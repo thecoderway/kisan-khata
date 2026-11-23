@@ -1,136 +1,30 @@
-
 ---
 name: accounting-engine
-description: Implement or review Kisan Khata financial transactions, ledger posting, payment allocation, interest calculations and crop-season settlements.
+description: Implement and review Kisan Khata consolidated customer accounting, payment events, interest calculations and settlements.
 ---
 
 # Accounting Engine Skill
 
-## Objective
+Read docs/02-business-rules.md, docs/03-accounting-engine.md, docs/04-database-architecture.md and .claude/rules/financial-integrity.md.
 
-Implement financially correct and auditable accounting workflows.
-
-## Required Reading
-
-- docs/02-business-rules.md
-- docs/03-accounting-engine.md
-- docs/04-database-architecture.md
-- .claude/rules/financial-integrity.md
-- .claude/agents/accounting-reviewer.md
-
-## Critical Rule
-
-Never invent a financial business rule.
-
-If a required decision is unresolved, STOP the affected implementation and ask the product owner.
+## Non-negotiable rules
+- Never allocate a payment to individual sales. Do not create allocation tables or records.
+- At payment, calculate eligible interest through payment date, subtract payment from consolidated payable and start the carried-forward balance cycle on that date.
+- Same-day subsequent payments must not duplicate interest.
+- New sales keep their individual sale dates and accrue interest from those dates.
+- Excess payment remains customer advance.
+- Interest events are payment and two Owner-configured annual Auto Settlement dates; no daily/monthly posting job.
+- Actual Days / 30. Do not invent unresolved rounding, date-boundary, capitalization or exact annual-date rules.
+- Owner may edit posted Sales/Payments; Manager and Staff may not. Preserve immutable before/after audit history.
 
 ## Workflow
+1. Identify the financial event and relevant customer/shop.
+2. Read the approved rule and determine opening state.
+3. Document calculation inputs, effective dates, ledger effect and expected closing state.
+4. Identify transaction, audit and idempotency requirements; no sale-level allocation records.
+5. Implement with decimal-safe arithmetic, DB transactions, locks and tenant validation.
+6. Reconcile ledger and projections.
+7. Test same-day payments, independent new-sale dates, carried-forward balance dates, advance, corrections, concurrency and unresolved boundaries.
+8. Use accounting reviewer for high-risk changes.
 
-### Step 1: Identify the Financial Operation
-
-Examples:
-
-- Credit sale.
-- Payment.
-- Interest charge.
-- Settlement.
-- Adjustment.
-- Reversal.
-
-### Step 2: Identify Financial Components
-
-Determine whether the operation affects:
-
-- Principal.
-- Interest.
-- Both.
-- Neither.
-
-### Step 3: Identify Approved Rules
-
-Find the approved:
-
-- Transaction date rules.
-- Posting rules.
-- Payment allocation rules.
-- Interest policy.
-- Settlement policy.
-- Rounding policy.
-
-### Step 4: Define the Accounting Effect
-
-Document:
-
-- Opening state.
-- Financial event.
-- Expected ledger entries.
-- Closing state.
-
-Do not implement until the expected result is clear.
-
-### Step 5: Design Transaction Posting
-
-Identify:
-
-- Transaction header.
-- Ledger entries.
-- Allocation records.
-- Audit records.
-- Reversal relationship.
-
-### Step 6: Implement Safely
-
-Use:
-
-- Decimal arithmetic.
-- Database transactions.
-- Row locking where required.
-- Idempotency.
-- Unique constraints.
-- Explicit posting services.
-
-### Step 7: Preserve History
-
-Posted records must not be silently changed or deleted.
-
-Use approved compensating entries.
-
-### Step 8: Verify Ledger Reconciliation
-
-Recalculate balances from authoritative entries.
-
-Compare projections against the ledger.
-
-### Step 9: Test Edge Cases
-
-Test:
-
-- Zero and negative values.
-- Large amounts.
-- Decimal precision.
-- Same-date entries.
-- Backdated operations.
-- Duplicate requests.
-- Concurrent requests.
-- Reversals.
-
-### Step 10: Accounting Review
-
-Use the accounting reviewer for high-risk changes.
-
-## Required Output
-
-Explain:
-
-1. Financial operation.
-2. Approved business rules.
-3. Ledger impact.
-4. Database changes.
-5. Concurrency protection.
-6. Reversal behavior.
-7. Automated tests.
-8. Remaining unresolved decisions.
-
-## Completion Criteria
-
-No unexplained financial change, duplicate posting or untraceable balance is acceptable.
+If an expected result depends on an unresolved business decision, stop and ask the product owner. Report exact tests and remaining risks.
