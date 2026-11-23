@@ -45,7 +45,7 @@ class RegisteredShopController
                 'name' => $validated['owner_name'],
                 'email' => $validated['email'],
                 'mobile' => $validated['mobile'],
-                'password' => Hash::make($validated['password']),
+                'password' => $validated['password'],
                 'role' => User::ROLE_OWNER,
                 'preferred_language' => 'hi',
                 'is_active' => true,
