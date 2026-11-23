@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class MobileOtpDeliveryUnavailable extends RuntimeException
-{
-}
+class MobileOtpDeliveryUnavailable extends RuntimeException {}
