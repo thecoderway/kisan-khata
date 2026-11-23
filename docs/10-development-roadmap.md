@@ -1,6 +1,6 @@
 # Kisan Khata — Development Roadmap
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved  
 **Delivery Approach:** Incremental Development  
 **Architecture:** Modular Monolith  
@@ -167,12 +167,13 @@ Use the following development cycle:
 
 ### Objectives
 
-- Owner management of shop users.
-- Manager creation.
-- Staff creation.
-- Role-based access control.
-- User activation and deactivation.
-- Employee limits.
+- Owner-only creation and administration of Manager and Staff accounts.
+- Role-based access control for Owner, Manager and Staff.
+- User activation, deactivation and reactivation.
+- Owner-only Manager/Staff role changes.
+- Active-user capacity enforcement and concurrency protection.
+- Role-specific customer permissions and Staff visibility for Managers.
+- Audit history for user lifecycle and role changes.
 
 ### Deliverables
 
@@ -184,12 +185,18 @@ Use the following development cycle:
 
 ### Acceptance criteria
 
-- Owner has full permitted shop access.
-- Manager has approved operational access.
-- Staff has approved limited access.
+- Owner has full permitted shop access and is the only role allowed to administer Manager/Staff accounts.
+- Manager can view the Staff list and active/deactivated status only; Manager cannot create, deactivate, reactivate, or change user roles.
+- Staff can view, add and edit customer profile information, but cannot delete customers or edit/delete posted financial transactions.
 - Manager and Staff cannot edit posted financial transactions.
 - Only Owner can edit posted sales and payments.
-- Shop user limits are enforced on the backend.
+- Active capacity is limited to one Owner, two Managers, five Staff and eight shop users total.
+- Deactivated Manager/Staff accounts release role and total active-user capacity while retaining their accounts and audit history.
+- Reactivation is rejected when the target role or total active-user capacity is full.
+- Concurrent creation, reactivation and role changes cannot exceed capacity.
+- Only Owner can change Manager/Staff roles; role changes enforce destination capacity atomically and are audited.
+- The sole active Owner cannot be deactivated or demoted through ordinary shop-user management; ownership transfer remains a separately authorized and audited process.
+- User lifecycle and role-change authorization is enforced server-side for both web and API requests.
 
 ## 7. Phase 4 — Customer Management
 

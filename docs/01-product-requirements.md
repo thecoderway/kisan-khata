@@ -1,6 +1,6 @@
 # Kisan Khata — Product Requirements Document (PRD)
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Product:** Kisan Khata  
 **Product Type:** Multi-Tenant SaaS Accounting Application  
 **Initial Platform:** Responsive Web Application  
@@ -96,7 +96,7 @@ Each shop supports:
 - Maximum 2 Managers.
 - Maximum 5 Staff members.
 
-These are fixed initial product limits, not independently configurable staff permissions.
+These are fixed initial product limits, not independently configurable staff permissions. Capacity is measured against active shop users. Deactivated Manager and Staff accounts do not consume role or total active-user capacity; their account and audit history remain retained. Reactivation is allowed only when the relevant role and total active-user capacities are available. A shop must retain exactly one active Owner. The Owner account cannot be deactivated or demoted through ordinary shop-user management; ownership transfer requires a separately authorized and audited process.
 
 ## 5. User Roles and Permissions
 
@@ -130,7 +130,10 @@ Capabilities:
 - Configure annual Auto Settlement dates.
 - Edit posted sales and payments.
 - View audit history.
-- Manage Managers and Staff.
+- Manage Manager and Staff accounts: create, deactivate, reactivate, and change Manager/Staff roles.
+- View and manage shop users' active status and role history.
+
+The Shop Owner cannot deactivate or demote their own Owner account through ordinary shop-user management. Ownership transfer is a separate, explicitly authorized and audited process.
 - Manage settlements.
 - Generate reports.
 - Manage subscription and billing.
@@ -147,7 +150,9 @@ Capabilities:
 - Record payments.
 - View customer ledgers.
 - View reports.
-- Perform permitted staff operations.
+- View the Staff list and each Staff member's active/deactivated status only.
+
+Manager cannot create, deactivate, reactivate, or change the role of any shop user.
 
 Restrictions:
 
@@ -165,6 +170,7 @@ Capabilities:
 
 - View customers.
 - Add customers.
+- Edit existing customer profile information.
 - Record credit sales.
 - Record payments.
 - View own work and transaction history.
@@ -172,7 +178,8 @@ Capabilities:
 
 Restrictions:
 
-- Cannot edit or delete posted financial transactions.
+- Cannot delete customers or edit/delete posted financial transactions.
+- Customer profile editing does not grant permission to alter sales, payments, ledger entries, or other financial history.
 - Cannot configure interest policies.
 - Cannot manage subscriptions.
 - Cannot modify shop ownership or critical settings.

@@ -1,6 +1,6 @@
 # Kisan Khata — Multi-Tenancy Architecture
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved  
 **Architecture:** Shared Database, Shared Application  
 **Database:** MySQL 8.4  
@@ -113,10 +113,16 @@ Rules:
 - Manager and Staff cannot create other shop users.
 - User capacity must be checked during account creation.
 - Concurrent account creation must not exceed capacity.
-- Disabled users must follow a defined account-capacity policy.
-- User role changes must be authorized and audited.
+- Capacity counts active shop users only: one active Owner, up to two active Managers, up to five active Staff, and eight active users total.
+- Deactivated Manager and Staff accounts release both their role capacity and total active-user capacity; their accounts and audit history are retained.
+- Reactivation must re-check role and total active-user capacity before the account becomes active.
+- The sole active Owner cannot be deactivated or demoted through ordinary shop-user management. Ownership transfer requires a separately authorized and audited process.
+- Only the Owner may create, deactivate, reactivate, or change the roles of Manager and Staff accounts.
+- Manager may view the Staff list and active/deactivated status only; Manager cannot administer user accounts.
+- Role changes must check destination-role capacity and release source-role capacity atomically.
+- Account creation, deactivation, reactivation and role changes must be serialized per shop (for example, by locking the Shop row in a database transaction) so concurrent requests cannot exceed capacity.
 
-The capacity must be enforced by backend services and database safeguards where practical.
+The capacity must be enforced by backend services and database safeguards where practical. The active-user count and authorization checks must be server-side; client-supplied status or role values are never authoritative.
 
 ## 5. Tenant Identification
 
@@ -300,18 +306,23 @@ Tenant isolation and role authorization are separate security responsibilities.
 - Manage customers.
 - Manage sales and payments within approved permissions.
 - View reports.
-- Manage routine staff operations.
+- View the Staff list and active/deactivated status only.
+- Cannot create, deactivate, reactivate, or change the role of any shop user.
 - Cannot change subscription, ownership or critical security settings.
 - Cannot edit posted financial transactions.
 
 ### Staff
 
-- View and add customers.
+- View, add and edit customer profile information.
 - Record credit sales.
 - Record payments.
 - View own work and transaction history.
-- Cannot edit or delete posted financial transactions.
+- Cannot delete customers or edit/delete posted financial transactions.
 - Has limited report and settings access.
+
+### Owner protection
+
+The sole active Owner cannot be deactivated or demoted through ordinary shop-user management. Ownership transfer is outside ordinary user administration and requires a separately authorized and audited process.
 
 The initial release uses fixed roles.
 
