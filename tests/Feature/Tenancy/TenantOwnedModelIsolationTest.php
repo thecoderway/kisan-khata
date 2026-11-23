@@ -126,4 +126,51 @@ class TenantOwnedModelIsolationTest extends TestCase
 
         $unscopedRecord->delete();
     }
+
+    public function test_bulk_update_cannot_modify_another_shops_record_when_scope_is_bypassed(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+
+        app(CurrentShop::class)->set($shopB);
+        $settingB = $shopB->settings()->create([
+            'setting_key' => 'language',
+            'setting_value' => 'en',
+        ]);
+
+        app(CurrentShop::class)->set($shopA);
+
+        ShopSetting::withoutGlobalScope('current_shop')
+            ->whereKey($settingB->id)
+            ->update(['setting_value' => 'tampered']);
+
+        $this->assertSame(
+            'en',
+            ShopSetting::withoutGlobalScope('current_shop')->findOrFail($settingB->id)->setting_value,
+        );
+    }
+
+    public function test_bulk_delete_cannot_remove_another_shops_record_when_scope_is_bypassed(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+
+        app(CurrentShop::class)->set($shopB);
+        $settingB = $shopB->settings()->create([
+            'setting_key' => 'language',
+            'setting_value' => 'en',
+        ]);
+
+        app(CurrentShop::class)->set($shopA);
+
+        ShopSetting::withoutGlobalScope('current_shop')
+            ->whereKey($settingB->id)
+            ->delete();
+
+        $this->assertDatabaseHas('shop_settings', [
+            'id' => $settingB->id,
+            'shop_id' => $shopB->id,
+            'setting_value' => 'en',
+        ]);
+    }
 }
