@@ -212,4 +212,78 @@ class TenantOwnedModelIsolationTest extends TestCase
         }
     }
 
+
+    public function test_upsert_is_scoped_to_the_current_shop_even_when_global_scope_is_bypassed(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+
+        app(CurrentShop::class)->set($shopB);
+        $settingB = $shopB->settings()->create([
+            'setting_key' => 'language',
+            'setting_value' => 'en',
+        ]);
+
+        app(CurrentShop::class)->set($shopA);
+
+        ShopSetting::withoutGlobalScope('current_shop')->upsert(
+            [[
+                'setting_key' => 'language',
+                'setting_value' => 'hi',
+            ]],
+            ['setting_key'],
+            ['setting_value'],
+        );
+
+        $this->assertDatabaseHas('shop_settings', [
+            'shop_id' => $shopB->id,
+            'setting_key' => 'language',
+            'setting_value' => 'en',
+        ]);
+
+        $this->assertDatabaseHas('shop_settings', [
+            'shop_id' => $shopA->id,
+            'setting_key' => 'language',
+            'setting_value' => 'hi',
+        ]);
+
+        $this->assertDatabaseCount('shop_settings', 2);
+    }
+
+    public function test_upsert_rejects_rows_claiming_another_shop(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        app(CurrentShop::class)->set($shopA);
+
+        $this->expectException(AuthorizationException::class);
+
+        ShopSetting::upsert(
+            [[
+                'shop_id' => $shopB->id,
+                'setting_key' => 'language',
+                'setting_value' => 'tampered',
+            ]],
+            ['shop_id', 'setting_key'],
+            ['setting_value'],
+        );
+    }
+
+    public function test_upsert_cannot_update_tenant_ownership(): void
+    {
+        $shop = Shop::factory()->create();
+        app(CurrentShop::class)->set($shop);
+
+        $this->expectException(AuthorizationException::class);
+
+        ShopSetting::upsert(
+            [[
+                'setting_key' => 'language',
+                'setting_value' => 'hi',
+            ]],
+            ['shop_id', 'setting_key'],
+            ['shop_id', 'setting_value'],
+        );
+    }
+
 }
