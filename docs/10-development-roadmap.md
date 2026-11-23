@@ -1,9 +1,12 @@
-
 # Kisan Khata — Development Roadmap
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
+**Status:** Approved  
 **Delivery Approach:** Incremental Development  
-**Architecture:** Modular Monolith
+**Architecture:** Modular Monolith  
+**Backend:** Laravel 13  
+**Database:** MySQL 8.4  
+**PHP:** 8.3
 
 ---
 
@@ -11,471 +14,803 @@
 
 This roadmap defines the recommended development sequence for Kisan Khata.
 
-Development must proceed in small, verifiable phases.
+Development must proceed in small, independently verifiable phases.
+
+The application must be developed according to the approved product requirements, business rules, accounting engine, database architecture, multi-tenancy, security, UI/UX, API and testing documents.
 
 Do not ask an AI coding agent to build the entire application in one operation.
 
-Every phase must have:
+Every development phase must have:
 
 - Clear objectives.
 - Defined scope.
+- Dependencies.
 - Database changes.
 - Implementation tasks.
-- Tests.
+- Automated tests.
+- Security considerations.
 - Acceptance criteria.
 - Completion status.
 
 ## 2. Development Strategy
 
-Use the following cycle:
+Use the following development cycle:
 
-1. Inspect existing code.
-2. Read relevant project documentation.
-3. Identify dependencies.
-4. Prepare implementation plan.
-5. Obtain approval for significant decisions.
-6. Implement a small feature.
-7. Write automated tests.
-8. Run tests.
-9. Review security.
-10. Update documentation.
+1. Inspect the existing codebase.
+2. Read relevant approved documentation.
+3. Identify dependencies and existing implementation.
+4. Prepare a small implementation plan.
+5. Identify conflicts with approved architecture.
+6. Obtain approval for significant changes.
+7. Implement one manageable feature.
+8. Write automated tests.
+9. Run relevant tests.
+10. Review security and tenant isolation.
+11. Review database integrity.
+12. Update documentation and project status.
 
-## 3. Phase 0 — Project Foundation
+### Important implementation rules
 
-Objectives:
+- Existing working functionality must not be removed without approval.
+- Approved business rules must not be silently changed.
+- Financial calculations must remain backend-controlled.
+- Database changes must follow the approved database architecture.
+- All tenant-owned data must remain isolated by shop.
+- Every significant feature must have automated tests.
+- Do not claim completion without executing the relevant tests.
 
-- Inspect existing Laravel application.
-- Confirm PHP and Laravel versions.
-- Confirm MySQL version.
+## 3. Phase 0 — Existing Project Audit and Foundation
+
+### Objectives
+
+- Inspect the existing Laravel application.
+- Confirm PHP, Laravel and MySQL versions.
+- Review existing database migrations.
 - Review installed packages.
-- Configure development environment.
-- Configure environment variables.
-- Establish code formatting standards.
-- Establish testing framework.
-- Configure logging.
+- Review current authentication implementation.
+- Review current application structure.
+- Review Docker and development environment.
+- Identify existing functionality and incomplete modules.
+- Establish baseline testing and code quality checks.
 
-Deliverables:
+### Deliverables
 
-- Working Laravel application.
-- Database connection.
-- Passing baseline tests.
-- Initial architecture documentation.
+- Existing codebase audit.
+- Architecture gap report.
+- Development environment verification.
+- Baseline test results.
+- Initial implementation backlog.
 
-Acceptance criteria:
+### Acceptance criteria
 
 - Application starts successfully.
 - Database connection works.
-- Existing functionality is preserved.
-- Baseline test suite passes.
+- Existing migrations are understood.
+- Existing tests have been executed.
+- Existing functionality is documented.
+- No existing feature is accidentally removed.
 
-## 4. Phase 1 — Authentication and Shop Management
+## 4. Phase 1 — Authentication and Shop Foundation
 
-Objectives:
+### Objectives
 
-- Authentication.
-- Shop registration.
+- Shop Owner registration.
+- Shop creation.
+- Mobile OTP authentication.
+- Email/password authentication.
+- User profile.
 - Shop profile.
-- Shop memberships.
-- Shop selection.
-- Roles and permissions foundation.
+- Owner account setup.
+- Authentication security.
 
-Deliverables:
+### Business rules
 
-- User management.
-- Shop management.
-- Membership model.
-- Authorization foundation.
+- One user belongs to exactly one shop.
+- One user has exactly one role.
+- Roles are Owner, Manager and Staff.
+- No multi-shop switching or membership model.
+- Shop user limits:
+  - 1 Owner.
+  - 2 Managers.
+  - 5 Staff.
 
-Acceptance criteria:
+### Deliverables
 
-- Users can authenticate.
-- Authorized users can access their shop.
-- Unauthorized shop switching is rejected.
-- Permission tests pass.
+- Authentication module.
+- Shop module.
+- User module.
+- OTP verification.
+- Email/password login.
+- User-shop relationship.
+- Authentication tests.
+
+### Acceptance criteria
+
+- Users can authenticate using approved login methods.
+- Shop registration creates the correct Owner relationship.
+- A user cannot belong to multiple shops.
+- User role is enforced.
+- OTP expiration and rate limiting work.
+- Unauthorized shop access is rejected.
 
 ## 5. Phase 2 — Multi-Tenancy Foundation
 
-Objectives:
+### Objectives
 
-- Centralized current shop context.
+- Centralized authenticated shop context.
 - Tenant-aware models.
-- Tenant-aware queries.
+- Tenant-aware database queries.
 - Tenant authorization.
-- Tenant-specific storage structure.
-- Tenant-specific cache keys.
+- Tenant-aware file storage.
+- Tenant-aware cache keys.
+- Tenant-aware background jobs.
 
-Deliverables:
+### Deliverables
 
-- CurrentShop abstraction.
+- CurrentShop or equivalent shop-context abstraction.
 - Tenant middleware or equivalent request context.
+- Tenant-scoped query mechanism.
 - Tenant ownership validation.
-- Cross-tenant tests.
+- Cross-tenant security tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
+- Every tenant-owned record is scoped to the authenticated user's shop.
+- Client-provided shop IDs cannot bypass authorization.
 - Shop A cannot access Shop B data.
-- Jobs establish explicit tenant context.
+- Background jobs establish explicit tenant context.
 - Tenant isolation tests pass.
 
-This phase must be completed before customer and financial modules are exposed to multiple shops.
+**This phase must be completed before exposing customer and financial modules to multiple shops.**
 
-## 6. Phase 3 — Customer Management
+## 6. Phase 3 — Roles and User Management
 
-Objectives:
+### Objectives
+
+- Owner management of shop users.
+- Manager creation.
+- Staff creation.
+- Role-based access control.
+- User activation and deactivation.
+- Employee limits.
+
+### Deliverables
+
+- User management screens.
+- User management services.
+- Policies and authorization rules.
+- Role-specific navigation.
+- Role authorization tests.
+
+### Acceptance criteria
+
+- Owner has full permitted shop access.
+- Manager has approved operational access.
+- Staff has approved limited access.
+- Manager and Staff cannot edit posted financial transactions.
+- Only Owner can edit posted sales and payments.
+- Shop user limits are enforced on the backend.
+
+## 7. Phase 4 — Customer Management
+
+### Objectives
 
 - Customer creation.
 - Customer editing.
 - Customer listing.
-- Search.
-- Filters.
-- Customer detail page.
+- Customer search.
+- Village filters.
+- Customer details.
+- Hindi and English data handling.
+- Automatic translation support.
 
-Deliverables:
+### Customer fields
 
-- Customer migrations.
-- Customer model.
-- Customer services.
+- Name — required.
+- Mobile — optional.
+- Village — optional.
+- Address — optional.
+- Notes — optional.
+
+### Language requirements
+
+- Preserve original entered text.
+- Preserve original language.
+- Store Hindi translation separately.
+- Store English translation separately.
+- Allow translation corrections.
+- Never overwrite original text with automatic translation.
+
+### Deliverables
+
+- Customer database tables.
+- Customer model and services.
 - Customer policies.
-- Customer controllers.
-- Customer views.
+- Customer controllers and API endpoints.
+- Customer UI.
+- Translation integration.
 - Customer tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
 - Authorized users can manage customers.
 - Search works in Hindi and English.
+- Original and translated text remain separate.
 - Tenant isolation is enforced.
-- Pagination works.
+- Pagination and filters work.
 
-## 7. Phase 4 — Financial Foundation
+## 8. Phase 5 — Financial Foundation and Accounting Engine
 
-Objectives:
+**This is one of the most critical development phases.**
 
-- Define financial transaction model.
-- Define ledger entry conventions.
-- Implement decimal arithmetic.
-- Implement transaction posting workflow.
-- Implement reversal workflow.
+### Objectives
+
+- Implement financial transaction foundation.
+- Implement decimal-safe money handling.
+- Implement consolidated customer outstanding.
+- Implement ledger entries.
+- Implement financial posting.
+- Implement advance balance handling.
+- Implement audit history.
 - Implement idempotency.
 - Implement concurrency protection.
 
-Deliverables:
+### Accounting architecture
 
-- Financial transaction service.
-- Ledger posting service.
-- Financial database migrations.
-- Financial integrity tests.
+The accounting engine must support:
 
-Important:
+- Sales.
+- Payments.
+- Consolidated outstanding.
+- Interest.
+- Advances.
+- Settlements.
+- Corrections.
+- Running customer ledger.
 
-Do not begin production interest calculations before the accounting foundation is stable.
+### Consolidated balance rules
 
-Acceptance criteria:
+- Payments are not allocated to individual sale IDs.
+- A payment first triggers eligible interest calculation through the payment date.
+- The received payment is deducted from total payable.
+- Remaining balance is carried forward from the payment date.
+- New sales preserve their own sale dates.
+- Excess payment becomes customer advance.
+- Multiple payments on the same date must not duplicate interest.
 
-- Transactions are auditable.
-- Posted entries are immutable through ordinary workflows.
-- Duplicate posting is prevented.
+### Deliverables
+
+- Financial transaction services.
+- Ledger posting services.
+- Consolidated balance calculation.
+- Advance handling.
+- Database migrations.
+- Audit services.
+- Idempotency mechanism.
+- Concurrency protection.
+- Financial unit and integration tests.
+
+### Acceptance criteria
+
 - Financial posting is atomic.
+- Duplicate posting is prevented.
+- Monetary calculations use safe decimal arithmetic.
+- Consolidated outstanding is correct.
+- Advance balances are correct.
+- Ledger entries reconcile with financial transactions.
+- Same-day multiple payments are handled correctly.
+- Audit history is preserved.
 
-## 8. Phase 5 — Credit Sales
+**Do not begin full production sales and payment workflows until the financial foundation passes its critical tests.**
 
-Objectives:
+## 9. Phase 6 — Credit Sales
 
-- Draft credit sale.
+### Objectives
+
+- Sale creation.
 - Sale validation.
 - Sale posting.
-- Bill upload.
 - Sale listing.
-- Sale detail.
-- Sale reversal.
+- Sale details.
+- Crop/season tagging.
+- Optional bill upload.
+- Owner-authorized correction.
 
-Deliverables:
+### Sale information
+
+- Customer.
+- Sale date.
+- Amount.
+- Description.
+- Optional crop or season tag.
+
+A product category or sale type is not mandatory.
+
+### Deliverables
 
 - Sales module.
-- Sale attachments.
-- Posting service integration.
+- Sale migrations.
+- Sale services.
+- Sale controllers and API endpoints.
+- Sale forms and listing.
+- Private bill attachments.
+- Audit integration.
 - Sales tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
-- Posted sales update the ledger correctly.
-- Customer and shop ownership are validated.
+- Authorized users can record sales.
+- Posted sales update consolidated customer outstanding.
+- Original sale date is retained.
+- Owner can edit posted sales.
+- Manager and Staff cannot edit or delete posted sales.
+- Owner corrections retain old and new values in audit history.
+- Corrections trigger required recalculation.
 - Attachments are private.
-- Reversals preserve history.
 
-## 9. Phase 6 — Payments
+## 10. Phase 7 — Payments
 
-Objectives:
+### Objectives
 
-- Draft payment.
-- Payment posting.
-- Payment methods.
-- Receipt upload.
-- Allocation records.
+- Payment recording.
+- Payment processing.
 - Payment history.
-- Payment reversal.
+- Payment receipt upload.
+- Consolidated balance update.
+- Advance handling.
+- Owner-authorized correction.
 
-Important:
+### Payment processing flow
 
-The product owner must approve payment allocation behavior before the authoritative allocation engine is implemented.
+1. Validate payment details.
+2. Lock or otherwise safely protect the customer's financial account during processing.
+3. Calculate eligible interest through the payment date.
+4. Determine total payable.
+5. Deduct payment amount.
+6. Record excess as advance, if applicable.
+7. Carry forward the remaining outstanding.
+8. Preserve audit and ledger history.
+9. Return the resulting balance.
 
-Deliverables:
+### Deliverables
 
 - Payments module.
-- Payment allocation service.
-- Payment posting service.
+- Payment services.
+- Payment controllers and API endpoints.
+- Receipt upload.
+- Payment history.
+- Idempotency integration.
+- Audit integration.
 - Payment tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
 - Payments are posted exactly once.
-- Allocations are traceable.
-- Account balances remain consistent.
-- Reversal preserves history.
+- Payments are not allocated to individual sale IDs.
+- Same-day multiple payments do not duplicate interest.
+- Excess payment is recorded as advance.
+- Concurrent payment requests preserve balance consistency.
+- Only Owner can edit posted payments.
+- Corrections preserve immutable audit history.
+- Financial balances reconcile.
 
-## 10. Phase 7 — Customer Ledger
+## 11. Phase 8 — Customer Ledger
 
-Objectives:
+### Objectives
 
-- Chronological ledger.
+- Customer account ledger.
 - Opening balance.
-- Debit and credit display.
+- Sales display.
+- Payment display.
+- Interest entries.
+- Settlement entries.
+- Advance balance.
+- Adjustments and corrections.
 - Running balance.
-- Principal and interest separation.
 - Date filters.
-- Ledger printing.
+- Printable ledger.
 
-Deliverables:
+### Deliverables
 
 - Customer ledger service.
 - Ledger UI.
+- Ledger API.
+- Running balance calculation.
 - Printable ledger layout.
 - Ledger tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
-- Ledger can be reconciled to posted entries.
+- Ledger displays the complete consolidated account.
+- Payments are not shown as allocations against individual sales.
+- Carried-forward balance is correct.
+- New sales preserve their own dates.
 - Running balances are deterministic.
-- Hindi printing works.
-- Closing balance is correct.
+- Ledger matches the accounting engine.
+- Hindi and English printing work.
 
-## 11. Phase 8 — Interest Engine
+## 12. Phase 9 — Interest Engine
 
-Prerequisite:
+### Prerequisites
 
-All required interest business decisions must be approved.
+- Financial foundation completed.
+- Consolidated payment model implemented.
+- Interest business rules finalized.
+- Interest date-boundary and rounding decisions approved.
 
-Objectives:
+### Objectives
 
-- Interest policy.
-- Policy versioning.
-- Calculation engine.
+- Interest policy management.
+- Monthly interest rate.
+- Grace period.
+- Customer-specific interest rate.
+- Capitalization policy.
+- Actual-days/30 calculation.
 - Calculation history.
-- Interest posting.
-- Interest reports.
+- Annual auto settlement.
+- Interest transparency.
 
-Deliverables:
+### Approved calculation basis
+
+`Interest = Eligible Base × (Monthly Rate / 100) × (Eligible Days / 30)`
+
+### Interest calculation events
+
+Interest calculation must occur on:
+
+1. Customer payment.
+2. Two configured annual auto-settlement dates.
+
+It must not be repeatedly posted by an ordinary daily/monthly background interest job.
+
+### Deliverables
 
 - Interest policy models.
+- Policy versioning.
 - Interest calculation service.
 - Interest posting service.
-- Interest calculation tests.
-- Audit trail.
+- Interest calculation history.
+- Owner-only policy management.
+- Interest API.
+- Interest tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
 - Calculations are deterministic.
-- Calculation basis is explainable.
+- Actual elapsed days are used.
+- Grace period is respected.
 - Historical policies are preserved.
-- Boundary tests pass.
-- No unapproved interest behavior exists.
+- Capitalized and separate interest configurations work correctly.
+- Same-date payment and auto settlement do not duplicate interest.
+- Interest calculations are explainable.
+- Boundary and rounding tests pass.
 
-## 12. Phase 9 — Crop-Season Settlement
+## 13. Phase 10 — Crop-Season Settlement
 
-Prerequisite:
-
-All settlement and payment allocation decisions must be approved.
-
-Objectives:
+### Objectives
 
 - Settlement preparation.
 - Settlement calculation.
-- Settlement posting.
-- Carry-forward handling.
-- Settlement reversal.
+- Full settlement.
+- Partial settlement.
+- Carry-forward to next crop season.
 - Settlement history.
+- Audit history.
 
-Deliverables:
+### Deliverables
 
 - Settlement module.
 - Settlement services.
 - Settlement ledger entries.
-- Settlement reports.
+- Settlement API.
+- Settlement UI.
 - Settlement tests.
 
-Acceptance criteria:
+### Acceptance criteria
 
+- Full settlement is handled correctly.
+- Partial settlement retains the remaining balance.
+- Carry-forward preserves outstanding.
 - Previous financial history remains intact.
-- Outstanding balances are correct.
-- Carry-forward treatment is explainable.
-- Reversals work.
+- Interest is calculated according to approved rules.
 - Duplicate settlements are prevented.
+- Settlement operations are auditable.
 
-## 13. Phase 10 — Reports and Printing
+## 14. Phase 11 — Reports, Printing and Exports
 
-Objectives:
+### Objectives
 
-- Outstanding report.
+- Customer outstanding report.
 - Sales report.
 - Payment report.
 - Interest report.
 - Settlement report.
 - Customer ledger print.
-- Date filters.
+- PDF exports.
+- Excel/CSV exports.
+- Date and customer filters.
 
-Acceptance criteria:
+### Deliverables
 
-- Reports are tenant-scoped.
-- Totals match ledger data.
-- Print layouts work in Hindi and English.
-- Large datasets are paginated or exported safely.
+- Reporting services.
+- Report UI.
+- PDF generation.
+- Excel/CSV export.
+- Report tests.
 
-## 14. Phase 11 — Subscription System
+### Acceptance criteria
 
-Objectives:
+- All reports are tenant-scoped.
+- Totals match authoritative ledger data.
+- Role permissions are enforced.
+- Hindi and English printing work.
+- Large datasets are handled safely.
+- Exported data is consistent with the accounting engine.
+
+## 15. Phase 12 — Subscription System
+
+### Objectives
 
 - Subscription plans.
-- Shop subscription.
-- Trial configuration.
+- Shop-level subscription.
+- Free Trial.
+- Basic, Standard and Premium plans.
+- Monthly billing.
+- Annual billing.
 - Renewal.
 - Expiry.
-- Grace period.
-- Suspension.
-- Payment integration after provider selection.
+- Three-day grace period.
+- Read-only access.
+- Subscription history.
 
-Acceptance criteria:
+### Approved rules
 
-- Shop subscription status is correctly enforced.
-- One shop's suspension does not affect another.
+- Subscription belongs to the shop, not individual users.
+- All users of a shop share subscription status.
+- Free Trial duration is configurable, initially three months.
+- After expiry and three-day grace period, the shop becomes read-only.
+- Owner retains access to data exports after expiry.
+
+### Deliverables
+
+- Subscription models.
+- Plan configuration.
+- Subscription services.
+- Subscription enforcement middleware or equivalent.
+- Subscription UI.
+- Billing integration after provider selection.
+- Subscription tests.
+
+### Acceptance criteria
+
+- Shop subscription status is enforced correctly.
+- One shop's subscription status does not affect another.
+- Expiry and grace period work.
+- Read-only restrictions cannot be bypassed through API.
+- Owner can export data after expiry.
 - Subscription changes are auditable.
 
-## 15. Phase 12 — Production Readiness
+## 16. Phase 13 — API Finalization and Android Readiness
 
-Objectives:
+The API foundation should be implemented alongside the relevant backend modules. This phase verifies the complete API contract and Android readiness.
+
+### Objectives
+
+- Verify API versioning.
+- Verify authentication.
+- Verify customer APIs.
+- Verify sales APIs.
+- Verify payment APIs.
+- Verify ledger APIs.
+- Verify interest and settlement APIs.
+- Verify file APIs.
+- Verify API documentation.
+- Verify Android-compatible token authentication.
+
+### Deliverables
+
+- Versioned REST API.
+- API documentation.
+- OpenAPI/Swagger specification, where adopted.
+- API integration tests.
+- Android integration readiness report.
+
+### Acceptance criteria
+
+- Web and Android clients use the same business logic.
+- Financial calculations remain backend-controlled.
+- API tenant isolation is verified.
+- API authorization is verified.
+- Idempotency works for financial endpoints.
+- API tests pass.
+
+## 17. Phase 14 — Production Readiness
+
+### Objectives
 
 - Production hosting.
 - HTTPS.
-- Database backups.
+- Environment configuration.
+- Database backup.
+- Encrypted off-site backup.
 - Restore testing.
 - Error monitoring.
+- Application logging.
 - Security review.
 - Performance review.
 - Deployment procedure.
+- Recovery procedure.
 
-Acceptance criteria:
+### Deliverables
+
+- Production environment.
+- Deployment documentation.
+- Backup automation.
+- Restore procedure.
+- Monitoring and alerting.
+- Security review report.
+- Release checklist.
+
+### Acceptance criteria
 
 - Production configuration is secure.
-- Backup and recovery are tested.
-- Critical tests pass.
+- Backups run successfully.
+- Restore procedure has been tested.
 - Tenant isolation is verified.
+- Critical automated tests pass.
 - Monitoring is operational.
+- Deployment and recovery procedures are documented.
 
-## 16. Phase 13 — Android Application
+## 18. Phase 15 — Android Application
 
-Android development starts after the web application API and financial behavior are stable.
+Android development begins after the backend API and financial behavior are stable.
 
-Objectives:
+### Objectives
 
 - Android authentication.
-- Shop selection.
 - Customer management.
-- Sales.
+- Sales recording.
 - Payments.
-- Ledger.
+- Customer ledger.
+- Interest information.
+- Settlements.
+- Reports.
 - Bill and receipt uploads.
 - Hindi and English UI.
 
-The Android client must use backend financial services.
+### Deliverables
 
-Do not duplicate accounting logic in Android.
+- Native Android application.
+- API integration.
+- Secure token storage.
+- Mobile UI.
+- Android integration tests.
 
-Offline synchronization requires separate approval and architecture design.
+### Acceptance criteria
 
-## 17. Indicative Schedule
+- Android uses the same backend accounting engine.
+- Android cannot independently modify authoritative balances.
+- User permissions match backend roles.
+- Tenant isolation remains enforced.
+- Financial workflows work consistently across web and Android.
 
-An indicative estimate for one experienced Laravel developer:
+Offline synchronization is not part of the initial release. It requires a separate architecture and approval.
 
-| Area | Estimated Duration |
+## 19. Indicative Development Schedule
+
+The following estimates are planning estimates for one experienced Laravel developer. They are not delivery guarantees.
+
+| Development area | Estimated duration |
 |---|---:|
-| Foundation and architecture | 3–5 days |
-| Authentication and tenancy | 5–8 days |
-| Customers | 3–5 days |
-| Financial foundation | 5–8 days |
-| Sales | 4–6 days |
+| Project audit and foundation | 3–5 days |
+| Authentication and shop foundation | 5–8 days |
+| Multi-tenancy | 4–7 days |
+| Roles and user management | 3–5 days |
+| Customer management | 4–7 days |
+| Financial foundation | 7–12 days |
+| Credit sales | 4–7 days |
 | Payments | 5–8 days |
-| Ledger | 4–7 days |
-| Interest engine | 5–10 days |
-| Settlement | 4–7 days |
-| Reports and printing | 4–7 days |
-| Subscription and production readiness | 5–10 days |
+| Customer ledger | 4–7 days |
+| Interest engine | 7–12 days |
+| Crop-season settlement | 4–8 days |
+| Reports and exports | 4–8 days |
+| Subscription system | 5–8 days |
+| API finalization | 4–7 days |
+| Production readiness | 5–10 days |
+| Android application | Separate estimate |
 
-These are planning estimates, not delivery guarantees.
+Some tasks can run in parallel after their dependencies are stable.
 
-Actual duration depends on existing codebase quality, requirements, testing depth and product decisions.
+The actual duration depends on existing code quality, integration complexity, testing depth and unresolved business decisions.
 
-## 18. AI-Assisted Development Rules
+## 20. AI-Assisted Development Rules
 
-When using Claude Code:
+When using Claude Code or another AI coding agent:
 
-- Work on one phase at a time.
-- Give it the relevant documentation.
-- Ask it to inspect the existing project first.
-- Require an implementation plan.
-- Review database changes.
-- Review financial calculations.
-- Require tests.
-- Run tests before accepting work.
-- Do not let it silently change approved architecture.
+1. Work on one phase at a time.
+2. Provide the relevant approved documentation.
+3. Ask the agent to inspect existing code before modifying it.
+4. Require an implementation plan.
+5. Review database migrations.
+6. Review financial calculations independently.
+7. Require automated tests.
+8. Run tests before accepting implementation.
+9. Review authorization and tenant isolation.
+10. Do not allow silent changes to approved architecture.
+11. Require a summary of changed files.
+12. Require evidence of test execution.
+13. Update project documentation after completion.
 
-## 19. Release Milestones
+AI-generated code must be reviewed before merging.
 
-### Milestone A — Basic Customer Ledger
+## 21. Release Milestones
+
+### Milestone A — Secure Shop and Customer Foundation
 
 - Authentication.
-- Shops.
-- Customers.
+- Shop registration.
+- Multi-tenancy.
+- Roles.
+- Customer management.
+
+### Milestone B — Basic Financial Ledger
+
+- Financial foundation.
 - Credit sales.
-- Payments.
-- Basic ledger.
+- Consolidated payments.
+- Customer ledger.
+- Advance handling.
 
-### Milestone B — Financial Automation
+### Milestone C — Financial Automation
 
-- Approved interest engine.
-- Crop-season settlements.
+- Interest engine.
+- Interest policies.
+- Annual auto settlement.
+- Crop-season settlement.
 - Financial reports.
 
-### Milestone C — SaaS Commercial Release
+### Milestone D — Commercial SaaS Release
 
-- Subscriptions.
-- Production deployment.
-- Security review.
-- Merchant onboarding.
+- Subscription system.
+- Data exports.
+- Production hosting.
+- Backup and recovery.
+- Security and performance review.
 
-### Milestone D — Mobile Expansion
+### Milestone E — Mobile Expansion
 
-- Versioned API.
+- Finalized API.
 - Android application.
 - Mobile workflows.
+- Future offline architecture, subject to separate approval.
 
-## 20. Roadmap Completion Rules
+## 22. Roadmap Completion Rules
 
 A phase is complete only when:
 
-- Scope is implemented.
-- Relevant tests pass.
-- Security is reviewed.
-- Tenant isolation is tested.
+- Approved scope is implemented.
+- Relevant automated tests exist.
+- Relevant tests have actually passed.
+- Tenant isolation is verified.
+- Authorization is verified.
+- Financial integrity is verified where applicable.
+- Security review is completed.
 - Documentation is updated.
 - Acceptance criteria are met.
+- `docs/PROJECT-STATUS.md` is updated.
 
-Update docs/PROJECT-STATUS.md after every completed phase.
+A phase must not be marked complete merely because code has been written.
+
+## 23. Change Management
+
+If implementation reveals a conflict or missing requirement:
+
+1. Stop the affected implementation.
+2. Document the conflict.
+3. Identify impacted approved documents.
+4. Explain the technical and business consequences.
+5. Obtain approval for the proposed change.
+6. Update the relevant documentation.
+7. Resume implementation only after approval.
+
+This prevents implementation decisions from silently changing the product.
