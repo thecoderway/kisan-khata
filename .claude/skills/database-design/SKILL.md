@@ -1,128 +1,20 @@
-
 ---
 name: database-design
-description: Design and review Kisan Khata MySQL schemas, relationships, indexes, migrations and tenant-aware data integrity constraints.
+description: Design and review Kisan Khata MySQL schemas, tenant constraints, indexes and migrations.
 ---
 
 # Database Design Skill
 
-## Objective
+Read docs/04-database-architecture.md, docs/05-multi-tenancy.md, docs/03-accounting-engine.md and applicable security/financial rules.
 
-Design a reliable and maintainable MySQL schema for Kisan Khata.
+1. Identify entities, relationships, ownership, lifecycle, retention and query patterns.
+2. Inspect existing migrations/models before proposing tables.
+3. Define cardinality, tenant ownership, constraints and deletion behavior.
+4. Use shop_id for tenant-owned records and validate same-shop relationships; use composite constraints where practical.
+5. Use DECIMAL for money, DATE/DATETIME appropriately, bounded strings and JSON only where justified. Never FLOAT/DOUBLE for authoritative amounts.
+6. Do not create payment_allocations or any sale-level payment allocation model. Payments reduce consolidated customer payable.
+7. Preserve each new sale's effective date separately from the carried-forward balance's calculation-cycle start date.
+8. Plan safe migrations, indexes, query performance and data preservation.
+9. Test constraints, foreign keys, duplicate references, cross-tenant relations and migration behavior.
 
-## Required Reading
-
-- docs/04-database-architecture.md
-- docs/05-multi-tenancy.md
-- docs/03-accounting-engine.md
-- .claude/rules/financial-integrity.md
-- .claude/rules/tenant-security.md
-
-## Workflow
-
-### Step 1: Understand Data Requirements
-
-Identify:
-
-- Entities.
-- Relationships.
-- Tenant ownership.
-- Lifecycle.
-- Retention requirements.
-- Query patterns.
-
-### Step 2: Inspect Existing Schema
-
-Inspect existing migrations and models.
-
-Do not create duplicate tables or relationships.
-
-### Step 3: Define Relationships
-
-For each relationship, specify:
-
-- Parent.
-- Child.
-- Cardinality.
-- Ownership.
-- Deletion behavior.
-- Required constraints.
-
-### Step 4: Enforce Tenant Integrity
-
-Use shop_id for tenant-owned records.
-
-Validate related records belong to the same shop.
-
-Use composite constraints where practical.
-
-### Step 5: Define Data Types
-
-Use:
-
-- BIGINT or appropriate primary key type.
-- VARCHAR for bounded text.
-- TEXT for longer notes.
-- DATE or DATETIME as appropriate.
-- DECIMAL for money.
-- JSON only for genuinely flexible structured data.
-
-Do not use FLOAT or DOUBLE for financial amounts.
-
-### Step 6: Define Indexes
-
-Review:
-
-- Tenant filtering.
-- Customer search.
-- Date filtering.
-- Transaction references.
-- Unique constraints.
-
-Avoid excessive indexes.
-
-### Step 7: Design Migrations
-
-Migrations should:
-
-- Be safe.
-- Be reviewable.
-- Avoid unnecessary data loss.
-- Preserve financial history.
-- Be reversible where practical.
-
-### Step 8: Review Query Performance
-
-Consider:
-
-- Pagination.
-- Composite indexes.
-- N+1 queries.
-- Ledger query volume.
-- Large-table growth.
-
-### Step 9: Test
-
-Test:
-
-- Constraints.
-- Foreign keys.
-- Duplicate references.
-- Cross-tenant relationships.
-- Migration up/down behavior where supported.
-
-## Required Output
-
-Provide:
-
-1. Schema proposal.
-2. Relationship explanation.
-3. Indexing strategy.
-4. Tenant integrity analysis.
-5. Migration plan.
-6. Data migration risks.
-7. Required tests.
-
-## Completion Criteria
-
-The schema must preserve data integrity, tenant isolation and financial history.
+Output schema, relationships, indexes, tenant analysis, migration plan, risks and tests. Do not invent unresolved accounting policy.
