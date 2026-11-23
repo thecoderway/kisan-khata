@@ -11,9 +11,13 @@ Route::prefix('auth/mobile')->group(function (): void {
 });
 
 Route::middleware('auth:sanctum')->group(function (): void {
-    Route::get('/user', function (Request $request) {
-        return $request->user()->load('shop:id,name');
-    })->middleware('tenant');
+    // Authenticated business API routes must also resolve the user's tenant.
+    Route::middleware('tenant')->group(function (): void {
+        Route::get('/user', function (Request $request) {
+            return $request->user()->load('shop:id,name');
+        });
+    });
 
+    // Logout only revokes the current token and remains available for suspended shops.
     Route::post('/logout', [TokenController::class, 'destroy']);
 });
