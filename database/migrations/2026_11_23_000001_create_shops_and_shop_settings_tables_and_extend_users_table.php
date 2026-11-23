@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -59,6 +60,15 @@ return new class extends Migration
 
     public function down(): void
     {
+        // The original users schema requires email. Refuse rollback before
+        // changing anything if mobile-only accounts have since been created.
+        if (DB::table('users')->whereNull('email')->exists()) {
+            throw new RuntimeException(
+                'Cannot roll back the shop database migration while users with a null email exist. '
+                .'Assign an email to those users before retrying the rollback.'
+            );
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropIndex(['shop_id', 'role']);
             $table->dropUnique(['mobile']);
