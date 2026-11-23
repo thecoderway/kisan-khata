@@ -1,133 +1,181 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-23  
-**Project Status:** Phase 2 — SaaS Core Architecture (foundation implemented; role/user management is next)  
-**Current Main Commit:** `73617d14895cc972ae45d57080113402cfd76f6d`  
-**Release:** Not yet released; no production deployment is claimed.
+**Status Snapshot Base:** `main` at `13ad942` (PR #5 merged; this document correction is proposed separately)  
+**Project Status:** Foundation implementation in progress; Phase 3 is the next implementation phase.  
+**Release:** Not released; no production deployment is claimed.
 
-## Approved baseline
+## 1. Source of truth and mandatory project rules
 
-Docs 01–10 are Approved, Version 2.0. Accepted ADRs: ADR-0001 through ADR-0009. See `docs/decisions/README.md`.
+The authoritative baseline is the approved **Docs 01–10, Version 2.0**, together with **ADR-0001 through ADR-0009** in `docs/decisions/`. The roadmap in `docs/10-development-roadmap.md` defines the official phase numbering and sequence. This status file records evidence-based progress; it does not replace or silently amend approved requirements.
 
-The approved product and accounting rules remain authoritative. This status update records implementation progress; it does not approve or change unresolved business rules.
+These rules are mandatory for all future work, including AI-assisted work:
 
-## Executive summary
+1. **Document-first:** Before planning or changing code, read the relevant approved PRD, Business Rules, Accounting Engine, Database, Multi-Tenancy, Security, UI/UX, API and Testing sections, the applicable roadmap phase, and all relevant ADRs.
+2. **Inspect before implementing:** Audit the existing code, migrations, routes, policies, tests and dependencies. Do not assume a feature is absent or complete from a status label alone.
+3. **No silent scope or policy changes:** Do not invent business rules, defaults, permissions, pricing, calculations or architecture. If a requirement is missing, ambiguous or conflicts with an ADR/document, stop the affected work, explain the conflict and obtain Product Owner approval. Update the authoritative document/ADR before implementation.
+4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Never merge to `main` without the Product Owner's explicit approval.
+5. **Security and tenancy by design:** Derive tenant context from authenticated membership; never trust client-supplied `shop_id` or role. Enforce authorization server-side and test cross-tenant access for every tenant-owned feature.
+6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Do not introduce sale-level payment allocation.
+7. **Tests are evidence:** Add relevant automated tests and actually run them. Never claim tests, builds, migrations or acceptance criteria passed without observed output.
+8. **Review all changes:** Report changed files, migrations, security implications, test output and known limitations. Preserve existing working functionality unless explicitly approved otherwise.
+9. **Documentation stays synchronized:** Update the relevant technical document and this status file in the same delivery whenever implementation changes documented behavior or verified progress. Distinguish implemented, tested, accepted and production-configured states.
+10. **Approval gates:** Ask before significant architecture/business changes, PR creation when not already authorized, and every merge. SMS provider integration is explicitly deferred to the final integration/release-readiness stage by Product Owner instruction.
 
-The project has completed its initial Docker/modular-monolith foundation and the first SaaS identity/authentication/tenant-context packages.
+If any future instruction conflicts with these rules or approved documentation, do not guess; surface the conflict and ask for a decision.
 
-The following implementation packages are merged into `main`:
+## 2. Approved baseline
 
-| Package | Scope | Status |
+| Document | Subject | Baseline |
 |---|---|---|
-| Package 1 | Shop tenancy database foundation | Complete |
-| Package 2A | Owner/shop registration and email/password authentication | Complete |
-| Package 2B | CurrentShop tenant context and tenant middleware | Complete |
-| Package 2C | Mobile OTP authentication API and Sanctum bearer tokens | Complete |
+| 01 | Product Requirements | Approved v2.0 |
+| 02 | Business Rules | Approved v2.0 |
+| 03 | Accounting Engine | Approved v2.0 |
+| 04 | Database Architecture | Approved v2.0 |
+| 05 | Multi-Tenancy | Approved v2.0 |
+| 06 | Security | Approved v2.0 |
+| 07 | UI/UX Guidelines | Approved v2.0 |
+| 08 | API Architecture | Approved v2.0 |
+| 09 | Testing Strategy | Approved v2.0 |
+| 10 | Development Roadmap | Approved v2.0 |
 
-**Current next milestone:** Phase 3 — Roles and User Management, beginning with backend authorization/policies and enforcing shop user limits.
+Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments; ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events (specified scope only; parameters remain open); ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions.
 
-Important distinction: role values and tenant foundations exist, but complete role-based user-management workflows, screens, policies and all shop limits have not yet been delivered.
+See [approved docs](https://github.com/thecoderway/kisan-khata/tree/main/docs) and [ADR index](https://github.com/thecoderway/kisan-khata/blob/main/docs/decisions/README.md).
 
-## Implementation status
+## 3. Executive summary
 
-### Phase 0 — Existing project audit and foundation: COMPLETE
+The initial Docker/modular-monolith foundation and initial shop identity/authentication/tenant-context implementation are present. The work merged into `main` includes:
 
-The initial project foundation is present:
-- Docker Compose development environment with PHP 8.3, MySQL 8.4, Nginx, phpMyAdmin and a separate frontend container.
-- Environment/security configuration and setup workflow.
+| Delivery label used during implementation | Scope | Evidence-based status |
+|---|---|---|
+| Package 1 | Shop tenancy database foundation | Implemented; merged |
+| Package 2A | Owner/shop registration and email/password authentication | Implemented; merged |
+| Package 2B | CurrentShop context and tenant middleware | Initial foundation implemented; merged; broader Phase 2 acceptance remains |
+| Package 2C | Mobile OTP API and Sanctum bearer tokens | Implemented; merged; real SMS delivery not configured |
+| Package 2D | No separate approved implementation package has been defined in Roadmap v2.0 | Historical conversational label only; see official Phase 3 below |
+
+**Important numbering clarification:** The approved roadmap defines **Phase 3 — Roles and User Management**. It does not define a Package 2D. If the team informally uses “Package 2D” for the next work, it must be explicitly treated as a delivery alias for the approved Phase 3 scope, not as a new or competing roadmap phase. The official roadmap numbering always takes precedence.
+
+## 4. Official roadmap phase status
+
+| Official phase | Scope | Current status |
+|---|---|---|
+| Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
+| Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
+| Phase 2 | Multi-Tenancy Foundation | Initial tenant-context foundation implemented; full acceptance is pending tenant-aware models/queries, files, cache, jobs and comprehensive cross-tenant verification |
+| Phase 3 | Roles and User Management | Not started; next official phase |
+| Phase 4 | Customer Management | Not started |
+| Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
+| Phase 6 | Credit Sales | Not started |
+| Phase 7 | Payments | Not started |
+| Phase 8 | Customer Ledger | Not started |
+| Phase 9 | Interest Engine | Not started; unresolved business parameters must be approved first |
+| Phase 10 | Crop-Season Settlement | Not started |
+| Phase 11 | Reports, Printing and Exports | Not started |
+| Phase 12 | Subscription System | Not started |
+| Phase 13 | API Finalization and Android Readiness | Partial groundwork only; full versioned API contract is not complete |
+| Phase 14 | Production Readiness | Not started |
+| Phase 15 | Android Application | Not started |
+
+The roadmap's five release milestones remain:
+- **A — Secure Shop & Customer Foundation:** Phases 1–4.
+- **B — Basic Financial Ledger:** Phases 5–8.
+- **C — Financial Automation:** Phases 9–11.
+- **D — Commercial SaaS Release:** Phases 12–14.
+- **E — Mobile Expansion:** Phases 13 and 15.
+
+No milestone is declared complete merely because some component packages have merged.
+
+## 5. Implemented work and known gaps
+
+### Phase 0 — Existing Project Audit and Foundation
+
+Recorded as complete:
+- Docker Compose environment with PHP 8.3, MySQL 8.4, Nginx, phpMyAdmin and frontend container.
 - Modular Monolith structure and module namespaces.
-- Composer test/lint scripts and Docker-based frontend build workflow.
-- Persistent MySQL volume retained.
+- Environment/setup workflow, Composer test/lint scripts and Docker-based frontend build workflow.
+- Persistent MySQL volume.
 
-### Phase 1 — Authentication and Shop Foundation: CORE COMPLETE
+### Phase 1 — Authentication and Shop Foundation
 
-**Package 1 — Shop tenancy database foundation**
-- Shops and shop settings tables.
-- Nullable user-to-shop relationship foundation.
+**Implemented:**
+- Shops and shop settings tables; user-shop relationship foundation.
 - User role/mobile/language/active-state fields.
-- Database constraints and relationships for the one-user/one-shop model.
-
-**Package 2A — Owner registration and authentication**
 - Transactional Owner and Shop registration.
-- Email/password login and logout.
-- Remember-me and password reset flows.
-- Login throttling and inactive/suspended account checks.
+- Email/password login/logout, remember-me, password reset and login throttling.
+- Inactive/suspended account checks.
 - Registration does not trust client-supplied shop ID or role.
+- Mobile OTP request/verification service; cryptographically generated six-digit OTP with hash-only storage.
+- Five-minute expiry, single-use verification, five-attempt limit, resend cooldown and rate limiting.
+- Generic unknown-mobile response.
+- Sanctum token issuance after successful verification, token expiry and current-token logout.
+- Daily OTP challenge-pruning command and scheduler registration.
+- OTP feature tests and `docs/mobile-otp-auth.md`.
 
-**Package 2C — Mobile OTP authentication**
-- Provider-independent OTP request and verification services.
-- Cryptographically generated six-digit OTP; only the hash is stored.
-- Five-minute expiry, single-use verification, five-attempt limit and resend cooldown.
-- Request/verification rate limiting and generic unknown-mobile response.
-- Sanctum bearer token issuance only after successful verification.
-- Token expiry and current-token logout.
-- Daily challenge-pruning command and scheduler registration.
-- Automated feature tests and `docs/mobile-otp-auth.md`.
+**Not yet verified complete against Phase 1 acceptance:**
+- Full user profile workflow.
+- Full shop profile workflow.
+- End-to-end real SMS delivery (explicitly deferred).
+- Complete phase-level acceptance review.
 
-**SMS delivery is intentionally deferred:** no production SMS provider is selected or configured. The default null sender fails closed. Keep the sender abstraction and fake sender for development/tests; integrate the real SMS provider in the final integration/release-readiness stage, not during the upcoming feature phases.
+### Phase 2 — Multi-Tenancy Foundation
 
-### Phase 2 — Multi-Tenancy Foundation: CORE COMPLETE; CONTINUOUS ENFORCEMENT REQUIRED
+**Implemented initial foundation:**
+- `CurrentShop` context resolved from authenticated user's shop.
+- Tenant middleware and protected dashboard/API context.
+- Client-supplied shop IDs are not trusted for tenant selection.
+- Initial tests for active shop context and missing/suspended tenant access.
 
-**Package 2B — CurrentShop and tenant middleware**
-- Central CurrentShop tenant context resolved from the authenticated user.
-- Tenant middleware and route protection.
-- Dashboard/API tenant context protection.
-- Client-provided shop IDs are not trusted for tenant selection.
-- Automated tests cover active shop context and forbidden access for missing/suspended tenant contexts.
+**Remaining Phase 2 acceptance work:**
+- Audit every tenant-owned model, relationship and query for consistent shop scoping.
+- Ownership validation and cross-tenant denial tests for each resource.
+- Tenant-aware private file storage and download authorization.
+- Tenant-aware cache keys.
+- Explicit tenant context in background jobs.
+- Tenant-scoped exports and other asynchronous work when implemented.
+- Full Phase 2 acceptance review against Docs 04/05/06/09 and Roadmap Phase 2.
 
-This completes the initial tenant-context foundation. Every new tenant-owned module must still enforce shop scoping, ownership validation and cross-tenant tests. File storage, cache, exports and background jobs must receive explicit tenant-aware handling when those features are introduced.
+Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
 
-### Phase 3 — Roles and User Management: NOT STARTED / NEXT
+### Phase 3 — Roles and User Management (next official phase)
 
-Required scope:
-- Backend Policies/Gates and role-permission matrix for Owner, Manager and Staff.
-- Owner-managed Manager and Staff creation, activation/deactivation and account lifecycle.
-- Enforce per-shop limits on the backend: 1 Owner, up to 2 Managers and up to 5 Staff.
-- Prevent privilege escalation and unauthorized role changes.
-- Role-aware navigation and user-management UI.
-- Tests for every role/action combination, limits, inactive users and cross-tenant access.
+Required scope from Roadmap v2.0:
+- Owner management of shop users.
+- Manager creation and Staff creation.
+- Role-based access control.
+- User activation/deactivation and account lifecycle.
+- Backend enforcement of shop limits: 1 Owner, up to 2 Managers and up to 5 Staff.
+- Policies/authorization rules and role-specific navigation.
+- Automated tests for every role/action combination, privilege escalation, limits, inactive users and cross-tenant access.
+- Owner-only editing of posted Sales/Payments; Manager and Staff must not edit posted financial transactions, as specified in the approved roadmap/business rules.
 
-Do not treat the existence of a role column or role constants as completion of role-based authorization.
+Before coding, audit the existing role representation, registration logic, routes/controllers and existing authorization. Produce a permission matrix from approved documents; do not infer unspecified Manager/Staff permissions.
 
-### Later roadmap phases
+## 6. Remaining official phases — scope summary
 
-Follow the approved sequence in `docs/10-development-roadmap.md`:
+1. **Phase 4 — Customer Management:** customer CRUD, search, village filters, required/optional fields, preserve original entered text and store Hindi/English translations separately; correction workflow and tenant-scoped tests.
+2. **Phase 5 — Financial Foundation:** decimal-safe money, consolidated outstanding, ledger posting, advances, immutable audit history, idempotency, transaction atomicity and concurrency protection. This is a prerequisite for production sales/payments.
+3. **Phase 6 — Credit Sales:** sale creation/posting/list/details, optional crop/season tag and private bill attachment, Owner-only corrections with before/after audit.
+4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, excess as advance, idempotency and concurrency protection; no sale-level allocation.
+5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/advance/corrections, filters and printable Hindi/English ledger.
+6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
+7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention.
+8. **Phase 11 — Reports, Printing and Exports:** tenant-scoped reports, PDF and Excel/CSV, totals reconciled to ledger.
+9. **Phase 12 — Subscription System:** shop-level plans, trial, monthly/annual billing, renewal/expiry, three-day grace period, read-only enforcement and Owner data export. Do not invent pricing/entitlements.
+10. **Phase 13 — API Finalization and Android Readiness:** complete approved versioned REST API, auth/customer/sales/payment/ledger/interest/settlement/file endpoints, documentation and integration tests. Current auth routes are under `/api`; approved architecture specifies `/api/v1`, so versioning remains outstanding.
+11. **Phase 14 — Production Readiness:** hosting, HTTPS, secure configuration, encrypted off-site backup, restore tests, monitoring, logging, security/performance review and deployment/recovery procedures.
+12. **Phase 15 — Android Application:** native Android workflows using the same backend business logic, secure token storage and integration tests. Offline synchronization is not in initial scope and requires separate approval.
 
-1. **Phase 4 — Customer Management:** customer CRUD/search, village filters, tenant isolation, preserve original text and separate Hindi/English translations.
-2. **Phase 5 — Financial Foundation and Accounting Engine:** decimal-safe money handling, consolidated customer balance, ledger posting, advances, immutable audit history, idempotency and concurrency protection. This is a critical prerequisite.
-3. **Phase 6 — Credit Sales:** sale workflows built on the approved financial services.
-4. **Phase 7 — Payments:** consolidated payment processing; never introduce sale-level payment allocation.
-5. **Phase 8 — Customer Ledger:** complete running account history and printable ledger.
-6. **Phase 9 — Interest Engine:** only after the outstanding financial policy decisions are approved.
-7. **Phase 10 — Crop-Season Settlement:** full/partial settlement and carry-forward according to approved rules.
-8. **Phase 11 — Reports, Printing and Exports.**
-9. **Phase 12 — Subscription System:** shop-level plans and enforcement; do not invent plan pricing or entitlements.
-10. **API completion and native Android:** expand the current authentication API into the approved versioned API contract, then build the Android client against the same backend business logic. Offline synchronization remains a separately designed/approved capability.
-11. **Final integration and release readiness:** configure and test the selected production SMS provider here, after the main product workflows and client integration are ready; then complete deployment, monitoring, backup and operational readiness work.
+## 7. Explicitly deferred integration
 
-The current authentication routes are implemented under `/api`; the approved API architecture specifies a versioned `/api/v1` contract. Versioning and the remaining business endpoints are future API work, not completed functionality.
+**Production SMS provider integration is deferred until the final integration/release-readiness stage**, by explicit Product Owner instruction. Do not select a provider, request credentials, add provider-specific dependencies or implement live delivery during Phases 3–15 unless the Product Owner changes this instruction.
 
-## Current technical verification
+The existing provider-independent sender contract and fail-closed null sender remain. Current OTP tests use a fake sender and do not prove real SMS delivery.
 
-**Execution date:** 2026-11-23  
-**Environment:** local Docker Compose development environment  
-**Verified by project owner after merging PR #4:**
+## 8. Unresolved product/business decisions
 
-- Local `main` fast-forwarded to `origin/main` at merge commit `73617d1`.
-- Git working tree clean; local branch up to date with `origin/main`.
-- `php artisan migrate:status`: all six listed migrations report `Ran`.
-- `php artisan test`: **30 passed, 113 assertions**.
-- `vendor/bin/pint --test`: **53 files PASS**.
-- Earlier frontend Vite production build was verified during Package 2B.
-
-The OTP test suite uses a fake sender. These results do not mean live SMS delivery has been tested. No production deployment or release is claimed.
-
-## Deferred integrations and unresolved product decisions
-
-### Explicitly deferred until the final integration stage
-- Production SMS provider selection, credentials, sender/template registration and delivery testing.
-
-### Product/business decisions still requiring approval before affected features
+Do not invent defaults. Obtain Product Owner approval before implementing affected behavior:
 - Interest capitalization policy.
 - Interest rounding precision and rounding mode.
 - Interest effective-date/day-boundary conventions and grace-period boundary.
@@ -140,9 +188,9 @@ The OTP test suite uses a fake sender. These results do not mean live SMS delive
 - Payment gateway.
 - Hosting region and operational data-retention parameters.
 
-Do not invent defaults for these decisions. Stop and ask the Product Owner when an implementation depends on an unresolved rule.
+If a relevant document or ADR conflicts or is ambiguous, stop and report the conflict before coding.
 
-## Key financial and security invariants
+## 9. Key financial and security invariants
 
 - No sale-level payment allocation.
 - Payments reduce consolidated customer payable after eligible interest is calculated through the payment date.
@@ -156,24 +204,39 @@ Do not invent defaults for these decisions. Stop and ask the Product Owner when 
 - Every tenant-owned query, relation, file, cache entry, export and background job must enforce tenant ownership.
 - Financial posting must be transactional, idempotent, concurrency-safe and auditable.
 
-## Git and delivery workflow
+## 10. Verified technical evidence
 
-- Current stable branch: `main`.
-- Current main commit at this status update: `73617d1` (merge of PR #4).
-- Feature work must use a dedicated branch and be reviewed through a PR.
-- Do not merge to `main` without the Product Owner's explicit approval.
-- Update this document only from verified repository, test or Product Owner evidence.
+**Execution date:** 2026-11-23  
+**Environment:** local Docker Compose development environment  
+**Verified by Product Owner after merging PR #4:**
+- Local `main` fast-forwarded to `origin/main` at merge commit `73617d1`.
+- Working tree clean and local branch up to date at that time.
+- `php artisan migrate:status`: all six listed migrations reported `Ran`.
+- `php artisan test`: **30 passed, 113 assertions**.
+- `vendor/bin/pint --test`: **53 files PASS**.
+- Earlier frontend Vite production build was verified during Package 2B.
 
-## Immediate next implementation plan
+After PR #5, the Product Owner separately confirmed local `main` synced to `13ad942`, working tree clean and branch divergence `0 0`. No new application test run was reported after the documentation-only PR #5. The test results above remain the latest reported application verification, not a claim of a fresh run at `13ad942`.
 
-Start with **Package 3A — Role Authorization and User Management Foundation**:
-1. Audit the existing role representation and current route/controller authorization.
-2. Translate the approved Owner/Manager/Staff permissions into a server-side policy matrix.
-3. Implement backend policies/services and enforce the shop user limits transactionally.
-4. Add Owner-only Manager/Staff lifecycle endpoints and validation.
-5. Add feature tests for allowed/denied actions, role escalation, limits, inactive users and tenant isolation.
-6. Implement the corresponding responsive Hindi/English UI after backend contracts are stable.
-7. Run the full test suite, Pint and frontend build; update this status only with actual results.
+No production deployment or release is claimed.
 
-Do not start Customer, Sales, Payment or Accounting workflows until the prerequisite identity, tenant and role authorization work is sufficiently established. Build the financial foundation before exposing Sales and Payments.
+## 11. Git and delivery workflow
 
+- Stable branch: `main`.
+- Latest Product Owner-confirmed local sync before this proposed documentation correction: `13ad942`; working tree clean; divergence `0 0`.
+- All feature and documentation changes use dedicated branches and PR review.
+- No merge to `main` without explicit Product Owner approval.
+- Update status only from verified repository, test or Product Owner evidence.
+- Keep this document and relevant technical documentation synchronized with accepted implementation.
+
+## 12. Immediate next steps
+
+1. Complete this documentation/status correction and obtain Product Owner review.
+2. Before Phase 3 coding, perform a focused Phase 1/2 gap audit against Roadmap acceptance criteria and Docs 01/02/04/05/06/08/09 plus relevant ADRs. Record which gaps block safe Phase 3/4 delivery.
+3. Prepare Phase 3 implementation plan: role-permission matrix, lifecycle workflows, shop-limit enforcement, UI/API scope, migration impact, security threats and acceptance tests. Ask for approval where the approved documents do not specify behavior.
+4. Implement Phase 3 in small PR-sized increments; test every role/action combination and tenant boundary.
+5. Revisit Phase 2 acceptance and complete required tenant-aware infrastructure before exposing multi-tenant customer/financial workflows.
+6. Proceed to Phase 4, then Phase 5 before Credit Sales and Payments.
+7. Keep production SMS provider integration deferred until final integration/release readiness.
+
+This status file is a progress record. The approved v2.0 documents and accepted ADRs remain authoritative.
