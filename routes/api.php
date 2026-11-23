@@ -1,9 +1,9 @@
 <?php
 
-use App\\Http\\Controllers\\Api\\Auth\\MobileOtpController;
-use App\\Http\\Controllers\\Api\\Auth\\TokenController;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Route;
+use App\Http\Controllers\Api\Auth\MobileOtpController;
+use App\Http\Controllers\Api\Auth\TokenController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth/mobile')->group(function (): void {
     Route::post('/request-otp', [MobileOtpController::class, 'request'])->middleware('throttle:20,1');
