@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Models\\Concerns;
+namespace App\Models\Concerns;
 
-use App\\Tenancy\\CurrentShop;
-use Illuminate\\Auth\\Access\\AuthorizationException;
-use Illuminate\\Database\\Eloquent\\Builder;
-use Illuminate\\Database\\Eloquent\\Model;
+use App\Tenancy\CurrentShop;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use LogicException;
 
 trait BelongsToCurrentShop
@@ -29,7 +29,6 @@ trait BelongsToCurrentShop
 
         static::creating(function (Model $model): void {
             $currentShopId = self::currentShopId();
-
             $requestedShopId = $model->getAttribute('shop_id');
 
             if ($requestedShopId !== null && (int) $requestedShopId !== $currentShopId) {
