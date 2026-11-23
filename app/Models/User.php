@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -37,6 +38,17 @@ class User extends Authenticatable
     public function newEloquentBuilder($query): UserBuilder
     {
         return new UserBuilder($query);
+    }
+
+    /**
+     * Keep single-record inserts inside the model lifecycle. Direct builder
+     * insertGetId calls are blocked by UserBuilder because they skip model events.
+     */
+    protected function insertAndSetId(Builder $query, $attributes)
+    {
+        $id = $query->toBase()->insertGetId($attributes, $keyName = $this->getKeyName());
+
+        $this->setAttribute($keyName, $id);
     }
 
     protected static function booted(): void
