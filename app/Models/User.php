@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,15 @@ class User extends Authenticatable
     public const ROLE_STAFF = 'staff';
 
     public const ROLE_PLATFORM_OWNER = 'platform_owner';
+
+    protected static function booted(): void
+    {
+        static::updating(function (User $user): void {
+            if ($user->isDirty('shop_id')) {
+                throw new AuthorizationException('A user cannot be reassigned to another shop.');
+            }
+        });
+    }
 
     /**
      * @return BelongsTo<Shop, $this>
