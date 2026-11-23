@@ -24,7 +24,7 @@ class AuthenticatedSessionController
             'password' => ['required', 'string'],
         ]);
 
-        $key = Str::transliterate(Str::lower($request->string('email')).'|'.$request->ip());
+        $key = Str::transliterate(Str::lower((string) $request->input('email')).'|'.$request->ip());
 
         if ($limiter->tooManyAttempts('login:'.$key, 5)) {
             throw ValidationException::withMessages([
