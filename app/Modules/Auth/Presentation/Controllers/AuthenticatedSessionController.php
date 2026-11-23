@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Modules\\Auth\\Presentation\\Controllers;
+namespace App\Modules\Auth\Presentation\Controllers;
 
-use Illuminate\\Cache\\RateLimiter;
-use Illuminate\\Http\\RedirectResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Auth;
-use Illuminate\\Support\\Str;
-use Illuminate\\Validation\\ValidationException;
-use Illuminate\\View\\View;
+use Illuminate\Cache\RateLimiter;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class AuthenticatedSessionController
 {
