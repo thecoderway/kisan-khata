@@ -20,10 +20,7 @@ class TenantOwnedBuilder extends Builder
     public function update(array $values)
     {
         $shopId = $this->requireCurrentShopId();
-
-        if (array_key_exists('shop_id', $values) && (int) $values['shop_id'] !== $shopId) {
-            throw new AuthorizationException('A record cannot be moved to another shop.');
-        }
+        $this->assertOwnershipIsImmutable(array_keys($values));
 
         return $this->where(
             $this->getModel()->qualifyColumn('shop_id'),
@@ -37,12 +34,29 @@ class TenantOwnedBuilder extends Builder
             $this->whereKey($id);
         }
 
-        $shopId = $this->requireCurrentShopId();
-
         return $this->where(
             $this->getModel()->qualifyColumn('shop_id'),
-            $shopId,
+            $this->requireCurrentShopId(),
         )->toBase()->delete();
+    }
+
+    public function touch($column = null)
+    {
+        $this->requireCurrentShopId();
+
+        $column ??= $this->getModel()->getUpdatedAtColumn();
+
+        if (! $this->getModel()->usesTimestamps() || $column === null) {
+            return false;
+        }
+
+        $columns = is_array($column) ? $column : [$column];
+        $this->assertOwnershipIsImmutable($columns);
+
+        $timestamp = $this->getModel()->freshTimestamp();
+        $values = array_fill_keys($columns, $timestamp);
+
+        return $this->update($values);
     }
 
     /**
@@ -84,11 +98,7 @@ class TenantOwnedBuilder extends Builder
         }
 
         if ($update !== null) {
-            foreach ($update as $column) {
-                if (is_string($column) && ($column === 'shop_id' || str_ends_with($column, '.shop_id'))) {
-                    throw new AuthorizationException('Tenant ownership cannot be changed through upsert.');
-                }
-            }
+            $this->assertOwnershipIsImmutable($update);
         } else {
             $update = array_values(array_diff(array_keys($rows[0]), ['shop_id']));
         }
@@ -98,9 +108,7 @@ class TenantOwnedBuilder extends Builder
 
     public function increment($column, $amount = 1, array $extra = [])
     {
-        if ($column === 'shop_id') {
-            throw new AuthorizationException('Tenant ownership cannot be changed through increment.');
-        }
+        $this->assertOwnershipIsImmutable([$column, ...array_keys($extra)]);
 
         return $this->where(
             $this->getModel()->qualifyColumn('shop_id'),
@@ -110,14 +118,123 @@ class TenantOwnedBuilder extends Builder
 
     public function decrement($column, $amount = 1, array $extra = [])
     {
-        if ($column === 'shop_id') {
-            throw new AuthorizationException('Tenant ownership cannot be changed through decrement.');
-        }
+        $this->assertOwnershipIsImmutable([$column, ...array_keys($extra)]);
 
         return $this->where(
             $this->getModel()->qualifyColumn('shop_id'),
             $this->requireCurrentShopId(),
         )->toBase()->decrement($column, $amount, $extra);
+    }
+
+    public function incrementEach(array $columns, array $extra = [])
+    {
+        $this->assertOwnershipIsImmutable([...array_keys($columns), ...array_keys($extra)]);
+
+        return $this->where(
+            $this->getModel()->qualifyColumn('shop_id'),
+            $this->requireCurrentShopId(),
+        )->toBase()->incrementEach($columns, $this->addUpdatedAtColumn($extra));
+    }
+
+    public function decrementEach(array $columns, array $extra = [])
+    {
+        $this->assertOwnershipIsImmutable([...array_keys($columns), ...array_keys($extra)]);
+
+        return $this->where(
+            $this->getModel()->qualifyColumn('shop_id'),
+            $this->requireCurrentShopId(),
+        )->toBase()->decrementEach($columns, $this->addUpdatedAtColumn($extra));
+    }
+
+    public function insert(array $values)
+    {
+        return $this->toBase()->insert($this->withCurrentShop($values));
+    }
+
+    public function insertOrIgnore(array $values)
+    {
+        return $this->toBase()->insertOrIgnore($this->withCurrentShop($values));
+    }
+
+    public function insertGetId(array $values, $sequence = null)
+    {
+        return $this->toBase()->insertGetId($this->withCurrentShop($values), $sequence);
+    }
+
+    public function insertUsing(array $columns, $query)
+    {
+        throw new LogicException('Tenant-owned insertUsing is not supported; use an explicitly tenant-scoped service operation.');
+    }
+
+    public function insertOrIgnoreUsing(array $columns, $query)
+    {
+        throw new LogicException('Tenant-owned insertOrIgnoreUsing is not supported; use an explicitly tenant-scoped service operation.');
+    }
+
+    public function insertOrIgnoreReturning(array $values, array $returning = ['*'], array|string|null $uniqueBy = null)
+    {
+        throw new LogicException('Tenant-owned insertOrIgnoreReturning is not supported; use an explicitly tenant-scoped service operation.');
+    }
+
+    public function updateOrInsert(array $attributes, array|callable $values = [])
+    {
+        throw new LogicException('Tenant-owned updateOrInsert is not supported; use upsert or model save operations.');
+    }
+
+    public function truncate()
+    {
+        throw new LogicException('Tenant-owned tables cannot be truncated through a model query.');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|array<string, mixed>  $values
+     * @return array<int, array<string, mixed>>|array<string, mixed>
+     */
+    private function withCurrentShop(array $values): array
+    {
+        $shopId = $this->requireCurrentShopId();
+
+        if ($values === []) {
+            return $values;
+        }
+
+        $rows = array_is_list($values) && isset($values[0]) && is_array($values[0])
+            ? $values
+            : [$values];
+
+        foreach ($rows as &$row) {
+            if (! is_array($row)) {
+                throw new LogicException('Tenant-owned insert values must be row arrays.');
+            }
+
+            if (array_key_exists('shop_id', $row) && (int) $row['shop_id'] !== $shopId) {
+                throw new AuthorizationException('A record cannot be inserted for another shop.');
+            }
+
+            $row['shop_id'] = $shopId;
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<int, string>  $columns
+     */
+    private function assertOwnershipIsImmutable(array $columns): void
+    {
+        foreach ($columns as $column) {
+            if (! is_string($column)) {
+                continue;
+            }
+
+            $normalized = str_replace('`', '', $column);
+            $lastSegment = substr($normalized, strrpos('.'.$normalized, '.') + 1);
+
+            if ($lastSegment === 'shop_id') {
+                throw new AuthorizationException('Tenant ownership cannot be changed through a bulk mutation.');
+            }
+        }
     }
 
     private function requireCurrentShopId(): int
