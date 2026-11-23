@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\\Feature\\Api;
+namespace Tests\Feature\Api;
 
-use App\\Contracts\\MobileOtpSender;
-use App\\Models\\Shop;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Contracts\MobileOtpSender;
+use App\Models\Shop;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class MobileOtpAuthenticationTest extends TestCase
 {
