@@ -67,10 +67,7 @@ class UserBuilder extends Builder
 
     public function insertGetId(array $values, $sequence = null)
     {
-        // Eloquent model persistence (including factories and User::create()) uses
-        // insertGetId for a single model. Keep this path available; bulk insert
-        // APIs remain blocked below.
-        return parent::insertGetId($values, $sequence);
+        throw new LogicException('User inserts must use model persistence so model events are enforced.');
     }
 
     public function insertUsing(array $columns, $query)
