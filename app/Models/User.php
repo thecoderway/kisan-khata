@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\UserBuilder;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -32,6 +33,11 @@ class User extends Authenticatable
     public const ROLE_STAFF = 'staff';
 
     public const ROLE_PLATFORM_OWNER = 'platform_owner';
+
+    public function newEloquentBuilder($query): UserBuilder
+    {
+        return new UserBuilder($query);
+    }
 
     protected static function booted(): void
     {
