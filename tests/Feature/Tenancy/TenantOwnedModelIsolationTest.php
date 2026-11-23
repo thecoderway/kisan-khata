@@ -173,4 +173,43 @@ class TenantOwnedModelIsolationTest extends TestCase
             'setting_value' => 'en',
         ]);
     }
+
+    public function test_bulk_increment_and_decrement_cannot_change_tenant_ownership(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+
+        app(CurrentShop::class)->set($shopB);
+        $settingB = $shopB->settings()->create([
+            'setting_key' => 'language',
+            'setting_value' => 'en',
+        ]);
+
+        app(CurrentShop::class)->set($shopA);
+
+        try {
+            ShopSetting::withoutGlobalScope('current_shop')
+                ->whereKey($settingB->id)
+                ->increment('shop_id');
+            $this->fail('Bulk increment must not modify tenant ownership.');
+        } catch (AuthorizationException) {
+            $this->assertDatabaseHas('shop_settings', [
+                'id' => $settingB->id,
+                'shop_id' => $shopB->id,
+            ]);
+        }
+
+        try {
+            ShopSetting::withoutGlobalScope('current_shop')
+                ->whereKey($settingB->id)
+                ->decrement('shop_id');
+            $this->fail('Bulk decrement must not modify tenant ownership.');
+        } catch (AuthorizationException) {
+            $this->assertDatabaseHas('shop_settings', [
+                'id' => $settingB->id,
+                'shop_id' => $shopB->id,
+            ]);
+        }
+    }
+
 }
