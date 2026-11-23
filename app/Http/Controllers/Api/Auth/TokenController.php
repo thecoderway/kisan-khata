@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api\\Auth;
+namespace App\Http\Controllers\Api\Auth;
 
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Laravel\\Sanctum\\PersonalAccessToken;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class TokenController
 {
