@@ -132,12 +132,12 @@ Capabilities:
 - View audit history.
 - Manage Manager and Staff accounts: create, deactivate, reactivate, and change Manager/Staff roles.
 - View and manage shop users' active status and role history.
-
-The Shop Owner cannot deactivate or demote their own Owner account through ordinary shop-user management. Ownership transfer is a separate, explicitly authorized and audited process.
 - Manage settlements.
 - Generate reports.
 - Manage subscription and billing.
 - Export shop data.
+
+**Owner protection:** The Shop Owner cannot deactivate or demote their own Owner account through ordinary shop-user management. Ownership transfer is a separate, explicitly authorized and audited process.
 
 ### 5.3 Shop Manager
 
