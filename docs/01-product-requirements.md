@@ -1,486 +1,812 @@
-
 # Kisan Khata — Product Requirements Document (PRD)
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Product:** Kisan Khata  
 **Product Type:** Multi-Tenant SaaS Accounting Application  
 **Initial Platform:** Responsive Web Application  
-**Future Platform:** Android Application
+**Future Platform:** Android Application  
+**Backend:** Laravel  
+**Database:** MySQL  
+**Supported Languages:** Hindi and English  
+**Status:** Approved
 
 ---
 
 ## 1. Product Overview
 
-Kisan Khata is a cloud-based accounting and customer credit management platform designed for small and medium-sized merchants in Indian towns and villages.
+Kisan Khata is a cloud-based accounting and customer credit management SaaS application designed for small and medium-sized merchants in Indian towns and villages.
 
-Many merchants sell products to farmers on credit and receive payments after harvesting seasons.
+Many merchants sell agricultural products and other goods to customers on credit and receive payments later, often around crop harvesting seasons.
 
-These merchants commonly maintain handwritten notebooks to track:
+Kisan Khata will replace handwritten account books with a digital platform that provides:
 
-- Customer details
-- Credit sales
-- Payments
-- Outstanding balances
-- Interest
-- Seasonal settlements
+- Customer management.
+- Credit sales recording.
+- Payment recording.
+- Consolidated outstanding balances.
+- Interest calculation.
+- Crop-season settlements.
+- Complete financial history.
+- Printable customer ledgers.
+- Shop employee management.
+- Subscription-based access.
 
-Kisan Khata will digitize this process and provide accurate, transparent and printable customer ledgers.
+The application must be simple enough for merchants with limited technical knowledge.
 
 ## 2. Product Goals
 
 1. Replace manual credit notebooks.
-2. Make customer account management simple.
-3. Track every credit sale and payment.
-4. Calculate interest according to shop-specific approved policies.
-5. Support seasonal account settlements.
-6. Provide complete customer-wise financial history.
-7. Support Hindi and English.
-8. Allow multiple independent shops to use one platform.
-9. Generate revenue through subscriptions.
-10. Prepare the architecture for a future Android application.
+2. Maintain accurate customer-wise financial accounts.
+3. Record credit sales and payments.
+4. Calculate interest using shop-approved policies.
+5. Maintain consolidated customer outstanding balances.
+6. Support partial and full settlements.
+7. Support crop-season-based account management.
+8. Provide transparent financial calculations.
+9. Support Hindi and English.
+10. Allow independent shops to operate securely on one SaaS platform.
+11. Generate revenue through subscriptions.
+12. Prepare the backend for a future Android application.
 
 ## 3. Target Users
 
-### 3.1 Primary Users
+### 3.1 Primary Shop Categories
 
-- Cloth merchants
-- Electronics retailers
-- Agricultural input shops
-- Fertilizer retailers
-- Seed retailers
-- Pesticide retailers
-- General merchants
+- Agricultural input shops.
+- Fertilizer retailers.
+- Seed retailers.
+- Pesticide retailers.
+- Cloth merchants.
+- Electronics retailers.
+- General merchants.
+- Other businesses offering customer credit.
 
 ### 3.2 Typical Customer
 
-A farmer who purchases products on credit and pays after crop harvesting.
+A farmer or other customer who purchases products on credit and pays the outstanding amount later.
 
-## 4. User Roles
+## 4. SaaS and Shop Structure
 
-### Platform Owner
+Kisan Khata will operate as a multi-tenant SaaS application.
 
-Responsible for the SaaS platform.
+### 4.1 Tenancy Model
+
+- Use one shared MySQL database.
+- Each shop represents one independent tenant.
+- All tenant-owned records must be associated with `shop_id`.
+- One shop must never access another shop's financial or customer data.
+- Tenant isolation must be enforced at application, service and database levels wherever applicable.
+
+### 4.2 User–Shop Relationship
+
+The approved relationship is:
+
+**1 User = 1 Shop = 1 Role**
+
+- A user belongs to only one shop.
+- A user has only one role within that shop.
+- Multiple-shop membership is not part of the initial product.
+- Shop switching is not required.
+
+### 4.3 Shop Capacity
+
+Each shop supports:
+
+- 1 Owner.
+- Maximum 2 Managers.
+- Maximum 5 Staff members.
+
+These are fixed initial product limits, not independently configurable staff permissions.
+
+## 5. User Roles and Permissions
+
+### 5.1 Platform Owner
+
+Responsible for the overall SaaS platform.
 
 Capabilities:
 
-- Manage shops
-- Manage subscriptions
-- View platform-level usage
-- Manage subscription plans
-- Suspend or reactivate shops
-- View platform audit information
+- Manage shops.
+- Manage subscription plans.
+- Manage subscriptions.
+- Suspend or reactivate shops.
+- Monitor platform usage.
+- View platform-level audit information.
 
 Platform administrators must not automatically receive unrestricted access to tenant financial records.
 
-### Shop Owner
+### 5.2 Shop Owner
 
-Responsible for an individual merchant account.
+The owner has complete control over the shop.
 
 Capabilities:
 
-- Manage shop profile
-- Manage shop employees
-- Manage customers
-- Create credit sales
-- Record payments
-- View customer ledgers
-- Configure approved interest policies
-- Create settlements
-- Generate reports
-- Manage subscription
+- Manage shop profile and settings.
+- Manage customers.
+- Create and manage sales.
+- Record and manage payments.
+- View complete customer ledgers.
+- Configure interest policies.
+- Configure annual Auto Settlement dates.
+- Edit posted sales and payments.
+- View audit history.
+- Manage Managers and Staff.
+- Manage settlements.
+- Generate reports.
+- Manage subscription and billing.
+- Export shop data.
 
-### Shop Employee
+### 5.3 Shop Manager
 
-Capabilities must be configurable by the shop owner.
+Maximum 2 Managers per shop.
 
-Possible permissions:
+Capabilities:
 
-- View customers
-- Add customers
-- Create sales
-- Record payments
-- View ledgers
-- Print ledgers
-- View reports
+- Manage customers.
+- Record credit sales.
+- Record payments.
+- View customer ledgers.
+- View reports.
+- Perform permitted staff operations.
 
-Sensitive operations such as changing financial policies, reversing posted transactions and creating settlements should require explicit permissions.
+Restrictions:
 
-## 5. Authentication and Shop Registration
+- Cannot manage subscriptions.
+- Cannot change shop ownership.
+- Cannot change critical security settings.
+- Cannot edit posted financial transactions.
+- Cannot change critical financial policies unless explicitly approved in a future product decision.
 
-The system should support:
+### 5.4 Shop Staff
 
-- User registration
-- Login
-- Logout
-- Password reset
-- Email or mobile verification, depending on the selected authentication design
-- Shop registration
-- Shop profile creation
-- Shop membership management
+Maximum 5 Staff members per shop.
 
-A user may eventually belong to more than one shop.
+Capabilities:
 
-Every operation must execute within an authorized shop context.
+- View customers.
+- Add customers.
+- Record credit sales.
+- Record payments.
+- View own work and transaction history.
+- View permitted customer information.
 
-## 6. Shop Profile
+Restrictions:
 
-Fields:
+- Cannot edit or delete posted financial transactions.
+- Cannot configure interest policies.
+- Cannot manage subscriptions.
+- Cannot modify shop ownership or critical settings.
+- Access to sensitive reports is restricted.
 
-- Shop name
-- Owner name
-- Mobile number
-- Email (optional)
-- Address
-- Village
-- Tehsil
-- District
-- State
-- PIN code
-- Preferred language
-- Logo (optional)
+Custom per-user permission configuration is not included in the initial release.
 
-Shop profile information should appear on printable customer ledgers.
+## 6. Authentication and Registration
 
-## 7. Customer Management
+The system must support:
 
-### Customer Information
+- Shop self-registration.
+- Email verification.
+- Mobile verification.
+- Mobile OTP login.
+- Email and password login.
+- Logout.
+- Password reset.
+- Secure session management.
 
-Required fields:
+The shop owner creates Manager and Staff accounts.
 
-- Customer name
-- Father's name
-- Mobile number
-- Village
+A user account must be associated with only one shop and one role.
 
-Optional fields:
+## 7. Shop Profile
 
-- Address
-- PIN code
-- Notes
-- Alternate mobile number
+Shop profile fields:
 
-### Customer Operations
+- Shop name.
+- Owner name.
+- Mobile number.
+- Email.
+- Address.
+- Village.
+- Tehsil.
+- District.
+- State.
+- PIN code.
+- Preferred application language.
+- Logo (optional).
 
-- Add customer
-- View customer
-- Edit customer
-- Search customers
-- Filter customers
-- View customer ledger
-- View outstanding balance
+Shop information must appear on printable customer ledgers and receipts.
 
-### Search Requirements
+## 8. Customer Management
 
-Support search by:
+### 8.1 Customer Information
 
-- Customer name
-- Father's name
-- Mobile number
-- Village
+Required:
 
-Search must support Hindi and English text.
+- Customer name.
 
-Do not rely on automatic transliteration as the only search mechanism.
+Optional:
 
-## 8. Credit Sales Management
+- Mobile number.
+- Village.
 
-A shop owner or authorized employee can record a credit sale.
+The application must not require Father's name or other unnecessary information to create a customer.
 
-### Sale Fields
+### 8.2 Customer Operations
 
-- Customer
-- Sale amount
-- Sale date
-- Sale time
-- Description
-- Bill number (optional)
-- Bill photo (optional)
-- Notes (optional)
+- Add customer.
+- View customer.
+- Edit customer details.
+- Search customers.
+- Filter customers.
+- View customer ledger.
+- View consolidated outstanding balance.
+- View financial history.
+- Tag sales with crop seasons.
 
-### Sale Operations
+### 8.3 Customer Account Structure
 
-- Create sale
-- View sale
-- Edit draft sale
-- View sale history
-- Search sales
-- Filter by customer
-- Filter by date
-- Filter by amount
-- Print sale details
+Each customer has one consolidated account within a shop.
 
-Posted sales must follow the approved correction and reversal policy.
+The account must maintain:
 
-## 9. Payment Management
+- Original credit sales.
+- Payments received.
+- Outstanding balance.
+- Interest calculations.
+- Advances.
+- Settlements.
+- Crop-season history.
+
+Payments are not allocated to individual sale IDs.
+
+### 8.4 Crop Season
+
+Sales should support crop-season tagging, such as:
+
+- Kharif.
+- Rabi.
+- Other configurable crop seasons.
+
+Season tagging must not create separate customer accounts or break the consolidated outstanding balance.
+
+## 9. Credit Sales Management
+
+A sale represents goods or services provided to a customer on credit.
+
+### 9.1 Sale Fields
+
+- Customer.
+- Sale date.
+- Sale amount.
+- Description.
+
+### 9.2 Sale Operations
+
+- Create sale.
+- View sale.
+- Edit sale.
+- View sale history.
+- Search sales.
+- Filter by customer.
+- Filter by date.
+- View sale details.
+
+Every sale must preserve its original transaction date because interest eligibility depends on the sale date.
+
+### 9.3 Posted Sale Correction
+
+The Shop Owner can directly edit a posted sale.
+
+When editing:
+
+- Preserve the original values.
+- Store the new values.
+- Record the user who performed the edit.
+- Record the date and time.
+- Record the correction reason.
+- Maintain immutable audit history.
+- Recalculate affected customer balances and interest.
+
+Managers and Staff cannot edit posted sales.
+
+Physical deletion of posted financial history is prohibited.
+
+## 10. Payment Management
 
 A payment represents money received from a customer.
 
-### Payment Fields
+### 10.1 Payment Fields
 
-- Customer
-- Amount
-- Payment date
-- Payment time
-- Payment method
-- Reference number
-- Description
-- Receipt photo (optional)
+- Customer.
+- Payment date.
+- Payment amount.
+- Description.
 
-### Payment Methods
+Payment method may be recorded as additional information.
 
-- Cash
-- UPI
-- Bank transfer
-- Cheque
-- Other
+### 10.2 Payment Operations
 
-### Payment Operations
+- Record payment.
+- View payment.
+- Edit payment.
+- View payment history.
+- Print payment receipt.
 
-- Add payment
-- View payment
-- Edit draft payment
-- View payment history
-- View allocation history
-- Search payments
-- Print receipt
+### 10.3 Consolidated Payment Calculation
 
-A posted payment must never be silently overwritten.
+Payments are not allocated to individual sales, invoices, interest entries or principal components.
 
-## 10. Customer Ledger
+The payment process follows this sequence:
 
-Every customer must have a complete financial ledger.
+1. Calculate the customer's complete payable amount through the payment date.
+2. Include all eligible interest through that date.
+3. Add the applicable outstanding balance and new interest.
+4. Subtract the received payment from the total payable.
+5. Carry forward the remaining amount as the new consolidated outstanding.
+6. Start the new consolidated balance's interest calculation cycle from the payment date.
 
-### Ledger Entries
+### 10.4 Multiple Payments on the Same Date
 
-- Opening balance
-- Credit sale
-- Payment
-- Interest
-- Crop-season settlement
-- Adjustment
-- Reversal
+Interest must not be calculated repeatedly for the same elapsed period.
 
-### Ledger Columns
+Example:
 
-- Date
-- Transaction reference
-- Particulars
-- Debit
-- Credit
-- Principal balance
-- Interest balance
-- Total outstanding
+- First payment: Calculate interest through that date.
+- Subtract the first payment from total payable.
+- Second payment on the same date: No additional interest because elapsed days are zero.
+- Subtract the second payment directly from the remaining outstanding.
 
-### Ledger Features
+### 10.5 Excess Payment
 
-- Customer-wise history
-- Date range filtering
-- Running balance
-- Opening and closing balance
-- Principal and interest separation
-- Printable format
-- Hindi and English labels
+If a payment exceeds the total payable:
 
-## 11. Interest Configuration
+- The outstanding balance becomes zero.
+- The excess amount is retained as a customer advance.
+- The advance is maintained separately in the customer ledger.
+- Future sales can be adjusted against the available advance according to the approved business rules.
 
-Each shop may configure its interest policy after the applicable rules are finalized.
+### 10.6 Posted Payment Correction
 
-Possible configuration fields:
+The Shop Owner can directly edit a posted payment.
 
-- Interest rate
-- Rate period
-- Interest-free period
-- Calculation method
-- Day-count convention
-- Partial-month policy
-- Compounding policy
-- Payment allocation policy
-- Rounding policy
-- Effective date
+The system must preserve:
 
-Do not activate a policy until its financial semantics are explicitly defined.
+- Original amount and date.
+- New amount and date.
+- Previous and updated values.
+- Correction reason.
+- User performing the edit.
+- Timestamp.
+- Recalculated financial results.
 
-## 12. Crop-Season Settlement
+Managers and Staff cannot edit posted payments.
 
-The application should support account settlement around harvest seasons.
+## 11. Customer Ledger and Outstanding Balance
 
-A settlement may involve:
+Every customer must have one consolidated financial ledger.
 
-- Customer
-- Settlement date
-- Outstanding principal
-- Outstanding interest
-- Amount paid
-- Amount carried forward
-- Settlement reference
-- Notes
+### 11.1 Ledger Information
 
-The exact accounting treatment must follow the approved settlement policy.
+- Opening balance.
+- Credit sales.
+- Payments.
+- Interest calculations.
+- Customer advances.
+- Settlements.
+- Adjustments.
+- Closing balance.
 
-Settlement must preserve the original transaction history.
+### 11.2 Ledger Requirements
 
-## 13. Reports
+- Complete chronological history.
+- Running outstanding balance.
+- Date range filtering.
+- Crop-season filtering.
+- Clear transaction descriptions.
+- Interest calculation explanations.
+- Printable format.
+- Hindi and English labels.
+
+### 11.3 Financial History
+
+The ledger must preserve the original transaction history even when an Owner corrects a posted transaction.
+
+The current financial position must always be reproducible from the transaction history and approved calculation rules.
+
+## 12. Interest Configuration and Calculation
+
+### 12.1 Interest Configuration
+
+Each shop has a default monthly interest rate.
+
+The Shop Owner can optionally configure a different interest rate for an individual customer.
+
+Configuration includes:
+
+- Monthly interest rate.
+- Customer-specific rate, if applicable.
+- Grace period in days.
+- Interest capitalization policy.
+- Annual Auto Settlement dates.
+
+The default grace period is zero days.
+
+### 12.2 Calculation Formula
+
+The approved day-count convention is Actual Days / 30.
+
+Formula:
+
+**Interest = Eligible Outstanding × (Monthly Rate / 100) × (Actual Days / 30)**
+
+The calculation must use precise decimal arithmetic.
+
+PHP floating-point arithmetic must never be used for authoritative financial calculations.
+
+### 12.3 Interest Calculation Triggers
+
+Interest is not posted through an automatic daily or monthly background process.
+
+Interest calculation occurs only at these events:
+
+1. When a customer makes a payment.
+2. On either of the two annual Auto Settlement dates configured by the Shop Owner.
+
+At these events, the system calculates all eligible interest through the applicable date.
+
+### 12.4 Annual Auto Settlement Dates
+
+The Shop Owner can configure two dates per year.
+
+The system must:
+
+- Execute the interest calculation for eligible customer accounts on these dates.
+- Avoid duplicate interest calculation for the same date and period.
+- Maintain calculation history.
+- Record the applicable interest policy version.
+- Preserve the previous outstanding balance and calculated results.
+
+### 12.5 Same-Date Calculation Protection
+
+If a payment and Auto Settlement occur on the same date, the same elapsed period must not generate interest twice.
+
+The calculation must be idempotent.
+
+### 12.6 New Sales After a Payment
+
+After a payment, the consolidated carried-forward balance starts a new calculation cycle from the payment date.
+
+However, new sales recorded after that payment must retain their individual sale dates.
+
+At the next interest calculation:
+
+- The carried-forward outstanding accrues interest from the previous payment or calculation date.
+- Each new sale accrues interest from its own eligible sale date.
+- The total payable is calculated by combining these components.
+
+### 12.7 Interest Capitalization
+
+The application should support two Owner-selectable policies:
+
+**Policy A — Capitalized Interest**
+
+- Calculated interest is added to the outstanding balance.
+- Future interest may be calculated on the updated outstanding amount.
+- This creates a compounding effect.
+
+**Policy B — Separate Interest**
+
+- Interest remains separately identifiable.
+- Future interest is not charged on previously accrued interest.
+
+The final default policy and detailed transition behavior require explicit approval before implementation.
+
+### 12.8 Calculation History
+
+Every calculation must preserve:
+
+- Calculation date.
+- Applicable interest rate.
+- Calculation start date.
+- Calculation end date.
+- Actual elapsed days.
+- Eligible outstanding amount.
+- Formula used.
+- Calculated interest.
+- Interest policy version.
+- Customer account reference.
+
+## 13. Crop-Season Settlement
+
+The application must support:
+
+- Full settlement.
+- Partial settlement.
+- Outstanding balance carry-forward.
+- Next crop-season opening balance.
+- Settlement history.
+
+A settlement must preserve all original sales, payments and interest history.
+
+The settlement process must not silently close or delete earlier financial records.
+
+Detailed settlement accounting and correction behavior must follow the approved business rules.
+
+## 14. Reports
 
 Initial reports:
 
-1. Customer list
-2. Outstanding balance report
-3. Customer-wise ledger
-4. Credit sales report
-5. Payment report
-6. Interest report
-7. Settlement report
-8. Daily collection report
-9. Date-wise transaction report
+1. Customer list.
+2. Outstanding balance report.
+3. Customer-wise ledger.
+4. Credit sales report.
+5. Payment report.
+6. Interest report.
+7. Crop-season report.
+8. Settlement report.
+9. Daily collection report.
+10. Date-wise transaction report.
 
-Reports must be tenant-scoped.
+All reports must be shop-scoped.
 
-## 14. Printing
+## 15. Printing and Data Export
 
-Customer ledger print format should include:
+### 15.1 Customer Ledger Printing
 
-- Shop name and contact information
-- Customer name
-- Father's name
-- Village
-- Mobile number
-- Selected date range
-- Opening balance
-- Transaction details
-- Debit and credit
-- Running balance
-- Principal and interest breakdown
-- Closing balance
-- Print date
+The printable ledger should include:
+
+- Shop name and contact information.
+- Customer name.
+- Mobile number.
+- Village.
+- Selected date range.
+- Opening balance.
+- Sales.
+- Payments.
+- Interest.
+- Advances.
+- Running balance.
+- Closing balance.
+- Print date.
 
 Use A4-friendly formatting.
 
 Hindi text must render correctly.
 
-## 15. Subscription Management
+### 15.2 Data Export
 
-Kisan Khata will operate as a subscription-based SaaS platform.
+The Shop Owner must be able to export shop data in:
 
-Initial requirements:
+- PDF.
+- Excel-compatible format.
+- CSV.
 
-- Subscription plans
-- Trial period (duration to be decided)
-- Subscription start date
-- Subscription expiry date
-- Subscription status
-- Payment history
-- Renewal
-- Grace period
-- Suspension
-- Reactivation
+Export access must remain available after subscription expiry, including during read-only access.
 
-Plan prices, limits and payment gateway are future business decisions.
+## 16. Subscription Management
 
-Do not hardcode subscription prices.
+Subscriptions belong to a shop, not individual users.
 
-## 16. Language Support
+All users of a shop share the same subscription.
 
-Supported languages:
+### 16.1 Initial Plans
 
-- Hindi
-- English
+Four plans:
 
-Requirements:
+1. Free Trial.
+2. Basic.
+3. Standard.
+4. Premium.
 
-- Language selection
-- Localized interface labels
-- Localized validation messages
-- Localized dates and numbers where appropriate
-- Hindi-compatible print output
-- Searchable Hindi and English customer data
+Plan pricing and detailed entitlements will be defined separately.
 
-## 17. Future Android Application
+### 16.2 Free Trial
 
-Android is Phase 2.
+- Default duration: 3 months.
+- Duration must be configurable through the database.
+- Trial is associated with the shop subscription.
 
-The web application must expose versioned APIs.
+### 16.3 Billing
 
-Business logic must remain in backend services.
+Support:
 
-Android must not independently calculate interest or ledger balances.
+- Monthly subscription.
+- Annual subscription.
+- Optional annual discount.
+- Payment history.
+- Renewal.
 
-Offline synchronization is not part of the initial scope.
+The initial payment gateway is not finalized. UPI is the likely preferred option.
 
-## 18. Non-Functional Requirements
+### 16.4 Expiry and Grace Period
 
-### Security
+- Subscription expiry initiates a 3-day grace period.
+- After the grace period, shop access becomes read-only.
+- Financial records must not be deleted or altered because of subscription expiry.
+- Shop Owner must retain PDF and Excel/CSV data export access.
 
-- Tenant isolation
-- Role-based authorization
-- Secure authentication
-- Protected document uploads
-- Audit trail
+## 17. Language and Translation
 
-### Reliability
+The application interface must support:
 
-- Database transactions for financial operations
-- Backup strategy
-- Error logging
-- Recovery procedures
+- Hindi.
+- English.
 
-### Performance
+### 17.1 Customer Data
 
-- Pagination
-- Indexed searches
-- Efficient ledger queries
-- Avoid unnecessary database queries
+Customer-entered information must be preserved in its original language.
 
-### Usability
+The system must also maintain translated Hindi and English versions.
 
-- Mobile-responsive UI
-- Simple forms
-- Large, readable controls
-- Clear Hindi terminology
-- Confirmation for sensitive financial operations
+For example:
 
-## 19. Initial Release Scope
+- Original customer name.
+- Hindi translated name.
+- English translated name.
 
-Include:
+The original text must never be overwritten by automatic translation.
 
-- Authentication
-- Shop registration
-- Tenant isolation
-- Customer management
-- Credit sales
-- Payments
-- Customer ledger
-- Interest configuration
-- Interest engine
-- Crop-season settlements
-- Basic reports
-- Ledger printing
-- Subscription foundations
+Translated values should be correctable where translation quality is insufficient.
 
-## 20. Excluded From Initial Release
+The same approach should be considered for customer descriptions and other relevant user-entered text.
+
+## 18. Platform and Technology Requirements
+
+### 18.1 Web Application
+
+- Responsive web application.
+- Desktop and mobile browser support.
+- Simple forms.
+- Readable controls.
+- Hindi and English interface.
+
+### 18.2 Backend
+
+- Laravel-based backend.
+- Modular monolith architecture.
+- Shared MySQL database.
+- Centralized business logic.
+- Secure tenant isolation.
+- Versioned REST API.
+
+### 18.3 Future Android Application
+
+Android is planned for a future phase.
+
+The backend must be designed to support:
+
+- Future Android authentication.
+- Versioned API endpoints.
+- Reusable financial services.
+- Customer and transaction synchronization.
+
+Offline synchronization is not part of the initial web release, but the architecture should avoid unnecessary barriers to supporting it later.
+
+The Android application must never independently calculate authoritative interest or customer balances.
+
+## 19. Security, Audit and Reliability
+
+### 19.1 Tenant Security
+
+- Strict shop-level data isolation.
+- Server-side tenant resolution.
+- Ownership validation.
+- Authorization for all financial operations.
+- Protection against cross-tenant access.
+
+### 19.2 Audit Trail
+
+Important actions must be auditable, including:
+
+- Customer changes.
+- Sale creation and correction.
+- Payment creation and correction.
+- Interest policy changes.
+- Interest calculations.
+- Settlements.
+- User and role changes.
+- Subscription changes.
+- Security-sensitive actions.
+
+Audit history must be protected from ordinary users and must not be silently modified.
+
+### 19.3 Backup and Recovery
+
+- Daily automated database backups.
+- Encrypted off-site backups.
+- Regular restore testing.
+- Documented recovery procedure.
+
+### 19.4 Data Retention
+
+Financial history must be retained according to the approved retention policy and applicable legal requirements.
+
+Shop deactivation and eventual deletion must follow a controlled process.
+
+The exact retention period requires separate approval.
+
+## 20. Initial Release Scope
+
+The initial web release includes:
+
+- Authentication.
+- Shop registration.
+- Shop and user management.
+- Tenant isolation.
+- Owner, Manager and Staff roles.
+- Customer management.
+- Crop-season tagging.
+- Credit sales.
+- Payments.
+- Consolidated customer ledger.
+- Interest configuration.
+- Interest calculation engine.
+- Annual Auto Settlement configuration.
+- Customer advances.
+- Crop-season settlements.
+- Basic reports.
+- Ledger printing.
+- Data export.
+- Subscription foundations.
+- Audit history.
+- Daily backups.
+
+## 21. Excluded From Initial Release
 
 Unless separately approved:
 
-- Android application
-- Offline synchronization
-- Inventory management
-- GST accounting
-- Full double-entry accounting
-- Payroll
-- E-commerce
-- Automated WhatsApp messaging
-- Banking integrations
+- Android application.
+- Offline synchronization.
+- Inventory management.
+- GST accounting.
+- Full double-entry accounting.
+- Payroll.
+- E-commerce.
+- Automated WhatsApp messaging.
+- Banking integrations.
+- Custom per-user permission configuration.
+- Multiple-shop membership for a single user.
 
-## 21. Success Criteria
+## 22. Success Criteria
 
-The initial product should allow a shop owner to:
+The initial product must allow a Shop Owner to:
 
 1. Register a shop.
-2. Add a customer.
-3. Record a credit sale.
-4. Record a payment.
-5. View the customer's complete ledger.
-6. Understand outstanding principal and interest.
-7. Perform an approved settlement.
-8. Print the customer ledger.
-9. Use the application in Hindi or English.
-10. Access only their shop's records.
+2. Create Manager and Staff accounts within shop limits.
+3. Add customers.
+4. Record credit sales.
+5. Record payments.
+6. View consolidated customer outstanding.
+7. Understand interest calculations.
+8. Handle multiple payments on the same date without duplicate interest.
+9. View new sales and carried-forward balances correctly.
+10. Record customer advances.
+11. Perform full and partial settlements.
+12. View complete customer financial history.
+13. Correct posted transactions with audit history.
+14. Print customer ledgers.
+15. Export shop data.
+16. Use the application in Hindi or English.
+17. Access only authorized shop records.
+
+---
+
+## 23. Decisions Requiring Final Approval
+
+The following items must be finalized before their respective implementation:
+
+1. Interest capitalization default: Policy A or Policy B.
+2. Exact interest rounding precision and rounding mode.
+3. Interest effective-date and day-boundary conventions.
+4. Grace-period eligibility boundary.
+5. Detailed Auto Settlement behavior when a customer has already had a payment calculation on that date.
+6. Detailed crop-season settlement accounting.
+7. Translation provider and correction workflow.
+8. Subscription plan prices and entitlements.
+9. Payment gateway.
+10. Financial data retention period.
+11. Hosting region.
+
+No developer or AI coding agent may silently decide these financial or business rules.
+
+Any change to an approved requirement must be documented and approved by the Product Owner before implementation.
