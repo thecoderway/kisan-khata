@@ -63,7 +63,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 |---|---|---|
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
-| Phase 2 | Multi-Tenancy Foundation | Initial tenant-context foundation implemented; full acceptance is pending tenant-aware models/queries, files, cache, jobs and comprehensive cross-tenant verification |
+| Phase 2 | Multi-Tenancy Foundation | Initial tenant context and tenant-owned builder protections implemented; route-level web/API security coverage is being added on the feature branch; full acceptance remains pending test execution and remaining infrastructure audits |
 | Phase 3 | Roles and User Management | Not started; next official phase |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
@@ -127,7 +127,12 @@ Recorded as complete:
 - Client-supplied shop IDs are not trusted for tenant selection.
 - Initial tests for active shop context and missing/suspended tenant access.
 
+**Current feature-branch work (implementation added; local execution not yet reported):**
+- Group tenant business routes under both authentication and tenant-resolution middleware; keep logout authenticated but outside tenant resolution so suspended shops can sign out.
+- Add web/API feature coverage for route middleware assignment, authenticated-user shop resolution despite forged query-string `shop_id`, inactive users, suspended shops, request-to-request tenant context resolution and logout behavior.
+
 **Remaining Phase 2 acceptance work:**
+- Execute and review the new route-level tests and the full suite.
 - Audit every tenant-owned model, relationship and query for consistent shop scoping.
 - Ownership validation and cross-tenant denial tests for each resource.
 - Tenant-aware private file storage and download authorization.
@@ -231,11 +236,11 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-1. Complete this documentation/status correction and obtain Product Owner review.
-2. Before Phase 3 coding, perform a focused Phase 1/2 gap audit against Roadmap acceptance criteria and Docs 01/02/04/05/06/08/09 plus relevant ADRs. Record which gaps block safe Phase 3/4 delivery.
-3. Prepare Phase 3 implementation plan: role-permission matrix, lifecycle workflows, shop-limit enforcement, UI/API scope, migration impact, security threats and acceptance tests. Ask for approval where the approved documents do not specify behavior.
-4. Implement Phase 3 in small PR-sized increments; test every role/action combination and tenant boundary.
-5. Revisit Phase 2 acceptance and complete required tenant-aware infrastructure before exposing multi-tenant customer/financial workflows.
+1. Execute the in-progress Phase 2 route-level tenant security tests and full relevant test suite; record only observed results.
+2. Complete the focused Phase 1/2 gap audit against Roadmap acceptance criteria and Docs 01/02/04/05/06/08/09 plus relevant ADRs. Record which gaps block safe Phase 3/4 delivery.
+3. Complete remaining Phase 2 tenant-aware infrastructure and acceptance checks before exposing multi-tenant customer/financial workflows.
+4. Prepare the official Phase 3 implementation plan: role-permission matrix, lifecycle workflows, shop-limit enforcement, UI/API scope, migration impact, security threats and acceptance tests. Ask for approval where approved documents do not specify behavior.
+5. Implement Phase 3 in small PR-sized increments; test every role/action combination and tenant boundary.
 6. Proceed to Phase 4, then Phase 5 before Credit Sales and Payments.
 7. Keep production SMS provider integration deferred until final integration/release readiness.
 
