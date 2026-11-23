@@ -1,12 +1,40 @@
 @import '@tabler/core/dist/css/tabler.min.css';
 @import '@tabler/icons-webfont/dist/tabler-icons.min.css';
 
-/*
-|--------------------------------------------------------------------------
-| Kisan Khata Custom Styles
-|--------------------------------------------------------------------------
-|
-| Application-specific styles will be added here.
-| Tabler provides the base Bootstrap 5 UI framework.
-|
-*/
+:root { --kk-green:#166534; --kk-green-strong:#15803d; --kk-green-soft:#dcfce7; --kk-bg:#f8fafc; --kk-text:#172033; --kk-muted:#64748b; }
+body.auth-shell { min-height:100vh; margin:0; background:radial-gradient(circle at 15% 10%,#dcfce7 0,transparent 28rem),var(--kk-bg); color:var(--kk-text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.auth-wrap { width:min(100% - 32px,480px); margin:0 auto; padding:42px 0 24px; }
+.brand-lockup { display:flex; align-items:center; gap:12px; width:fit-content; margin:0 auto 28px; color:var(--kk-text); text-decoration:none; }
+.brand-lockup strong { display:block; font-size:19px; font-weight:750; letter-spacing:-.5px; }
+.brand-lockup small { display:block; color:var(--kk-muted); font-size:12px; margin-top:1px; }
+.brand-mark { display:grid; place-items:center; width:44px; height:44px; border-radius:14px; background:var(--kk-green); color:white; font-size:23px; }
+.auth-card { padding:34px; border:1px solid #e2e8f0; border-radius:20px; background:white; box-shadow:0 18px 55px #0f172a0d; }
+.auth-heading { margin-bottom:26px; }
+.eyebrow { color:var(--kk-green-strong); font-size:10px; font-weight:800; letter-spacing:1.5px; }
+.auth-heading h1,.dashboard-title { margin:8px 0 7px; color:#0f172a; font-size:25px; font-weight:750; letter-spacing:-.8px; }
+.auth-heading p,.dashboard-copy { margin:0; color:var(--kk-muted); font-size:14px; line-height:1.65; }
+.auth-form { display:grid; gap:17px; }
+.form-group label { display:block; margin-bottom:7px; color:#334155; font-size:13px; font-weight:650; }
+.form-control { min-height:44px; border-color:#dbe3ec; border-radius:9px; font-size:14px; box-shadow:none!important; }
+.form-control:focus { border-color:var(--kk-green-strong); }
+.field-label-row { display:flex; justify-content:space-between; align-items:center; }
+.field-label-row a,.auth-switch a { color:var(--kk-green); font-size:12px; font-weight:700; text-decoration:none; }
+.form-check { display:flex; align-items:center; gap:8px; color:var(--kk-muted); font-size:13px; }
+.form-check-input:checked { background-color:var(--kk-green); border-color:var(--kk-green); }
+.auth-submit { min-height:46px; margin-top:3px; border:0; border-radius:9px; background:var(--kk-green); font-weight:650; }
+.auth-submit:hover { background:#14532d; }
+.auth-submit i { margin-left:5px; }
+.auth-switch { margin-top:24px; padding-top:20px; border-top:1px solid #edf1f5; color:var(--kk-muted); text-align:center; font-size:13px; }
+.auth-footer { margin:22px 0 0; color:#94a3b8; text-align:center; font-size:11px; }
+.field-error { display:block; margin-top:5px; color:#dc2626; font-size:11px; }
+.form-hint { display:block; margin-top:5px; color:var(--kk-muted); font-size:11px; }
+.alert { border-radius:9px; font-size:13px; }
+.dashboard-top { display:flex; align-items:center; justify-content:space-between; }
+.status-pill { padding:5px 9px; border-radius:30px; background:var(--kk-green-soft); color:var(--kk-green); font-size:11px; font-weight:700; }
+.dashboard-title { margin-top:18px; }
+.shop-summary { display:flex; align-items:center; gap:13px; margin-top:18px; padding:14px; border:1px solid #e8eef3; border-radius:12px; }
+.summary-icon { display:grid; place-items:center; width:40px; height:40px; border-radius:11px; background:var(--kk-green-soft); color:var(--kk-green); font-size:20px; }
+.shop-summary small,.shop-summary strong { display:block; }
+.shop-summary small { color:var(--kk-muted); font-size:11px; }
+.shop-summary strong { margin-top:2px; font-size:14px; }
+@media(max-width:480px) { .auth-wrap{padding-top:24px}.auth-card{padding:25px 20px;border-radius:16px}.auth-heading h1{font-size:22px} }
