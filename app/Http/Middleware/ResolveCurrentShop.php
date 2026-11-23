@@ -10,7 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ResolveCurrentShop
 {
-    public function handle(Request $request, Closure $next, CurrentShop $currentShop): Response
+    public function __construct(private readonly CurrentShop $currentShop) {}
+
+    public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
@@ -26,7 +28,7 @@ class ResolveCurrentShop
             abort(403, 'An active shop is required.');
         }
 
-        $currentShop->set($shop);
+        $this->currentShop->set($shop);
 
         return $next($request);
     }
