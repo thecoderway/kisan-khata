@@ -29,16 +29,14 @@ class ShopDatabaseTest extends TestCase
     {
         $shop = Shop::factory()->create();
 
-        ShopSetting::create([
-            'shop_id' => $shop->id,
+        $shop->settings()->create([
             'setting_key' => 'ledger.language',
             'setting_value' => 'hi',
         ]);
 
         $this->expectException(QueryException::class);
 
-        ShopSetting::create([
-            'shop_id' => $shop->id,
+        $shop->settings()->create([
             'setting_key' => 'ledger.language',
             'setting_value' => 'en',
         ]);
