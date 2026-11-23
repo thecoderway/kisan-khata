@@ -144,10 +144,10 @@ Recorded as complete:
 - Reviewed Docs 04/05/06/09, Roadmap Phase 2 and accepted ADR-0002/ADR-0005 against the current feature-branch implementation.
 - Confirmed the current tenant-owned Eloquent data model is limited to `ShopSetting`; customer/financial/file/cache/export/job modules are not implemented yet. Their required controls and tests remain mandatory when those modules are introduced.
 - Confirmed `CurrentShop` is registered as a Laravel scoped service, tenant middleware derives the active shop from the authenticated user, and authenticated business routes are tenant-protected while logout remains available for suspended shops.
-- Added a `User` model update guard rejecting changes to `shop_id`, plus a regression test. This protects the approved one-user/one-shop association against ordinary Eloquent saves. Any future administrative reassignment workflow would require a separately reviewed, explicitly authorized system operation; it is not part of ordinary user management.
+- Added a `User` model update guard and a custom `UserBuilder` to reject reassignment through both ordinary Eloquent saves and bulk Eloquent update/increment/upsert paths, with regression tests. Any future administrative reassignment workflow would require a separately reviewed, explicitly authorized system operation; it is not part of ordinary user management.
 - Raw `DB::table()` / query-builder operations and `toBase()` are outside Eloquent model guards. Current raw OTP access is limited to the system-level `mobile_otp_challenges` table; tenant-owned raw SQL/query-builder access must be explicitly reviewed and tenant-filtered when added.
 - No current application cache, upload/download, tenant-specific queue job or export implementation exists. These are deferred until their features exist, not considered implemented or tested.
-- The newly added user reassignment regression test has not yet been executed by the Product Owner at the time of this status update. Earlier reported passing results predate this latest change and must not be presented as verification of the new test.
+- The newly added user reassignment regression tests have not yet been executed by the Product Owner at the time of this status update. Earlier reported passing results predate these latest changes and must not be presented as verification of the new tests.
 
 **Remaining Phase 2 acceptance work:**
 - Complete a final review of all tenant-owned models, relationships, raw query paths and scope-bypass/system-operation boundaries.
