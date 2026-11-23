@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\\Feature\\Api;
+namespace Tests\Feature\Api;
 
-use App\\Contracts\\MobileOtpSender;
-use App\\Models\\Shop;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Contracts\MobileOtpSender;
+use App\Models\Shop;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class MobileOtpAuthenticationTest extends TestCase
 {
@@ -187,7 +187,7 @@ class MobileOtpAuthenticationTest extends TestCase
             'attempts' => 5,
         ]);
         $this->assertNotNull(
-            \\Illuminate\\Support\\Facades\\DB::table('mobile_otp_challenges')
+            \Illuminate\Support\Facades\DB::table('mobile_otp_challenges')
                 ->where('mobile', $user->mobile)
                 ->value('consumed_at')
         );
@@ -231,7 +231,7 @@ class MobileOtpAuthenticationTest extends TestCase
 
         $this->assertEquals(
             now()->addDays(12)->toDateTimeString(),
-            \\Illuminate\\Support\\Facades\\DB::table('personal_access_tokens')
+            \Illuminate\Support\Facades\DB::table('personal_access_tokens')
                 ->where('tokenable_id', $user->id)
                 ->value('expires_at')
         );
