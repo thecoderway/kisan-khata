@@ -1,0 +1,28 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# PHP dependencies
+/vendor
+
+# Node dependencies and generated frontend assets
+/node_modules
+/public/build
+/public/hot
+
+# Runtime data and logs
+/storage/logs
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/views
+
+# Local/editor files
+.idea
+.vscode
+*.log
+.DS_Store
