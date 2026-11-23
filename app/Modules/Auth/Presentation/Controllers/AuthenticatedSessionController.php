@@ -41,7 +41,7 @@ class AuthenticatedSessionController
         }
 
         $user = $request->user();
-        if (! $user->is_active || ($user->shop && $user->shop->status !== 'active')) {
+        if (! $user->is_active || ! $user->shop || $user->shop->status !== 'active') {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
