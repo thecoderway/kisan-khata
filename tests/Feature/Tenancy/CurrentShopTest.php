@@ -30,7 +30,6 @@ class CurrentShopTest extends TestCase
         $this->assertSame($shop->id, app(CurrentShop::class)->id());
     }
 
-
     public function test_user_cannot_be_reassigned_to_another_shop(): void
     {
         $shopA = Shop::factory()->create();
@@ -47,7 +46,6 @@ class CurrentShopTest extends TestCase
 
         $user->save();
     }
-
 
     public function test_bulk_user_update_cannot_change_shop_ownership(): void
     {
