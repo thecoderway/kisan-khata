@@ -249,6 +249,117 @@ class TenantOwnedModelIsolationTest extends TestCase
         $this->assertDatabaseCount('shop_settings', 2);
     }
 
+    public function test_insert_apis_force_the_current_shop_id(): void
+    {
+        $shop = Shop::factory()->create();
+        app(CurrentShop::class)->set($shop);
+
+        ShopSetting::query()->insert([
+            'setting_key' => 'inserted',
+            'setting_value' => 'one',
+        ]);
+
+        ShopSetting::query()->insertOrIgnore([
+            'setting_key' => 'ignored-api',
+            'setting_value' => 'two',
+        ]);
+
+        $id = ShopSetting::query()->insertGetId([
+            'setting_key' => 'insert-get-id',
+            'setting_value' => 'three',
+        ]);
+
+        $this->assertDatabaseHas('shop_settings', [
+            'id' => $id,
+            'shop_id' => $shop->id,
+            'setting_key' => 'insert-get-id',
+        ]);
+
+        $this->assertDatabaseHas('shop_settings', [
+            'shop_id' => $shop->id,
+            'setting_key' => 'inserted',
+        ]);
+
+        $this->assertDatabaseHas('shop_settings', [
+            'shop_id' => $shop->id,
+            'setting_key' => 'ignored-api',
+        ]);
+    }
+
+    public function test_insert_apis_reject_a_foreign_shop_id(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        app(CurrentShop::class)->set($shopA);
+
+        $this->expectException(AuthorizationException::class);
+
+        ShopSetting::query()->insert([
+            'shop_id' => $shopB->id,
+            'setting_key' => 'forbidden',
+            'setting_value' => 'tampered',
+        ]);
+    }
+
+    public function test_touch_and_increment_each_respect_tenant_ownership(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+
+        app(CurrentShop::class)->set($shopB);
+        $settingB = $shopB->settings()->create([
+            'setting_key' => 'language',
+            'setting_value' => 'en',
+        ]);
+        $originalUpdatedAt = $settingB->updated_at;
+
+        app(CurrentShop::class)->set($shopA);
+
+        ShopSetting::withoutGlobalScope('current_shop')
+            ->whereKey($settingB->id)
+            ->touch();
+
+        $this->assertDatabaseHas('shop_settings', [
+            'id' => $settingB->id,
+            'shop_id' => $shopB->id,
+            'updated_at' => $originalUpdatedAt,
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+
+        ShopSetting::query()->incrementEach(['shop_id' => 1]);
+    }
+
+    public function test_tenant_owned_query_rejects_truncate_and_unsafe_insert_helpers(): void
+    {
+        $shop = Shop::factory()->create();
+        app(CurrentShop::class)->set($shop);
+
+        try {
+            ShopSetting::query()->truncate();
+            $this->fail('Tenant-owned tables must not be truncated through model queries.');
+        } catch (LogicException) {
+            $this->assertTrue(true);
+        }
+
+        try {
+            ShopSetting::query()->updateOrInsert(
+                ['setting_key' => 'unsafe'],
+                ['setting_value' => 'value'],
+            );
+            $this->fail('updateOrInsert must be blocked for tenant-owned models.');
+        } catch (LogicException) {
+            $this->assertTrue(true);
+        }
+
+        try {
+            ShopSetting::query()->insertUsing(['setting_key', 'setting_value'], 'shop_settings');
+            $this->fail('insertUsing must be blocked for tenant-owned models.');
+        } catch (LogicException) {
+            $this->assertTrue(true);
+        }
+    }
+
     public function test_upsert_rejects_rows_claiming_another_shop(): void
     {
         $shopA = Shop::factory()->create();
