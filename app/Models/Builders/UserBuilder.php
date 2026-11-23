@@ -51,15 +51,37 @@ class UserBuilder extends Builder
 
     public function upsert(array $values, $uniqueBy, $update = null)
     {
-        $this->assertShopIdIsImmutable(is_array($update) ? $update : []);
+        throw new LogicException('Bulk user upserts are not supported; create or update User models explicitly.');
+    }
 
-        foreach ($values as $row) {
-            if (is_array($row) && array_key_exists('shop_id', $row)) {
-                throw new AuthorizationException('Bulk user inserts cannot assign or change shop ownership.');
-            }
-        }
+    public function insert(array $values)
+    {
+        throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
+    }
 
-        return parent::upsert($values, $uniqueBy, $update);
+    public function insertOrIgnore(array $values)
+    {
+        throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
+    }
+
+    public function insertGetId(array $values, $sequence = null)
+    {
+        throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
+    }
+
+    public function insertUsing(array $columns, $query)
+    {
+        throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
+    }
+
+    public function insertOrIgnoreUsing(array $columns, $query)
+    {
+        throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
+    }
+
+    public function insertOrIgnoreReturning(array $values, array $returning = ['*'], array|string|null $uniqueBy = null)
+    {
+        throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
     }
 
     private function assertShopIdIsImmutable(array $columns): void
