@@ -63,7 +63,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 |---|---|---|
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
-| Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections and route-level web/API security coverage implemented on the feature branch; local Pint and full test suite pass; full acceptance remains pending remaining infrastructure and acceptance review |
+| Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; prior local suite passed before the latest user-association change; re-verification and full acceptance remain pending |
 | Phase 3 | Roles and User Management | Not started; next official phase |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
@@ -139,6 +139,15 @@ Recorded as complete:
 - No application jobs or queue dispatch usage was found under `app/`.
 - Direct query-builder access in `MobileOtpService` targets the system-level `mobile_otp_challenges` table; registration uses a transaction to create the Shop and Owner User.
 - The only current tenant-owned Eloquent model identified is `ShopSetting`; its tenant scope and guarded mutation paths have dedicated tests.
+
+**Final acceptance review findings (2026-11-23):**
+- Reviewed Docs 04/05/06/09, Roadmap Phase 2 and accepted ADR-0002/ADR-0005 against the current feature-branch implementation.
+- Confirmed the current tenant-owned Eloquent data model is limited to `ShopSetting`; customer/financial/file/cache/export/job modules are not implemented yet. Their required controls and tests remain mandatory when those modules are introduced.
+- Confirmed `CurrentShop` is registered as a Laravel scoped service, tenant middleware derives the active shop from the authenticated user, and authenticated business routes are tenant-protected while logout remains available for suspended shops.
+- Added a `User` model update guard rejecting changes to `shop_id`, plus a regression test. This protects the approved one-user/one-shop association against ordinary Eloquent saves. Any future administrative reassignment workflow would require a separately reviewed, explicitly authorized system operation; it is not part of ordinary user management.
+- Raw `DB::table()` / query-builder operations and `toBase()` are outside Eloquent model guards. Current raw OTP access is limited to the system-level `mobile_otp_challenges` table; tenant-owned raw SQL/query-builder access must be explicitly reviewed and tenant-filtered when added.
+- No current application cache, upload/download, tenant-specific queue job or export implementation exists. These are deferred until their features exist, not considered implemented or tested.
+- The newly added user reassignment regression test has not yet been executed by the Product Owner at the time of this status update. Earlier reported passing results predate this latest change and must not be presented as verification of the new test.
 
 **Remaining Phase 2 acceptance work:**
 - Complete a final review of all tenant-owned models, relationships, raw query paths and scope-bypass/system-operation boundaries.
