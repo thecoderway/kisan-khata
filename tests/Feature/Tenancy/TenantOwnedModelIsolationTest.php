@@ -212,7 +212,6 @@ class TenantOwnedModelIsolationTest extends TestCase
         }
     }
 
-
     public function test_upsert_is_scoped_to_the_current_shop_even_when_global_scope_is_bypassed(): void
     {
         $shopA = Shop::factory()->create();
