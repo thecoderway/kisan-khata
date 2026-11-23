@@ -45,6 +45,57 @@ class TenantOwnedBuilder extends Builder
         )->toBase()->delete();
     }
 
+    /**
+     * Upsert only within the current tenant and make tenant ownership immutable.
+     *
+     * @param  array<int, array<string, mixed>>|array<string, mixed>  $values
+     * @param  array<int, string>|string  $uniqueBy
+     * @param  array<int, string>|null  $update
+     */
+    public function upsert(array $values, $uniqueBy, $update = null)
+    {
+        $shopId = $this->requireCurrentShopId();
+
+        if ($values === []) {
+            return 0;
+        }
+
+        $rows = array_is_list($values) && isset($values[0]) && is_array($values[0])
+            ? $values
+            : [$values];
+
+        foreach ($rows as &$row) {
+            if (! is_array($row)) {
+                throw new LogicException('Tenant-owned upsert values must be row arrays.');
+            }
+
+            if (array_key_exists('shop_id', $row) && (int) $row['shop_id'] !== $shopId) {
+                throw new AuthorizationException('A record cannot be upserted for another shop.');
+            }
+
+            $row['shop_id'] = $shopId;
+        }
+        unset($row);
+
+        $uniqueColumns = is_array($uniqueBy) ? $uniqueBy : [$uniqueBy];
+
+        if (! in_array('shop_id', $uniqueColumns, true)) {
+            $uniqueColumns[] = 'shop_id';
+        }
+
+        if ($update !== null) {
+            foreach ($update as $column) {
+                if (is_string($column) && ($column === 'shop_id' || str_ends_with($column, '.shop_id'))) {
+                    throw new AuthorizationException('Tenant ownership cannot be changed through upsert.');
+                }
+            }
+        } else {
+            $update = array_values(array_diff(array_keys($rows[0]), ['shop_id']));
+        }
+
+        return parent::upsert($rows, $uniqueColumns, $update);
+    }
+
     public function increment($column, $amount = 1, array $extra = [])
     {
         if ($column === 'shop_id') {
