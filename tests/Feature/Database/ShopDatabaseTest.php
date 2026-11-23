@@ -3,7 +3,6 @@
 namespace Tests\Feature\Database;
 
 use App\Models\Shop;
-use App\Models\ShopSetting;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,6 +54,22 @@ class ShopDatabaseTest extends TestCase
 
         $this->assertNull($user->email);
         $this->assertNull($user->mobile);
+    }
+
+    public function test_role_and_active_status_are_not_mass_assignable(): void
+    {
+        $user = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $user->fill([
+            'role' => User::ROLE_PLATFORM_OWNER,
+            'is_active' => false,
+        ]);
+
+        $this->assertSame(User::ROLE_STAFF, $user->role);
+        $this->assertTrue($user->is_active);
     }
 
     public function test_a_shop_can_have_multiple_settings_with_distinct_keys(): void
