@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Services\\Auth;
+namespace App\Services\Auth;
 
-use App\\Contracts\\MobileOtpSender;
-use App\\Models\\Shop;
-use App\\Models\\User;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Hash;
-use Illuminate\\Validation\\ValidationException;
+use App\Contracts\MobileOtpSender;
+use App\Models\Shop;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class MobileOtpService
 {
@@ -56,7 +56,7 @@ class MobileOtpService
 
         try {
             $this->sender->send($mobile, $code);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             DB::table('mobile_otp_challenges')
                 ->where('mobile', $mobile)
                 ->whereNull('consumed_at')
