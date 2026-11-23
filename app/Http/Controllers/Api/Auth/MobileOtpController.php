@@ -1,20 +1,20 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api\\Auth;
+namespace App\Http\Controllers\Api\Auth;
 
-use App\\Exceptions\\MobileOtpDeliveryUnavailable;
-use App\\Http\\Controllers\\Controller;
-use App\\Services\\Auth\\MobileOtpService;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\RateLimiter as RateLimiterFacade;
+use App\Exceptions\MobileOtpDeliveryUnavailable;
+use App\Http\Controllers\Controller;
+use App\Services\Auth\MobileOtpService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter as RateLimiterFacade;
 
 class MobileOtpController extends Controller
 {
     public function request(Request $request, MobileOtpService $otp): JsonResponse
     {
         $validated = $request->validate([
-            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\\\-\\\\s]{8,20}$/'],
+            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\-\\s]{8,20}$/'],
         ]);
 
         $mobile = trim($validated['mobile']);
@@ -48,7 +48,7 @@ class MobileOtpController extends Controller
     public function verify(Request $request, MobileOtpService $otp): JsonResponse
     {
         $validated = $request->validate([
-            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\\\-\\\\s]{8,20}$/'],
+            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\-\\s]{8,20}$/'],
             'otp' => ['required', 'digits:6'],
         ]);
 
@@ -97,6 +97,6 @@ class MobileOtpController extends Controller
      */
     private function mobileRateLimitIdentity(string $mobile): string
     {
-        return preg_replace('/[\\s()\\-]/u', '', trim($mobile)) ?? trim($mobile);
+        return preg_replace('/[\s()\-]/u', '', trim($mobile)) ?? trim($mobile);
     }
 }
