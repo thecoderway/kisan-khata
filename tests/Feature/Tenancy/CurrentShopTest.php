@@ -5,6 +5,7 @@ namespace Tests\Feature\Tenancy;
 use App\Models\Shop;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,6 +28,24 @@ class CurrentShopTest extends TestCase
             ->assertViewHas('shop', fn (Shop $resolvedShop): bool => $resolvedShop->is($shop));
 
         $this->assertSame($shop->id, app(CurrentShop::class)->id());
+    }
+
+
+    public function test_user_cannot_be_reassigned_to_another_shop(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shopA->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $user->shop_id = $shopB->id;
+
+        $this->expectException(AuthorizationException::class);
+
+        $user->save();
     }
 
     public function test_dashboard_does_not_use_a_client_supplied_shop_id(): void
