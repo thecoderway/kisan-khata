@@ -1,24 +1,20 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api\\Auth;
+namespace App\Http\Controllers\Api\Auth;
 
-use App\\Exceptions\\MobileOtpDeliveryUnavailable;
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\User;
-use App\\Services\\Auth\\MobileOtpService;
-use Illuminate\\Cache\\RateLimiter;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\RateLimiter as RateLimiterFacade;
-use Illuminate\\Support\\Str;
-use Illuminate\\Validation\\ValidationException;
+use App\Exceptions\MobileOtpDeliveryUnavailable;
+use App\Http\Controllers\Controller;
+use App\Services\Auth\MobileOtpService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter as RateLimiterFacade;
 
 class MobileOtpController extends Controller
 {
     public function request(Request $request, MobileOtpService $otp): JsonResponse
     {
         $validated = $request->validate([
-            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\\\-\\\\s]{8,20}$/'],
+            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\-\\s]{8,20}$/'],
         ]);
 
         $mobile = trim($validated['mobile']);
@@ -36,11 +32,13 @@ class MobileOtpController extends Controller
         RateLimiterFacade::hit('mobile-otp:request:mobile:'.$mobileKey, $window);
         RateLimiterFacade::hit('mobile-otp:request:ip:'.$ipKey, $window);
 
-        if (config('mobile_otp.sender') === 'null') {
-            throw new MobileOtpDeliveryUnavailable('SMS delivery is not configured.');
+        try {
+            $otp->request($mobile);
+        } catch (MobileOtpDeliveryUnavailable) {
+            return response()->json([
+                'message' => 'OTP सेवा अभी उपलब्ध नहीं है। कृपया बाद में प्रयास करें।',
+            ], 503);
         }
-
-        $otp->request($mobile);
 
         return response()->json([
             'message' => 'यदि यह मोबाइल नंबर सक्रिय खाते से जुड़ा है, तो OTP भेज दिया जाएगा।',
