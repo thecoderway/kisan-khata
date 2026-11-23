@@ -4,6 +4,7 @@ namespace Tests\Feature\Database;
 
 use App\Models\Shop;
 use App\Models\User;
+use App\Tenancy\CurrentShop;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,6 +28,7 @@ class ShopDatabaseTest extends TestCase
     public function test_shop_settings_are_unique_per_shop_and_key(): void
     {
         $shop = Shop::factory()->create();
+        app(CurrentShop::class)->set($shop);
 
         $shop->settings()->create([
             'setting_key' => 'ledger.language',
@@ -88,6 +90,7 @@ class ShopDatabaseTest extends TestCase
     public function test_a_shop_can_have_multiple_settings_with_distinct_keys(): void
     {
         $shop = Shop::factory()->create();
+        app(CurrentShop::class)->set($shop);
 
         $shop->settings()->createMany([
             ['setting_key' => 'language', 'setting_value' => 'hi'],
