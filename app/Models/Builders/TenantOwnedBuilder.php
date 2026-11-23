@@ -198,9 +198,8 @@ class TenantOwnedBuilder extends Builder
             return $values;
         }
 
-        $rows = array_is_list($values) && isset($values[0]) && is_array($values[0])
-            ? $values
-            : [$values];
+        $isBatch = array_is_list($values) && isset($values[0]) && is_array($values[0]);
+        $rows = $isBatch ? $values : [$values];
 
         foreach ($rows as &$row) {
             if (! is_array($row)) {
@@ -228,8 +227,9 @@ class TenantOwnedBuilder extends Builder
                 continue;
             }
 
-            $normalized = str_replace('`', '', $column);
-            $lastSegment = substr($normalized, strrpos('.'.$normalized, '.') + 1);
+            $normalized = strtolower(str_replace(['`', '"'], '', $column));
+            $segments = explode('.', $normalized);
+            $lastSegment = trim((string) end($segments));
 
             if ($lastSegment === 'shop_id') {
                 throw new AuthorizationException('Tenant ownership cannot be changed through a bulk mutation.');
