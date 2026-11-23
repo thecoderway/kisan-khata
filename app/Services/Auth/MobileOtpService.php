@@ -85,6 +85,9 @@ class MobileOtpService
     public function verify(string $mobile, string $code): User
     {
         $result = DB::transaction(function () use ($mobile, $code): array {
+            // Keep the same lock order as request(): user first, then challenge.
+            $user = User::query()->where('mobile', $mobile)->lockForUpdate()->first();
+
             $challenge = DB::table('mobile_otp_challenges')
                 ->where('mobile', $mobile)
                 ->whereNull('consumed_at')
@@ -118,11 +121,7 @@ class MobileOtpService
                 return ['status' => 'invalid'];
             }
 
-            $user = User::query()
-                ->with('shop')
-                ->where('mobile', $mobile)
-                ->lockForUpdate()
-                ->first();
+            $user?->load('shop');
 
             if (! $this->isEligible($user)) {
                 DB::table('mobile_otp_challenges')->where('id', $challenge->id)->update([
