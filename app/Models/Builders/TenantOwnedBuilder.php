@@ -44,19 +44,20 @@ class TenantOwnedBuilder extends Builder
     {
         $this->requireCurrentShopId();
 
-        $column ??= $this->getModel()->getUpdatedAtColumn();
+        if ($column === null) {
+            $column = $this->getModel()->getUpdatedAtColumn();
 
-        if (! $this->getModel()->usesTimestamps() || $column === null) {
-            return false;
+            if (! $this->getModel()->usesTimestamps() || $column === null) {
+                return false;
+            }
         }
 
         $columns = is_array($column) ? $column : [$column];
         $this->assertOwnershipIsImmutable($columns);
 
         $timestamp = $this->getModel()->freshTimestamp();
-        $values = array_fill_keys($columns, $timestamp);
 
-        return $this->update($values);
+        return $this->update(array_fill_keys($columns, $timestamp));
     }
 
     /**
