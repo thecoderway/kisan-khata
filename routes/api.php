@@ -13,7 +13,7 @@ Route::prefix('auth/mobile')->group(function (): void {
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', function (Request $request) {
         return $request->user()->load('shop:id,name');
-    });
+    })->middleware('tenant');
 
     Route::post('/logout', [TokenController::class, 'destroy']);
 });
