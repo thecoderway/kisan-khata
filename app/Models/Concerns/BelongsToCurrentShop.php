@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Builders\TenantOwnedBuilder;
 use App\Tenancy\CurrentShop;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,11 @@ use LogicException;
 
 trait BelongsToCurrentShop
 {
+    public function newEloquentBuilder($query): TenantOwnedBuilder
+    {
+        return new TenantOwnedBuilder($query);
+    }
+
     protected static function bootBelongsToCurrentShop(): void
     {
         static::addGlobalScope('current_shop', function (Builder $query): void {
