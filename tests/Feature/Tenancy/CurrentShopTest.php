@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Tenancy\CurrentShop;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException;
 use Tests\TestCase;
 
 class CurrentShopTest extends TestCase
@@ -61,6 +62,22 @@ class CurrentShopTest extends TestCase
 
         User::query()->whereKey($user->id)->update([
             'shop_id' => $shopB->id,
+        ]);
+    }
+
+    public function test_direct_user_builder_insert_get_id_is_blocked(): void
+    {
+        $shop = Shop::factory()->create();
+
+        $this->expectException(LogicException::class);
+
+        User::query()->insertGetId([
+            'shop_id' => $shop->id,
+            'name' => 'Injected User',
+            'mobile' => '9999999999',
+            'password' => bcrypt('password'),
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
         ]);
     }
 
