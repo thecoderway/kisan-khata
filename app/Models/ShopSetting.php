@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ShopSetting extends Model
 {
     protected $fillable = [
-        'shop_id',
         'setting_key',
         'setting_value',
     ];
