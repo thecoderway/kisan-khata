@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kisan Khata - Sale and Payment</title>
+<link rel="stylesheet" href="../../../node_modules/@tabler/core/dist/css/tabler.min.css">
+<link rel="stylesheet" href="../../../node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="./prototype.css">
+</head>
+<body>
+<header class="kk-topbar"><a class="kk-brand" href="dashboard.html">🌱 Kisan Khata</a><div>हिंदी　 <i class="ti ti-user-circle"></i> Demo Owner</div></header>
+<div class="kk-shell">
+<aside class="kk-sidebar"><div class="fw-bold mb-3">मुख्य मेन्यू</div>
+<a href="dashboard.html">डैशबोर्ड</a><a href="customers.html">ग्राहक</a><a class="active" href="sale-payment.html">लेन-देन</a><a href="customer-ledger.html">बहीखाता</a>
+</aside>
+<main class="kk-content">
+<div class="mb-4"><h1 class="mb-1">नया लेन-देन</h1><div class="kk-muted">ग्राहक की उधार बिक्री या प्राप्त भुगतान दर्ज करें</div></div>
+<div class="row g-3">
+<div class="col-12 col-lg-6"><div class="kk-card h-100">
+<div class="kk-card-head"><i class="ti ti-shopping-cart text-success me-2"></i>उधार बिक्री दर्ज करें</div>
+<div class="kk-card-body">
+<div class="kk-field"><label class="form-label kk-form-label">ग्राहक चुनें *</label><select class="form-select"><option>ग्राहक चुनें</option><option>रामलाल जी</option><option>मोहनलाल जी</option></select></div>
+<div class="kk-field"><label class="form-label kk-form-label">बिक्री की तारीख *</label><input type="date" class="form-control" value="2026-11-23"></div>
+<div class="kk-field"><label class="form-label kk-form-label">राशि (₹) *</label><input type="number" class="form-control" placeholder="0.00"></div>
+<div class="kk-field"><label class="form-label kk-form-label">विवरण *</label><textarea class="form-control" rows="3" placeholder="जैसे: गेहूँ 5 क्विंटल"></textarea></div>
+<div class="kk-field"><label class="form-label kk-form-label">फसल सीजन (वैकल्पिक)</label><input class="form-control" placeholder="जैसे: रबी 2026"></div>
+<button class="btn kk-btn-primary w-100" type="button">बिक्री सेव करें</button>
+</div></div></div>
+<div class="col-12 col-lg-6"><div class="kk-card h-100">
+<div class="kk-card-head"><i class="ti ti-cash text-success me-2"></i>भुगतान दर्ज करें</div>
+<div class="kk-card-body">
+<div class="kk-field"><label class="form-label kk-form-label">ग्राहक चुनें *</label><select class="form-select"><option>ग्राहक चुनें</option><option>रामलाल जी</option><option>मोहनलाल जी</option></select></div>
+<div class="kk-field"><label class="form-label kk-form-label">भुगतान की तारीख *</label><input type="date" class="form-control" value="2026-11-23"></div>
+<div class="kk-field"><label class="form-label kk-form-label">प्राप्त राशि (₹) *</label><input type="number" class="form-control" placeholder="0.00"></div>
+<div class="kk-field"><label class="form-label kk-form-label">भुगतान का विवरण</label><textarea class="form-control" rows="3" placeholder="जैसे: नकद भुगतान"></textarea></div>
+<div class="alert alert-info">भुगतान ग्राहक के कुल बकाया में समायोजित होगा।</div>
+<button class="btn kk-btn-primary w-100" type="button">भुगतान सेव करें</button>
+</div></div></div>
+</div>
+<p class="kk-muted small mt-3">यह UI prototype है। कोई वास्तविक बिक्री या भुगतान सेव नहीं होगा।</p>
+</main></div></body></html>

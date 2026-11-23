@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kisan Khata - Customer Ledger</title>
+<link rel="stylesheet" href="../../../node_modules/@tabler/core/dist/css/tabler.min.css">
+<link rel="stylesheet" href="../../../node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="./prototype.css">
+</head>
+<body>
+<header class="kk-topbar"><a class="kk-brand" href="dashboard.html">🌱 Kisan Khata</a><div>हिंदी　 <i class="ti ti-user-circle"></i> Demo Owner</div></header>
+<div class="kk-shell">
+<aside class="kk-sidebar"><div class="fw-bold mb-3">मुख्य मेन्यू</div>
+<a href="dashboard.html">डैशबोर्ड</a><a href="customers.html">ग्राहक</a><a href="sale-payment.html">लेन-देन</a><a class="active" href="customer-ledger.html">बहीखाता</a>
+</aside>
+<main class="kk-content">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+<div><h1 class="mb-1">ग्राहक बहीखाता</h1><div class="kk-muted">ग्राहक के सभी लेन-देन और बकाया का विवरण</div></div>
+<button class="btn btn-outline-secondary"><i class="ti ti-printer me-1"></i> प्रिंट करें</button>
+</div>
+<div class="kk-card mb-3"><div class="kk-card-body">
+<div class="row g-3 align-items-end">
+<div class="col-12 col-md-5"><label class="form-label kk-form-label">ग्राहक चुनें</label><select class="form-select"><option>रामलाल जी - लोटिया</option><option>मोहनलाल जी - सारंगपुर</option></select></div>
+<div class="col-6 col-md-3"><label class="form-label kk-form-label">शुरुआत</label><input type="date" class="form-control" value="2026-04-01"></div>
+<div class="col-6 col-md-3"><label class="form-label kk-form-label">अंतिम तारीख</label><input type="date" class="form-control" value="2026-11-23"></div>
+<div class="col-12 col-md-1"><button class="btn kk-btn-primary w-100">देखें</button></div>
+</div></div></div>
+<div class="row g-3 mb-3">
+<div class="col-12 col-md-4"><div class="kk-card kk-stat"><span class="kk-muted">कुल उधार बिक्री</span><strong>₹32,000</strong></div></div>
+<div class="col-12 col-md-4"><div class="kk-card kk-stat"><span class="kk-muted">कुल भुगतान</span><strong class="text-success">₹20,000</strong></div></div>
+<div class="col-12 col-md-4"><div class="kk-card kk-stat"><span class="kk-muted">वर्तमान बकाया</span><strong class="text-danger">₹12,000</strong></div></div>
+</div>
+<div class="kk-card"><div class="kk-card-head">लेन-देन का विवरण</div><div class="kk-card-body">
+<div class="kk-table-wrap"><table class="table table-vcenter kk-table">
+<thead><tr><th>तारीख</th><th>विवरण</th><th>प्रकार</th><th class="text-end">राशि</th><th class="text-end">बकाया</th></tr></thead>
+<tbody>
+<tr><td>01-04-2026</td><td>पिछला बकाया</td><td>शेष</td><td class="text-end">—</td><td class="text-end">₹0</td></tr>
+<tr><td>10-04-2026</td><td>गेहूँ 5 क्विंटल</td><td><span class="badge bg-red-lt">उधार बिक्री</span></td><td class="text-end">₹20,000</td><td class="text-end">₹20,000</td></tr>
+<tr><td>15-05-2026</td><td>नकद भुगतान</td><td><span class="badge bg-green-lt">भुगतान</span></td><td class="text-end">₹8,000</td><td class="text-end">₹12,000</td></tr>
+<tr><td>20-06-2026</td><td>सोयाबीन 2 क्विंटल</td><td><span class="badge bg-red-lt">उधार बिक्री</span></td><td class="text-end">₹12,000</td><td class="text-end">₹24,000</td></tr>
+<tr><td>05-07-2026</td><td>नकद भुगतान</td><td><span class="badge bg-green-lt">भुगतान</span></td><td class="text-end">₹12,000</td><td class="text-end">₹12,000</td></tr>
+</tbody></table></div>
+<div class="kk-muted small">यह केवल UI prototype का काल्पनिक sample data है। ब्याज गणना इस prototype में शामिल नहीं है।</div>
+</div></div>
+</main></div></body></html>

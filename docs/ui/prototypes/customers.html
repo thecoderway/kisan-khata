@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kisan Khata - Customers</title>
+<link rel="stylesheet" href="../../../node_modules/@tabler/core/dist/css/tabler.min.css">
+<link rel="stylesheet" href="../../../node_modules/@tabler/icons-webfont/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="./prototype.css">
+</head>
+<body>
+<header class="kk-topbar"><a class="kk-brand" href="dashboard.html">🌱 Kisan Khata</a><div>हिंदी　 <i class="ti ti-user-circle"></i> Demo Owner</div></header>
+<div class="kk-shell">
+<aside class="kk-sidebar"><div class="fw-bold mb-3">मुख्य मेन्यू</div>
+<a href="dashboard.html"><i class="ti ti-layout-dashboard me-2"></i>डैशबोर्ड</a>
+<a class="active" href="customers.html"><i class="ti ti-users me-2"></i>ग्राहक</a>
+<a href="sale-payment.html"><i class="ti ti-shopping-cart me-2"></i>लेन-देन</a>
+<a href="customer-ledger.html"><i class="ti ti-notebook me-2"></i>बहीखाता</a>
+</aside>
+<main class="kk-content">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+<div><h1 class="mb-1">ग्राहक</h1><div class="kk-muted">अपने सभी ग्राहकों का रिकॉर्ड देखें और संभालें</div></div>
+<button class="btn kk-btn-primary"><i class="ti ti-user-plus me-1"></i> नया ग्राहक</button>
+</div>
+<div class="row g-3 mb-4">
+<div class="col-12 col-md-4"><div class="kk-card kk-stat"><span class="kk-muted">कुल ग्राहक</span><strong>125</strong></div></div>
+<div class="col-12 col-md-4"><div class="kk-card kk-stat"><span class="kk-muted">बकाया वाले ग्राहक</span><strong>48</strong></div></div>
+<div class="col-12 col-md-4"><div class="kk-card kk-stat"><span class="kk-muted">शून्य बकाया</span><strong>77</strong></div></div>
+</div>
+<div class="kk-card">
+<div class="kk-card-body">
+<div class="row g-2 mb-3">
+<div class="col-12 col-md-6"><input class="form-control" placeholder="नाम या मोबाइल नंबर से खोजें"></div>
+<div class="col-12 col-md-3"><select class="form-select"><option>सभी ग्राहक</option><option>बकाया वाले</option><option>शून्य बकाया</option></select></div>
+<div class="col-12 col-md-3"><button class="btn btn-outline-secondary w-100">खोजें</button></div>
+</div>
+<div class="kk-table-wrap"><table class="table table-vcenter kk-table">
+<thead><tr><th>ग्राहक</th><th>मोबाइल</th><th>गाँव</th><th class="text-end">कुल बकाया</th><th>विवरण</th></tr></thead>
+<tbody>
+<tr><td><strong>रामलाल जी</strong></td><td>98XXXXXX21</td><td>लोटिया</td><td class="text-end text-danger">₹12,000</td><td><a href="customer-ledger.html">बहीखाता देखें</a></td></tr>
+<tr><td><strong>मोहनलाल जी</strong></td><td>97XXXXXX42</td><td>सारंगपुर</td><td class="text-end">₹0</td><td><a href="customer-ledger.html">बहीखाता देखें</a></td></tr>
+<tr><td><strong>श्याम जी</strong></td><td>99XXXXXX15</td><td>ब्यावरा</td><td class="text-end text-danger">₹8,500</td><td><a href="customer-ledger.html">बहीखाता देखें</a></td></tr>
+</tbody></table></div>
+<div class="kk-muted small">यह केवल UI prototype का काल्पनिक sample data है।</div>
+</div></div>
+</main></div></body></html>
