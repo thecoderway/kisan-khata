@@ -63,7 +63,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 |---|---|---|
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
-| Phase 2 | Multi-Tenancy Foundation | Initial tenant context and tenant-owned builder protections implemented; route-level web/API security coverage is being added on the feature branch; full acceptance remains pending test execution and remaining infrastructure audits |
+| Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections and route-level web/API security coverage implemented on the feature branch; local Pint and full test suite pass; full acceptance remains pending remaining infrastructure and acceptance review |
 | Phase 3 | Roles and User Management | Not started; next official phase |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
@@ -127,19 +127,26 @@ Recorded as complete:
 - Client-supplied shop IDs are not trusted for tenant selection.
 - Initial tests for active shop context and missing/suspended tenant access.
 
-**Current feature-branch work (implementation added; local execution not yet reported):**
+**Current feature-branch work (local execution reported by Product Owner):**
 - Group tenant business routes under both authentication and tenant-resolution middleware; keep logout authenticated but outside tenant resolution so suspended shops can sign out.
-- Add web/API feature coverage for route middleware assignment, authenticated-user shop resolution despite forged query-string `shop_id`, inactive users, suspended shops, request-to-request tenant context resolution and logout behavior.
+- Add web/API feature coverage for middleware assignment, authenticated-user shop resolution despite forged query-string `shop_id`, inactive users, suspended shops, request-to-request tenant context resolution and logout behavior.
+- Local verification: `pint --test` passed for 57 files; `TenantMiddlewareIsolationTest` passed 10 tests / 25 assertions; `TenantOwnedModelIsolationTest` passed 17 tests / 26 assertions; full suite passed 57 tests / 164 assertions.
+
+**Infrastructure audit findings (feature branch):**
+- No application cache/Redis usage was found under `app/`.
+- Session usage is limited to authentication/session regeneration and invalidation.
+- No upload/download implementation or Storage facade usage was found; `Shop.logo_path` is currently only a model attribute.
+- No application jobs or queue dispatch usage was found under `app/`.
+- Direct query-builder access in `MobileOtpService` targets the system-level `mobile_otp_challenges` table; registration uses a transaction to create the Shop and Owner User.
+- The only current tenant-owned Eloquent model identified is `ShopSetting`; its tenant scope and guarded mutation paths have dedicated tests.
 
 **Remaining Phase 2 acceptance work:**
-- Execute and review the new route-level tests and the full suite.
-- Audit every tenant-owned model, relationship and query for consistent shop scoping.
-- Ownership validation and cross-tenant denial tests for each resource.
-- Tenant-aware private file storage and download authorization.
-- Tenant-aware cache keys.
-- Explicit tenant context in background jobs.
-- Tenant-scoped exports and other asynchronous work when implemented.
-- Full Phase 2 acceptance review against Docs 04/05/06/09 and Roadmap Phase 2.
+- Complete a final review of all tenant-owned models, relationships, raw query paths and scope-bypass/system-operation boundaries.
+- Add tenant-aware private file storage and authorized download tests when file features are introduced; no upload/download path currently exists to exercise.
+- Add tenant-aware cache keys/tests when tenant-specific caching is introduced; no application cache usage currently exists.
+- Establish explicit tenant context and lifecycle cleanup for tenant-specific jobs when such jobs are introduced; no application jobs or queue dispatch currently exist.
+- Verify tenant-scoped exports and asynchronous work when implemented.
+- Complete the Phase 2 acceptance review against Docs 04/05/06/09 and Roadmap Phase 2. Do not mark Phase 2 complete solely from the current passing suite.
 
 Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
 
@@ -222,6 +229,15 @@ If a relevant document or ADR conflicts or is ambiguous, stop and report the con
 - Earlier frontend Vite production build was verified during Package 2B.
 
 After PR #5, the Product Owner separately confirmed local `main` synced to `13ad942`, working tree clean and branch divergence `0 0`. No new application test run was reported after the documentation-only PR #5. The test results above remain the latest reported application verification, not a claim of a fresh run at `13ad942`.
+
+**Additional feature-branch verification reported by Product Owner (2026-11-23):**
+- Feature branch: `feat/tenant-isolation-foundation`, local fast-forward to commit `9cd5cc4`.
+- Working tree was clean before the test run.
+- `vendor/bin/pint --test`: **57 files PASS**.
+- `TenantMiddlewareIsolationTest`: **10 passed, 25 assertions**.
+- `TenantOwnedModelIsolationTest`: **17 passed, 26 assertions**.
+- Full `php artisan test`: **57 passed, 164 assertions, 0 failures**.
+- The cache/session/storage/jobs/database-access audit was also reported; findings are recorded in the Phase 2 section above.
 
 No production deployment or release is claimed.
 
