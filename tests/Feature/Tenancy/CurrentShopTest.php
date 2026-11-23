@@ -48,6 +48,24 @@ class CurrentShopTest extends TestCase
         $user->save();
     }
 
+
+    public function test_bulk_user_update_cannot_change_shop_ownership(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shopA->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+
+        User::query()->whereKey($user->id)->update([
+            'shop_id' => $shopB->id,
+        ]);
+    }
+
     public function test_dashboard_does_not_use_a_client_supplied_shop_id(): void
     {
         $userShop = Shop::factory()->create(['name' => 'User Shop']);
