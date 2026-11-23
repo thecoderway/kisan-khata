@@ -30,7 +30,6 @@ class Shop extends Model
         'logo_path',
         'timezone',
         'preferred_language',
-        'status',
     ];
 
     /**
