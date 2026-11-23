@@ -2,8 +2,9 @@
 
 namespace App\Models\Builders;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
+use LogicException;
 
 /**
  * Prevent bulk Eloquent mutations from changing a user's tenant association.
