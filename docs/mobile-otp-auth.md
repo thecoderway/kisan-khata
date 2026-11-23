@@ -55,7 +55,7 @@ Revokes only the token used for the request.
 - Mobile verification timestamp is set only after successful OTP verification.
 - Tokens expire after 30 days by default; configure `MOBILE_OTP_TOKEN_EXPIRY_DAYS`.
 - No OTP is returned in API responses or written to application logs.
-- Default sender is intentionally unconfigured. Implement `App\\Contracts\\MobileOtpSender` and set `MOBILE_OTP_SENDER` to its fully qualified class name to enable SMS delivery. Provider implementations should throw `App\\Exceptions\\MobileOtpDeliveryUnavailable` when delivery fails.
+- Default sender is intentionally unconfigured. Implement `App\Contracts\MobileOtpSender` and set `MOBILE_OTP_SENDER` to its fully qualified class name to enable SMS delivery. Provider implementations should throw `App\Exceptions\MobileOtpDeliveryUnavailable` when delivery fails.
 
 ## Mobile number format
 
