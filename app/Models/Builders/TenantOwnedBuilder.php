@@ -45,6 +45,30 @@ class TenantOwnedBuilder extends Builder
         )->toBase()->delete();
     }
 
+    public function increment($column, $amount = 1, array $extra = [])
+    {
+        if ($column === 'shop_id') {
+            throw new AuthorizationException('Tenant ownership cannot be changed through increment.');
+        }
+
+        return $this->where(
+            $this->getModel()->qualifyColumn('shop_id'),
+            $this->requireCurrentShopId(),
+        )->toBase()->increment($column, $amount, $extra);
+    }
+
+    public function decrement($column, $amount = 1, array $extra = [])
+    {
+        if ($column === 'shop_id') {
+            throw new AuthorizationException('Tenant ownership cannot be changed through decrement.');
+        }
+
+        return $this->where(
+            $this->getModel()->qualifyColumn('shop_id'),
+            $this->requireCurrentShopId(),
+        )->toBase()->decrement($column, $amount, $extra);
+    }
+
     private function requireCurrentShopId(): int
     {
         $shopId = app(CurrentShop::class)->id();
