@@ -72,6 +72,19 @@ class ShopDatabaseTest extends TestCase
         $this->assertTrue($user->is_active);
     }
 
+    public function test_shop_status_is_not_mass_assignable(): void
+    {
+        $shop = Shop::factory()->create([
+            'status' => Shop::STATUS_ACTIVE,
+        ]);
+
+        $shop->fill([
+            'status' => Shop::STATUS_SUSPENDED,
+        ]);
+
+        $this->assertSame(Shop::STATUS_ACTIVE, $shop->status);
+    }
+
     public function test_a_shop_can_have_multiple_settings_with_distinct_keys(): void
     {
         $shop = Shop::factory()->create();
