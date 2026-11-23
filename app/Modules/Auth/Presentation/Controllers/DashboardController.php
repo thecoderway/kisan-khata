@@ -1,8 +1,8 @@
 <?php
 
-namespace App\\Modules\\Auth\\Presentation\\Controllers;
+namespace App\Modules\Auth\Presentation\Controllers;
 
-use Illuminate\\View\\View;
+use Illuminate\View\View;
 
 class DashboardController
 {
