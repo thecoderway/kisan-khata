@@ -9,6 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This is the initial tenancy migration. Existing accounts have no
+        // approved role/shop mapping yet, so never assign them an arbitrary role.
+        if (DB::table('users')->exists()) {
+            throw new RuntimeException(
+                'Cannot apply the shop database migration while users already exist. '
+                .'Define and run an explicit user role/shop mapping before applying this migration.'
+            );
+        }
+
         Schema::create('shops', function (Blueprint $table) {
             $table->id();
             $table->string('name');
