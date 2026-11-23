@@ -4,13 +4,12 @@ namespace App\Modules\Auth\Presentation\Controllers;
 
 use App\Models\Shop;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
 
 class RegisteredShopController
 {
@@ -25,7 +24,7 @@ class RegisteredShopController
             'shop_name' => ['required', 'string', 'max:255'],
             'owner_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
-            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\-\s]{8,20}$/', 'unique:users,mobile'],
+            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\-\\s]{8,20}$/', 'unique:users,mobile'],
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
         ]);
 
