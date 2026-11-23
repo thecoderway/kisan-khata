@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Models\\Builders;
+namespace App\Models\Builders;
 
-use Illuminate\\Database\\Eloquent\\Builder;
-use Illuminate\\Auth\\Access\\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Auth\Access\AuthorizationException;
 
 /**
  * Prevent bulk Eloquent mutations from changing a user's tenant association.
  *
- * @template TModel of \\App\\Models\\User
+ * @template TModel of \App\Models\User
  *
  * @extends Builder<TModel>
  */
