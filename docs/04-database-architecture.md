@@ -1,100 +1,108 @@
-
 # Kisan Khata — Database Architecture
 
-**Document Version:** 1.0  
-**Database:** MySQL  
-**Architecture:** Shared Database, Multi-Tenant
+**Document Version:** 2.0  
+**Status:** Approved  
+**Database:** MySQL 8.4  
+**Architecture:** Shared Database, Multi-Tenant  
+**Backend:** Laravel 13
 
 ---
 
 ## 1. Database Design Principles
 
 1. Use relational database design.
-2. Use foreign keys wherever appropriate.
-3. Use tenant identifiers on tenant-owned tables.
-4. Use DECIMAL for financial amounts.
-5. Use indexes for common queries.
-6. Preserve financial history.
-7. Avoid storing duplicate authoritative balances.
-8. Use migrations for schema changes.
-9. Use explicit transaction status fields.
-10. Design for future versioned API support.
+2. Use MySQL 8.4.
+3. Use foreign keys wherever appropriate.
+4. Every tenant-owned record must be associated with `shop_id`.
+5. Use DECIMAL for financial amounts.
+6. Preserve financial transaction history and audit history.
+7. Do not store manually editable balances as authoritative accounting data.
+8. Use Laravel migrations for schema changes.
+9. Use database transactions for financial operations.
+10. Design for future versioned API and Android support.
+11. Enforce tenant isolation in application services and database relationships.
+12. Avoid duplicate financial effects.
 
-All table names below are proposed names.
-
-Column definitions and relationships must be validated against the actual Laravel and MySQL versions.
+All table and column names are proposed. Final implementation must validate relationships, constraints and indexes against actual application requirements.
 
 ## 2. Core Table Groups
 
 ### Identity and Tenancy
-
-- users
-- shops
-- shop_user
-- shop_settings
-- roles or permissions (depending on authorization implementation)
+- `users`
+- `shops`
+- `shop_settings`
 
 ### Customer Management
-
-- customers
+- `customers`
 
 ### Sales
-
-- sales
-- sale_attachments
+- `sales`
+- `sale_revisions`
+- `sale_attachments`
 
 ### Payments
-
-- payments
-- payment_allocations
-- payment_attachments
+- `payments`
+- `payment_revisions`
+- `payment_attachments`
+- `customer_advances`
 
 ### Accounting
-
-- financial_transactions
-- ledger_entries
-- account_balance_snapshots
+- `financial_transactions`
+- `ledger_entries`
+- `customer_accounts`
+- `account_balance_snapshots`
 
 ### Interest
-
-- interest_policies
-- interest_policy_versions
-- interest_calculation_runs
-- interest_calculation_items
+- `interest_policies`
+- `interest_policy_versions`
+- `interest_calculation_runs`
+- `interest_calculation_items`
 
 ### Settlements
-
-- settlements
-- settlement_items
+- `settlements`
+- `settlement_items`
 
 ### Audit and SaaS
+- `audit_logs`
+- `subscription_plans`
+- `subscriptions`
+- `subscription_payments`
+- `idempotency_keys`
 
-- audit_logs
-- subscriptions
-- subscription_plans
-- subscription_payments
-- idempotency_keys
+**Important:** There is no `payment_allocations` table in this architecture.
 
 ## 3. users
 
-Purpose: Store platform user accounts.
+Purpose: Store platform and shop user accounts.
 
 Suggested columns:
 
-- id
-- name
-- email (nullable, unique when present)
-- mobile (nullable, unique when present)
-- password
-- email_verified_at
-- mobile_verified_at
-- preferred_language
-- is_active
-- remember_token
-- created_at
-- updated_at
+- `id`
+- `shop_id` — nullable only for platform-level accounts, if required
+- `name`
+- `email` — nullable, unique when present
+- `mobile` — nullable, unique when present
+- `password`
+- `role` — OWNER, MANAGER, STAFF or platform role as separately defined
+- `email_verified_at`
+- `mobile_verified_at`
+- `preferred_language`
+- `is_active`
+- `remember_token`
+- `created_at`
+- `updated_at`
 
-Authentication identifiers must follow the selected Laravel authentication design.
+Rules:
+
+1. A shop user belongs to exactly one shop.
+2. A shop user has exactly one role.
+3. Shop users cannot switch between multiple shops.
+4. Owner, Manager and Staff are fixed application roles.
+5. Custom per-user permission configuration is not part of the initial release.
+6. A shop can have only one Owner, up to two Managers and up to five Staff members.
+7. Role and shop capacity constraints must be enforced by backend services and appropriate database constraints where practical.
+
+The final platform administrator account structure may be separated from shop users if required.
 
 ## 4. shops
 
@@ -102,23 +110,23 @@ Purpose: Store merchant/shop information.
 
 Suggested columns:
 
-- id
-- name
-- owner_name
-- mobile
-- email (nullable)
-- address (nullable)
-- village (nullable)
-- tehsil (nullable)
-- district (nullable)
-- state (nullable)
-- pincode (nullable)
-- logo_path (nullable)
-- timezone
-- preferred_language
-- status
-- created_at
-- updated_at
+- `id`
+- `name`
+- `owner_name`
+- `mobile`
+- `email` — nullable
+- `address` — nullable
+- `village` — nullable
+- `tehsil` — nullable
+- `district` — nullable
+- `state` — nullable
+- `pincode` — nullable
+- `logo_path` — nullable
+- `timezone`
+- `preferred_language`
+- `status`
+- `created_at`
+- `updated_at`
 
 Suggested statuses:
 
@@ -126,126 +134,156 @@ Suggested statuses:
 - SUSPENDED
 - CLOSED
 
-## 5. shop_user
+Each shop is an independent tenant.
 
-Purpose: Connect users with shops.
-
-Suggested columns:
-
-- id
-- shop_id
-- user_id
-- role
-- permissions (only if a structured permission model is not used)
-- is_active
-- joined_at
-- created_at
-- updated_at
-
-Constraints:
-
-- Unique shop_id + user_id
-- Foreign key to shops
-- Foreign key to users
-
-A user may belong to multiple shops.
-
-## 6. shop_settings
+## 5. shop_settings
 
 Purpose: Store shop-level configuration.
 
 Suggested columns:
 
-- id
-- shop_id
-- setting_key
-- setting_value
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `setting_key`
+- `setting_value`
+- `created_at`
+- `updated_at`
 
-Unique constraint:
+Constraint:
 
-- shop_id + setting_key
+- Unique `shop_id + setting_key`
 
-Do not store sensitive secrets in ordinary settings fields.
+Do not store passwords, tokens or sensitive secrets in ordinary settings fields.
 
-## 7. customers
+Interest configuration should use dedicated interest policy tables rather than unstructured settings.
 
-Purpose: Store customer information.
+## 6. customers
+
+Purpose: Store customer information and language-specific representations.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_code
-- name
-- father_name
-- mobile
-- alternate_mobile (nullable)
-- village
-- address (nullable)
-- pincode (nullable)
-- notes (nullable)
-- status
-- created_by
-- created_at
-- updated_at
-- deleted_at (nullable)
+- `id`
+- `shop_id`
+- `customer_code`
+- `name_original`
+- `name_original_language`
+- `name_hi` — nullable
+- `name_en` — nullable
+- `mobile` — nullable
+- `village_original` — nullable
+- `village_original_language` — nullable
+- `village_hi` — nullable
+- `village_en` — nullable
+- `address_original` — nullable
+- `address_original_language` — nullable
+- `address_hi` — nullable
+- `address_en` — nullable
+- `notes` — nullable
+- `status`
+- `created_by`
+- `created_at`
+- `updated_at`
+- `deleted_at` — nullable
+
+Rules:
+
+1. Customer name is mandatory.
+2. Mobile number and village are optional.
+3. Original user-entered text must be preserved.
+4. Hindi and English translations must be stored separately.
+5. Automatic translation must never overwrite original text.
+6. Translated text may be corrected independently.
+7. Translation provider and workflow will be finalized separately.
 
 Indexes:
 
-- shop_id + customer_code
-- shop_id + mobile
-- shop_id + name
-- shop_id + father_name
-- shop_id + village
+- `shop_id + customer_code`
+- `shop_id + mobile`
+- `shop_id + name_original`
 
-Customer code uniqueness should be scoped to the shop.
+Customer code uniqueness must be scoped to the shop.
 
-## 8. sales
+## 7. sales
 
-Purpose: Store credit sale documents.
+Purpose: Store customer credit sales.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- sale_number
-- sale_date
-- amount DECIMAL(15,2)
-- description (nullable)
-- bill_number (nullable)
-- notes (nullable)
-- status
-- financial_transaction_id (nullable)
-- created_by
-- posted_by (nullable)
-- posted_at (nullable)
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `customer_id`
+- `sale_number`
+- `sale_date`
+- `amount DECIMAL(15,2)`
+- `description_original` — nullable
+- `description_original_language` — nullable
+- `description_hi` — nullable
+- `description_en` — nullable
+- `crop_season` — nullable
+- `status`
+- `financial_transaction_id` — nullable
+- `created_by`
+- `posted_by` — nullable
+- `posted_at` — nullable
+- `created_at`
+- `updated_at`
+
+Rules:
+
+1. Every sale belongs to one shop and one customer.
+2. Sale date and amount are mandatory.
+3. Amount must be greater than zero.
+4. Every sale preserves its own effective date.
+5. A sale must not inherit the calculation start date of an older outstanding balance.
+6. Posted sale correction is permitted only to the Shop Owner.
+7. Posted financial history must not be physically deleted.
 
 Suggested statuses:
 
 - DRAFT
 - POSTED
-- VOIDED
 
-Posted sales must not be silently overwritten.
+Any additional status must follow an approved correction or cancellation workflow.
+
+## 8. sale_revisions
+
+Purpose: Preserve previous and updated versions of Owner-corrected sales.
+
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `sale_id`
+- `revision_number`
+- `old_values JSON`
+- `new_values JSON`
+- `correction_reason`
+- `changed_by`
+- `changed_at`
+- `created_at`
+
+Rules:
+
+- Preserve original and updated values.
+- Record the acting Owner.
+- Record correction reason and timestamp.
+- Revision history must not be editable through normal application operations.
+- Financial recalculation must reference the relevant correction.
 
 ## 9. sale_attachments
 
 Suggested columns:
 
-- id
-- shop_id
-- sale_id
-- file_path
-- original_filename
-- mime_type
-- file_size
-- uploaded_by
-- created_at
+- `id`
+- `shop_id`
+- `sale_id`
+- `file_path`
+- `original_filename`
+- `mime_type`
+- `file_size`
+- `uploaded_by`
+- `created_at`
 
 Files must be stored privately.
 
@@ -255,412 +293,565 @@ Purpose: Store money received from customers.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- payment_number
-- payment_date
-- amount DECIMAL(15,2)
-- payment_method
-- reference_number (nullable)
-- description (nullable)
-- status
-- financial_transaction_id (nullable)
-- created_by
-- posted_by (nullable)
-- posted_at (nullable)
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `customer_id`
+- `payment_number`
+- `payment_date`
+- `amount DECIMAL(15,2)`
+- `payment_method` — nullable
+- `reference_number` — nullable
+- `description` — nullable
+- `status`
+- `financial_transaction_id` — nullable
+- `created_by`
+- `posted_by` — nullable
+- `posted_at` — nullable
+- `created_at`
+- `updated_at`
 
-Suggested statuses:
+Rules:
 
-- DRAFT
-- POSTED
-- REVERSED
+1. Every payment belongs to one shop and one customer.
+2. Payment date and amount are mandatory.
+3. Amount must be greater than zero.
+4. Payments reduce the customer's consolidated payable.
+5. Payments are not allocated to individual sale IDs.
+6. Payments are not split into interest and principal allocations.
+7. Multiple payments on the same date must not duplicate interest.
+8. Excess payment must be recorded as customer advance.
+9. Only the Shop Owner may edit posted payments.
 
-## 11. payment_allocations
+## 11. payment_revisions
 
-Purpose: Record how a payment is distributed.
-
-Suggested columns:
-
-- id
-- shop_id
-- payment_id
-- financial_transaction_id
-- target_transaction_id (nullable)
-- component
-- allocated_amount DECIMAL(15,2)
-- allocation_sequence
-- policy_version_id (nullable)
-- created_at
-
-Possible components:
-
-- PRINCIPAL
-- INTEREST
-
-Every allocation must be traceable to the payment and the outstanding item it reduces.
-
-## 12. financial_transactions
-
-Purpose: Central financial transaction header.
+Purpose: Preserve previous and updated versions of corrected payments.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- transaction_number
-- transaction_type
-- effective_date
-- status
-- source_type (nullable)
-- source_id (nullable)
-- description (nullable)
-- created_by
-- posted_by (nullable)
-- posted_at (nullable)
-- reversal_of_transaction_id (nullable)
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `payment_id`
+- `revision_number`
+- `old_values JSON`
+- `new_values JSON`
+- `correction_reason`
+- `changed_by`
+- `changed_at`
+- `created_at`
 
-Suggested transaction types:
+Rules:
+
+- Preserve old and new payment values.
+- Record the acting Owner.
+- Record correction reason and timestamp.
+- Preserve immutable revision history.
+- Trigger appropriate financial recalculation.
+
+## 12. payment_attachments
+
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `payment_id`
+- `file_path`
+- `original_filename`
+- `mime_type`
+- `file_size`
+- `uploaded_by`
+- `created_at`
+
+## 13. customer_advances
+
+Purpose: Maintain money received beyond the customer's payable amount.
+
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `customer_id`
+- `source_payment_id`
+- `advance_amount DECIMAL(15,2)`
+- `remaining_amount DECIMAL(15,2)`
+- `effective_date`
+- `status`
+- `created_at`
+- `updated_at`
+
+Rules:
+
+1. Advances must be separately identifiable.
+2. An advance must not be represented as a negative sale.
+3. Advance source payment must be traceable.
+4. Remaining advance must be auditable.
+5. Automatic adjustment against future sales requires a separately approved rule.
+
+If advance utilization is implemented later, its usage history must be recorded separately rather than overwriting the original advance.
+
+## 14. financial_transactions
+
+Purpose: Central financial transaction reference.
+
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `customer_id`
+- `transaction_number`
+- `transaction_type`
+- `effective_date`
+- `status`
+- `source_type` — nullable
+- `source_id` — nullable
+- `description` — nullable
+- `created_by`
+- `posted_by` — nullable
+- `posted_at` — nullable
+- `created_at`
+- `updated_at`
+
+Conceptual transaction types:
 
 - OPENING_BALANCE
 - CREDIT_SALE
 - PAYMENT
-- INTEREST_CHARGE
+- INTEREST_CALCULATION
+- INTEREST_POSTING
+- CUSTOMER_ADVANCE
 - SETTLEMENT
 - ADJUSTMENT
-- REVERSAL
 
-Use unique constraints for transaction numbers within a shop.
+Use a unique constraint on `shop_id + transaction_number`.
 
-## 13. ledger_entries
+The exact transaction and ledger representation must be finalized during implementation design.
 
-Purpose: Store immutable financial posting entries.
+## 15. ledger_entries
+
+Purpose: Preserve financial posting effects and provide chronological ledger history.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- financial_transaction_id
-- component
-- debit_amount DECIMAL(15,2)
-- credit_amount DECIMAL(15,2)
-- effective_date
-- sequence_number
-- description (nullable)
-- created_at
+- `id`
+- `shop_id`
+- `customer_id`
+- `financial_transaction_id`
+- `component`
+- `debit_amount DECIMAL(15,2)`
+- `credit_amount DECIMAL(15,2)`
+- `effective_date`
+- `sequence_number`
+- `description` — nullable
+- `created_at`
 
 Possible components:
 
-- PRINCIPAL
+- OUTSTANDING
 - INTEREST
+- CUSTOMER_ADVANCE
+- SETTLEMENT
+- ADJUSTMENT
 
 Rules:
 
-- A posted transaction produces the required ledger entries.
-- Debit and credit semantics must remain consistent.
-- Both amounts must not be positive in the same entry.
-- A zero-value entry should normally be rejected.
-- Posted entries must not be silently edited or deleted.
+1. Every posted financial transaction must generate the required ledger effect.
+2. Debit and credit semantics must be defined consistently.
+3. Both debit and credit amounts must not be positive in the same entry.
+4. Zero-value entries should normally be rejected.
+5. Posted ledger history must not be silently edited or deleted.
+6. Corrections must create traceable financial effects and preserve revision history.
+7. Ledger entries must not introduce individual sale-level payment allocations.
 
-The application must define and document the receivable debit/credit convention.
+The final receivable debit/credit convention must be documented before implementation.
 
-## 14. account_balance_snapshots
+## 16. customer_accounts
 
-Purpose: Optional performance optimization.
+Purpose: Maintain one current financial account per customer per shop.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- principal_balance DECIMAL(15,2)
-- interest_balance DECIMAL(15,2)
-- total_balance DECIMAL(15,2)
-- as_of_date
-- last_transaction_id
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `customer_id`
+- `outstanding_balance DECIMAL(15,2)`
+- `advance_balance DECIMAL(15,2)`
+- `last_interest_calculation_date` — nullable
+- `last_payment_date` — nullable
+- `version`
+- `created_at`
+- `updated_at`
+
+Constraint:
+
+- Unique `shop_id + customer_id`
+
+Rules:
+
+1. This is a current-state projection, not the authoritative financial history.
+2. The account must be rebuildable from financial transactions and approved calculation rules.
+3. Updates must occur transactionally.
+4. Concurrent financial operations must not corrupt the account.
+5. The account must distinguish outstanding from customer advances.
+6. The account must not be manually edited as an alternative to financial transactions.
+
+## 17. account_balance_snapshots
+
+Purpose: Optional performance optimization and historical balance reference.
+
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `customer_id`
+- `outstanding_balance DECIMAL(15,2)`
+- `advance_balance DECIMAL(15,2)`
+- `as_of_date`
+- `last_transaction_id`
+- `created_at`
 
 Snapshots are projections, not the authoritative accounting source.
 
-They must be rebuildable from ledger entries.
+They must be rebuildable and reconcilable from financial history.
 
-## 15. interest_policies
+## 18. interest_policies
 
-Purpose: Identify the shop's interest policy.
-
-Suggested columns:
-
-- id
-- shop_id
-- name
-- status
-- created_by
-- created_at
-- updated_at
-
-## 16. interest_policy_versions
-
-Purpose: Preserve the historical configuration of interest rules.
+Purpose: Identify a shop's interest policy.
 
 Suggested columns:
 
-- id
-- shop_id
-- interest_policy_id
-- version_number
-- rate_value DECIMAL(12,8)
-- rate_period
-- interest_free_value
-- interest_free_unit
-- calculation_method
-- day_count_convention
-- partial_period_method
-- compounding_method
-- interest_basis
-- rounding_method
-- payment_allocation_method
-- effective_from
-- effective_until (nullable)
-- approved_by
-- approved_at
-- created_at
+- `id`
+- `shop_id`
+- `name`
+- `status`
+- `created_by`
+- `created_at`
+- `updated_at`
 
-Do not activate unapproved policy versions.
+A shop must have a default interest policy.
 
-The fields above are candidates. Final structure must follow approved business decisions.
+Customer-specific interest rates may override the shop default according to approved business rules.
 
-## 17. interest_calculation_runs
+## 19. interest_policy_versions
 
-Purpose: Record calculation execution.
+Purpose: Preserve historical interest configuration.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- policy_version_id
-- calculation_start_date
-- calculation_end_date
-- calculation_status
-- total_interest DECIMAL(15,2)
-- calculation_reference
-- executed_by
-- executed_at
-- created_at
+- `id`
+- `shop_id`
+- `interest_policy_id`
+- `version_number`
+- `monthly_rate DECIMAL(12,8)`
+- `grace_period_days`
+- `capitalization_policy`
+- `effective_from`
+- `effective_until` — nullable
+- `approved_by`
+- `approved_at`
+- `created_at`
 
-## 18. interest_calculation_items
+Possible capitalization policies:
 
-Purpose: Record calculation details.
+- CAPITALIZED
+- SEPARATE
+
+The policy version must preserve the actual configuration used for historical calculations.
+
+Customer-specific rates may require a separate customer policy override or versioned customer-interest configuration.
+
+Exact policy transition behavior remains pending approval.
+
+## 20. interest_calculation_runs
+
+Purpose: Record each interest calculation execution.
 
 Suggested columns:
 
-- id
-- shop_id
-- interest_calculation_run_id
-- source_transaction_id
-- eligible_principal DECIMAL(15,2)
-- rate_value DECIMAL(12,8)
-- period_start
-- period_end
-- eligible_days
-- unrounded_interest DECIMAL(20,8)
-- rounded_interest DECIMAL(15,2)
-- explanation_json
-- created_at
+- `id`
+- `shop_id`
+- `customer_id`
+- `policy_version_id`
+- `trigger_type`
+- `calculation_date`
+- `calculation_status`
+- `total_interest DECIMAL(20,8)`
+- `calculation_reference`
+- `trigger_transaction_id` — nullable
+- `executed_by` — nullable
+- `executed_at`
+- `created_at`
 
-## 19. settlements
+Possible trigger types:
+
+- PAYMENT
+- ANNUAL_AUTO_SETTLEMENT
+
+The calculation reference and uniqueness strategy must prevent duplicate calculation for the same applicable period.
+
+## 21. interest_calculation_items
+
+Purpose: Preserve detailed calculation components.
+
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `interest_calculation_run_id`
+- `source_type`
+- `source_id`
+- `eligible_balance DECIMAL(20,8)`
+- `rate_value DECIMAL(12,8)`
+- `period_start`
+- `period_end`
+- `actual_days`
+- `unrounded_interest DECIMAL(20,8)`
+- `rounded_interest DECIMAL(15,2)`
+- `explanation_json`
+- `created_at`
+
+The source may represent:
+
+- Consolidated carried-forward outstanding.
+- An individual new sale.
+- A separately maintained interest component, where applicable.
+
+Each calculation item must make it possible to explain which amount, date range and rate produced the interest.
+
+## 22. settlements
 
 Purpose: Store crop-season settlement records.
 
 Suggested columns:
 
-- id
-- shop_id
-- customer_id
-- settlement_number
-- settlement_date
-- principal_before DECIMAL(15,2)
-- interest_before DECIMAL(15,2)
-- payment_amount DECIMAL(15,2)
-- principal_carried_forward DECIMAL(15,2)
-- interest_carried_forward DECIMAL(15,2)
-- status
-- financial_transaction_id
-- notes (nullable)
-- created_by
-- posted_by (nullable)
-- posted_at (nullable)
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `customer_id`
+- `settlement_number`
+- `settlement_date`
+- `outstanding_before DECIMAL(15,2)`
+- `amount_received DECIMAL(15,2)`
+- `outstanding_carried_forward DECIMAL(15,2)`
+- `status`
+- `financial_transaction_id`
+- `notes` — nullable
+- `created_by`
+- `posted_by` — nullable
+- `posted_at` — nullable
+- `created_at`
+- `updated_at`
 
-Final behavior depends on the approved settlement policy.
+Detailed settlement fields and accounting behavior must follow the final approved settlement rules.
 
-## 20. settlement_items
+Do not assume separate principal and interest settlement allocation.
+
+## 23. settlement_items
 
 Purpose: Preserve settlement component details.
 
 Suggested columns:
 
-- id
-- shop_id
-- settlement_id
-- source_transaction_id (nullable)
-- component
-- amount DECIMAL(15,2)
-- treatment
-- created_at
+- `id`
+- `shop_id`
+- `settlement_id`
+- `source_transaction_id` — nullable
+- `component`
+- `amount DECIMAL(15,2)`
+- `treatment`
+- `created_at`
 
 Possible treatments:
 
 - PAID
 - CARRIED_FORWARD
 - ADJUSTED
-- REVERSED
 
-## 21. audit_logs
+Final component and treatment definitions depend on approved settlement accounting.
+
+## 24. audit_logs
+
+Purpose: Maintain audit history for financial, user and security-sensitive actions.
 
 Suggested columns:
 
-- id
-- shop_id (nullable for platform-level events)
-- user_id (nullable)
-- action
-- entity_type
-- entity_id
-- reason (nullable)
-- old_values (nullable JSON)
-- new_values (nullable JSON)
-- ip_address (nullable)
-- user_agent (nullable)
-- created_at
+- `id`
+- `shop_id` — nullable for platform-level events
+- `user_id` — nullable for system events
+- `action`
+- `entity_type`
+- `entity_id`
+- `reason` — nullable
+- `old_values JSON` — nullable
+- `new_values JSON` — nullable
+- `ip_address` — nullable
+- `user_agent` — nullable
+- `created_at`
+
+Audit events include:
+
+- Sale creation and correction.
+- Payment creation and correction.
+- Customer changes.
+- Interest policy changes.
+- Interest calculation.
+- Settlement.
+- User and role changes.
+- Subscription changes.
+- Security-sensitive operations.
 
 Do not store passwords, tokens or unnecessary sensitive data.
 
-## 22. SaaS Subscription Tables
+Ordinary application users must not be able to modify or delete audit records.
+
+## 25. SaaS Subscription Tables
 
 ### subscription_plans
 
-- id
-- name
-- description
-- price DECIMAL(15,2)
-- billing_interval
-- limits_json
-- is_active
-- created_at
-- updated_at
+Suggested columns:
+
+- `id`
+- `name`
+- `description`
+- `price DECIMAL(15,2)`
+- `billing_interval`
+- `trial_duration_days` — nullable
+- `limits_json`
+- `is_active`
+- `created_at`
+- `updated_at`
+
+Initial plans:
+
+- Free Trial
+- Basic
+- Standard
+- Premium
 
 ### subscriptions
 
-- id
-- shop_id
-- subscription_plan_id
-- starts_at
-- ends_at
-- trial_ends_at (nullable)
-- grace_ends_at (nullable)
-- status
-- created_at
-- updated_at
+Suggested columns:
+
+- `id`
+- `shop_id`
+- `subscription_plan_id`
+- `starts_at`
+- `ends_at`
+- `trial_ends_at` — nullable
+- `grace_ends_at` — nullable
+- `status`
+- `created_at`
+- `updated_at`
+
+Subscription belongs to the shop, not individual users.
 
 ### subscription_payments
 
-- id
-- shop_id
-- subscription_id
-- amount DECIMAL(15,2)
-- payment_reference
-- payment_status
-- paid_at (nullable)
-- created_at
-- updated_at
+Suggested columns:
 
-## 23. idempotency_keys
+- `id`
+- `shop_id`
+- `subscription_id`
+- `amount DECIMAL(15,2)`
+- `payment_reference`
+- `payment_status`
+- `paid_at` — nullable
+- `created_at`
+- `updated_at`
+
+## 26. idempotency_keys
 
 Purpose: Prevent duplicate financial operations caused by request retries.
 
 Suggested columns:
 
-- id
-- shop_id
-- user_id
-- idempotency_key
-- request_hash
-- response_reference (nullable)
-- status
-- created_at
-- updated_at
+- `id`
+- `shop_id`
+- `user_id`
+- `idempotency_key`
+- `request_hash`
+- `response_reference` — nullable
+- `status`
+- `created_at`
+- `updated_at`
 
 Unique constraint:
 
-- shop_id + idempotency_key
+- `shop_id + idempotency_key`
 
-## 24. Important Database Constraints
+The same key with a different request payload must be rejected.
+
+## 27. Important Database Constraints
 
 Use:
 
-- Foreign keys
-- Unique constraints
-- Check constraints where supported by the selected MySQL version
-- Composite tenant indexes
-- Non-null constraints for mandatory fields
+- Foreign keys.
+- Unique constraints.
+- Check constraints supported by MySQL 8.4.
+- Composite tenant-aware indexes.
+- Non-null constraints for mandatory fields.
 
 A foreign key alone does not guarantee that related records belong to the same shop.
 
 Where necessary, use composite tenant-aware keys or enforce ownership through validated application services and database constraints.
 
-## 25. Indexing Strategy
+Every financial operation must validate that customer, sale, payment and transaction references belong to the same shop.
 
-Frequently queried records should have indexes beginning with shop_id.
+## 28. Indexing Strategy
+
+Frequently queried records should have indexes beginning with `shop_id`.
 
 Examples:
 
-- customers(shop_id, mobile)
-- customers(shop_id, name)
-- sales(shop_id, customer_id, sale_date)
-- payments(shop_id, customer_id, payment_date)
-- financial_transactions(shop_id, customer_id, effective_date)
-- ledger_entries(shop_id, customer_id, effective_date)
+- `customers(shop_id, customer_code)`
+- `customers(shop_id, mobile)`
+- `customers(shop_id, name_original)`
+- `sales(shop_id, customer_id, sale_date)`
+- `payments(shop_id, customer_id, payment_date)`
+- `financial_transactions(shop_id, customer_id, effective_date)`
+- `ledger_entries(shop_id, customer_id, effective_date)`
+- `interest_calculation_runs(shop_id, customer_id, calculation_date)`
+- `audit_logs(shop_id, entity_type, entity_id)`
 
-Review indexes using real query patterns and EXPLAIN.
+Review indexes using actual query patterns and EXPLAIN.
 
-Avoid adding unnecessary indexes to every column.
+Avoid unnecessary indexes on every column.
 
-## 26. Data Retention
+## 29. Data Retention
 
-Financial records must be retained according to the product's approved retention policy and applicable legal requirements.
+Financial records must be retained according to the approved retention policy and applicable legal requirements.
 
 Do not cascade-delete posted financial transactions when a customer or shop is deactivated.
 
 Use controlled archival and retention processes.
 
-## 27. Migration Strategy
+## 30. Migration Strategy
 
 Every database schema change must use Laravel migrations.
 
 Requirements:
 
-- Migrations must be reversible where practical.
+- Migrations should be reversible where practical.
 - Large production changes must be deployed safely.
 - Existing financial data must not be silently modified.
 - Data migrations must be tested.
 - Backups must be available before high-risk changes.
+- Tenant data integrity must be validated after migrations.
+- Financial calculations must be reconciled after relevant data migrations.
 
-## 28. Database Acceptance Criteria
+## 31. Database Acceptance Criteria
 
 - Every tenant-owned record has a tenant relationship.
-- Financial transactions are traceable.
-- Posted ledger entries are immutable.
-- Payment allocations are recorded.
+- One shop user belongs to one shop and has one role.
+- Shop user capacity limits are enforced.
+- No many-to-many shop membership is required.
+- Customer original and translated text are stored separately.
+- Sales preserve their effective dates.
+- Payments use consolidated payable.
+- No payment allocation table or sale-level allocation is required.
+- Customer advances are separately identifiable.
 - Interest policy versions are preserved.
+- Interest calculation components are traceable.
+- Owner corrections preserve revision and audit history.
 - Settlements are traceable.
-- Duplicate requests are prevented.
+- Duplicate financial requests are prevented.
 - Cross-tenant references are rejected.
-- Financial snapshots can be rebuilt.
+- Customer account projections can be rebuilt.
+- Financial history is not cascade-deleted.
