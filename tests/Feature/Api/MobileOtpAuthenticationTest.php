@@ -59,6 +59,12 @@ class MobileOtpAuthenticationTest extends TestCase
         ]);
         $this->assertNotNull($user->fresh()->mobile_verified_at);
         $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        $this->withToken($response->json('token'))
+            ->getJson('/api/user')
+            ->assertOk()
+            ->assertJsonPath('id', $user->id)
+            ->assertJsonPath('shop.id', $shop->id);
     }
 
     public function test_unknown_mobile_gets_generic_response_without_creating_challenge(): void
