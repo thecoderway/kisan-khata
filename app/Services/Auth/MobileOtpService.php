@@ -15,21 +15,6 @@ class MobileOtpService
 
     public function request(string $mobile): bool
     {
-        $user = User::query()->with('shop')->where('mobile', $mobile)->first();
-
-        if (! $this->isEligible($user)) {
-            return false;
-        }
-
-        $latest = DB::table('mobile_otp_challenges')
-            ->where('mobile', $mobile)
-            ->latest('id')
-            ->first();
-
-        if ($latest && now()->diffInSeconds($latest->created_at) < (int) config('mobile_otp.resend_cooldown_seconds', 60)) {
-            return true;
-        }
-
         $code = str_pad(
             (string) random_int(0, (10 ** (int) config('mobile_otp.length', 6)) - 1),
             (int) config('mobile_otp.length', 6),
@@ -37,7 +22,30 @@ class MobileOtpService
             STR_PAD_LEFT,
         );
 
-        DB::transaction(function () use ($mobile, $code): void {
+        $challengeCreated = DB::transaction(function () use ($mobile, $code): bool {
+            // Lock the account row so concurrent requests for the same mobile
+            // cannot both pass the resend-cooldown check.
+            $user = User::query()->where('mobile', $mobile)->lockForUpdate()->first();
+
+            if (! $user) {
+                return false;
+            }
+
+            $user->load('shop');
+
+            if (! $this->isEligible($user)) {
+                return false;
+            }
+
+            $latest = DB::table('mobile_otp_challenges')
+                ->where('mobile', $mobile)
+                ->latest('id')
+                ->first();
+
+            if ($latest && now()->diffInSeconds($latest->created_at) < (int) config('mobile_otp.resend_cooldown_seconds', 60)) {
+                return false;
+            }
+
             DB::table('mobile_otp_challenges')
                 ->where('mobile', $mobile)
                 ->whereNull('consumed_at')
@@ -52,7 +60,13 @@ class MobileOtpService
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            return true;
         });
+
+        if (! $challengeCreated) {
+            return false;
+        }
 
         try {
             $this->sender->send($mobile, $code);
@@ -104,7 +118,11 @@ class MobileOtpService
                 return ['status' => 'invalid'];
             }
 
-            $user = User::query()->with('shop')->where('mobile', $mobile)->first();
+            $user = User::query()
+                ->with('shop')
+                ->where('mobile', $mobile)
+                ->lockForUpdate()
+                ->first();
 
             if (! $this->isEligible($user)) {
                 DB::table('mobile_otp_challenges')->where('id', $challenge->id)->update([
