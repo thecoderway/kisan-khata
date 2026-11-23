@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Modules\\Auth\\Presentation\\Controllers;
+namespace App\Modules\Auth\Presentation\Controllers;
 
-use Illuminate\\Http\\RedirectResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Password;
-use Illuminate\\View\\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
+use Illuminate\View\View;
 
 class PasswordResetLinkController
 {
