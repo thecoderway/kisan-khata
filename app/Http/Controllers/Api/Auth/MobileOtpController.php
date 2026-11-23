@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Http\Controllers\Api\Auth;
+namespace App\\Http\\Controllers\\Api\\Auth;
 
-use App\Exceptions\MobileOtpDeliveryUnavailable;
-use App\Http\Controllers\Controller;
-use App\Services\Auth\MobileOtpService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter as RateLimiterFacade;
+use App\\Exceptions\\MobileOtpDeliveryUnavailable;
+use App\\Http\\Controllers\\Controller;
+use App\\Services\\Auth\\MobileOtpService;
+use Illuminate\\Http\\JsonResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\RateLimiter as RateLimiterFacade;
 
 class MobileOtpController extends Controller
 {
     public function request(Request $request, MobileOtpService $otp): JsonResponse
     {
         $validated = $request->validate([
-            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\-\\s]{8,20}$/'],
+            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\\\-\\\\s]{8,20}$/'],
         ]);
 
         $mobile = trim($validated['mobile']);
-        $mobileKey = hash('sha256', $mobile);
+        $mobileKey = hash('sha256', $this->mobileRateLimitIdentity($mobile));
         $ipKey = $request->ip() ?? 'unknown';
         $window = (int) config('mobile_otp.request_limit_window_seconds', 900);
         $mobileLimit = (int) config('mobile_otp.request_limit_per_mobile', 3);
@@ -48,12 +48,12 @@ class MobileOtpController extends Controller
     public function verify(Request $request, MobileOtpService $otp): JsonResponse
     {
         $validated = $request->validate([
-            'mobile' => ['required', 'string', 'max:20'],
+            'mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\\\\-\\\\s]{8,20}$/'],
             'otp' => ['required', 'digits:6'],
         ]);
 
         $mobile = trim($validated['mobile']);
-        $key = 'mobile-otp:verify:'.hash('sha256', $mobile);
+        $key = 'mobile-otp:verify:'.hash('sha256', $this->mobileRateLimitIdentity($mobile));
         $limit = (int) config('mobile_otp.verify_limit_per_mobile', 10);
 
         if (RateLimiterFacade::tooManyAttempts($key, $limit)) {
@@ -86,5 +86,17 @@ class MobileOtpController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Normalize presentation separators for throttling only.
+     *
+     * Account lookup remains exact until registration data has a shared
+     * canonical storage policy; this prevents formatting variants from
+     * bypassing rate limits without silently changing account identity.
+     */
+    private function mobileRateLimitIdentity(string $mobile): string
+    {
+        return preg_replace('/[\\s()\\-]/u', '', trim($mobile)) ?? trim($mobile);
     }
 }
