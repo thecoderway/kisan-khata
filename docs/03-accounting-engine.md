@@ -1,388 +1,442 @@
-
 # Kisan Khata — Accounting Engine Architecture
 
-**Document Version:** 1.0
+**Document Version:** 2.0  
+**Status:** Approved  
+**Related Documents:** `docs/01-product-requirements.md`, `docs/02-business-rules.md`
 
 ---
 
 ## 1. Purpose
 
-This document defines the architecture of the financial calculation engine.
+This document defines the technical architecture of the Kisan Khata financial calculation engine.
 
-The accounting engine is responsible for:
+The engine is responsible for recording financial transactions, maintaining consolidated customer balances, processing payments, calculating interest, maintaining customer advances, processing crop-season settlements, producing customer ledgers, preserving correction history and reproducing historical calculations.
 
-- Recording financial transactions
-- Maintaining customer balances
-- Allocating payments
-- Calculating interest
-- Processing settlements
-- Producing ledger entries
-- Preserving financial history
+The engine must be independent of the web interface. All authoritative financial calculations must run in backend services. The frontend and future Android application must never independently calculate authoritative balances or interest.
 
-The accounting engine must be independent of the web interface.
+## 2. Core Architecture Principles
 
-## 2. Core Principles
-
-1. Financial records must be auditable.
-2. Posted transactions must be immutable.
-3. Principal and interest must remain distinguishable.
-4. Every balance must be explainable.
-5. Financial calculations must be deterministic.
-6. Financial operations must be transactional.
-7. Duplicate requests must not create duplicate financial entries.
-8. Historical calculations must preserve the policy used.
+1. Financial calculations must be deterministic and decimal-safe.
+2. Every balance must be explainable and reproducible.
+3. Financial transaction history and correction audit history must remain traceable.
+4. Owner corrections preserve previous values and immutable audit history.
+5. Payments reduce consolidated customer payable; they are not allocated to individual sale IDs.
+6. Interest follows approved calculation triggers.
+7. Duplicate requests must not create duplicate financial effects.
+8. Financial operations must be database-transactional.
+9. Historical calculations preserve the policy used.
+10. Balance projections must be rebuildable.
+11. Every operation enforces tenant isolation.
 
 ## 3. Financial Data Types
 
 Use MySQL DECIMAL for financial values.
 
-Suggested initial types:
+Proposed initial types, subject to validation against expected business limits:
 
-- Money: DECIMAL(15,2)
-- Interest calculation precision: DECIMAL(20,8)
-- Rate precision: DECIMAL(12,8)
+- Money: `DECIMAL(15,2)`
+- Interest calculation precision: `DECIMAL(20,8)`
+- Rate precision: `DECIMAL(12,8)`
 
-These are proposed precision choices and should be validated against expected business limits.
+Never use PHP floating-point arithmetic for authoritative financial calculations. Use a suitable decimal arithmetic library or carefully designed integer minor-unit arithmetic.
 
-Never use PHP float for authoritative financial calculations.
-
-Use a suitable decimal arithmetic library or carefully designed integer minor-unit arithmetic.
+Rounding must be centralized in the financial calculation layer. Exact rounding precision and mode remain pending Product Owner approval.
 
 ## 4. Financial Concepts
 
-### Principal
+### 4.1 Credit Sale
 
-The original amount owed due to credit sales, less principal repayments and approved adjustments.
+A credit sale increases customer payable. Every sale retains its own effective date because interest eligibility depends on that date.
 
-### Interest
+### 4.2 Payment
 
-The interest amount calculated under an approved policy.
+A payment represents money received from a customer. It reduces the customer's complete payable amount rather than being allocated to individual sales or interest components.
 
-### Payment
+### 4.3 Consolidated Outstanding
 
-Money received from a customer.
+The consolidated outstanding is the amount carried forward after processing eligible sales, interest and payments. It has a calculation-cycle start date. After a payment, the remaining consolidated outstanding starts a new cycle from that payment date.
 
-### Allocation
+### 4.4 Sale-Level Interest Basis
 
-The distribution of a payment across outstanding financial components.
+New sales after the previous payment retain their individual sale dates. They must not inherit the calculation-cycle start date of an older consolidated outstanding balance.
 
-### Settlement
+### 4.5 Customer Advance
 
-An accounting event that closes or carries forward an account according to an approved settlement policy.
+An advance represents money received beyond the customer's complete payable amount. It must be separately identifiable and must not be represented as a negative sale.
 
-### Reversal
+### 4.6 Interest and Settlement
 
-A compensating transaction that offsets an earlier posted transaction.
+Interest follows the shop or customer policy, preserving calculation basis, effective dates, rate and policy version. A settlement records full or partial settlement and any balance carried forward. Detailed settlement accounting follows separately approved rules.
 
-## 5. Suggested Transaction Model
+## 5. Financial Transaction Model
 
-Use a financial transaction header with associated entries.
+Use a financial transaction model with associated transaction details and audit history.
 
 Conceptual transaction types:
 
 - OPENING_BALANCE
 - CREDIT_SALE
 - PAYMENT
-- INTEREST_CHARGE
+- INTEREST_CALCULATION
+- INTEREST_POSTING
+- CUSTOMER_ADVANCE
 - SETTLEMENT
 - ADJUSTMENT
-- REVERSAL
 
-Every transaction should include:
+The exact type structure may be refined during database architecture design.
 
-- Unique ID
-- Shop ID
-- Customer ID
-- Transaction number
-- Transaction type
-- Effective date
-- Created timestamp
-- Posted timestamp
-- Status
-- Description
-- Created by
-- Reversal reference where applicable
+Every financial transaction should include:
 
-## 6. Ledger Entry Model
+- Unique ID, Shop ID and Customer ID.
+- Transaction number and type.
+- Effective date.
+- Created and posted timestamps, where applicable.
+- Status and description.
+- Created by and updated by, where applicable.
+- Version or revision reference.
 
-A transaction may produce one or more ledger entries.
+Every transaction must belong to the correct tenant and customer.
 
-Each entry should identify:
+## 6. Consolidated Customer Account Model
 
-- Financial component
-- Debit amount
-- Credit amount
-- Effective date
-- Transaction reference
-- Source reference
+Maintain one consolidated account per customer per shop. It must represent existing carried-forward outstanding, new credit sales, calculated interest, payments, customer advances, settlements and approved adjustments.
 
-Financial components may include:
+Preserve the distinction between:
 
-- PRINCIPAL
-- INTEREST
+1. Consolidated carried-forward balance.
+2. Individual new sales not yet incorporated into a payment calculation.
+3. Separately maintained interest, where the selected policy requires it.
+4. Customer advance balance.
 
-The ledger must support a deterministic running balance.
+Prevent the same sale or interest amount from being counted twice.
 
-For customer receivables:
+### 6.1 Calculation Cycle
 
-- Credit sale increases principal receivable.
-- Payment reduces the allocated receivable.
-- Interest charge increases interest receivable.
-- Reversal offsets the original entry.
-- Settlement follows its approved accounting treatment.
+A calculation cycle identifies the period for which a balance component is eligible for interest. Retain its start date, end date, eligible balance, applicable rate, policy version, calculated interest and calculation reference.
 
-The final debit/credit presentation must be defined consistently throughout the application.
+After a payment, the remaining consolidated outstanding starts a new cycle from the payment date. New sales retain their own effective sale dates.
 
-## 7. Payment Allocation Engine
+## 7. Payment Processing Engine
 
-The payment allocation engine determines how received money reduces outstanding balances.
-
-Possible strategies:
-
-- Interest first
-- Principal first
-- Oldest invoice first
-- Manual allocation
-
-The policy is not approved yet.
-
-Suggested service interface:
-
-`PaymentAllocationService`
+Suggested service: `CustomerPaymentService`.
 
 Responsibilities:
 
-1. Load eligible outstanding items.
-2. Resolve the effective allocation policy.
-3. Calculate allocations using decimal arithmetic.
-4. Validate that allocations do not exceed payment amount.
-5. Persist allocation records.
-6. Update account projections safely.
-7. Record audit information.
+1. Validate shop and customer ownership.
+2. Validate payment amount and effective date.
+3. Lock or safely serialize the customer financial account.
+4. Identify current outstanding and eligible new sales.
+5. Calculate eligible interest through the payment date.
+6. Determine complete payable amount.
+7. Subtract the received payment.
+8. Carry forward the remaining outstanding.
+9. Record excess as customer advance, if applicable.
+10. Update account projections.
+11. Record transaction and audit history.
+12. Return an explainable payment result.
 
-Do not implement a default allocation order without product owner approval.
+### 7.1 No Sale-Level Allocation
 
-## 8. Interest Engine
+The payment engine must not allocate payment to oldest or newest sale, allocate interest-first or principal-first, or require payment allocation records against sale IDs. Payment is applied to consolidated payable.
 
-Suggested service:
+### 7.2 Multiple Payments on the Same Date
 
-`InterestCalculationService`
+The engine must ensure the same elapsed period is not charged interest twice. For subsequent same-date payments, no additional elapsed-day interest is generated for the already calculated period. The received amount reduces remaining consolidated outstanding. Each payment and updated balance is recorded independently.
+
+### 7.3 Excess Payment
+
+If payment exceeds complete payable, outstanding becomes zero and excess becomes a separately stored customer advance, traceable in the ledger. Automatic use of advances against future sales requires a separately approved business rule.
+
+## 8. Interest Calculation Engine
+
+Suggested service: `InterestCalculationService`.
 
 Responsibilities:
 
-1. Load the approved interest policy.
-2. Identify eligible principal balances.
-3. Determine the interest-free period.
-4. Determine the calculation interval.
-5. Apply the approved rate.
-6. Apply the day-count convention.
-7. Apply partial-period rules.
-8. Apply rounding rules.
+1. Load applicable shop or customer interest policy.
+2. Identify eligible balance components.
+3. Identify calculation start and end dates.
+4. Apply grace period.
+5. Calculate actual elapsed days.
+6. Apply monthly interest rate.
+7. Apply approved capitalization policy.
+8. Apply approved rounding rules.
 9. Produce an explainable calculation result.
-10. Persist a charge only when the posting workflow authorizes it.
+10. Return a result suitable for payment processing or Auto Settlement posting.
 
-### Interest Calculation Input
+### 8.1 Approved Formula
 
-Conceptual input:
+**Interest = Eligible Outstanding × (Monthly Rate / 100) × (Actual Days / 30)**
 
-- Shop ID
-- Customer ID
-- Principal balance or eligible invoice balances
-- Calculation start date
-- Calculation end date
-- Interest policy version
-- Payment and adjustment history
+Use decimal-safe arithmetic.
 
-### Interest Calculation Output
+### 8.2 Calculation Triggers
 
-- Eligible principal
-- Applicable rate
-- Eligible period
-- Number of days or months
-- Calculation method
-- Unrounded interest
-- Rounded interest
-- Policy version
-- Explanation
+Interest calculation is event-driven. The two approved triggers are:
 
-The exact formula must be determined after policy approval.
+1. Customer payment.
+2. Either of the two annual Auto Settlement dates configured by the Shop Owner.
 
-Do not assume that a monthly rate should be divided by 30.
+There must be no automatic daily or monthly interest-posting process.
+
+### 8.3 Calculation Inputs
+
+Conceptual inputs:
+
+- Shop ID and Customer ID.
+- Calculation effective date.
+- Existing consolidated outstanding.
+- Consolidated balance cycle start date.
+- New sale records and their effective dates.
+- Applicable interest rate.
+- Grace-period configuration.
+- Capitalization policy.
+- Previous calculation references.
+- Policy version.
+
+### 8.4 Calculation Output
+
+- Eligible balance components.
+- Applicable rate.
+- Start and end dates.
+- Actual elapsed days.
+- Formula identifier.
+- Capitalization policy.
+- Unrounded and rounded interest.
+- Policy version.
+- Explanation of the result.
+
+### 8.5 New Sales After Payment
+
+Calculate interest independently on carried-forward consolidated outstanding from its applicable cycle start date and on each new sale from its own eligible sale date. Do not duplicate previously calculated interest or count a sale amount twice.
 
 ## 9. Interest Calculation History
 
-Every posted interest charge should retain:
+Every calculation must preserve:
 
-- Principal basis
-- Rate
-- Start date
-- End date
-- Day count or period count
-- Formula identifier
-- Rounding method
-- Policy version
-- Calculated amount
-- Posting transaction ID
+- Shop ID and Customer ID.
+- Calculation date, start date and end date.
+- Actual elapsed days.
+- Eligible balance or balance components.
+- Applicable monthly rate.
+- Grace-period treatment.
+- Formula identifier.
+- Capitalization policy and policy version.
+- Unrounded and rounded result.
+- Posting or payment reference.
+- Calculation status.
 
-This makes the calculation reproducible and explainable.
+Historical calculation records remain available for audit and explanation.
 
 ## 10. Interest Policy Versioning
 
-Interest policies must be versioned.
+Interest policies must be versioned. A policy may contain monthly rate, customer-specific rate, grace period, capitalization policy, effective date and policy version.
 
-If a shop changes its rate or calculation method:
+When a policy changes:
 
-- New policy version must be created.
-- Effective date must be recorded.
-- Historical posted charges must not be rewritten.
-- The system must define how open balances transition to the new policy.
+1. Create a new policy version.
+2. Preserve the previous version.
+3. Record effective date and acting user.
+4. Preserve historical calculations under their original policy.
+5. Apply the new policy according to its effective-date rules.
 
-Policy changes must be authorized.
+Transition behavior for existing outstanding balances must be finalized before implementation.
 
-## 11. Settlement Engine
+## 11. Annual Auto Settlement Engine
 
-Suggested service:
+Suggested service: `AutoSettlementService`.
 
-`SettlementService`
+Responsibilities:
+
+1. Load configured annual Auto Settlement dates.
+2. Identify eligible customer accounts.
+3. Determine the last applicable calculation boundary.
+4. Calculate interest through the configured date.
+5. Prevent duplicate calculations.
+6. Record calculation results.
+7. Update account projections.
+8. Record execution history.
+9. Support safe retries after failures.
+
+### 11.1 Idempotency
+
+Repeated execution for the same customer and effective period must not create duplicate interest. If payment and Auto Settlement occur on the same date, the same elapsed period must be calculated only once. Exact execution ordering and recovery behavior must be finalized before implementation.
+
+## 12. Settlement Engine
+
+Suggested service: `SettlementService`.
 
 Responsibilities:
 
 1. Load customer account state.
-2. Calculate outstanding principal.
-3. Calculate outstanding interest.
-4. Validate settlement date.
-5. Record amount received.
-6. Apply payment allocation policy.
-7. Calculate remaining amount.
-8. Apply approved carry-forward treatment.
-9. Record settlement transaction.
-10. Preserve all previous entries.
+2. Calculate payable amount under approved settlement rules.
+3. Record settlement date and amount received.
+4. Determine full or partial settlement.
+5. Determine remaining balance.
+6. Apply approved carry-forward treatment.
+7. Preserve historical financial records.
+8. Update account projections.
+9. Record settlement and audit history.
 
-The engine must support reversal or correction of settlements without destroying history.
+Support settlement correction without destroying previous financial history. Detailed settlement accounting must not be invented before Product Owner approval.
 
-## 12. Ledger Query Engine
+## 13. Customer Ledger Engine
 
-Suggested service:
-
-`CustomerLedgerService`
+Suggested service: `CustomerLedgerService`.
 
 Responsibilities:
 
-- Fetch chronological transactions.
+- Fetch chronological customer financial activity.
 - Apply date filters.
-- Calculate opening balance.
-- Calculate running balance.
-- Calculate closing balance.
-- Separate principal and interest.
+- Calculate opening, running and closing balances.
+- Display credit sales, payments, interest, advances and settlements.
+- Explain calculation history.
 - Return printable ledger data.
 
-Use a stable transaction ordering.
+Use stable transaction ordering. When two transactions share an effective date, use a deterministic secondary ordering such as posting sequence or transaction ID. The ledger must distinguish original transaction history from subsequent corrections.
 
-When two entries have the same effective date, use a deterministic secondary ordering such as posting sequence or transaction ID.
+## 14. Transaction Corrections and Audit History
 
-## 13. Concurrency and Database Transactions
+The Shop Owner can directly edit posted sales and payments.
 
-Financial posting must use database transactions.
+When a posted transaction is edited:
 
-Where necessary:
+1. Preserve previous transaction values.
+2. Store updated transaction values.
+3. Create an immutable audit record.
+4. Record acting user, correction timestamp and reason.
+5. Recalculate affected financial results.
+6. Update account projections transactionally.
+7. Preserve a traceable link between original version and correction.
 
-- Lock the customer account or relevant balance rows.
-- Prevent concurrent over-allocation.
+Managers and Staff cannot edit posted financial transactions. Physical deletion of posted financial history is prohibited. The current transaction state may be updated by an authorized Owner, but audit history must not be silently modified.
+
+The exact strategy for historical backdated corrections and recalculation must be finalized before implementation.
+
+## 15. Concurrency and Database Transactions
+
+Financial posting must use database transactions. Where necessary:
+
+- Lock customer account or relevant balance rows.
+- Serialize concurrent financial operations for the same customer.
+- Prevent duplicate payment processing.
 - Enforce unique transaction references.
 - Use idempotency keys for retryable requests.
-- Validate account state again after locking.
+- Validate account state after locking.
+- Update transaction history and projections atomically.
 
-Never assume two simultaneous payment requests cannot occur.
+Never assume simultaneous payment requests cannot occur. A failed operation must not leave a partially updated customer account.
 
-## 14. Immutability
+## 16. Balance Projection and Reconciliation
 
-Once posted:
+A customer balance summary may be stored for performance, but:
 
-- Do not silently edit financial amounts.
-- Do not physically delete transactions.
-- Use reversal transactions.
-- Preserve original records.
-- Store correction reasons.
-- Maintain audit information.
+1. Financial transaction history remains the source of truth.
+2. Balance projections must be rebuildable.
+3. Projection updates must occur transactionally.
+4. Reconciliation must detect discrepancies.
+5. A projection must never be treated as authoritative accounting history.
+6. Corrections must update affected projections safely.
 
-Draft records may be edited before posting according to permissions.
+Provide a reconciliation mechanism to compare calculated account state with stored projections.
 
-## 15. Balance Projection
+## 17. Suggested Application Services
 
-A customer balance summary may be stored for performance.
-
-However:
-
-- The transaction ledger remains the source of truth.
-- Projections must be rebuildable.
-- Projection updates must happen transactionally.
-- Periodic reconciliation must detect discrepancies.
-
-Never trust a manually editable balance column as the accounting source of truth.
-
-## 16. Suggested Application Services
+Conceptual service boundaries:
 
 - FinancialTransactionService
 - LedgerPostingService
-- PaymentAllocationService
+- CustomerPaymentService
 - InterestCalculationService
 - InterestPostingService
+- AutoSettlementService
 - SettlementService
 - CustomerLedgerService
 - AccountBalanceService
 - FinancialReconciliationService
+- FinancialAuditService
 
-These are conceptual service boundaries, not mandatory class names.
+These are architectural boundaries, not mandatory class names. Implementation may refine names and responsibilities without changing approved business behavior.
 
-## 17. Required Automated Tests
+## 18. Required Automated Tests
 
-### Credit Sales
+### 18.1 Credit Sales
 
-- Valid credit sale increases principal.
+- Valid sale increases customer payable.
 - Invalid sale amount is rejected.
 - Cross-tenant sale is rejected.
-- Reversal offsets original sale.
+- Sale retains its effective date.
+- New sale uses its own interest eligibility date.
+- Owner correction preserves audit history.
+- Manager and Staff cannot edit posted sales.
 
-### Payments
+### 18.2 Payments
 
-- Valid payment is recorded.
-- Payment cannot be allocated twice.
-- Payment allocation follows the approved policy.
+- Valid payment reduces consolidated payable.
+- Payment is not allocated to individual sale IDs.
+- Payment cannot be processed twice.
+- Same-date payments do not duplicate interest.
+- Payment after new sales calculates eligible interest correctly.
+- Excess payment creates customer advance.
 - Concurrent payments do not corrupt balances.
-- Reversed payment restores the appropriate outstanding amount.
+- Owner correction preserves previous values and recalculates affected results.
+- Manager and Staff cannot edit posted payments.
 
-### Interest
+### 18.3 Interest
 
-- Interest-free period boundary.
-- Rate changes.
-- Partial period.
-- Leap year.
-- Month-end.
-- Payment during interest period.
-- Rounding.
-- Repeated calculation.
-- Historical policy version.
+- Actual Days / 30 formula.
+- Zero elapsed days.
+- Grace-period boundary.
+- Customer-specific and shop default rates.
+- New sale after payment.
+- Existing consolidated outstanding after payment.
+- Multiple sales with different effective dates.
+- Capitalized and separate interest policies.
+- Repeated calculation does not duplicate interest.
+- Same-date payment and Auto Settlement.
+- Rate and policy version changes.
+- Leap year and month-end.
+- Decimal precision and rounding.
+- Historical calculation reproducibility.
 
-### Settlements
+Tests depending on unresolved policies remain pending until those policies are approved.
+
+### 18.4 Settlements
 
 - Full settlement.
 - Partial settlement.
-- Remaining balance.
-- Interest treatment.
-- Settlement reversal.
+- Remaining balance carry-forward.
+- Settlement history preservation.
 - Repeated settlement request.
+- Settlement correction.
+- Settlement interest behavior according to approved policy.
 
-Tests requiring unresolved policies must remain pending until the relevant decisions are approved.
+### 18.5 Audit and Concurrency
 
-## 18. Accounting Engine Acceptance Criteria
+- Owner correction records previous and updated values.
+- Audit history cannot be silently modified.
+- Unauthorized correction is rejected.
+- Duplicate requests are idempotent.
+- Concurrent financial operations remain consistent.
+- Cross-tenant access is rejected.
+- Balance projections can be rebuilt.
 
-The accounting engine is acceptable only when:
+## 19. Accounting Engine Acceptance Criteria
 
-- Every balance can be traced to posted entries.
-- Principal and interest are separately identifiable.
-- Every payment allocation is recorded.
-- Historical interest calculations are explainable.
-- Reversals preserve history.
-- Concurrent operations remain consistent.
-- Cross-tenant access is prevented.
-- Automated financial tests pass.
+The engine is acceptable only when every customer balance is explainable; consolidated payments follow approved rules; no sale-level allocation is required; same-date payments do not duplicate interest; new sales retain their own interest dates; advances are separately identifiable; interest uses Actual Days / 30 and approved triggers; historical calculations are reproducible; Owner corrections preserve immutable audit history; concurrent operations remain consistent; projections are rebuildable; tenant isolation is enforced; and automated financial tests pass.
+
+## 20. Implementation Dependencies
+
+The following decisions must be finalized before implementing the corresponding behavior:
+
+1. Interest capitalization default and transition behavior.
+2. Rounding precision and rounding mode.
+3. Interest effective-date and day-boundary conventions.
+4. Grace-period eligibility boundary.
+5. Same-date payment and Auto Settlement execution ordering.
+6. Crop-season settlement accounting.
+7. Customer advance adjustment against future sales.
+8. Backdated correction and recalculation behavior.
+9. Final financial database schema and ledger representation.
+
+No implementation may silently assume these unresolved rules.
