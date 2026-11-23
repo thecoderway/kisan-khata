@@ -1,257 +1,482 @@
-
 # Kisan Khata — Business Rules
 
-**Document Version:** 1.0
+**Document Version:** 2.0  
+**Status:** Approved  
+**Related Document:** `docs/01-product-requirements.md`
 
 ---
 
 ## 1. Purpose
 
-This document defines the business rules governing customer credit, payments, interest and crop-season settlements.
+This document defines the business rules governing:
 
-These rules are the source of truth for the application's financial behavior.
+- Shops and users.
+- Customers.
+- Credit sales.
+- Payments.
+- Consolidated outstanding balances.
+- Interest calculations.
+- Customer advances.
+- Crop-season settlements.
+- Transaction corrections.
+- Financial audit history.
 
-Developers must not invent missing accounting rules.
+These rules define the expected business behavior of Kisan Khata.
+
+The accounting engine, database schema, APIs and user interface must follow these rules.
+
+Developers and AI coding agents must not invent missing financial rules.
 
 ## 2. Core Business Model
 
-A merchant sells goods to a customer on credit.
+1. A shop provides goods or services to customers on credit.
+2. Each customer has one consolidated account within that shop.
+3. Customers may make multiple credit purchases.
+4. Customers may make multiple payments.
+5. Interest may apply according to the shop's configured policy.
+6. Payments reduce the customer's total payable amount.
+7. Remaining outstanding continues in the customer's consolidated account.
+8. Crop-season settlements may close or carry forward an account balance.
+9. All financial activity must remain traceable through the customer ledger.
 
-The customer pays the outstanding amount later.
+## 3. Shop and User Rules
 
-The merchant may allow an interest-free period.
+1. Kisan Khata is a multi-tenant SaaS application.
+2. Every shop is an independent tenant.
+3. Every tenant-owned record must belong to one shop.
+4. One user belongs to exactly one shop.
+5. One user has exactly one role.
+6. A shop supports one Owner, up to two Managers and up to five Staff members.
+7. A user must never access another shop's data.
+8. Subscription belongs to the shop, not an individual user.
 
-After the interest-free period, interest may apply according to the shop's configured policy.
+### 3.1 Roles
 
-Around harvesting seasons, the merchant and customer may settle the account.
+**Owner**
+- Full shop-level control.
+- Can configure financial policies.
+- Can edit posted sales and payments.
+- Can manage employees and subscriptions.
 
-Any remaining amount may continue as an outstanding balance.
+**Manager**
+- Can manage customers, sales, payments and permitted reports.
+- Cannot edit posted financial transactions.
+- Cannot change ownership, subscription or critical security settings.
 
-## 3. Customer Rules
+**Staff**
+- Can view and add customers.
+- Can record credit sales and payments.
+- Can view permitted customer and transaction information.
+- Cannot edit or delete posted financial transactions.
+- Cannot configure interest policies or subscriptions.
 
-1. A customer belongs to one shop.
+Custom per-user permission configuration is not part of the initial release.
+
+## 4. Customer Rules
+
+1. A customer belongs to exactly one shop.
 2. A customer cannot be accessed by another shop.
-3. A customer may have multiple credit sales.
-4. A customer may make multiple payments.
-5. A customer must have a complete ledger.
-6. Customer information changes must be auditable where necessary.
+3. Customer name is mandatory.
+4. Mobile number is optional.
+5. Village is optional.
+6. A customer can have multiple credit sales.
+7. A customer can make multiple payments.
+8. A customer has one consolidated account.
+9. A customer ledger must contain all relevant financial activity.
+10. Customer information changes must be auditable.
+11. Customer deactivation must not delete financial history.
 
-## 4. Credit Sale Rules
+### 4.1 Crop-Season Tagging
 
-1. A credit sale must belong to a valid customer.
-2. A credit sale must belong to the current shop.
-3. Every sale must have an amount greater than zero.
-4. Every sale must have a transaction date.
-5. A sale may contain a description.
-6. A bill photo is optional.
-7. A posted sale must appear in the customer's ledger.
-8. A posted sale must not be physically deleted.
-9. Corrections must preserve historical information.
+1. A sale may be associated with a crop season.
+2. Examples include Kharif and Rabi.
+3. Crop-season tagging is for classification and reporting.
+4. It must not create a separate customer account.
+5. It must not independently change the consolidated outstanding balance.
 
-## 5. Payment Rules
+## 5. Credit Sale Rules
+
+1. A sale must belong to a valid customer.
+2. A sale must belong to the current shop.
+3. Sale amount must be greater than zero.
+4. Sale date is mandatory.
+5. Description is supported.
+6. Customer name and other customer information must be retrieved from the associated customer record.
+7. Every sale must preserve its original effective date.
+8. Every posted sale must be reflected in the customer ledger.
+9. Every sale must be traceable to its creator.
+10. A posted sale cannot be physically deleted.
+
+### 5.1 Interest Eligibility
+
+Each sale must retain enough information to determine its interest eligibility independently.
+
+A new sale must not inherit the calculation start date of an older consolidated outstanding balance.
+
+The applicable grace period and interest policy must be applied according to the approved shop or customer policy.
+
+### 5.2 Sale Correction
+
+The Shop Owner can directly edit a posted sale.
+
+When a sale is edited:
+
+1. Preserve its previous values.
+2. Store the updated values.
+3. Record the editing user.
+4. Record correction timestamp.
+5. Record correction reason.
+6. Preserve immutable audit history.
+7. Recalculate affected customer financial results.
+8. Preserve the original correction history.
+
+Managers and Staff cannot edit posted sales.
+
+## 6. Payment Rules
 
 1. A payment must belong to a valid customer.
 2. A payment must belong to the current shop.
 3. Payment amount must be greater than zero.
-4. Payment date must be recorded.
-5. Payment method may be recorded.
-6. A payment must be reflected in the customer's ledger.
-7. Every payment must have a documented allocation policy.
-8. A payment must never be counted twice.
-9. Reversing a payment must preserve its original record.
-10. Payment allocation changes must be auditable.
+4. Payment date is mandatory.
+5. Description may be recorded.
+6. Payment method may be recorded.
+7. Every payment must appear in the customer's ledger.
+8. A payment must never be processed twice.
+9. Payments are not allocated to individual sale IDs.
+10. Payments are not divided into interest and principal components for payment allocation.
+11. Payment processing must use the customer's consolidated payable amount.
 
-## 6. Interest-Free Period
+### 6.1 Consolidated Payment Calculation
 
-The initial business concept includes an interest-free period after a credit sale.
+When a payment is received:
 
-However, the exact meaning is not yet approved.
+1. Identify the customer's current financial state.
+2. Calculate all eligible interest through the payment date.
+3. Include the existing outstanding and applicable new sales.
+4. Determine the complete payable amount.
+5. Subtract the received payment.
+6. Carry forward the remaining amount as consolidated outstanding.
+7. Set the new calculation cycle start date for that carried-forward balance to the payment date.
 
-Possible interpretations:
+The customer ledger must preserve the original sales and payment entries.
 
-- One calendar month
-- 30 elapsed days
-- A configurable number of days
+### 6.2 Multiple Payments on the Same Date
 
-The product owner must select the intended rule.
+If multiple payments are recorded on the same date:
 
-The system must support an explicit policy rather than hardcoding a duration.
+1. The first payment triggers the required interest calculation through that date.
+2. The first payment is subtracted from the payable amount.
+3. The remaining outstanding becomes the new consolidated balance.
+4. A subsequent payment on that same date must not calculate interest again for the same elapsed period.
+5. The subsequent payment is subtracted directly from the remaining balance.
 
-## 7. Interest Rules
+Elapsed days between same-date calculations are zero.
 
-Interest is expected to be monthly.
+### 6.3 Payment After New Sales
 
-The following decisions remain unresolved:
+If new sales occur after a payment:
 
-| Rule | Current Status |
-|---|---|
-| Interest rate | Not approved |
-| Meaning of example 2.00 | Not approved |
-| Interest-free period | Not approved |
-| Daily or monthly calculation | Not approved |
-| Partial-month treatment | Not approved |
-| Day-count convention | Not approved |
-| Simple or compound interest | Not approved |
-| Interest on principal only | Not approved |
-| Interest on unpaid interest | Not approved |
-| Rounding policy | Not approved |
-| Interest posting frequency | Not approved |
+1. The previous carried-forward outstanding retains its calculation cycle start date.
+2. Every new sale retains its own sale date.
+3. At the next calculation, the old carried-forward balance accrues interest from its applicable cycle start date.
+4. New sales accrue interest from their own eligible dates.
+5. The payable amount combines all eligible outstanding components and applicable interest.
 
-Do not implement a production interest policy until these decisions are approved.
+### 6.4 Excess Payment and Customer Advance
 
-## 8. Payment Allocation Rules
+If a payment exceeds the complete payable amount:
 
-When a customer makes a payment, the system must determine which outstanding amounts are reduced.
+1. Outstanding becomes zero.
+2. The excess amount becomes a customer advance.
+3. The advance must be separately identifiable in the ledger.
+4. The advance must not be treated as negative sales.
+5. The advance must remain available for future account adjustments.
 
-Possible policies:
+The exact automatic adjustment behavior against future sales requires a separately approved rule.
 
-- Interest first, then principal
-- Principal first, then interest
-- Oldest outstanding invoice first
-- User-selected allocation
-- Proportional allocation
+### 6.5 Payment Correction
 
-No policy is approved yet.
+The Shop Owner can directly edit a posted payment.
 
-The selected policy must be stored with the financial allocation records.
+The system must:
 
-Historical allocations must remain reproducible.
+- Preserve the original amount and date.
+- Store the corrected amount and date.
+- Record the reason.
+- Record the user and timestamp.
+- Preserve the previous and updated values.
+- Recalculate affected customer balances and interest.
+- Maintain immutable audit history.
 
-## 9. Crop-Season Settlement
+Managers and Staff cannot edit posted payments.
 
-The business model includes account settlements around harvest seasons.
+## 7. Interest Configuration Rules
 
-A settlement may involve:
+1. Every shop has a default monthly interest rate.
+2. The Owner may configure a customer-specific interest rate.
+3. The applicable rate must be identifiable for every calculation.
+4. The grace period is configurable.
+5. Default grace period is zero days.
+6. Interest calculation must use the approved policy version.
+7. Historical calculations must retain the policy used at that time.
 
-1. Calculating outstanding principal.
-2. Calculating outstanding interest.
-3. Recording the settlement date.
-4. Recording the amount received.
-5. Determining the remaining balance.
-6. Carrying forward the remaining balance according to the approved policy.
+## 8. Interest Calculation Rules
 
-The exact treatment is unresolved.
+### 8.1 Approved Formula
 
-Questions requiring approval:
+The approved day-count convention is Actual Days / 30.
 
-- Is outstanding interest crystallized at settlement?
-- Does unpaid interest become principal?
-- Does the new period start with principal only?
-- Does interest begin on the settlement date or the following day?
-- Are old invoices closed?
-- Is a new opening balance created?
-- How are settlement corrections handled?
+**Interest = Eligible Outstanding × (Monthly Rate / 100) × (Actual Days / 30)**
 
-Do not assume that settlement means the customer has paid the full amount.
+### 8.2 Calculation Triggers
 
-## 10. Outstanding Balance
+Interest calculation occurs only:
+
+1. When a customer makes a payment.
+2. On either of the two annual Auto Settlement dates configured by the Shop Owner.
+
+The system must not post interest through an automatic daily or monthly periodic process.
+
+### 8.3 Annual Auto Settlement
+
+1. The Owner configures two annual dates.
+2. The system calculates eligible interest on those dates.
+3. Every calculation must be recorded.
+4. Repeated execution must not duplicate the same interest.
+5. A payment and Auto Settlement on the same date must not calculate the same elapsed period twice.
+
+### 8.4 Calculation Basis
 
 The system must distinguish:
 
-- Original credit sales
-- Payments received
-- Principal outstanding
-- Interest outstanding
-- Adjustments
-- Settlements
+- Previously carried-forward consolidated outstanding.
+- New sales after the previous payment or calculation.
+- Customer advances.
+- Previously calculated interest.
+- Applicable policy and grace period.
 
-The total amount due must follow the approved accounting model.
+New sales must retain their own effective dates.
 
-Do not calculate balances by relying only on editable customer balance fields.
+### 8.5 Capitalization Policy
 
-The ledger and financial transaction records must be the source of truth.
+Two policies are supported in the product design.
 
-## 11. Transaction Dates
+**Policy A — Capitalized Interest**
 
-The system should distinguish:
+- Calculated interest is added to outstanding.
+- Future eligible interest may apply to the updated outstanding.
+- This creates a compounding effect.
 
-- Transaction date
-- Creation timestamp
-- Posting timestamp
-- Effective date (where applicable)
+**Policy B — Separate Interest**
 
-Backdated transactions must follow explicit permissions and audit rules.
+- Interest remains separately identifiable.
+- Future interest is not charged on previously accrued interest.
 
-Interest calculations must use the approved effective date.
+The default policy and exact transition behavior remain pending final approval.
 
-## 12. Transaction Corrections
+### 8.6 Interest Calculation History
 
-Posted financial records must not be silently edited or deleted.
+Every calculation must preserve:
 
-Correction workflow:
+- Customer.
+- Shop.
+- Calculation date.
+- Start date.
+- End date.
+- Actual elapsed days.
+- Eligible outstanding.
+- Applicable monthly rate.
+- Grace-period treatment.
+- Calculation formula.
+- Policy version.
+- Unrounded result.
+- Rounded result.
 
-1. Identify the original transaction.
-2. Record a reversal or adjustment.
-3. Preserve the original transaction.
-4. Create a replacement transaction if required.
-5. Record the reason.
-6. Record the user performing the correction.
-7. Preserve the complete audit history.
+## 9. Crop-Season Settlement Rules
+
+The application supports:
+
+- Full settlement.
+- Partial settlement.
+- Outstanding balance carry-forward.
+- Next crop-season opening balance.
+- Settlement history.
+
+Rules:
+
+1. Settlement must preserve previous financial transactions.
+2. Settlement must not physically delete sales or payments.
+3. Remaining outstanding must be traceable.
+4. The next crop-season balance must be explainable.
+5. Full settlement and partial settlement must be distinguishable.
+6. Settlement operations must be auditable.
+
+The following details remain pending approval:
+
+- Whether interest is capitalized during settlement.
+- Whether unpaid interest remains separate.
+- Whether a new opening balance is created.
+- Exact interest start date after settlement.
+- Settlement correction and recalculation behavior.
+
+## 10. Outstanding Balance Rules
+
+The customer's payable amount must be derived from financial history.
+
+The system must maintain distinguishable information for:
+
+- Credit sales.
+- Payments received.
+- Carried-forward outstanding.
+- Interest.
+- Customer advances.
+- Settlements.
+- Approved adjustments.
+
+A manually editable balance field must never be the authoritative accounting source.
+
+The consolidated customer balance must be reproducible from recorded financial activity and approved rules.
+
+## 11. Transaction Date Rules
+
+The system must distinguish:
+
+- Effective transaction date.
+- Creation timestamp.
+- Posting timestamp.
+- Correction timestamp.
+
+Interest calculations use the approved effective dates.
+
+Backdated transaction permissions and their exact recalculation behavior require a separately approved rule.
+
+## 12. Transaction Correction Rules
+
+1. Only the Shop Owner can edit posted sales and payments.
+2. Managers and Staff cannot edit posted financial transactions.
+3. Physical deletion of posted financial history is prohibited.
+4. Every correction must preserve previous and updated values.
+5. Every correction must include the acting user and timestamp.
+6. A correction reason must be recorded.
+7. Affected balances and interest must be recalculated.
+8. The audit history must remain immutable.
+9. A correction must not silently change unrelated customer accounts.
+
+The exact recalculation behavior for historical backdated corrections must be documented before implementation.
 
 ## 13. Financial Audit Trail
 
-Every important financial action should record:
+Important financial actions must record:
 
-- Shop ID
-- User ID
-- Entity type
-- Entity ID
-- Action
-- Previous state where appropriate
-- New state where appropriate
-- Reason
-- Timestamp
+- Shop ID.
+- User ID.
+- Entity type.
+- Entity ID.
+- Action.
+- Previous values, where applicable.
+- Updated values, where applicable.
+- Correction reason, where applicable.
+- Timestamp.
+- Relevant calculation or transaction reference.
 
-Sensitive information must not be unnecessarily duplicated in logs.
+Audit records must be protected against modification by ordinary users.
 
-## 14. Rounding
+Sensitive information must not be unnecessarily copied into audit logs.
 
-Financial rounding must be consistent.
+## 14. Rounding and Decimal Precision
 
-The application must define:
+1. Financial values must use decimal-safe arithmetic.
+2. PHP floating-point arithmetic must not be used for authoritative calculations.
+3. Monetary precision and interest precision must be defined centrally.
+4. Rounding must be deterministic.
+5. The exact rounding mode and point of rounding remain pending approval.
+6. Every calculation must retain enough precision to explain its result.
 
-- Monetary precision
-- Interest precision
-- Rounding mode
-- Point at which rounding occurs
+## 15. Tenant Isolation Rules
 
-Never rely on PHP float behavior.
+Every shop has independent:
 
-## 15. Tenant Isolation
-
-Every shop must have independent:
-
-- Customers
-- Sales
-- Payments
-- Ledgers
-- Interest policies
-- Settlements
-- Employees
-- Reports
+- Customers.
+- Sales.
+- Payments.
+- Customer ledgers.
+- Interest policies.
+- Settlements.
+- Employees.
+- Reports.
+- Subscriptions.
 
 Cross-tenant access is prohibited.
 
-## 16. Unresolved Product Decisions
+Every financial operation must validate that the customer and all related records belong to the current shop.
 
-Maintain these decisions in docs/decisions/.
+## 16. Idempotency and Concurrency
 
-No developer or AI coding agent may silently resolve financial ambiguities.
+1. A financial operation must not be posted twice because of retries.
+2. Duplicate payment requests must not create duplicate payments.
+3. Interest calculation must be idempotent for the same customer and effective period.
+4. Same-date payment calculations must not duplicate interest.
+5. Concurrent financial operations must not corrupt outstanding balances.
+6. The system must use appropriate database transactions and locking.
+7. The final balance must remain consistent after concurrent operations.
 
-Any change to an approved financial rule requires:
+## 17. Subscription Rules
 
-- Product owner approval
-- Updated documentation
-- Impact analysis
-- Migration or data correction plan where necessary
-- Regression tests
+1. A subscription belongs to a shop.
+2. All users of a shop share its subscription.
+3. Initial plans are Free Trial, Basic, Standard and Premium.
+4. Default trial duration is three months and is database-configurable.
+5. Monthly and annual billing are supported.
+6. Subscription expiry has a three-day grace period.
+7. After grace expiry, shop access becomes read-only.
+8. Financial history must remain preserved.
+9. The Owner retains PDF and Excel/CSV export access after expiry.
 
-## 17. Business Rule Priority
+Detailed plan entitlements and pricing are maintained separately.
+
+## 18. Data Retention
+
+1. Financial records must be retained according to approved retention requirements.
+2. Shop deactivation must not immediately delete financial records.
+3. Deletion must follow a controlled retention process.
+4. Backups must be protected.
+5. The final retention period requires approval.
+
+## 19. Unresolved Product Decisions
+
+The following items must be finalized before implementation of the affected behavior:
+
+1. Interest capitalization default: Policy A or Policy B.
+2. Exact interest rounding precision and rounding mode.
+3. Interest effective-date and day-boundary conventions.
+4. Grace-period eligibility boundary.
+5. Same-date payment and Auto Settlement execution ordering.
+6. Detailed crop-season settlement accounting.
+7. Automatic adjustment of customer advances against future sales.
+8. Backdated transaction correction and recalculation rules.
+9. Subscription plan entitlements and pricing.
+10. Payment gateway.
+11. Financial data retention period.
+
+No developer or AI coding agent may silently resolve these decisions.
+
+## 20. Business Rule Change Management
+
+Any change to an approved business rule requires:
+
+1. Product Owner approval.
+2. Updated documentation.
+3. Impact analysis.
+4. Database migration or data correction plan, where necessary.
+5. Updated automated tests.
+6. Review of historical financial compatibility.
+
+## 21. Business Rule Priority
 
 If a feature request conflicts with an approved financial rule:
 
 1. Preserve financial integrity.
 2. Stop implementation of the conflicting behavior.
 3. Explain the conflict.
-4. Request product owner approval.
+4. Request Product Owner approval.
 5. Update documentation after approval.
