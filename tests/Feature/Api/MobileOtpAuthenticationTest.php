@@ -131,7 +131,7 @@ class MobileOtpAuthenticationTest extends TestCase
 
         $this->postJson('/api/auth/mobile/verify-otp', [
             'mobile' => $user->mobile,
-            'otp' => '000000',
+            'otp' => $sender->code === '000000' ? '000001' : '000000',
         ])->assertUnprocessable();
 
         $this->assertDatabaseHas('mobile_otp_challenges', [
