@@ -1,126 +1,19 @@
-
 ---
 name: architecture
-description: Plan and review Kisan Khata modules, services, database relationships and architecture changes. Use before implementing major features or changing system structure.
+description: Plan and review Kisan Khata modules and architecture changes against approved docs and accepted ADRs.
 ---
 
-# Kisan Khata Architecture Skill
+# Architecture Skill
 
-## Objective
+Read CLAUDE.md, docs/01-product-requirements.md, docs/04-database-architecture.md, docs/05-multi-tenancy.md, docs/08-api-architecture.md and docs/decisions/README.md.
 
-Design maintainable Laravel modules that follow the approved Kisan Khata architecture.
+1. Identify business objective, role, tenant, entities, behavior and acceptance criteria.
+2. Inspect existing Laravel version, modules, models, services, policies, migrations, routes and tests.
+3. Define module ownership, interfaces, data ownership and dependencies.
+4. Trace request through authentication, tenant context, authorization, validation, service/domain logic, database and response.
+5. Assess tenant isolation, financial integrity, security, performance, API compatibility and migration risks.
+6. List files, schema changes, services, policies, routes, tests and docs affected.
+7. If proposal conflicts with approved docs or accepted ADRs, explain and obtain approval before implementation.
+8. Implement only the approved scope; run relevant tests and report evidence.
 
-## Required Reading
-
-Before starting:
-
-- CLAUDE.md
-- docs/01-product-requirements.md
-- docs/04-database-architecture.md
-- docs/05-multi-tenancy.md
-- docs/08-api-architecture.md
-- docs/decisions/README.md
-
-## Workflow
-
-### Step 1: Understand the Requirement
-
-Identify:
-
-- Business objective.
-- User role.
-- Affected shop.
-- Affected entities.
-- Expected behavior.
-- Acceptance criteria.
-
-Ask for clarification if the requirement is ambiguous.
-
-### Step 2: Inspect Existing Architecture
-
-Inspect:
-
-- Laravel version.
-- Existing modules.
-- Models.
-- Controllers.
-- Services.
-- Policies.
-- Migrations.
-- Routes.
-- Tests.
-
-Reuse existing working patterns where appropriate.
-
-### Step 3: Define Module Boundaries
-
-Identify:
-
-- Module ownership.
-- Public service interfaces.
-- Data ownership.
-- Dependencies.
-- Events, if required.
-
-Avoid unnecessary coupling.
-
-### Step 4: Design Data Flow
-
-Explain:
-
-Request
-→ Authentication
-→ Tenant Context
-→ Authorization
-→ Validation
-→ Application Service
-→ Domain Logic
-→ Database
-→ Response
-
-Adjust the flow according to the feature.
-
-### Step 5: Evaluate Risks
-
-Review:
-
-- Tenant isolation.
-- Financial integrity.
-- Performance.
-- API compatibility.
-- Security.
-- Migration impact.
-
-### Step 6: Prepare Implementation Plan
-
-List:
-
-1. Files to create.
-2. Files to modify.
-3. Database changes.
-4. Services.
-5. Policies.
-6. Routes.
-7. Tests.
-8. Documentation updates.
-
-### Step 7: Review Decisions
-
-If a proposal changes an accepted architecture decision, document the impact and request approval.
-
-### Step 8: Implementation
-
-Implement only the approved scope.
-
-### Step 9: Verification
-
-Run relevant tests and inspect the final changes.
-
-## Completion Criteria
-
-- Architecture is documented.
-- Module responsibilities are clear.
-- Tenant isolation is preserved.
-- Financial logic is separated.
-- Required tests are identified.
-- No unapproved architectural change remains.
+Do not introduce sale-level payment allocation, multi-shop user membership or a different tenancy architecture without a new approved decision.
