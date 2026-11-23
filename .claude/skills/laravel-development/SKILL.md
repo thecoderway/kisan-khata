@@ -1,134 +1,23 @@
-
 ---
 name: laravel-development
-description: Implement and maintain Kisan Khata features using the existing Laravel project conventions, validation, services, policies, migrations and tests.
+description: Implement Kisan Khata features using approved Laravel conventions, validation, services, policies, migrations and tests.
 ---
 
 # Laravel Development Skill
 
-## Objective
+Approved target stack: PHP 8.3, Laravel 13, MySQL 8.4. Inspect actual environment/manifests and existing patterns; do not upgrade/install packages without approval.
 
-Implement production-quality Laravel functionality without violating Kisan Khata architecture.
+1. Read CLAUDE.md, relevant rules, product docs and accepted ADRs.
+2. Identify user story, role, tenant, input, expected result and errors.
+3. Inspect existing code and tests; reuse valid patterns.
+4. Plan migrations, models, relationships, requests, policies, services, controllers, routes, views/API and tests.
+5. Use migrations, foreign keys, constraints, indexes and DECIMAL.
+6. Keep business logic out of controllers; validate tenant ownership at critical service boundaries.
+7. Enforce authorization server-side.
+8. Follow approved Hindi/English UI conventions and preserve original customer text separately from translations.
+9. For payments, implement consolidated payable reduction only; no sale-level allocation. Apply interest through payment date, avoid duplicate same-day interest, preserve new-sale dates and carry-forward cycle start.
+10. Owner-only posted Sale/Payment edits must retain immutable before/after audit history; Manager/Staff cannot edit.
+11. Write success, validation, authorization, tenant, financial boundary and concurrency tests.
+12. Run relevant tests/formatting/static analysis and report exact results and remaining risks.
 
-## Required Reading
-
-- CLAUDE.md
-- .claude/rules/laravel-conventions.md
-- .claude/rules/tenant-security.md
-- docs/06-security.md
-- docs/09-testing-strategy.md
-
-## Workflow
-
-### Step 1: Inspect the Environment
-
-Check:
-
-- PHP version.
-- Laravel version.
-- Composer dependencies.
-- Database configuration.
-- Existing frontend stack.
-- Existing tests.
-
-Do not upgrade dependencies without approval.
-
-### Step 2: Understand the Feature
-
-Identify:
-
-- User story.
-- Permissions.
-- Tenant ownership.
-- Input fields.
-- Expected result.
-- Error cases.
-
-### Step 3: Inspect Existing Code
-
-Find similar functionality.
-
-Follow established conventions unless they conflict with approved architecture.
-
-### Step 4: Plan Changes
-
-Identify:
-
-- Migrations.
-- Models.
-- Relationships.
-- Form Requests.
-- Policies.
-- Services or Actions.
-- Controllers.
-- Routes.
-- Views or API Resources.
-- Tests.
-
-### Step 5: Implement Database Changes
-
-Use migrations.
-
-Add appropriate:
-
-- Foreign keys.
-- Unique constraints.
-- Indexes.
-- DECIMAL columns.
-
-Never use floating-point database columns for money.
-
-### Step 6: Implement Business Logic
-
-Keep business logic outside controllers.
-
-Validate tenant ownership inside critical service boundaries.
-
-Use database transactions for multi-step financial workflows.
-
-### Step 7: Implement Authorization
-
-Use Policies or equivalent server-side authorization.
-
-Never rely on frontend visibility.
-
-### Step 8: Implement User Interface
-
-Follow approved UI conventions.
-
-Use localized labels.
-
-Preserve Hindi and English support.
-
-### Step 9: Write Tests
-
-Include:
-
-- Success cases.
-- Validation failures.
-- Authorization failures.
-- Tenant isolation.
-- Edge cases.
-
-### Step 10: Verify
-
-Run:
-
-- Relevant automated tests.
-- Code formatting.
-- Static analysis if configured.
-- Migration checks.
-
-### Step 11: Report
-
-Summarize:
-
-- Files changed.
-- Database changes.
-- Tests executed.
-- Results.
-- Remaining risks.
-
-## Completion Criteria
-
-A feature is complete only when its implementation, authorization, validation, tests and documentation are verified.
+Stop and ask if behavior depends on unresolved policy.
