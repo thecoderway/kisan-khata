@@ -1,125 +1,27 @@
-
 # Kisan Khata — Architecture Decision Records
 
-## 1. Purpose
+ADRs record important accepted or proposed technical/business architecture decisions. Approved product documentation v2.0 is the baseline; ADRs must not invent policy beyond it.
 
-This directory contains Architecture Decision Records (ADRs).
+## Status
+- PROPOSED: awaiting approval.
+- ACCEPTED: explicitly approved decision.
+- REJECTED: not selected.
+- SUPERSEDED: replaced by a later accepted ADR; preserve history.
 
-An ADR documents an important technical or architectural decision.
-
-It explains:
-
-- The problem.
-- The available options.
-- The selected option.
-- The reason for the decision.
-- The consequences.
-- The current status.
-
-## 2. ADR Naming Convention
-
-Use:
-
-`ADR-NNNN-short-description.md`
-
-Examples:
-
-- ADR-0001-modular-monolith.md
-- ADR-0002-shared-database-tenancy.md
-- ADR-0003-web-first-api-ready.md
-
-## 3. ADR Status
-
-Use one of:
-
-- PROPOSED
-- ACCEPTED
-- REJECTED
-- SUPERSEDED
-
-Do not mark a proposal as accepted without product owner or authorized technical approval.
-
-## 4. ADR Template
-
-```markdown
-# ADR-NNNN — Decision Title
-
-**Status:** PROPOSED  
-**Date:** YYYY-MM-DD
-
-## Context
-
-Describe the problem and why a decision is required.
-
-## Decision Drivers
-
-- Driver 1
-- Driver 2
-
-## Options Considered
-
-### Option A
-
-Description and trade-offs.
-
-### Option B
-
-Description and trade-offs.
-
-## Decision
-
-Describe the selected option.
-
-## Consequences
-
-### Positive
-
-- Benefits.
-
-### Negative
-
-- Trade-offs.
-
-## Security Impact
-
-Describe security implications.
-
-## Financial Data Impact
-
-Describe financial data implications.
-
-## Future Reconsideration
-
-Explain what circumstances would justify revisiting the decision.
-```
-
-## 5. Decision Rules
-
-1. Avoid recording minor implementation details as ADRs.
-2. Record decisions that affect system architecture.
-3. Record decisions that are expensive to reverse.
-4. Record decisions that affect financial integrity.
-5. Record decisions that affect tenant isolation.
-6. Link related documentation.
-7. Preserve superseded ADRs.
-8. Never silently rewrite an accepted decision.
-
-## 6. Current ADR Index
-
+## Index
 | ADR | Topic | Status |
 |---|---|---|
-| ADR-0001 | Modular Monolith | PROPOSED |
-| ADR-0002 | Shared Database Tenancy | PROPOSED |
-| ADR-0003 | Web First and API Ready | PROPOSED |
+| ADR-0001 | Modular Monolith | ACCEPTED |
+| ADR-0002 | Shared Database Multi-Tenancy | ACCEPTED |
+| ADR-0003 | Web-First, API-Ready Architecture | ACCEPTED |
+| ADR-0004 | Consolidated Customer Ledger and Payments | ACCEPTED |
+| ADR-0005 | User, Shop and Role Relationship | ACCEPTED |
+| ADR-0006 | Financial Transaction Correction and Audit | ACCEPTED |
+| ADR-0007 | Interest Calculation Events | ACCEPTED — specified scope only; open parameters remain pending |
+| ADR-0008 | Bilingual Customer Data | ACCEPTED |
+| ADR-0009 | Shop-Level Subscriptions | ACCEPTED |
 
-## 7. Approval
+## ADR template
+Each ADR must include context, decision, consequences, security/data-integrity impact, related docs and reconsideration criteria. Preserve accepted decision history; changes require explicit approval and a superseding ADR.
 
-Technical implementation should follow accepted ADRs.
-
-If a new requirement conflicts with an accepted ADR:
-
-1. Explain the conflict.
-2. Evaluate alternatives.
-3. Prepare a new ADR or revision.
-4. Obtain approval.
-5. Update related documentation.
+If an ADR conflicts with docs/01–10 v2.0 or an explicitly approved later decision, stop and report the conflict. Do not silently change accepted decisions.
