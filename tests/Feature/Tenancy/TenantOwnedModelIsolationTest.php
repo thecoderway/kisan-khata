@@ -285,5 +285,4 @@ class TenantOwnedModelIsolationTest extends TestCase
             ['shop_id', 'setting_value'],
         );
     }
-
 }
