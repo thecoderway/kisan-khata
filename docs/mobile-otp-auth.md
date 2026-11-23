@@ -51,12 +51,14 @@ Revokes only the token used for the request.
 - Five-minute expiry, single-use challenge, and five verification attempts.
 - Sixty-second resend cooldown.
 - Per-mobile and per-IP request rate limits, plus per-mobile verification rate limiting.
+- Formatting separators (spaces, parentheses, and hyphens) are removed for rate-limit identity, preventing trivial formatting variants from bypassing throttles.
 - OTP login is limited to active users belonging to active shops.
 - Mobile verification timestamp is set only after successful OTP verification.
 - Tokens expire after 30 days by default; configure `MOBILE_OTP_TOKEN_EXPIRY_DAYS`.
+- Expired and consumed challenge records are pruned daily after seven days by the `mobile-otp:prune` scheduled command. Ensure Laravel's scheduler is running in the deployment environment.
 - No OTP is returned in API responses or written to application logs.
-- Default sender is intentionally unconfigured. Implement `App\Contracts\MobileOtpSender` and set `MOBILE_OTP_SENDER` to its fully qualified class name to enable SMS delivery. Provider implementations should throw `App\Exceptions\MobileOtpDeliveryUnavailable` when delivery fails.
+- Default sender is intentionally unconfigured. Implement `App\\Contracts\\MobileOtpSender` and set `MOBILE_OTP_SENDER` to its fully qualified class name to enable SMS delivery. Provider implementations should throw `App\\Exceptions\\MobileOtpDeliveryUnavailable` when delivery fails.
 
 ## Mobile number format
 
-The API accepts the same mobile string format stored by owner registration and performs an exact match. Keep registration and mobile-app input formatting consistent. A dedicated E.164 normalization policy can be introduced with the SMS provider integration.
+Both OTP endpoints validate the same mobile input format accepted by owner registration. Account lookup continues to use the exact stored mobile string. Keep registration and mobile-app input formatting consistent; a canonical E.164 storage policy should be introduced separately with a deliberate migration before changing account lookup semantics.
