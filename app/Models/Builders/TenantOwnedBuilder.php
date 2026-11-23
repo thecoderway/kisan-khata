@@ -74,9 +74,8 @@ class TenantOwnedBuilder extends Builder
             return 0;
         }
 
-        $rows = array_is_list($values) && isset($values[0]) && is_array($values[0])
-            ? $values
-            : [$values];
+        $isBatch = array_is_list($values) && isset($values[0]) && is_array($values[0]);
+        $rows = $isBatch ? $values : [$values];
 
         foreach ($rows as &$row) {
             if (! is_array($row)) {
@@ -215,7 +214,7 @@ class TenantOwnedBuilder extends Builder
         }
         unset($row);
 
-        return $rows;
+        return $isBatch ? $rows : $rows[0];
     }
 
     /**
