@@ -13,6 +13,69 @@ class ShopUserCapacityTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_capacity_summary_reports_active_counts_and_limits(): void
+    {
+        $shop = Shop::factory()->create();
+
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        User::factory()->count(2)->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        User::factory()->count(3)->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'is_active' => false,
+        ]);
+
+        $summary = app(ShopUserCapacity::class)->summary($shop);
+
+        $this->assertSame(1, $summary['roles'][User::ROLE_OWNER]['active']);
+        $this->assertSame(1, $summary['roles'][User::ROLE_OWNER]['limit']);
+        $this->assertSame(2, $summary['roles'][User::ROLE_MANAGER]['active']);
+        $this->assertSame(2, $summary['roles'][User::ROLE_MANAGER]['limit']);
+        $this->assertSame(3, $summary['roles'][User::ROLE_STAFF]['active']);
+        $this->assertSame(5, $summary['roles'][User::ROLE_STAFF]['limit']);
+        $this->assertSame(6, $summary['active_total']);
+        $this->assertSame(8, $summary['total_limit']);
+    }
+
+    public function test_capacity_summary_is_scoped_to_the_requested_shop(): void
+    {
+        $shop = Shop::factory()->create();
+        $otherShop = Shop::factory()->create();
+
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        User::factory()->count(2)->create([
+            'shop_id' => $otherShop->id,
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        $summary = app(ShopUserCapacity::class)->summary($shop);
+
+        $this->assertSame(1, $summary['active_total']);
+        $this->assertSame(0, $summary['roles'][User::ROLE_STAFF]['active']);
+    }
+
     public function test_shop_wide_active_user_limit_is_enforced_independently_of_role_limits(): void
     {
         $shop = Shop::factory()->create();
