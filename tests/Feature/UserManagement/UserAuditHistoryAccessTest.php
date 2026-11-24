@@ -77,7 +77,6 @@ class UserAuditHistoryAccessTest extends TestCase
             ->assertJsonValidationErrors('per_page');
     }
 
-
     private function createUser(Shop $shop, string $role): User
     {
         return User::factory()->create([
