@@ -120,6 +120,6 @@ class AppendOnlyAndRetentionTest extends TestCase
             'created_at' => now(),
         ]);
 
-        return UserAuditLog::query()->findOrFail($id);
+        return UserAuditLog::withoutGlobalScope('current_shop')->findOrFail($id);
     }
 }

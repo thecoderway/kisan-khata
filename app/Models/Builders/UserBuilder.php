@@ -109,17 +109,24 @@ class UserBuilder extends Builder
 
     private function scopeToCurrentShop(): void
     {
+        $model = $this->getModel();
         $shopId = app(CurrentShop::class)->id();
 
-        if ($shopId === null && $this->getModel()->exists) {
-            $shopId = $this->getModel()->getRawOriginal('shop_id');
+        if ($shopId === null && $model->getKey() !== null) {
+            $shopId = $model->getRawOriginal('shop_id') ?? $model->getAttribute('shop_id');
+
+            if ($shopId === null) {
+                $this->whereKey($model->getKey());
+
+                return;
+            }
         }
 
         if ($shopId === null) {
             throw new LogicException('A current shop context is required for bulk user mutations.');
         }
 
-        $this->where($this->getModel()->qualifyColumn('shop_id'), $shopId);
+        $this->where($model->qualifyColumn('shop_id'), $shopId);
     }
 
     private function assertShopIdIsImmutable(array $columns): void
