@@ -30,6 +30,7 @@ class NewPasswordController
             function ($user, $password): void {
                 $user->forceFill([
                     'password' => $password,
+                    'must_change_password' => false,
                     'remember_token' => Str::random(60),
                 ])->save();
 

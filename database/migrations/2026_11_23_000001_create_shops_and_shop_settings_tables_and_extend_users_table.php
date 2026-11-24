@@ -79,9 +79,11 @@ return new class extends Migration
         }
 
         Schema::table('users', function (Blueprint $table) {
+            // MySQL requires the foreign key to be removed before its supporting
+            // index can be dropped.
+            $table->dropForeign(['shop_id']);
             $table->dropIndex(['shop_id', 'role']);
             $table->dropUnique(['mobile']);
-            $table->dropForeign(['shop_id']);
             $table->dropColumn([
                 'shop_id',
                 'mobile',

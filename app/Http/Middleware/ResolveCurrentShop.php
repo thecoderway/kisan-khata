@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Shop;
+use App\Models\User;
 use App\Tenancy\CurrentShop;
 use Closure;
 use Illuminate\Http\Request;
@@ -20,6 +21,10 @@ class ResolveCurrentShop
             abort(403, 'An active user account is required.');
         }
 
+        if (! in_array($user->role, [User::ROLE_OWNER, User::ROLE_MANAGER, User::ROLE_STAFF], true)) {
+            abort(403, 'A shop-level user role is required.');
+        }
+
         $shop = $user->shop()
             ->where('status', Shop::STATUS_ACTIVE)
             ->first();
@@ -30,6 +35,10 @@ class ResolveCurrentShop
 
         $this->currentShop->set($shop);
 
-        return $next($request);
+        try {
+            return $next($request);
+        } finally {
+            $this->currentShop->clear();
+        }
     }
 }

@@ -1,6 +1,6 @@
 # Kisan Khata — Multi-Tenancy Architecture
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved  
 **Architecture:** Shared Database, Shared Application  
 **Database:** MySQL 8.4  
@@ -113,10 +113,16 @@ Rules:
 - Manager and Staff cannot create other shop users.
 - User capacity must be checked during account creation.
 - Concurrent account creation must not exceed capacity.
-- Disabled users must follow a defined account-capacity policy.
-- User role changes must be authorized and audited.
+- Capacity counts active shop users only: one active Owner, up to two active Managers, up to five active Staff, and eight active users total.
+- Deactivated Manager and Staff accounts release both their role capacity and total active-user capacity; their accounts and audit history are retained.
+- Reactivation must re-check role and total active-user capacity before the account becomes active.
+- The sole active Owner cannot be deactivated or demoted through ordinary shop-user management. Ownership transfer requires a separately authorized and audited process.
+- Only the Owner may create, deactivate, reactivate, or change the roles of Manager and Staff accounts.
+- Manager may view the Staff list and active/deactivated status only; Manager cannot administer user accounts.
+- Role changes must check destination-role capacity and release source-role capacity atomically.
+- Account creation, deactivation, reactivation and role changes must be serialized per shop (for example, by locking the Shop row in a database transaction) so concurrent requests cannot exceed capacity.
 
-The capacity must be enforced by backend services and database safeguards where practical.
+The capacity must be enforced by backend services and database safeguards where practical. The active-user count and authorization checks must be server-side; client-supplied status or role values are never authoritative.
 
 ## 5. Tenant Identification
 
@@ -300,18 +306,23 @@ Tenant isolation and role authorization are separate security responsibilities.
 - Manage customers.
 - Manage sales and payments within approved permissions.
 - View reports.
-- Manage routine staff operations.
+- View the Staff list and active/deactivated status only.
+- Cannot create, deactivate, reactivate, or change the role of any shop user.
 - Cannot change subscription, ownership or critical security settings.
 - Cannot edit posted financial transactions.
 
 ### Staff
 
-- View and add customers.
+- View, add and edit customer profile information.
 - Record credit sales.
 - Record payments.
 - View own work and transaction history.
-- Cannot edit or delete posted financial transactions.
+- Cannot delete customers or edit/delete posted financial transactions.
 - Has limited report and settings access.
+
+### Owner protection
+
+The sole active Owner cannot be deactivated or demoted through ordinary shop-user management. Ownership transfer is outside ordinary user administration and requires a separately authorized and audited process.
 
 The initial release uses fixed roles.
 
@@ -500,3 +511,17 @@ Multi-tenancy is complete only when:
 - API requests enforce tenant ownership.
 - Platform administration is separated from shop-level permissions.
 - Automated cross-tenant tests pass.
+
+## 21. Current implementation mapping
+
+The current tenant foundation provides these reusable enforcement points:
+
+- `App\Tenancy\CurrentShop` is registered as a Laravel scoped service. `ResolveCurrentShop` derives the shop from the authenticated user, accepts only Owner/Manager/Staff roles, rejects inactive users and inactive shops, and clears the context after the request completes.
+- `BelongsToCurrentShop` and `TenantOwnedBuilder` provide fail-closed query scoping and tenant-safe set-based mutations for tenant-owned Eloquent models such as `ShopSetting`. Removing the global scope does not remove the builder's ownership checks on bulk writes.
+- `UserBuilder` prevents shop reassignment and unsafe bulk insert/delete paths; bulk updates and increments are limited to the current shop. Model-instance persistence remains available for controlled authentication and lifecycle operations.
+- `UserAuditLog` queries fail closed without a current shop, are scoped to the current shop, and retain append-only mutation guards. Its controlled lifecycle writer validates the locked shop, actor and target before using the query builder.
+- Use `TenantCacheKey::make()` to prefix tenant cache keys with `shop:{shop_id}:`.
+- Use the `tenant_private` filesystem disk together with `TenantPrivatePath::make()` for shop-prefixed private paths. The path helper rejects absolute paths and traversal segments.
+- Tenant-specific queued jobs must implement `TenantAwareJob` and include `ResolveTenantForJob` in their job middleware. The middleware verifies an active shop and clears tenant context in a `finally` block.
+
+These are tenant infrastructure primitives, not claims that customer attachments, tenant-specific cache consumers, background business jobs or exports already exist. Each future feature must use the relevant primitive and add resource-specific authorization, ownership and cross-tenant tests. Raw SQL/query-builder operations bypass Eloquent scopes and must remain limited to reviewed system operations with explicit tenant validation.

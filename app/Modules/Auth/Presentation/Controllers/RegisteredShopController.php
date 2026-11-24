@@ -51,6 +51,21 @@ class RegisteredShopController
             ]);
             $user->save();
 
+            DB::table('user_audit_logs')->insert([
+                'shop_id' => $shop->getKey(),
+                // The initial Owner is the actor for the self-registration event.
+                'actor_user_id' => $user->getKey(),
+                'target_user_id' => $user->getKey(),
+                'action' => 'user.created',
+                'old_values' => null,
+                'new_values' => json_encode([
+                    'role' => $user->role,
+                    'is_active' => $user->is_active,
+                ], JSON_THROW_ON_ERROR),
+                'reason' => 'Initial shop registration',
+                'created_at' => now(),
+            ]);
+
             return $user;
         });
 

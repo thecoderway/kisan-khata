@@ -1,6 +1,6 @@
 # Kisan Khata — Security Architecture
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved
 
 ---
@@ -124,18 +124,26 @@ There are no custom per-user permissions in the initial release.
 - Manage customers.
 - Manage operational sales and payments.
 - View reports.
-- Perform routine staff operations.
+- View the Staff list and active/deactivated status only.
+- Cannot create, deactivate, reactivate, or change the role of shop users.
 - Cannot change ownership, subscription or critical security settings.
 - Cannot edit or delete posted financial transactions.
 
 ### Staff
 
-- View and add customers.
+- View, add and edit customer profile information.
 - Record credit sales.
 - Record payments.
 - View own work and transaction history.
-- Cannot edit or delete posted financial transactions.
+- Cannot delete customers or edit/delete posted financial transactions.
 - Has limited reports and settings access.
+
+### Owner-only user administration and Owner protection
+
+- Only the Shop Owner may create, deactivate, reactivate, or change the roles of Manager and Staff accounts.
+- The sole active Owner cannot be deactivated or demoted through ordinary shop-user management.
+- Ownership transfer requires a separately authorized and audited process; it is not an ordinary role-change operation.
+- All user-management permissions must be enforced by server-side policies and application services for web and API requests.
 
 ### Platform Administrator
 
@@ -343,8 +351,9 @@ Examples:
 
 - Login and authentication security events.
 - OTP verification failures where appropriate.
-- User account creation and deactivation.
-- Role changes.
+- User account creation, deactivation and reactivation.
+- Role changes, including previous and new roles.
+- Rejected user lifecycle or role-change attempts where security monitoring is appropriate.
 - Shop ownership or security setting changes.
 - Customer changes.
 - Sale creation and correction.
@@ -361,8 +370,8 @@ Audit records should capture, where applicable:
 - Actor user ID.
 - Action type.
 - Affected record type and ID.
-- Previous values.
-- New values.
+- Previous values, including previous active status and role where applicable.
+- New values, including new active status and role where applicable.
 - Timestamp.
 - Reason or reference.
 - Request or correlation identifier.

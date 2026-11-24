@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -35,6 +36,23 @@ class AuthenticationTest extends TestCase
         $this->assertTrue(Hash::check('StrongPass123', $user->password));
         $this->assertDatabaseCount('shops', 1);
         $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseHas('user_audit_logs', [
+            'shop_id' => $shop->id,
+            'actor_user_id' => $user->id,
+            'target_user_id' => $user->id,
+            'action' => 'user.created',
+            'reason' => 'Initial shop registration',
+        ]);
+
+        $audit = DB::table('user_audit_logs')
+            ->where('target_user_id', $user->id)
+            ->where('action', 'user.created')
+            ->first();
+
+        $this->assertSame([
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ], json_decode($audit->new_values, true, 512, JSON_THROW_ON_ERROR));
     }
 
     public function test_registration_rejects_duplicate_owner_mobile(): void
@@ -119,5 +137,39 @@ class AuthenticationTest extends TestCase
         ])->assertRedirect(route('login'))->assertSessionHasErrors('email');
 
         $this->assertGuest();
+    }
+
+    public function test_web_first_login_forces_password_change_before_dashboard_access(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'email' => 'first-login@example.com',
+            'password' => 'Temporary123',
+            'must_change_password' => true,
+            'is_active' => true,
+        ]);
+
+        $this->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'Temporary123',
+        ])->assertRedirect(route('password.first-login.edit'));
+
+        $this->assertAuthenticatedAs($user);
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('password.first-login.edit'));
+
+        $this->get(route('password.first-login.edit'))->assertOk();
+
+        $this->post(route('password.first-login.update'), [
+            'current_password' => 'Temporary123',
+            'password' => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertFalse($user->fresh()->must_change_password);
+        $this->get(route('dashboard'))->assertOk();
     }
 }

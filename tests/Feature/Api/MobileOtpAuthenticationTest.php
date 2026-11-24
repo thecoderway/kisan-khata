@@ -5,7 +5,9 @@ namespace Tests\Feature\Api;
 use App\Contracts\MobileOtpSender;
 use App\Models\Shop;
 use App\Models\User;
+use App\Modules\Users\Application\ManageShopUserLifecycle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -96,6 +98,34 @@ class MobileOtpAuthenticationTest extends TestCase
 
         $this->assertNull($sender->code);
         $this->assertDatabaseCount('mobile_otp_challenges', 0);
+    }
+
+    public function test_otp_issued_before_deactivation_cannot_authenticate_the_deactivated_user(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+        $staff = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'mobile' => '9876543210',
+            'is_active' => true,
+        ]);
+
+        $sender = $this->requestOtp($staff);
+
+        app(ManageShopUserLifecycle::class)
+            ->deactivate($owner, $staff->id);
+
+        $this->postJson('/api/auth/mobile/verify-otp', [
+            'mobile' => $staff->mobile,
+            'otp' => $sender->code,
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
     public function test_suspended_shop_cannot_receive_mobile_otp(): void
@@ -249,6 +279,75 @@ class MobileOtpAuthenticationTest extends TestCase
 
         $this->postJson('/api/auth/mobile/request-otp', ['mobile' => $user->mobile])
             ->assertTooManyRequests();
+    }
+
+    public function test_first_login_otp_issues_restricted_token_and_requires_temporary_password(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'mobile' => '9876543210',
+            'password' => 'Temporary123',
+            'must_change_password' => true,
+            'is_active' => true,
+        ]);
+
+        $sender = $this->requestOtp($user);
+
+        $response = $this->postJson('/api/auth/mobile/verify-otp', [
+            'mobile' => $user->mobile,
+            'otp' => $sender->code,
+        ])->assertOk()
+            ->assertJsonPath('first_login_required', true)
+            ->assertJsonMissingPath('user');
+
+        $firstLoginToken = $response->json('token');
+
+        $this->withToken($firstLoginToken)->getJson('/api/user')->assertForbidden();
+
+        $this->withToken($firstLoginToken)->postJson('/api/auth/mobile/complete-first-login', [
+            'temporary_password' => 'WrongTemporary123',
+            'password' => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])->assertUnprocessable();
+
+        $this->assertTrue($user->fresh()->must_change_password);
+
+        $completed = $this->withToken($firstLoginToken)->postJson('/api/auth/mobile/complete-first-login', [
+            'temporary_password' => 'Temporary123',
+            'password' => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])->assertOk()
+            ->assertJsonPath('first_login_required', false)
+            ->assertJsonPath('user.id', $user->id);
+
+        $this->assertFalse($user->fresh()->must_change_password);
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        $issuedToken = DB::table('personal_access_tokens')
+            ->where('tokenable_id', $user->id)
+            ->first();
+
+        $this->assertSame(['app'], json_decode($issuedToken->abilities, true));
+
+        $profileResponse = $this->withToken($completed->json('token'))
+            ->getJson('/api/user');
+
+        $this->assertSame(200, $profileResponse->status(), $profileResponse->getContent());
+        $profileResponse->assertJsonPath('id', $user->id);
+
+        // Each HTTP request normally gets a fresh guard lifecycle. Reset the cached
+        // guard between simulated requests so this assertion validates the revoked
+        // bearer token rather than the prior request's cached authenticated user.
+        Auth::forgetGuards();
+
+        $this->withToken($firstLoginToken)
+            ->postJson('/api/auth/mobile/complete-first-login', [
+                'temporary_password' => 'Temporary123',
+                'password' => 'AnotherSecure123',
+                'password_confirmation' => 'AnotherSecure123',
+            ])->assertUnauthorized();
     }
 
     private function createEligibleUser(): User

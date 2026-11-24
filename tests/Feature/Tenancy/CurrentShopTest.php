@@ -5,7 +5,9 @@ namespace Tests\Feature\Tenancy;
 use App\Models\Shop;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException;
 use Tests\TestCase;
 
 class CurrentShopTest extends TestCase
@@ -26,7 +28,57 @@ class CurrentShopTest extends TestCase
         $response->assertOk()
             ->assertViewHas('shop', fn (Shop $resolvedShop): bool => $resolvedShop->is($shop));
 
-        $this->assertSame($shop->id, app(CurrentShop::class)->id());
+        $this->assertNull(app(CurrentShop::class)->id());
+    }
+
+    public function test_user_cannot_be_reassigned_to_another_shop(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shopA->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $user->shop_id = $shopB->id;
+
+        $this->expectException(AuthorizationException::class);
+
+        $user->save();
+    }
+
+    public function test_bulk_user_update_cannot_change_shop_ownership(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shopA->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+
+        User::query()->whereKey($user->id)->update([
+            'shop_id' => $shopB->id,
+        ]);
+    }
+
+    public function test_direct_user_builder_insert_get_id_is_blocked(): void
+    {
+        $shop = Shop::factory()->create();
+
+        $this->expectException(LogicException::class);
+
+        User::query()->insertGetId([
+            'shop_id' => $shop->id,
+            'name' => 'Injected User',
+            'mobile' => '9999999999',
+            'password' => bcrypt('password'),
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
     }
 
     public function test_dashboard_does_not_use_a_client_supplied_shop_id(): void
@@ -78,5 +130,55 @@ class CurrentShopTest extends TestCase
         ]);
 
         $this->actingAs($user)->get(route('dashboard'))->assertForbidden();
+    }
+
+    public function test_platform_owner_role_is_rejected_even_if_a_shop_is_assigned(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_PLATFORM_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->get(route('dashboard'))->assertForbidden();
+    }
+
+    public function test_bulk_user_update_is_restricted_to_the_current_shop(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        $userA = User::factory()->create([
+            'shop_id' => $shopA->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+        $userB = User::factory()->create([
+            'shop_id' => $shopB->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        app(CurrentShop::class)->set($shopA);
+
+        User::query()->whereKey($userB->id)->update(['name' => 'Cross-tenant mutation']);
+        User::query()->whereKey($userB->id)->increment('is_active');
+
+        $this->assertDatabaseHas('users', ['id' => $userA->id, 'name' => $userA->name]);
+        $this->assertDatabaseHas('users', ['id' => $userB->id, 'name' => $userB->name, 'is_active' => true]);
+    }
+
+    public function test_bulk_user_mutations_fail_closed_without_tenant_context(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->expectException(LogicException::class);
+
+        User::query()->whereKey($user->id)->update(['name' => 'No tenant context']);
     }
 }

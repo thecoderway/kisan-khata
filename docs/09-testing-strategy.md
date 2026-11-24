@@ -421,45 +421,39 @@ Verify:
 
 Every new tenant-owned module must include corresponding isolation tests.
 
+Current foundation regression coverage also verifies:
+
+- Tenant context is resolved from the authenticated user, rejects platform-level roles on shop routes, and is cleared after request completion.
+- User bulk mutations cannot affect another shop and fail closed when no tenant context is available.
+- Shop settings and user audit history are scoped to the current shop; audit history fails closed without context and rejects cross-shop inserts.
+- Tenant cache keys are shop-namespaced.
+- Private tenant paths are shop-prefixed and reject absolute paths and traversal segments.
+- Tenant job middleware establishes the requested active shop context and clears it after both successful and failed execution.
+
+
 ## 13. Role Authorization Tests
 
-Test all three roles independently.
-
-### Owner
-
 Verify:
 
-- Full permitted shop access.
-- Interest policy management.
-- Subscription and billing access.
-- Employee management.
-- Posted sale and payment corrections.
-- Financial reports and exports.
+- Owner has full permitted shop access.
+- Manager can view only Staff list and active/deactivated status.
+- Staff cannot access user management.
+- Owner can create, deactivate, reactivate and change Manager/Staff roles.
+- Manager and Staff cannot create, deactivate, reactivate or change user roles.
+- Owner cannot ordinarily deactivate or demote themselves.
+- Ownership transfer is not available through ordinary user-management routes.
+- Customer profile permissions and posted financial transaction permissions are enforced and tested by their respective domain modules when introduced.
 
-### Manager
+### Phase 3 execution evidence — 2026-11-24
 
-Verify:
+GitHub Actions Laravel CI run #19 completed successfully on MySQL 8.4:
+- 90 Pint files passed.
+- Composer validation and Vite production build passed.
+- MySQL shop-row locking integration: 1 passed / 2 assertions.
+- Remaining Laravel suite: 138 passed / 430 assertions.
+- Combined: 139 tests / 432 assertions / 0 failures / 0 skipped.
 
-- Customer operations.
-- Sale and payment recording.
-- Permitted reports.
-- Permitted staff operations.
-- Cannot edit or delete posted financial transactions.
-- Cannot change subscription or ownership settings.
-
-### Staff
-
-Verify:
-
-- Customer viewing and creation.
-- Sale recording.
-- Payment recording.
-- Permitted transaction history access.
-- Cannot edit or delete posted financial transactions.
-- Cannot change interest policies.
-- Cannot access restricted reports or settings.
-
-Backend authorization must be tested even when the UI hides restricted controls.
+Phase 3 coverage includes Web/API lifecycle success and denial paths, tenant isolation, response-field minimization, account retention, session/token revocation, capacity limits and append-only audit history. Customer/Sales/Payments domain-specific authorization remains required when those later modules are built.
 
 ## 14. File Upload and Export Tests
 
@@ -608,6 +602,8 @@ The CI pipeline should run:
 8. Security-focused tests.
 9. Relevant API tests.
 10. Browser tests where configured.
+
+Database-sensitive integration tests must use MySQL 8.4. Tests that manage the schema through Laravel's `DatabaseMigrations` trait must run in a separate PHPUnit process from tests using `RefreshDatabase` when their migration teardown would otherwise invalidate the shared in-process migration state. Keep these tests in a dedicated PHPUnit group and invoke that group in a separate CI test command; run the remaining suite in a fresh command/process. Do not remove or skip the MySQL test to work around migration-state conflicts.
 
 Critical failures must block deployment.
 

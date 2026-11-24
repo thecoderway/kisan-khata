@@ -1,6 +1,6 @@
 # Kisan Khata — UI/UX Guidelines
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved  
 **Languages:** Hindi and English  
 **Primary Users:** Indian agricultural merchants, traders and shop operators  
@@ -27,6 +27,21 @@ The interface must prioritize:
 9. Consistent user experience.
 
 Users should be able to perform everyday shop operations without requiring accounting or technical knowledge.
+
+### Approved visual palette
+
+The Product Owner approved the following Green + White + Slate palette on 2026-11-23. Use these tokens consistently across the responsive web interface and future UI components.
+
+| Token | Color | Intended use |
+|---|---|---|
+| Primary green | `#166534` | Primary actions, active navigation and key brand emphasis |
+| Secondary green | `#15803D` | Secondary emphasis and interactive states |
+| Light green | `#DCFCE7` | Subtle success surfaces and selected/active backgrounds |
+| App background | `#F8FAFC` | Main page background |
+| Surface | `#FFFFFF` | Cards, forms, tables and panels |
+| Text | Slate / dark text | Primary content, labels and readable contrast |
+
+Use neutral slate tones for borders, dividers, muted text and disabled states. Maintain readable contrast, visible keyboard focus, and clear hover/active/disabled states. Do not use color alone to communicate status.
 
 ## 2. Language Support
 

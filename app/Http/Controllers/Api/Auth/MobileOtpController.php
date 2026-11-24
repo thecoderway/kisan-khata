@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Exceptions\MobileOtpDeliveryUnavailable;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\Auth\MobileOtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter as RateLimiterFacade;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class MobileOtpController extends Controller
 {
@@ -62,14 +67,46 @@ class MobileOtpController extends Controller
 
         RateLimiterFacade::hit($key, (int) config('mobile_otp.expiry_minutes', 5) * 60);
 
-        $user = $otp->verify($mobile, $validated['otp']);
-        $expiresAt = now()->addDays(max(1, (int) config('mobile_otp.token_expiry_days', 30)));
-        $token = $user->createToken('mobile-app', ['*'], $expiresAt);
+        // Token issuance runs inside OTP verification's locked transaction.
+        // Failed-attempt counters still commit before validation errors are raised.
+        $issued = $otp->verifyAndIssueToken($mobile, $validated['otp'], function (User $user) {
+            $isFirstLogin = $user->must_change_password;
+            $expiresAt = $isFirstLogin
+                ? now()->addMinutes(10)
+                : now()->addDays(max(1, (int) config('mobile_otp.token_expiry_days', 30)));
+            $token = $user->createToken(
+                $isFirstLogin ? 'mobile-first-login' : 'mobile-app',
+                [$isFirstLogin ? 'first-login' : 'app'],
+                $expiresAt,
+            );
+
+            return [
+                'is_first_login' => $isFirstLogin,
+                'expires_at' => $expiresAt,
+                'token' => $token,
+            ];
+        });
+
+        $user = $issued['user'];
+        $isFirstLogin = $issued['issued']['is_first_login'];
+        $expiresAt = $issued['issued']['expires_at'];
+        $token = $issued['issued']['token'];
 
         RateLimiterFacade::clear($key);
 
+        if ($isFirstLogin) {
+            return response()->json([
+                'message' => 'मोबाइल सत्यापन सफल हुआ। आगे बढ़ने के लिए अस्थायी पासवर्ड सत्यापित करें और नया पासवर्ड बनाएं।',
+                'first_login_required' => true,
+                'token_type' => 'Bearer',
+                'token' => $token->plainTextToken,
+                'expires_at' => $expiresAt->toISOString(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'लॉगिन सफल हुआ।',
+            'first_login_required' => false,
             'token_type' => 'Bearer',
             'token' => $token->plainTextToken,
             'expires_at' => $expiresAt->toISOString(),
@@ -88,13 +125,67 @@ class MobileOtpController extends Controller
         ]);
     }
 
-    /**
-     * Normalize presentation separators for throttling only.
-     *
-     * Account lookup remains exact until registration data has a shared
-     * canonical storage policy; this prevents formatting variants from
-     * bypassing rate limits without silently changing account identity.
-     */
+    public function completeFirstLogin(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'temporary_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers()],
+        ]);
+
+        $user = $request->user();
+
+        if (! $user->must_change_password || ! Hash::check($validated['temporary_password'], $user->password)) {
+            return response()->json(['message' => 'अस्थायी पासवर्ड सही नहीं है या first-login प्रक्रिया लागू नहीं है।'], 422);
+        }
+
+        $expiresAt = now()->addDays(max(1, (int) config('mobile_otp.token_expiry_days', 30)));
+
+        $token = DB::transaction(function () use ($request, $user, $validated, $expiresAt) {
+            $lockedUser = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+            if (! $lockedUser->must_change_password
+                || ! Hash::check($validated['temporary_password'], $lockedUser->password)) {
+                return null;
+            }
+
+            $lockedUser->forceFill([
+                'password' => $validated['password'],
+                'must_change_password' => false,
+            ])->save();
+
+            $request->user()->currentAccessToken()?->delete();
+
+            return $lockedUser->createToken('mobile-app', ['app'], $expiresAt);
+        });
+
+        if (! $token) {
+            return response()->json(['message' => 'First-login प्रक्रिया पहले ही पूरी हो चुकी है।'], 409);
+        }
+
+        // Ensure the next request resolves authentication from its new bearer token,
+        // not any guard instance cached while the restricted token was in use.
+        Auth::forgetGuards();
+
+        $user = $user->fresh()->load('shop');
+
+        return response()->json([
+            'message' => 'पासवर्ड सफलतापूर्वक अपडेट हुआ। लॉगिन सफल है।',
+            'first_login_required' => false,
+            'token_type' => 'Bearer',
+            'token' => $token->plainTextToken,
+            'expires_at' => $expiresAt->toISOString(),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'mobile' => $user->mobile,
+                'role' => $user->role,
+                'shop_id' => $user->shop_id,
+                'shop' => ['id' => $user->shop->id, 'name' => $user->shop->name],
+            ],
+        ]);
+    }
+
     private function mobileRateLimitIdentity(string $mobile): string
     {
         return preg_replace('/[\s()\-]/u', '', trim($mobile)) ?? trim($mobile);

@@ -54,7 +54,9 @@ class AuthenticatedSessionController
         $limiter->clear('login:'.$key);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return $user->must_change_password
+            ? redirect()->route('password.first-login.edit')
+            : redirect()->intended(route('dashboard'));
     }
 
     public function destroy(Request $request): RedirectResponse

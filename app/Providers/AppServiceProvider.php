@@ -4,7 +4,12 @@ namespace App\Providers;
 
 use App\Contracts\MobileOtpSender;
 use App\Infrastructure\Auth\NullMobileOtpSender;
+use App\Models\User;
+use App\Models\UserAuditLog;
+use App\Policies\UserAuditLogPolicy;
+use App\Policies\UserManagementPolicy;
 use App\Tenancy\CurrentShop;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        Gate::policy(User::class, UserManagementPolicy::class);
+        Gate::policy(UserAuditLog::class, UserAuditLogPolicy::class);
     }
 }

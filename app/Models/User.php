@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Builders\UserBuilder;
 use Database\Factories\UserFactory;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use LogicException;
 
 #[Fillable([
     'name',
@@ -32,6 +36,35 @@ class User extends Authenticatable
 
     public const ROLE_PLATFORM_OWNER = 'platform_owner';
 
+    public function newEloquentBuilder($query): UserBuilder
+    {
+        return new UserBuilder($query);
+    }
+
+    /**
+     * Keep single-record inserts inside the model lifecycle. Direct builder
+     * insertGetId calls are blocked by UserBuilder because they skip model events.
+     */
+    protected function insertAndSetId(Builder $query, $attributes)
+    {
+        $id = $query->toBase()->insertGetId($attributes, $keyName = $this->getKeyName());
+
+        $this->setAttribute($keyName, $id);
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (User $user): void {
+            if ($user->isDirty('shop_id')) {
+                throw new AuthorizationException('A user cannot be reassigned to another shop.');
+            }
+        });
+
+        static::deleting(fn () => throw new LogicException(
+            'Shop user accounts are retained; use the audited deactivation lifecycle.'
+        ));
+    }
+
     /**
      * @return BelongsTo<Shop, $this>
      */
@@ -50,6 +83,7 @@ class User extends Authenticatable
             'mobile_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 }

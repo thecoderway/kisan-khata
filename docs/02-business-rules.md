@@ -1,6 +1,6 @@
 # Kisan Khata — Business Rules
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved  
 **Related Document:** `docs/01-product-requirements.md`
 
@@ -60,17 +60,36 @@ Developers and AI coding agents must not invent missing financial rules.
 
 **Manager**
 - Can manage customers, sales, payments and permitted reports.
+- Can view the shop's Staff list and each Staff member's active/deactivated status only.
+- Cannot create, deactivate, reactivate, or change the role of shop users.
 - Cannot edit posted financial transactions.
 - Cannot change ownership, subscription or critical security settings.
 
 **Staff**
-- Can view and add customers.
+- Can view, add and edit customer profile information.
 - Can record credit sales and payments.
 - Can view permitted customer and transaction information.
-- Cannot edit or delete posted financial transactions.
+- Cannot delete customers or edit/delete posted financial transactions.
 - Cannot configure interest policies or subscriptions.
 
+**Owner-only user administration**
+- Only the Shop Owner can create Manager and Staff accounts, deactivate/reactivate Manager and Staff accounts, and change Manager/Staff roles.
+- The Shop Owner cannot deactivate or demote the sole Owner account through ordinary shop-user management. Ownership transfer requires a separately authorized and audited process.
+- Every user lifecycle and role-change action must be authorized server-side and audited.
+
 Custom per-user permission configuration is not part of the initial release.
+
+### 3.2 Active Capacity and User Lifecycle
+
+1. Role limits are one active Owner, up to two active Managers and up to five active Staff members; the total active shop-user limit is eight.
+2. Deactivated Manager and Staff accounts do not count toward role or total active-user capacity.
+3. Deactivation retains the user account and its audit history; it does not delete historical activity.
+4. Reactivation is permitted only when both the target role limit and total active-user limit remain available.
+5. Creation, deactivation, reactivation and role changes must enforce capacity atomically so concurrent requests cannot exceed limits.
+6. A Manager or Staff role change must check capacity for the destination role and release capacity in the source role within the same transaction.
+7. The sole active Owner cannot be deactivated or demoted through ordinary shop-user management. Ownership transfer is a separate authorized and audited process.
+8. Manager may view the Staff list and active/deactivated status, but cannot create, deactivate, reactivate or change roles.
+9. Only the Owner may administer Manager and Staff accounts and change Manager/Staff roles.
 
 ## 4. Customer Rules
 
