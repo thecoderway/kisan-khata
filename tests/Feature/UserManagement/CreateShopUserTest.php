@@ -46,6 +46,13 @@ class CreateShopUserTest extends TestCase
             'is_active' => true,
             'must_change_password' => true,
         ]);
+
+        $this->assertDatabaseHas('user_audit_logs', [
+            'shop_id' => $shop->id,
+            'actor_user_id' => $owner->id,
+            'target_user_id' => $user->id,
+            'action' => 'user.created',
+        ]);
     }
 
     public function test_owner_can_create_staff_and_client_shop_id_is_ignored(): void
