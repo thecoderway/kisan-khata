@@ -10,10 +10,13 @@ Route::prefix('auth/mobile')->group(function (): void {
     Route::post('/verify-otp', [MobileOtpController::class, 'verify'])->middleware('throttle:20,1');
 });
 
+Route::middleware(['auth:sanctum'])->group(function (): void {
+    Route::post('/logout', [TokenController::class, 'destroy']);
+});
+
 Route::middleware(['auth:sanctum', 'abilities:first-login'])->group(function (): void {
     Route::post('/auth/mobile/complete-first-login', [MobileOtpController::class, 'completeFirstLogin'])
         ->middleware('throttle:5,1');
-    Route::post('/logout', [TokenController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
@@ -22,6 +25,4 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             return $request->user()->load('shop:id,name');
         });
     });
-
-    Route::post('/logout', [TokenController::class, 'destroy']);
 });
