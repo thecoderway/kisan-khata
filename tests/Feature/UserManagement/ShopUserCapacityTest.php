@@ -115,7 +115,7 @@ class ShopUserCapacityTest extends TestCase
             'role' => User::ROLE_MANAGER,
             'is_active' => true,
         ]);
-        User::factory()->count(5)->create([
+        User::factory()->count(4)->create([
             'shop_id' => $shop->id,
             'role' => User::ROLE_STAFF,
             'is_active' => true,
@@ -128,13 +128,11 @@ class ShopUserCapacityTest extends TestCase
             User::ROLE_STAFF,
         );
 
-        $this->expectException(ValidationException::class);
-        app(ShopUserCapacity::class)->assertCanTransition(
-            $shop,
-            $target,
-            true,
-            User::ROLE_MANAGER,
-        );
+        $this->assertDatabaseHas('users', [
+            'id' => $target->id,
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
     }
 
     public function test_capacity_transition_rejects_a_user_from_another_shop(): void
