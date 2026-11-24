@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 
 class ManageShopUserLifecycle
 {
@@ -37,7 +38,16 @@ class ManageShopUserLifecycle
                 ->where('tokenable_id', $target->getKey())
                 ->delete();
 
-            DB::connection(config('session.connection'))
+            $sessionConnection = config('session.connection') ?: DB::getDefaultConnection();
+
+            if ($sessionConnection !== DB::getDefaultConnection()) {
+                throw new LogicException(
+                    'Database-backed session revocation must use the application database connection '
+                    .'so it remains atomic with account deactivation.'
+                );
+            }
+
+            DB::connection($sessionConnection)
                 ->table(config('session.table', 'sessions'))
                 ->where('user_id', $target->getKey())
                 ->delete();
