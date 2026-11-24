@@ -84,9 +84,14 @@ class ShopUserCapacityTest extends TestCase
             'role' => User::ROLE_MANAGER,
             'is_active' => true,
         ]);
-        User::factory()->count(5)->create([
+        User::factory()->count(4)->create([
             'shop_id' => $shop->id,
             'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => 'legacy_role',
             'is_active' => true,
         ]);
 
