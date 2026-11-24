@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Contracts\MobileOtpSender;
 use App\Models\Shop;
 use App\Models\User;
+use App\Modules\Users\Application\ManageShopUserLifecycle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -116,7 +117,7 @@ class MobileOtpAuthenticationTest extends TestCase
 
         $sender = $this->requestOtp($staff);
 
-        app(\App\Modules\Users\Application\ManageShopUserLifecycle::class)
+        app(ManageShopUserLifecycle::class)
             ->deactivate($owner, $staff->id);
 
         $this->postJson('/api/auth/mobile/verify-otp', [

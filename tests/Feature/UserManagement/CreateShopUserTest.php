@@ -8,6 +8,7 @@ use App\Modules\Users\Application\CreateShopUser;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class CreateShopUserTest extends TestCase
@@ -153,7 +154,7 @@ class CreateShopUserTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(CreateShopUser::class)->handle($owner, [
             'name' => 'Third Manager',
@@ -179,7 +180,7 @@ class CreateShopUserTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(CreateShopUser::class)->handle($owner, [
             'name' => 'Sixth Staff',

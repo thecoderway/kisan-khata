@@ -6,6 +6,7 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Users\Application\ManageShopUserLifecycle;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -112,7 +113,7 @@ class ManageShopUserLifecycleTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
         app(ManageShopUserLifecycle::class)->deactivate($owner, $otherUser->id);
     }
 

@@ -26,7 +26,7 @@ class ShopUserCapacity
             ? null
             : Shop::query()->whereKey($shopId)->lockForUpdate()->first();
 
-        if (!$shop || $shop->status !== Shop::STATUS_ACTIVE) {
+        if (! $shop || $shop->status !== Shop::STATUS_ACTIVE) {
             throw ValidationException::withMessages([
                 'shop' => 'Users can only be managed in an active shop.',
             ]);
