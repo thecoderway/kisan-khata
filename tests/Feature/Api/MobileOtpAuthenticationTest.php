@@ -251,6 +251,64 @@ class MobileOtpAuthenticationTest extends TestCase
             ->assertTooManyRequests();
     }
 
+    public function test_first_login_otp_issues_restricted_token_and_requires_temporary_password(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'mobile' => '9876543210',
+            'password' => 'Temporary123',
+            'must_change_password' => true,
+            'is_active' => true,
+        ]);
+
+        $sender = $this->requestOtp($user);
+
+        $response = $this->postJson('/api/auth/mobile/verify-otp', [
+            'mobile' => $user->mobile,
+            'otp' => $sender->code,
+        ])->assertOk()
+            ->assertJsonPath('first_login_required', true)
+            ->assertJsonMissingPath('user');
+
+        $firstLoginToken = $response->json('token');
+
+        $this->withToken($firstLoginToken)->getJson('/api/user')->assertUnauthorized();
+
+        $this->withToken($firstLoginToken)->postJson('/api/auth/mobile/complete-first-login', [
+            'temporary_password' => 'WrongTemporary123',
+            'password' => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])->assertUnprocessable();
+
+        $this->assertTrue($user->fresh()->must_change_password);
+
+        $completed = $this->withToken($firstLoginToken)->postJson('/api/auth/mobile/complete-first-login', [
+            'temporary_password' => 'Temporary123',
+            'password' => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])->assertOk()
+            ->assertJsonPath('first_login_required', false)
+            ->assertJsonPath('user.id', $user->id);
+
+        $this->assertFalse($user->fresh()->must_change_password);
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        $this->withToken($completed->json('token'))
+            ->getJson('/api/user')
+            ->assertOk()
+            ->assertJsonPath('id', $user->id);
+
+        $this->withToken($firstLoginToken)
+            ->postJson('/api/auth/mobile/complete-first-login', [
+                'temporary_password' => 'Temporary123',
+                'password' => 'AnotherSecure123',
+                'password_confirmation' => 'AnotherSecure123',
+            ])->assertUnauthorized();
+    }
+
+
     private function createEligibleUser(): User
     {
         $shop = Shop::factory()->create();
