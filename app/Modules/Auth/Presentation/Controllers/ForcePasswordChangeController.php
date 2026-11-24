@@ -25,7 +25,7 @@ class ForcePasswordChangeController
             'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers()],
         ]);
 
-        DB::transaction(function () use ($request, $validated): void {
+        $updatedUser = DB::transaction(function () use ($request, $validated): User {
             $user = User::query()
                 ->whereKey($request->user()->getKey())
                 ->lockForUpdate()
