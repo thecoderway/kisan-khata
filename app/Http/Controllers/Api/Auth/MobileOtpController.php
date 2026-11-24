@@ -64,16 +64,23 @@ class MobileOtpController extends Controller
 
         RateLimiterFacade::hit($key, (int) config('mobile_otp.expiry_minutes', 5) * 60);
 
-        $user = $otp->verify($mobile, $validated['otp']);
-        $isFirstLogin = $user->must_change_password;
-        $expiresAt = $isFirstLogin
-            ? now()->addMinutes(10)
-            : now()->addDays(max(1, (int) config('mobile_otp.token_expiry_days', 30)));
-        $token = $user->createToken(
-            $isFirstLogin ? 'mobile-first-login' : 'mobile-app',
-            [$isFirstLogin ? 'first-login' : 'app'],
-            $expiresAt,
-        );
+        // Keep the shop lock acquired during OTP verification until the token
+        // is issued. Deactivation therefore cannot commit between eligibility
+        // verification and creation of a new Sanctum token.
+        [$user, $isFirstLogin, $expiresAt, $token] = \Illuminate\Support\Facades\DB::transaction(function () use ($otp, $mobile, $validated) {
+            $user = $otp->verify($mobile, $validated['otp']);
+            $isFirstLogin = $user->must_change_password;
+            $expiresAt = $isFirstLogin
+                ? now()->addMinutes(10)
+                : now()->addDays(max(1, (int) config('mobile_otp.token_expiry_days', 30)));
+            $token = $user->createToken(
+                $isFirstLogin ? 'mobile-first-login' : 'mobile-app',
+                [$isFirstLogin ? 'first-login' : 'app'],
+                $expiresAt,
+            );
+
+            return [$user, $isFirstLogin, $expiresAt, $token];
+        });
 
         RateLimiterFacade::clear($key);
 
