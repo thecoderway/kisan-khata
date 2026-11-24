@@ -120,4 +120,39 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
     }
+    public function test_web_first_login_forces_password_change_before_dashboard_access(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'email' => 'first-login@example.com',
+            'password' => 'Temporary123',
+            'must_change_password' => true,
+            'is_active' => true,
+        ]);
+
+        $this->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'Temporary123',
+        ])->assertRedirect(route('password.first-login.edit'));
+
+        $this->assertAuthenticatedAs($user);
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('password.first-login.edit'));
+
+        $this->get(route('password.first-login.edit'))->assertOk();
+
+        $this->post(route('password.first-login.update'), [
+            'current_password' => 'Temporary123',
+            'password' => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertFalse($user->fresh()->must_change_password);
+        $this->get(route('dashboard'))->assertOk();
+    }
+
+
 }
