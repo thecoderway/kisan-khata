@@ -5,6 +5,7 @@ namespace App\Modules\Auth\Presentation\Controllers;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -46,6 +47,9 @@ class ForcePasswordChangeController
             return $user;
         });
 
+        // Refresh the authenticated guard's in-memory user after changing the
+        // must_change_password flag, then rotate the session identifier.
+        Auth::login($updatedUser);
         $request->session()->regenerate();
 
         return redirect()->route('dashboard')->with('status', 'आपका पासवर्ड सफलतापूर्वक अपडेट हो गया है।');
