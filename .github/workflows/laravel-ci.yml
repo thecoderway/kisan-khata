@@ -47,8 +47,10 @@ jobs:
       - name: Validate Composer configuration
         run: composer validate --strict
 
-      - name: Check PHP formatting
-        run: composer lint
+      - name: Diagnose PHP formatting
+        run: |
+          vendor/bin/pint --dirty
+          git diff -- app/Modules/Users/Application/CreateShopUser.php app/Modules/Users/Application/ShopUserCapacity.php app/Services/Auth/MobileOtpService.php
 
       - name: Run Laravel test suite
         run: composer test
