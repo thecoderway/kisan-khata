@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api\Users;
 use App\Http\Controllers\Controller;
 use App\Models\UserAuditLog;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 
 class UserAuditHistoryController extends Controller
 {
     public function __invoke(Request $request): LengthAwarePaginator
     {
-        $this->authorize('viewAny', UserAuditLog::class);
+        Gate::authorize('viewAny', UserAuditLog::class);
 
         $data = $request->validate([
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
