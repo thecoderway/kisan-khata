@@ -146,7 +146,7 @@ class CreateShopUserTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->expectException(\\Illuminate\\Validation\\ValidationException::class);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(CreateShopUser::class)->handle($owner, [
             'name' => 'Third Manager',
@@ -172,7 +172,7 @@ class CreateShopUserTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->expectException(\\Illuminate\\Validation\\ValidationException::class);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(CreateShopUser::class)->handle($owner, [
             'name' => 'Sixth Staff',
