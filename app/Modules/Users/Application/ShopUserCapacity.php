@@ -58,7 +58,7 @@ class ShopUserCapacity
         User $target,
         bool $nextActive,
         string $nextRole,
-    ): void {
+    ): array {
         if ((string) $target->shop_id !== (string) $shop->getKey()) {
             throw ValidationException::withMessages([
                 'user' => 'The user does not belong to this shop.',
@@ -78,6 +78,8 @@ class ShopUserCapacity
         }
 
         $this->assertWithinLimits($counts);
+
+        return $counts;
     }
 
     /**
