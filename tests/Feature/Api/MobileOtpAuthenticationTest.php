@@ -274,7 +274,7 @@ class MobileOtpAuthenticationTest extends TestCase
 
         $firstLoginToken = $response->json('token');
 
-        $this->withToken($firstLoginToken)->getJson('/api/user')->assertUnauthorized();
+        $this->withToken($firstLoginToken)->getJson('/api/user')->assertForbidden();
 
         $this->withToken($firstLoginToken)->postJson('/api/auth/mobile/complete-first-login', [
             'temporary_password' => 'WrongTemporary123',
