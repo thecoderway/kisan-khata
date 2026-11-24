@@ -64,7 +64,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
 | Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; latest Product Owner-reported local verification at `bc16e8e` passed Pint and the full 60-test suite (167 assertions); P2-A/P2-B implementation verification is green, while broader Phase 2 acceptance and P2-C infrastructure work remain pending |
-| Phase 3 | Roles and User Management | Not started; next official phase |
+| Phase 3 | Roles and User Management | In progress on `feat/tenant-isolation-foundation`; P3.1 authorization, P3.2 user creation/first-login and P3.3 capacity enforcement have been implemented and locally verified by the Product Owner; P3.4 lifecycle implementation is committed but awaiting local migration, formatting and test verification. Phase 3 is not complete. |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
@@ -159,7 +159,17 @@ Recorded as complete:
 
 Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
 
-### Phase 3 — Roles and User Management (next official phase)
+### Phase 3 — Roles and User Management (in progress)
+
+**Completed implementation slices (feature branch):**
+- P3.1 Authorization foundation: policy and role/tenant tests; Product Owner reported 9 passing tests.
+- P3.2 User creation and first-login enforcement: Owner-only creation, temporary password flow and web/mobile first-login tests; Product Owner reported the focused suites passing.
+- P3.3 Capacity enforcement: centralized shop-level capacity service and MySQL row-lock integration test; Product Owner reported all three focused suites passing.
+- P3.4 Lifecycle implementation is now present on the feature branch: Owner-only deactivate/reactivate/role-change application service, transactional capacity checks, account retention, Sanctum token revocation, database-session deletion, and user lifecycle audit records. API routes/controller and focused lifecycle tests have been added. These changes are **not yet locally verified**; migration, Pint and tests must be run after pulling.
+
+**P3.4 verification pending:** migration execution, `ManageShopUserLifecycleTest`, existing user-management suites, authentication regression tests, and Pint. Do not mark P3.4 or Phase 3 complete until the Product Owner reports the actual results.
+
+**Remaining Phase 3 work:** audit-history read access restricted to Owner, broader API authorization/security tests, UI screens/navigation, and full Phase 3 acceptance review. Keep these separate from the P3.4 lifecycle implementation.
 
 Required scope from Roadmap v2.0:
 - Owner management of shop users.
