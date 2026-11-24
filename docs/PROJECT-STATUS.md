@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-24  
-**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `4cf1d12` (2026-11-24)  
-**Project Status:** Phase 2 multi-tenancy foundation is accepted on the feature branch with MySQL 8.4 CI verification. Phase 3 user-management backend and Web UI are implemented; formal Phase 3 acceptance review remains pending. No production deployment is claimed.  
+**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `2d8c848` (2026-11-24)  
+**Project Status:** Phase 2 multi-tenancy foundation and Phase 3 Roles and User Management are accepted on the feature branch. Phase 2 and Phase 3 have successful MySQL 8.4 CI evidence; the latest targeted local regression run at `2d8c848` passed 15 tests and 70 assertions. No production deployment is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -258,14 +258,23 @@ After PR #5, the Product Owner separately confirmed local `main` synced to `13ad
 - Earlier feature-branch CI run at `7c59921` passed: Pint, Composer validation, frontend production build, and Laravel tests (**113 passed / 346 assertions / 1 skipped**). The skipped test was the MySQL/InnoDB row-lock integration test because that run used SQLite, so it did not verify MySQL concurrency.
 - The first MySQL 8.4 run (#9, `45348114561`) exposed a migration rollback foreign-key/index ordering defect and shared test-process migration-state interference. These were corrected in commit `b7de55665f02fc010a754e38b88b46ceedda0c4c` by fixing rollback order and isolating the MySQL row-lock group in its own CI process.
 - **GitHub Actions Laravel CI run #10:** [run `45349066353`](https://github.com/thecoderway/kisan-khata/actions/runs/45349066353), commit `b7de55665f02fc010a754e38b88b46ceedda0c4c`, completed successfully against **MySQL 8.4**. Pint passed for **83 files**; Composer validation passed; Vite production build passed; MySQL row-lock integration test passed (**1 test / 2 assertions**); remaining Laravel suite passed (**117 tests / 360 assertions**). Combined Laravel result: **118 tests passed, 362 assertions, 0 failed, 0 skipped**.
-- This is CI verification of the current branch, not formal Phase 2/3 acceptance or production verification. No production deployment is claimed.
+- Run #10 is historical MySQL 8.4 CI evidence for the earlier Phase 3 implementation state. Formal Phase 2 and Phase 3 feature-branch acceptance is recorded in the official roadmap and the Phase 2/3 sections above; Phase 3's later CI evidence is run #19. Neither CI run is a production deployment verification.
 
 No production deployment or release is claimed.
+
+
+**Latest targeted regression verification (2026-11-24):**
+- Branch: `feat/tenant-isolation-foundation`, commit `2d8c848`.
+- The Product Owner fast-forwarded the local branch to this commit.
+- Docker Compose `app` container executed:
+  `php artisan test --compact tests/Feature/UserManagement/CreateShopUserTest.php tests/Feature/Auth/AuthenticationTest.php`.
+- Result: **15 tests passed / 70 assertions / 0 failures** (2.73 seconds).
+- This run specifically verifies the latest CreateShopUser authorization corrections, stale-actor regression coverage and initial Owner registration audit coverage. It is a targeted local test run, not a full-suite or CI run.
 
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Latest Product Owner-confirmed local sync before this proposed documentation correction: `13ad942`; working tree clean; divergence `0 0`.
+- Latest Product Owner-confirmed feature-branch sync: `2d8c848` on `feat/tenant-isolation-foundation`; targeted user-management/authentication tests passed as recorded above. The stable `main` branch has not been changed by this delivery.
 - All feature and documentation changes use dedicated branches and PR review.
 - No merge to `main` without explicit Product Owner approval.
 - Update status only from verified repository, test or Product Owner evidence.
