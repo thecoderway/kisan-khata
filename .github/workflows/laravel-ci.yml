@@ -49,7 +49,7 @@ jobs:
 
       - name: Diagnose PHP formatting
         run: |
-          vendor/bin/pint --dirty
+          vendor/bin/pint
           git diff -- app/Modules/Users/Application/CreateShopUser.php app/Modules/Users/Application/ShopUserCapacity.php app/Services/Auth/MobileOtpService.php
 
       - name: Run Laravel test suite
