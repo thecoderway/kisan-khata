@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Auth\MobileOtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter as RateLimiterFacade;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 
@@ -143,6 +144,10 @@ class MobileOtpController extends Controller
         if (! $token) {
             return response()->json(['message' => 'First-login प्रक्रिया पहले ही पूरी हो चुकी है।'], 409);
         }
+
+        // Ensure the next request resolves authentication from its new bearer token,
+        // not any guard instance cached while the restricted token was in use.
+        Auth::forgetGuards();
 
         $user = $user->fresh()->load('shop');
 
