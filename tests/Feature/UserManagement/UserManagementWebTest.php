@@ -145,6 +145,68 @@ class UserManagementWebTest extends TestCase
             ->assertDontSee('other.shop@example.com');
     }
 
+    public function test_owner_can_manage_user_lifecycle_through_web_routes(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->userFor($shop, User::ROLE_OWNER);
+        $staff = $this->userFor($shop, User::ROLE_STAFF);
+
+        config(['session.driver' => 'database']);
+
+        $this->actingAs($owner)
+            ->from(route('users.index'))
+            ->post(route('users.deactivate', $staff->id), ['reason' => 'Role change'])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertFalse($staff->fresh()->is_active);
+        $this->assertDatabaseHas('user_audit_logs', [
+            'actor_user_id' => $owner->id,
+            'target_user_id' => $staff->id,
+            'action' => 'user.deactivated',
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('users.index'))
+            ->post(route('users.reactivate', $staff->id))
+            ->assertRedirect(route('users.index'));
+
+        $this->assertTrue($staff->fresh()->is_active);
+
+        $this->actingAs($owner)
+            ->from(route('users.index'))
+            ->patch(route('users.role', $staff->id), ['role' => User::ROLE_MANAGER])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertSame(User::ROLE_MANAGER, $staff->fresh()->role);
+        $this->assertDatabaseHas('user_audit_logs', [
+            'actor_user_id' => $owner->id,
+            'target_user_id' => $staff->id,
+            'action' => 'user.role_changed',
+        ]);
+    }
+
+    public function test_manager_cannot_submit_user_lifecycle_web_actions(): void
+    {
+        $shop = Shop::factory()->create();
+        $manager = $this->userFor($shop, User::ROLE_MANAGER);
+        $staff = $this->userFor($shop, User::ROLE_STAFF);
+
+        $this->actingAs($manager)
+            ->post(route('users.deactivate', $staff->id))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->post(route('users.reactivate', $staff->id))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->patch(route('users.role', $staff->id), ['role' => User::ROLE_MANAGER])
+            ->assertForbidden();
+
+        $this->assertTrue($staff->fresh()->is_active);
+        $this->assertSame(User::ROLE_STAFF, $staff->fresh()->role);
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      */
