@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Auth\MobileOtpController;
 use App\Http\Controllers\Api\Auth\TokenController;
 use App\Http\Controllers\Api\Users\ShopUserLifecycleController;
+use App\Http\Controllers\Api\Users\UserAuditHistoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,8 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
         Route::get('/user', function (Request $request) {
             return $request->user()->load('shop:id,name');
         });
+
+        Route::get('/shop/users/audit-logs', UserAuditHistoryController::class);
 
         Route::prefix('shop/users')->group(function (): void {
             Route::post('/{user}/deactivate', [ShopUserLifecycleController::class, 'deactivate']);
