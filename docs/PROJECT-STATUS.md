@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-11-24  
 **Status Snapshot Base:** `feat/tenant-isolation-foundation` at `7c59921` before acceptance-hardening changes (2026-11-24)  
-**Project Status:** Phase 3 user-management backend and Web UI are implemented; session-driver enforcement, append-only/retention guards and MySQL CI verification are being hardened. Phase 2/3 final acceptance remains pending fresh CI evidence.  
+**Project Status:** Phase 3 user-management backend and Web UI are implemented; session-driver enforcement and append-only/retention guards are implemented; MySQL CI verification is being repaired after migration/test-isolation failures. Phase 2/3 final acceptance remains pending fresh CI evidence.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -181,7 +181,7 @@ These results are Product Owner-reported local Docker execution results; they ar
 
 1. Enforce database-backed session revocation at runtime; fail closed if the configured driver cannot support ADR-0010 deactivation semantics.
 2. Block instance and bulk Eloquent deletion of retained User accounts; block instance and bulk Eloquent mutation/deletion of UserAuditLog records.
-3. Run the existing row-lock integration test against a real MySQL 8.4 service in CI rather than allowing SQLite to skip it.
+3. Run the row-lock integration test in an isolated MySQL 8.4 CI process, separate from the RefreshDatabase suite, without allowing SQLite to skip it.
 4. Keep Phase 3 acceptance pending until the new CI workflow reports green. Database-level/raw SQL writes remain outside Eloquent guards and must be limited to controlled system operations.
 
 **Authoritative business rules (ADR-0010):**
@@ -276,7 +276,7 @@ After PR #5, the Product Owner separately confirmed local `main` synced to `13ad
 **Phase 3 verification evidence (2026-11-24):**
 - Earlier feature-branch CI run at `7c59921` passed: Pint, Composer validation, frontend production build, and Laravel tests (**113 passed / 346 assertions / 1 skipped**).
 - The skipped test was the MySQL/InnoDB row-lock integration test because that CI run used SQLite; it did not verify MySQL concurrency.
-- The current acceptance-hardening changes switch CI to MySQL 8.4, add session-driver and append-only/retention regression tests, and must be considered unverified until the resulting GitHub Actions run completes successfully.
+- The acceptance-hardening changes switch CI to MySQL 8.4 and add session-driver and append-only/retention regression tests. The first MySQL run exposed a migration rollback foreign-key/index ordering defect and shared test-process migration-state interference (missing later migration tables/columns). These are being addressed by correcting rollback order and isolating the MySQL row-lock group in its own CI process. The revised CI remains unverified until a complete GitHub Actions run succeeds.
 - No production deployment is claimed.
 
 No production deployment or release is claimed.

@@ -609,6 +609,8 @@ The CI pipeline should run:
 9. Relevant API tests.
 10. Browser tests where configured.
 
+Database-sensitive integration tests must use MySQL 8.4. Tests that manage the schema through Laravel's `DatabaseMigrations` trait must run in a separate PHPUnit process from tests using `RefreshDatabase` when their migration teardown would otherwise invalidate the shared in-process migration state. Keep these tests in a dedicated PHPUnit group and invoke that group in a separate CI test command; run the remaining suite in a fresh command/process. Do not remove or skip the MySQL test to work around migration-state conflicts.
+
 Critical failures must block deployment.
 
 Tests must run against the intended PHP and MySQL versions.

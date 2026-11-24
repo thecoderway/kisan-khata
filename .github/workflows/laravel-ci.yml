@@ -77,8 +77,20 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Run Laravel test suite
-        run: composer test
+      - name: Run MySQL row-lock integration test
+        run: php artisan test --group=mysql-locking
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: kisan_khata_test
+          DB_USERNAME: kisan_user
+          DB_PASSWORD: kisan_password
+          SESSION_DRIVER: database
+
+      - name: Run remaining Laravel test suite
+        run: composer test -- --exclude-group=mysql-locking
         env:
           APP_ENV: testing
           DB_CONNECTION: mysql

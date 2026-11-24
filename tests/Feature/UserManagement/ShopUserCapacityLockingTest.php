@@ -7,8 +7,10 @@ use App\Modules\Users\Application\ShopUserCapacity;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
+#[Group('mysql-locking')]
 class ShopUserCapacityLockingTest extends TestCase
 {
     use DatabaseMigrations;
