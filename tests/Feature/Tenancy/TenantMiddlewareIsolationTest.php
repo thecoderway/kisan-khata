@@ -96,7 +96,7 @@ class TenantMiddlewareIsolationTest extends TestCase
         $shop = Shop::factory()->create(['status' => Shop::STATUS_SUSPENDED]);
         $user = $this->createOwnerFor($shop);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['app']);
 
         $this->getJson('/api/user')->assertForbidden();
     }
@@ -108,7 +108,7 @@ class TenantMiddlewareIsolationTest extends TestCase
         $userA = $this->createOwnerFor($shopA);
         $userB = $this->createOwnerFor($shopB);
 
-        Sanctum::actingAs($userA);
+        Sanctum::actingAs($userA, ['app']);
         $this->getJson('/api/user')
             ->assertOk()
             ->assertJsonPath('shop.id', $shopA->id);
