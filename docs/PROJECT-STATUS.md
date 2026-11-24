@@ -1,13 +1,13 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-24  
-**Status Snapshot Base:** `main` at `13ad942` (PR #5 merged; this document correction is proposed separately)  
-**Project Status:** Foundation implementation in progress; Phase 3 user-management implementation is underway on the feature branch.  
+**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `9a867d1` (2026-11-24)  
+**Project Status:** Phase 3 backend user-management foundation (P3.1–P3.5) implemented and locally verified; User Management Web UI, role-specific navigation, security hardening and Phase 3 acceptance remain.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
 
-The authoritative baseline is the approved **Docs 01–10, Version 2.0**, together with **ADR-0001 through ADR-0009** in `docs/decisions/`. The roadmap in `docs/10-development-roadmap.md` defines the official phase numbering and sequence. This status file records evidence-based progress; it does not replace or silently amend approved requirements.
+The authoritative baseline is the approved **Docs 01–10** at their recorded document versions, together with **ADR-0001 through ADR-0010** in `docs/decisions/`. The roadmap in `docs/10-development-roadmap.md` defines the official phase numbering and sequence. This status file records evidence-based progress; it does not replace or silently amend approved requirements.
 
 These rules are mandatory for all future work, including AI-assisted work:
 
@@ -39,7 +39,7 @@ If any future instruction conflicts with these rules or approved documentation, 
 | 09 | Testing Strategy | Approved v2.0 |
 | 10 | Development Roadmap | Approved v2.0 |
 
-Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments; ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events (specified scope only; parameters remain open); ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions.
+Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments; ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events (specified scope only; parameters remain open); ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions.
 
 See [approved docs](https://github.com/thecoderway/kisan-khata/tree/main/docs) and [ADR index](https://github.com/thecoderway/kisan-khata/blob/main/docs/decisions/README.md).
 
@@ -64,7 +64,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
 | Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; latest Product Owner-reported local verification at `bc16e8e` passed Pint and the full 60-test suite (167 assertions); P2-A/P2-B implementation verification is green, while broader Phase 2 acceptance and P2-C infrastructure work remain pending |
-| Phase 3 | Roles and User Management | In progress on `feat/tenant-isolation-foundation`; P3.1 authorization, P3.2 user creation/first-login and P3.3 capacity enforcement have been implemented and locally verified by the Product Owner; P3.4 lifecycle implementation is committed but awaiting local migration, formatting and test verification. Phase 3 is not complete. |
+| Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 implemented and locally verified on `feat/tenant-isolation-foundation` at `9a867d1`; Web UI, role-specific navigation, broader security hardening and final Phase 3 acceptance remain. |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
@@ -159,29 +159,47 @@ Recorded as complete:
 
 Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
 
-### Phase 3 — Roles and User Management (in progress)
+### Phase 3 — Roles and User Management (backend foundation complete; UI and acceptance in progress)
 
-**Completed implementation slices (feature branch):**
-- P3.1 Authorization foundation: policy and role/tenant tests; Product Owner reported 9 passing tests.
-- P3.2 User creation and first-login enforcement: Owner-only creation, temporary password flow and web/mobile first-login tests; Product Owner reported the focused suites passing.
-- P3.3 Capacity enforcement: centralized shop-level capacity service and MySQL row-lock integration test; Product Owner reported all three focused suites passing.
-- P3.4 Lifecycle implementation is now present on the feature branch: Owner-only deactivate/reactivate/role-change application service, transactional capacity checks, account retention, Sanctum token revocation, database-session deletion, and user lifecycle audit records. API routes/controller and focused lifecycle tests have been added. These changes are **not yet locally verified**; migration, Pint and tests must be run after pulling.
+**Implemented and locally verified on `feat/tenant-isolation-foundation`:**
 
-**P3.4 verification pending:** migration execution, `ManageShopUserLifecycleTest`, existing user-management suites, authentication regression tests, and Pint. Do not mark P3.4 or Phase 3 complete until the Product Owner reports the actual results.
+- **P3.1 Authorization foundation:** `UserManagementPolicy`, Gate registration, role-specific permissions and tenant-boundary policy tests.
+- **P3.2 User creation and first login:** Owner-only Manager/Staff creation, temporary-password handling, forced password change for Web and Mobile flows.
+- **P3.3 Capacity enforcement:** centralized role and total active-user limits with transactional Shop-row locking and MySQL locking coverage.
+- **P3.4 User lifecycle:** Owner-only deactivate/reactivate/role change, atomic capacity checks, retained accounts, Sanctum token revocation, database-session invalidation and append-only lifecycle audit records.
+- **P3.5 Audit history:** Owner-only, tenant-scoped, paginated audit-history endpoint and authorization tests.
 
-**Remaining Phase 3 work:** audit-history read access restricted to Owner, broader API authorization/security tests, UI screens/navigation, and full Phase 3 acceptance review. Keep these separate from the P3.4 lifecycle implementation.
+**Verified local results reported by Product Owner after pulling the latest feature-branch commit:**
 
-Required scope from Roadmap v2.0:
-- Owner management of shop users.
-- Manager creation and Staff creation.
-- Role-based access control.
-- User activation/deactivation and account lifecycle.
-- Backend enforcement of shop limits: 1 Owner, up to 2 Managers and up to 5 Staff.
-- Policies/authorization rules and role-specific navigation.
-- Automated tests for every role/action combination, privilege escalation, limits, inactive users and cross-tenant access.
-- Owner-only editing of posted Sales/Payments; Manager and Staff must not edit posted financial transactions, as specified in the approved roadmap/business rules.
+- `php artisan test --filter=UserAuditHistoryAccessTest`: **5 passed, 14 assertions**.
+- Full `php artisan test`: **99 passed, 298 assertions, 0 failures**.
+- `vendor/bin/pint --test`: **76 files PASS**.
 
-Before coding, audit the existing role representation, registration logic, routes/controllers and existing authorization. Produce a permission matrix from approved documents; do not infer unspecified Manager/Staff permissions.
+These results are Product Owner-reported local Docker execution results; they are not a CI result or production verification.
+
+**Remaining Phase 3 work:**
+
+1. User Management Web UI for Owner and Manager, reusing the existing application services.
+2. Owner-only create and lifecycle controls; Manager's restricted Staff directory/status view.
+3. Capacity summary and role-specific navigation, without exposing unfinished modules as working links.
+4. Web authorization, validation, tenant isolation, field-visibility and lifecycle regression tests.
+5. Broader API authorization/security review and final Phase 3 acceptance.
+
+The current dashboard remains a placeholder and there are no User Management Web routes/controllers/views yet. The existing API lifecycle operations and application services are reusable; do not duplicate business rules in web controllers or call the API internally over HTTP.
+
+**Authoritative business rules (ADR-0010):**
+
+- Each Shop has exactly 1 active Owner, up to 2 active Managers, up to 5 active Staff, and 8 active users total.
+- Only active users count toward capacity; deactivated Manager/Staff accounts retain history and release capacity.
+- Only the Owner may create, deactivate, reactivate or change the role of Manager/Staff.
+- Manager may view Staff list and active/deactivated status only; no full Staff account details or management actions.
+- Staff has no User Management access.
+- The sole active Owner cannot be deactivated or demoted through ordinary management; ownership transfer is a separate authorized/audited process.
+- Deactivation revokes database sessions and Sanctum tokens; user accounts are retained.
+- Temporary-password first-login and mandatory password-change behavior follows the accepted ADR and implemented Web/Mobile flows.
+
+Do not mark Phase 3 complete until the Web UI, navigation, authorization/security coverage and acceptance review are complete.
+
 
 ## 6. Remaining official phases — scope summary
 
@@ -237,7 +255,7 @@ If a relevant document or ADR conflicts or is ambiguous, stop and report the con
 
 ## 10. Verified technical evidence
 
-**Execution date:** 2026-11-23  
+**Execution date:** 2026-11-23 (baseline) and 2026-11-24 (Phase 3)  
 **Environment:** local Docker Compose development environment  
 **Verified by Product Owner after merging PR #4:**
 - Local `main` fast-forwarded to `origin/main` at merge commit `73617d1`.
@@ -258,6 +276,13 @@ After PR #5, the Product Owner separately confirmed local `main` synced to `13ad
 - Full `php artisan test`: **57 passed, 164 assertions, 0 failures**.
 - The cache/session/storage/jobs/database-access audit was also reported; findings are recorded in the Phase 2 section above.
 
+**Phase 3 verification reported by Product Owner (2026-11-24):**
+- Feature branch: `feat/tenant-isolation-foundation`, latest code pulled through commit `9a867d1`.
+- `php artisan test --filter=UserAuditHistoryAccessTest`: **5 passed / 14 assertions**.
+- Full `php artisan test`: **99 passed / 298 assertions / 0 failures**.
+- `vendor/bin/pint --test`: **76 files PASS**.
+- This is the latest reported application verification for the feature branch. No production deployment is claimed.
+
 No production deployment or release is claimed.
 
 ## 11. Git and delivery workflow
@@ -271,12 +296,12 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-1. Execute the in-progress Phase 2 route-level tenant security tests and full relevant test suite; record only observed results.
-2. Complete the focused Phase 1/2 gap audit against Roadmap acceptance criteria and Docs 01/02/04/05/06/08/09 plus relevant ADRs. Record which gaps block safe Phase 3/4 delivery.
-3. Complete remaining Phase 2 tenant-aware infrastructure and acceptance checks before exposing multi-tenant customer/financial workflows.
-4. Prepare the official Phase 3 implementation plan: role-permission matrix, lifecycle workflows, shop-limit enforcement, UI/API scope, migration impact, security threats and acceptance tests. Ask for approval where approved documents do not specify behavior.
-5. Implement Phase 3 in small PR-sized increments; test every role/action combination and tenant boundary.
-6. Proceed to Phase 4, then Phase 5 before Credit Sales and Payments.
+1. Complete the User Management Web UI blueprint review and obtain Product Owner approval before implementation.
+2. Implement the approved Web UI in small, testable increments, reusing the existing user-management application services and policies.
+3. Add role-specific navigation and ensure unfinished modules are not presented as functional links.
+4. Run Web authorization, tenant-isolation, validation, capacity, lifecycle and safe-field-visibility tests; rerun the full suite and Pint.
+5. Complete the Phase 3 security review and acceptance checklist; update this status document with observed results.
+6. Separately close the remaining Phase 1/2 acceptance gaps before exposing customer and financial modules or starting Phase 4.
 7. Keep production SMS provider integration deferred until final integration/release readiness.
 
-This status file is a progress record. The approved v2.0 documents and accepted ADRs remain authoritative.
+This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
