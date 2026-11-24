@@ -101,9 +101,13 @@
                                             @csrf
                                             @method('PATCH')
                                             <label class="visually-hidden" for="role-{{ $member->id }}">नई भूमिका</label>
-                                            <select id="role-{{ $member->id }}" name="role" class="form-select form-select-sm">
-                                                <option value="manager" @selected($member->role === 'manager')>Manager</option>
-                                                <option value="staff" @selected($member->role === 'staff')>Staff</option>
+                                            <select id="role-{{ $member->id }}" name="role" class="form-select form-select-sm" required>
+                                                <option value="" selected disabled>भूमिका बदलें</option>
+                                                @if ($member->role === 'manager')
+                                                    <option value="staff">Staff</option>
+                                                @else
+                                                    <option value="manager">Manager</option>
+                                                @endif
                                             </select>
                                             <button type="submit" class="btn btn-sm btn-outline-secondary">बदलें</button>
                                         </form>
