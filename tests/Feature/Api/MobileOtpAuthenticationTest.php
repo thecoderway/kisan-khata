@@ -295,10 +295,17 @@ class MobileOtpAuthenticationTest extends TestCase
         $this->assertFalse($user->fresh()->must_change_password);
         $this->assertDatabaseCount('personal_access_tokens', 1);
 
-        $this->withToken($completed->json('token'))
-            ->getJson('/api/user')
-            ->assertOk()
-            ->assertJsonPath('id', $user->id);
+        $issuedToken = DB::table('personal_access_tokens')
+            ->where('tokenable_id', $user->id)
+            ->first();
+
+        $this->assertSame(['app'], json_decode($issuedToken->abilities, true));
+
+        $profileResponse = $this->withToken($completed->json('token'))
+            ->getJson('/api/user');
+
+        $this->assertSame(200, $profileResponse->status(), $profileResponse->getContent());
+        $profileResponse->assertJsonPath('id', $user->id);
 
         $this->withToken($firstLoginToken)
             ->postJson('/api/auth/mobile/complete-first-login', [
