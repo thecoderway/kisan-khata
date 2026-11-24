@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Modules\\Auth\\Presentation\\Controllers;
+namespace App\Modules\Auth\Presentation\Controllers;
 
-use Illuminate\\Http\\RedirectResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rules\\Password as PasswordRule;
-use Illuminate\\View\\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\View\View;
 
 class ForcePasswordChangeController
 {
