@@ -38,8 +38,9 @@ If any future instruction conflicts with these rules or approved documentation, 
 | 08 | API Architecture | Approved v2.0 |
 | 09 | Testing Strategy | Approved v2.0 |
 | 10 | Development Roadmap | Approved v2.0 |
+| 11 | Geographic Master Data and Import Runbook | Added 2026-11-24 |
 
-Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments; ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events (specified scope only; parameters remain open); ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions.
+Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments; ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events (specified scope only; parameters remain open); ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions; ADR-0011 Geographic Master Data and Shop/Customer Location Defaults.
 
 See [approved docs](https://github.com/thecoderway/kisan-khata/tree/main/docs) and [ADR index](https://github.com/thecoderway/kisan-khata/blob/main/docs/decisions/README.md).
 
@@ -65,7 +66,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
 | Phase 2 | Multi-Tenancy Foundation | **Complete on `feat/tenant-isolation-foundation`**; request/job tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API role boundaries and regression coverage are implemented. Verified by successful MySQL 8.4 CI run #17; future business modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — accepted on `feat/tenant-isolation-foundation`**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage verified by successful MySQL 8.4 CI run #19. Cross-domain Customer/Sales/Payment permission enforcement remains a requirement for those later domain phases, not implemented ahead of them. |
-| Phase 4 | Customer Management | Not started |
+| Phase 4 | Customer Management | Not started; geographic master data is ready; location/default rules documented for Phase 4 |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
 | Phase 7 | Payments | Not started |
@@ -179,9 +180,19 @@ Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subje
 
 Phase 3 is accepted as the complete Roles and User Management phase. This is feature-branch acceptance, not production deployment/release approval. No merge to `main` is claimed.
 
+### Geographic master data — implemented and imported (2026-11-24)
+
+- Added the MP LGD `villages` table through migration `2026_11_24_000003_create_villages_table.php`.
+- Added `lgd:import-villages`, a validation-first Artisan import command with dry-run default, selected-snapshot filtering, duplicate/required-field checks, expected-count validation, source SHA-256 stability checks, chunked inserts and transaction rollback on failure.
+- Imported the 21-04-2026 snapshot: **57,484 Madhya Pradesh village records**.
+- Verified total row count and unique `villageCode` count are both 57,484; all rows have snapshot date `21-04-2026` and state code `23`.
+- Source CSV `imports/mp_villages.csv` is intentionally ignored by Git; the dataset itself is not committed.
+- Import provenance, schema, selection rationale, command usage and verification procedure are documented in [Geographic Master Data and Import Runbook](11-geographic-master-data.md).
+- This is shared reference data, not tenant data. Shop Profile and Customer location workflows are not yet implemented.
+
 ## 6. Remaining official phases — scope summary
 
-1. **Phase 4 — Customer Management:** customer CRUD, search, village filters, required/optional fields, preserve original entered text and store Hindi/English translations separately; correction workflow and tenant-scoped tests.
+1. **Phase 4 — Customer Management:** customer CRUD, search, LGD-backed location selectors and filters, shop-location defaults for new customer forms, independently saved customer location, required/optional fields, preserve original entered text and store Hindi/English translations separately; correction workflow and tenant-scoped tests.
 2. **Phase 5 — Financial Foundation:** decimal-safe money, consolidated outstanding, ledger posting, advances, immutable audit history, idempotency, transaction atomicity and concurrency protection. This is a prerequisite for production sales/payments.
 3. **Phase 6 — Credit Sales:** sale creation/posting/list/details, optional crop/season tag and private bill attachment, Owner-only corrections with before/after audit.
 4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, excess as advance, idempotency and concurrency protection; no sale-level allocation.
