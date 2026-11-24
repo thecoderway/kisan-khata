@@ -8,6 +8,8 @@ use App\Services\Auth\MobileOtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter as RateLimiterFacade;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 
@@ -66,7 +68,7 @@ class MobileOtpController extends Controller
 
         // Token issuance runs inside OTP verification's locked transaction.
         // Failed-attempt counters still commit before validation errors are raised.
-        $issued = $otp->verifyAndIssueToken($mobile, $validated['otp'], function (\App\Models\User $user) {
+        $issued = $otp->verifyAndIssueToken($mobile, $validated['otp'], function (User $user) {
             $isFirstLogin = $user->must_change_password;
             $expiresAt = $isFirstLogin
                 ? now()->addMinutes(10)
@@ -131,17 +133,17 @@ class MobileOtpController extends Controller
 
         $user = $request->user();
 
-        if (! $user->must_change_password || ! \Illuminate\Support\Facades\Hash::check($validated['temporary_password'], $user->password)) {
+        if (! $user->must_change_password || ! Hash::check($validated['temporary_password'], $user->password)) {
             return response()->json(['message' => 'अस्थायी पासवर्ड सही नहीं है या first-login प्रक्रिया लागू नहीं है।'], 422);
         }
 
         $expiresAt = now()->addDays(max(1, (int) config('mobile_otp.token_expiry_days', 30)));
 
-        $token = \Illuminate\Support\Facades\DB::transaction(function () use ($request, $user, $validated, $expiresAt) {
-            $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+        $token = DB::transaction(function () use ($request, $user, $validated, $expiresAt) {
+            $lockedUser = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
             if (! $lockedUser->must_change_password
-                || ! \Illuminate\Support\Facades\Hash::check($validated['temporary_password'], $lockedUser->password)) {
+                || ! Hash::check($validated['temporary_password'], $lockedUser->password)) {
                 return null;
             }
 

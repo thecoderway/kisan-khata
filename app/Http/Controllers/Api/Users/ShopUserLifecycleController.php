@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Users;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Modules\Users\Application\ManageShopUserLifecycle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class ShopUserLifecycleController extends Controller
         return response()->json(['user' => $this->userPayload($target)]);
     }
 
-    private function userPayload(\App\Models\User $user): array
+    private function userPayload(User $user): array
     {
         return [
             'id' => $user->id,

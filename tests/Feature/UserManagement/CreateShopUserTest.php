@@ -223,5 +223,4 @@ class CreateShopUserTest extends TestCase
         $this->assertTrue($user->is_active);
         $this->assertSame(2, $shop->users()->where('role', User::ROLE_MANAGER)->where('is_active', true)->count());
     }
-
 }

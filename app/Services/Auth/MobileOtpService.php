@@ -11,7 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 class MobileOtpService
 {
-    public function __construct(private readonly MobileOtpSender $sender) {}
+    public function __construct(private readonly MobileOtpSender $sender)
+    {
+    }
 
     public function request(string $mobile): bool
     {
@@ -27,13 +29,13 @@ class MobileOtpService
             // cannot both pass the resend-cooldown check.
             $user = User::query()->where('mobile', $mobile)->lockForUpdate()->first();
 
-            if (! $user) {
+            if (!$user) {
                 return false;
             }
 
             $user->load('shop');
 
-            if (! $this->isEligible($user)) {
+            if (!$this->isEligible($user)) {
                 return false;
             }
 
@@ -64,7 +66,7 @@ class MobileOtpService
             return true;
         });
 
-        if (! $challengeCreated) {
+        if (!$challengeCreated) {
             return false;
         }
 
@@ -122,7 +124,7 @@ class MobileOtpService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $challenge) {
+            if (!$challenge) {
                 return ['status' => 'invalid'];
             }
 
@@ -150,7 +152,7 @@ class MobileOtpService
 
             $user?->load('shop');
 
-            if (! $this->isEligible($user)) {
+            if (!$this->isEligible($user)) {
                 DB::table('mobile_otp_challenges')->where('id', $challenge->id)->update([
                     'attempts' => $attempts,
                     'consumed_at' => now(),

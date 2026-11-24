@@ -349,7 +349,6 @@ class MobileOtpAuthenticationTest extends TestCase
             ])->assertUnauthorized();
     }
 
-
     private function createEligibleUser(): User
     {
         $shop = Shop::factory()->create();

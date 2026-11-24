@@ -5,6 +5,7 @@ namespace Tests\Feature\UserManagement;
 use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Users\Application\ManageShopUserLifecycle;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -100,7 +101,7 @@ class ManageShopUserLifecycleTest extends TestCase
         try {
             app(ManageShopUserLifecycle::class)->deactivate($owner, $owner->id);
             $this->fail('Expected self-deactivation to be denied.');
-        } catch (\Illuminate\Auth\Access\AuthorizationException) {
+        } catch (AuthorizationException) {
             $this->assertTrue($owner->fresh()->is_active);
         }
 

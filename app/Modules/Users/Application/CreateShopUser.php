@@ -10,7 +10,9 @@ class CreateShopUser
 {
     public function __construct(
         private readonly ShopUserCapacity $capacity,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Create a Manager or Staff account for the authenticated Owner's shop.

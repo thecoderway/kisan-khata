@@ -120,6 +120,7 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
     }
+
     public function test_web_first_login_forces_password_change_before_dashboard_access(): void
     {
         $shop = Shop::factory()->create();
@@ -153,6 +154,4 @@ class AuthenticationTest extends TestCase
         $this->assertFalse($user->fresh()->must_change_password);
         $this->get(route('dashboard'))->assertOk();
     }
-
-
 }
