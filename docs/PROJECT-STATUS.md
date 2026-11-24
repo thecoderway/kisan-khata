@@ -64,7 +64,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
 | Phase 2 | Multi-Tenancy Foundation | **Complete on `feat/tenant-isolation-foundation`**; request/job tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API role boundaries and regression coverage are implemented. Verified by successful MySQL 8.4 CI run #17; future business modules still require resource-specific isolation tests. |
-| Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 and User Management Web UI/navigation are present on `feat/tenant-isolation-foundation`; acceptance-hardening changes and MySQL 8.4 CI verification are complete; formal Phase 3 acceptance review remains pending. |
+| Phase 3 | Roles and User Management | **Complete — accepted on `feat/tenant-isolation-foundation`**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage verified by successful MySQL 8.4 CI run #19. Cross-domain Customer/Sales/Payment permission enforcement remains a requirement for those later domain phases, not implemented ahead of them. |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
@@ -150,44 +150,34 @@ Recorded as complete:
 
 Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subject to the tenant-isolation requirements in Docs 04/05/06/09 and ADR-0002/ADR-0005; this acceptance does not pre-approve their implementation or release.
 
-### Phase 3 — Roles and User Management (implementation and CI verification complete; acceptance review pending)
+### Phase 3 — Roles and User Management
 
-**Implemented on `feat/tenant-isolation-foundation` (CI-verified in GitHub Actions run #10):**
+**Status: COMPLETE — accepted on `feat/tenant-isolation-foundation`**
 
-- **P3.1 Authorization foundation:** `UserManagementPolicy`, Gate registration, role-specific permissions and tenant-boundary policy tests.
-- **P3.2 User creation and first login:** Owner-only Manager/Staff creation, temporary-password handling, forced password change for Web and Mobile flows.
-- **P3.3 Capacity enforcement:** centralized role and total active-user limits with transactional Shop-row locking and MySQL locking coverage.
-- **P3.4 User lifecycle:** Owner-only deactivate/reactivate/role change, atomic capacity checks, retained accounts, Sanctum token revocation, and database-session invalidation. The acceptance-hardening change explicitly rejects deactivation unless `SESSION_DRIVER=database` and the session connection shares the application DB transaction.
-- **P3.5 Audit history:** Owner-only, tenant-scoped, paginated audit-history endpoint and authorization tests. Instance and Eloquent bulk mutation guards are implemented for append-only audit history and retained User accounts; raw SQL remains an explicitly privileged bypass that must stay restricted and reviewed.
+**Implemented and reviewed:**
 
-**Verified local results reported by Product Owner after pulling the latest feature-branch commit:**
+- **P3.1 Authorization foundation:** `UserManagementPolicy`, `UserAuditLogPolicy`, Gate registration, server-side role authorization and tenant-boundary checks.
+- **P3.2 User creation and first login:** Owner-only Manager/Staff creation, server-derived shop membership, temporary password hashing, forced password change in Web and Mobile flows, restricted first-login token.
+- **P3.3 Capacity enforcement:** exactly 1 active Owner, maximum 2 active Managers, maximum 5 active Staff and 8 active users total; deactivated Manager/Staff release capacity; transactional shop-row lock and atomic role/reactivation checks.
+- **P3.4 User lifecycle:** Owner-only deactivate/reactivate/role change; sole Owner/self-protection; retained accounts; Sanctum token revocation and database-session invalidation in the same application DB transaction. Deactivation fails closed unless `SESSION_DRIVER=database` and session connection matches the application connection.
+- **P3.5 Audit history:** append-only `UserAuditLog`, Owner-only tenant-scoped paginated Web/API history, actor/target/action/old/new/reason/timestamp, Eloquent instance and bulk mutation protections.
+- **Web UI and navigation:** Owner user directory, capacity summary, create form, lifecycle and role controls, audit-history page; Manager sees only Staff name and active/deactivated status; Staff has no user-management navigation or page access.
+- **API security:** Owner-only lifecycle routes, role authorization, tenant-bound target lookup, paginated audit endpoint, minimal response projection that excludes email/mobile/password/token/tenant internals.
+- **Regression coverage:** Owner/Manager/Staff/platform-role authorization, cross-shop isolation, user creation and forced password change, capacity limits and reactivation, role transitions, token/session revocation, append-only audit, Web and API lifecycle success/denial paths.
 
-- `php artisan test --filter=UserAuditHistoryAccessTest`: **5 passed, 14 assertions**.
-- Full `php artisan test`: **99 passed, 298 assertions, 0 failures**.
-- `vendor/bin/pint --test`: **76 files PASS**.
+**Authoritative ADR-0010 rules verified:** Owner is the only shop-user administrator; Manager is read-only for Staff identity/status; Staff cannot access User Management; Owner cannot be ordinarily deactivated/demoted; ownership transfer remains a separate future process.
 
-These results are Product Owner-reported local Docker execution results; they are not a CI result or production verification.
+**Cross-domain boundary (not a Phase 3 blocker):** Customer profile CRUD and posted Sales/Payments correction endpoints do not exist yet; their modules belong to later official phases. ADR-0010 role boundaries remain authoritative and must be enforced by Customer/Sales/Payment policies and covered by their own authorization tests when those modules are implemented. No Phase 4/5/6/7 functionality was added in this Phase 3 delivery.
 
-**Acceptance-hardening work in this delivery:**
+**CI verification — GitHub Actions Laravel CI run #19:** [run `45353098904`](https://github.com/thecoderway/kisan-khata/actions/runs/45353098904), implementation/test commit `d9512f3370bb65f30232e329b745fa2d393a2974`, completed successfully on MySQL 8.4:
+- Pint: **90 files PASS**.
+- Composer validation: passed.
+- Vite production build: passed.
+- MySQL row-lock integration: **1 passed / 2 assertions**.
+- Remaining Laravel suite: **138 passed / 430 assertions**.
+- Combined Laravel result: **139 tests passed / 432 assertions / 0 failures / 0 skipped**.
 
-1. Enforce database-backed session revocation at runtime; fail closed if the configured driver cannot support ADR-0010 deactivation semantics.
-2. Block instance and bulk Eloquent deletion of retained User accounts; block instance and bulk Eloquent mutation/deletion of UserAuditLog records.
-3. Run the row-lock integration test in an isolated MySQL 8.4 CI process, separate from the RefreshDatabase suite, without allowing SQLite to skip it — **verified successful in CI run #10**.
-4. CI is green; complete the broader Phase 3 acceptance review against ADR-0010 and the approved security/testing documents. Database-level/raw SQL writes remain outside Eloquent guards and must be limited to controlled system operations.
-
-**Authoritative business rules (ADR-0010):**
-
-- Each Shop has exactly 1 active Owner, up to 2 active Managers, up to 5 active Staff, and 8 active users total.
-- Only active users count toward capacity; deactivated Manager/Staff accounts retain history and release capacity.
-- Only the Owner may create, deactivate, reactivate or change the role of Manager/Staff.
-- Manager may view Staff list and active/deactivated status only; no full Staff account details or management actions.
-- Staff has no User Management access.
-- The sole active Owner cannot be deactivated or demoted through ordinary management; ownership transfer is a separate authorized/audited process.
-- Deactivation revokes database sessions and Sanctum tokens; user accounts are retained.
-- Temporary-password first-login and mandatory password-change behavior follows the accepted ADR and implemented Web/Mobile flows.
-
-Do not mark Phase 3 complete until the Web UI/navigation, authorization/security coverage, session revocation, retained-account/audit invariants and real MySQL concurrency verification are accepted.
-
+Phase 3 is accepted as the complete Roles and User Management phase. This is feature-branch acceptance, not production deployment/release approval. No merge to `main` is claimed.
 
 ## 6. Remaining official phases — scope summary
 
@@ -283,7 +273,7 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-1. Complete the Phase 3 security and acceptance review against ADR-0010 and the approved Docs 06/09, using the successful MySQL 8.4 CI evidence. Keep future customer/financial/file/cache/job/export modules subject to their own tenant-isolation tests.
-5. Keep Phase 4 out of scope until separately authorized; keep production SMS provider integration deferred until final integration/release readiness.
+- Phase 3 is accepted. Do not begin Phase 4 or other later roadmap phases until the Product Owner explicitly authorizes them.
+- Keep real SMS provider integration deferred until final integration/release readiness.
 
 This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
