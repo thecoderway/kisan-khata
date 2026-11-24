@@ -45,6 +45,36 @@ class ShopProfileTest extends TestCase
                 'stateNameLocal' => 'मध्य प्रदेश',
                 'data_gov_update_date' => '21-04-2026',
             ],
+            [
+                'villageCode' => '1003',
+                'villageNameEnglish' => 'Third Village',
+                'villageNameLocal' => 'तीसरा गाँव',
+                'subdistrictCode' => '203',
+                'subdistrictNameEnglish' => 'Third Tehsil',
+                'subdistrictNameLocal' => 'तीसरी तहसील',
+                'districtCode' => '301',
+                'districtNameEnglish' => 'Rajgarh',
+                'districtNameLocal' => 'राजगढ़',
+                'stateCode' => '23',
+                'stateNameEnglish' => 'Madhya Pradesh',
+                'stateNameLocal' => 'मध्य प्रदेश',
+                'data_gov_update_date' => '21-04-2026',
+            ],
+            [
+                'villageCode' => '1004',
+                'villageNameEnglish' => 'New State Village',
+                'villageNameLocal' => 'नया राज्य गाँव',
+                'subdistrictCode' => '401',
+                'subdistrictNameEnglish' => 'New State Tehsil',
+                'subdistrictNameLocal' => 'नई तहसील',
+                'districtCode' => '401',
+                'districtNameEnglish' => 'New State District',
+                'districtNameLocal' => 'नया जिला',
+                'stateCode' => '24',
+                'stateNameEnglish' => 'Other State',
+                'stateNameLocal' => 'अन्य राज्य',
+                'data_gov_update_date' => '21-04-2026',
+            ],
         ]);
     }
 
@@ -84,13 +114,120 @@ class ShopProfileTest extends TestCase
     public function test_shop_profile_is_forbidden_to_manager_and_staff(): void
     {
         $shop = Shop::factory()->create();
-        $manager = User::factory()->create([
+
+        foreach ([User::ROLE_MANAGER, User::ROLE_STAFF] as $role) {
+            $user = User::factory()->create([
+                'shop_id' => $shop->id,
+                'role' => $role,
+                'is_active' => true,
+            ]);
+
+            $this->actingAs($user)->get(route('shop-profile.edit'))->assertForbidden();
+            $this->actingAs($user)->put(route('shop-profile.update'), [
+                'name' => 'Tampered Shop',
+                'owner_name' => 'Unauthorized User',
+                'mobile' => '9999999999',
+            ])->assertForbidden();
+        }
+    }
+
+    public function test_changing_state_clears_omitted_descendant_codes(): void
+    {
+        $this->seedVillageHierarchy();
+        $shop = Shop::factory()->create();
+        DB::table('shops')->where('id', $shop->id)->update([
+            'state_code' => '23',
+            'district_code' => '301',
+            'subdistrict_code' => '201',
+            'village_code' => '1001',
+        ]);
+        $shop->refresh();
+        $owner = User::factory()->create([
             'shop_id' => $shop->id,
-            'role' => User::ROLE_MANAGER,
+            'role' => User::ROLE_OWNER,
             'is_active' => true,
         ]);
 
-        $this->actingAs($manager)->get(route('shop-profile.edit'))->assertForbidden();
+        $this->actingAs($owner)->put(route('shop-profile.update'), [
+            'name' => $shop->name,
+            'owner_name' => 'Owner',
+            'mobile' => '9999999999',
+            'state_code' => '24',
+        ])->assertRedirect(route('shop-profile.edit'));
+
+        $this->assertDatabaseHas('shops', [
+            'id' => $shop->id,
+            'state_code' => '24',
+            'district_code' => null,
+            'subdistrict_code' => null,
+            'village_code' => null,
+        ]);
+    }
+
+    public function test_changing_district_clears_omitted_subdistrict_and_village(): void
+    {
+        $this->seedVillageHierarchy();
+        $shop = Shop::factory()->create();
+        DB::table('shops')->where('id', $shop->id)->update([
+            'state_code' => '23',
+            'district_code' => '301',
+            'subdistrict_code' => '201',
+            'village_code' => '1001',
+        ]);
+        $shop->refresh();
+        $owner = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)->put(route('shop-profile.update'), [
+            'name' => $shop->name,
+            'owner_name' => 'Owner',
+            'mobile' => '9999999999',
+            'state_code' => '23',
+            'district_code' => '302',
+        ])->assertRedirect(route('shop-profile.edit'));
+
+        $this->assertDatabaseHas('shops', [
+            'id' => $shop->id,
+            'district_code' => '302',
+            'subdistrict_code' => null,
+            'village_code' => null,
+        ]);
+    }
+
+    public function test_changing_subdistrict_clears_omitted_village(): void
+    {
+        $this->seedVillageHierarchy();
+        $shop = Shop::factory()->create();
+        DB::table('shops')->where('id', $shop->id)->update([
+            'state_code' => '23',
+            'district_code' => '301',
+            'subdistrict_code' => '201',
+            'village_code' => '1001',
+        ]);
+        $shop->refresh();
+        $owner = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)->put(route('shop-profile.update'), [
+            'name' => $shop->name,
+            'owner_name' => 'Owner',
+            'mobile' => '9999999999',
+            'state_code' => '23',
+            'district_code' => '301',
+            'subdistrict_code' => '203',
+        ])->assertRedirect(route('shop-profile.edit'));
+
+        $this->assertDatabaseHas('shops', [
+            'id' => $shop->id,
+            'subdistrict_code' => '203',
+            'village_code' => null,
+        ]);
     }
 
     public function test_location_update_rejects_a_village_outside_selected_hierarchy(): void
@@ -135,5 +272,18 @@ class ShopProfileTest extends TestCase
 
         $this->actingAs($owner)->getJson(route('shop-profile.locations.districts', ['state' => '23']))
             ->assertOk()->assertJsonCount(2, 'data');
+
+        $this->getJson(route('shop-profile.locations.subdistricts', [
+            'state' => '23',
+            'district' => '301',
+        ]))->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['code' => '201', 'name' => 'Sarangpur']);
+
+        $this->getJson(route('shop-profile.locations.villages', [
+            'state' => '23',
+            'district' => '301',
+            'subdistrict' => '201',
+        ]))->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.code', '1001');
     }
 }
