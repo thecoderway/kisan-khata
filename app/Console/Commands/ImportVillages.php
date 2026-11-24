@@ -145,6 +145,7 @@ class ImportVillages extends Command
             });
 
             $this->info("Import successful: {$expected} villages inserted.");
+
             return self::SUCCESS;
 
         } catch (Throwable $exception) {
