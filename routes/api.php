@@ -20,14 +20,16 @@ Route::middleware(['auth:sanctum', 'abilities:first-login'])->group(function ():
         ->middleware('throttle:5,1');
 });
 
-Route::middleware(['auth:sanctum', 'abilities:app', 'tenant'])->group(function (): void {
-    Route::get('/user', function (Request $request) {
-        return $request->user()->load('shop:id,name');
-    });
+Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
+    Route::middleware('tenant')->group(function (): void {
+        Route::get('/user', function (Request $request) {
+            return $request->user()->load('shop:id,name');
+        });
 
-    Route::prefix('shop/users')->group(function (): void {
-        Route::post('/{user}/deactivate', [ShopUserLifecycleController::class, 'deactivate']);
-        Route::post('/{user}/reactivate', [ShopUserLifecycleController::class, 'reactivate']);
-        Route::patch('/{user}/role', [ShopUserLifecycleController::class, 'changeRole']);
+        Route::prefix('shop/users')->group(function (): void {
+            Route::post('/{user}/deactivate', [ShopUserLifecycleController::class, 'deactivate']);
+            Route::post('/{user}/reactivate', [ShopUserLifecycleController::class, 'reactivate']);
+            Route::patch('/{user}/role', [ShopUserLifecycleController::class, 'changeRole']);
+        });
     });
 });
