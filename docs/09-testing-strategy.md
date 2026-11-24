@@ -421,6 +421,16 @@ Verify:
 
 Every new tenant-owned module must include corresponding isolation tests.
 
+Current foundation regression coverage also verifies:
+
+- Tenant context is resolved from the authenticated user, rejects platform-level roles on shop routes, and is cleared after request completion.
+- User bulk mutations cannot affect another shop and fail closed when no tenant context is available.
+- Shop settings and user audit history are scoped to the current shop; audit history fails closed without context and rejects cross-shop inserts.
+- Tenant cache keys are shop-namespaced.
+- Private tenant paths are shop-prefixed and reject absolute paths and traversal segments.
+- Tenant job middleware establishes the requested active shop context and clears it after both successful and failed execution.
+
+
 ## 13. Role Authorization Tests
 
 Test all three roles independently.

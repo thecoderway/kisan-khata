@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-24  
-**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `7c59921` before acceptance-hardening changes (2026-11-24)  
-**Project Status:** Phase 3 user-management backend and Web UI are implemented; session-driver enforcement and append-only/retention guards are implemented; GitHub Actions CI run #10 is green on MySQL 8.4. Phase 2/3 final acceptance reviews remain pending; no production deployment is claimed.  
+**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `4cf1d12` (2026-11-24)  
+**Project Status:** Phase 2 multi-tenancy foundation is accepted on the feature branch with MySQL 8.4 CI verification. Phase 3 user-management backend and Web UI are implemented; formal Phase 3 acceptance review remains pending. No production deployment is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -63,7 +63,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 |---|---|---|
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
-| Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; previous Product Owner-reported local verification at `bc16e8e` passed Pint and the full 60-test suite (167 assertions). Broader Phase 2 acceptance and future file/cache/job/export controls remain pending until those modules exist and are verified |
+| Phase 2 | Multi-Tenancy Foundation | **Complete on `feat/tenant-isolation-foundation`**; request/job tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API role boundaries and regression coverage are implemented. Verified by successful MySQL 8.4 CI run #17; future business modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 and User Management Web UI/navigation are present on `feat/tenant-isolation-foundation`; acceptance-hardening changes and MySQL 8.4 CI verification are complete; formal Phase 3 acceptance review remains pending. |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
@@ -121,43 +121,34 @@ Recorded as complete:
 
 ### Phase 2 — Multi-Tenancy Foundation
 
-**Implemented initial foundation:**
-- `CurrentShop` context resolved from authenticated user's shop.
-- Tenant middleware and protected dashboard/API context.
-- Client-supplied shop IDs are not trusted for tenant selection.
-- Initial tests for active shop context and missing/suspended tenant access.
+**Status: Accepted — CI verified**
 
-**Current feature-branch work (local execution reported by Product Owner):**
-- Group tenant business routes under both authentication and tenant-resolution middleware; keep logout authenticated but outside tenant resolution so suspended shops can sign out.
-- Add web/API feature coverage for middleware assignment, authenticated-user shop resolution despite forged query-string `shop_id`, inactive users, suspended shops, request-to-request tenant context resolution and logout behavior.
-- Local verification: `pint --test` passed for 57 files; `TenantMiddlewareIsolationTest` passed 10 tests / 25 assertions; `TenantOwnedModelIsolationTest` passed 17 tests / 26 assertions; full suite passed 57 tests / 164 assertions.
+**Implemented on `feat/tenant-isolation-foundation`:**
+- Central `CurrentShop` service registered with request scope; tenant middleware derives shop only from the authenticated user, rejects inactive users/shops and platform-level roles, and clears context after request completion.
+- Web and API business routes require tenant middleware; logout remains available to suspended shops.
+- `ShopSetting` uses fail-closed tenant query scoping and a custom builder that protects bulk update/delete/increment/upsert/insert paths even when the global scope is explicitly bypassed.
+- `UserBuilder` prevents shop reassignment, blocks unsafe bulk insert/upsert/delete/truncate paths, scopes bulk updates and increments to the current shop, and fails closed for unscoped bulk mutations. Controlled model-instance persistence remains available for authentication and lifecycle operations.
+- `UserAuditLog` now has current-shop global query scoping, fail-closed behavior, tenant-validated model inserts and append-only mutation protection. The lifecycle service's raw insert remains a controlled system operation using the locked and validated shop/actor/target.
+- Tenant cache-key helper prefixes keys with the current shop ID.
+- Dedicated `tenant_private` filesystem disk and tenant-prefixed private-path helper reject traversal and absolute paths.
+- `TenantAwareJob` contract and job middleware establish an active shop context and clear it after success or failure.
+- Web/API route, cross-tenant model, bulk-mutation, platform-role, audit-history, cache-key, private-path and job-context regression tests.
 
-**Infrastructure audit findings (feature branch):**
-- No application cache/Redis usage was found under `app/`.
-- Session usage is limited to authentication/session regeneration and invalidation.
-- No upload/download implementation or Storage facade usage was found; `Shop.logo_path` is currently only a model attribute.
-- No application jobs or queue dispatch usage was found under `app/`.
-- Direct query-builder access in `MobileOtpService` targets the system-level `mobile_otp_challenges` table; registration uses a transaction to create the Shop and Owner User.
-- The only current tenant-owned Eloquent model identified is `ShopSetting`; its tenant scope and guarded mutation paths have dedicated tests.
+**Infrastructure boundary review:**
+- Current tenant-owned Eloquent data models are `ShopSetting` and `UserAuditLog`; shop users are protected through authenticated shop resolution, explicit shop-bound directory/lifecycle queries and `UserBuilder` mutation safeguards.
+- No Customer, Sales, Payments, Ledger, tenant upload/download, tenant-specific cache consumer, tenant business job or export module exists yet. The Phase 2 primitives are ready for those modules; each module must still add its own resource ownership, authorization and cross-tenant tests before release.
+- The current raw OTP query-builder path targets only the system-level `mobile_otp_challenges` table. The user-lifecycle audit writer is restricted to its validated shop context. Any future raw SQL/query-builder access to tenant-owned data requires explicit review and tenant filtering.
+- No production deployment or tenant-specific file/cache/job feature is claimed.
 
-**Final acceptance review findings (2026-11-23):**
-- Reviewed Docs 04/05/06/09, Roadmap Phase 2 and accepted ADR-0002/ADR-0005 against the current feature-branch implementation.
-- Confirmed the current tenant-owned Eloquent data model is limited to `ShopSetting`; customer/financial/file/cache/export/job modules are not implemented yet. Their required controls and tests remain mandatory when those modules are introduced.
-- Confirmed `CurrentShop` is registered as a Laravel scoped service, tenant middleware derives the active shop from the authenticated user, and authenticated business routes are tenant-protected while logout remains available for suspended shops.
-- Added a `User` model update guard and a custom `UserBuilder` to reject reassignment through both ordinary Eloquent saves and bulk Eloquent update/increment paths; unsafe bulk user insert/upsert APIs are blocked, with regression tests. Any future administrative reassignment workflow would require a separately reviewed, explicitly authorized system operation; it is not part of ordinary user management.
-- Raw `DB::table()` / query-builder operations and `toBase()` are outside Eloquent model guards. Current raw OTP access is limited to the system-level `mobile_otp_challenges` table; tenant-owned raw SQL/query-builder access must be explicitly reviewed and tenant-filtered when added.
-- No current application cache, upload/download, tenant-specific queue job or export implementation exists. These are deferred until their features exist, not considered implemented or tested.
-- **Latest Product Owner verification after the user-association changes (2026-11-23):** feature branch `feat/tenant-isolation-foundation`, HEAD `bc16e8e` (`test: reject direct user builder insert bypass`), local branch synced with origin and working tree clean. `vendor/bin/pint --test`: **58 files PASS**; `CurrentShopTest`: **8 passed / 11 assertions**; `TenantMiddlewareIsolationTest`: **10 passed / 25 assertions**; full `php artisan test`: **60 passed / 167 assertions / 0 failures**. This run includes the UserBuilder direct-insert regression test. These results verify the current P2-A/P2-B code path in the reported local Docker environment; they do not by themselves complete broader Phase 2 acceptance or prove controls for file storage, cache, jobs or exports that are not yet implemented.
+**Verification evidence — GitHub Actions Laravel CI run #17:** [run `45352021969`](https://github.com/thecoderway/kisan-khata/actions/runs/45352021969), commit `4cf1d128a4c166f8bf3dcd9b6dc6a3dc50baacba`, completed successfully on MySQL 8.4:
+- Pint: **89 files PASS**.
+- Composer validation: passed.
+- Vite production build: passed.
+- MySQL row-lock integration: **1 passed / 2 assertions**.
+- Remaining Laravel suite: **131 passed / 387 assertions**.
+- Combined Laravel result: **132 tests passed / 389 assertions / 0 failures / 0 skipped**.
 
-**Remaining Phase 2 acceptance work:**
-- Complete a final review of all tenant-owned models, relationships, raw query paths and scope-bypass/system-operation boundaries.
-- Add tenant-aware private file storage and authorized download tests when file features are introduced; no upload/download path currently exists to exercise.
-- Add tenant-aware cache keys/tests when tenant-specific caching is introduced; no application cache usage currently exists.
-- Establish explicit tenant context and lifecycle cleanup for tenant-specific jobs when such jobs are introduced; no application jobs or queue dispatch currently exist.
-- Verify tenant-scoped exports and asynchronous work when implemented.
-- Complete the Phase 2 acceptance review against Docs 04/05/06/09 and Roadmap Phase 2. Do not mark Phase 2 complete solely from the current passing suite.
-
-Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
+Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subject to the tenant-isolation requirements in Docs 04/05/06/09 and ADR-0002/ADR-0005; this acceptance does not pre-approve their implementation or release.
 
 ### Phase 3 — Roles and User Management (implementation and CI verification complete; acceptance review pending)
 
@@ -292,8 +283,7 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-1. Complete the Phase 2 acceptance checklist against Docs 04/05/06/09 and ADR-0002/ADR-0005; retain deferred file/cache/job/export controls as future acceptance obligations when those features are introduced.
-2. Complete the Phase 3 security and acceptance review against ADR-0010 and the approved Docs 06/09, using the successful MySQL 8.4 CI run #10 as verification evidence.
+1. Complete the Phase 3 security and acceptance review against ADR-0010 and the approved Docs 06/09, using the successful MySQL 8.4 CI evidence. Keep future customer/financial/file/cache/job/export modules subject to their own tenant-isolation tests.
 5. Keep Phase 4 out of scope until separately authorized; keep production SMS provider integration deferred until final integration/release readiness.
 
 This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
