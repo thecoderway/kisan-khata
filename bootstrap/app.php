@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'tenant' => ResolveCurrentShop::class,
-            'password.changed' => EnsurePasswordChanged::class,
+            'password.changed' => EnsurePasswordChanged::class,\n            'abilities' => CheckAbilities::class,\n            'ability' => CheckForAnyAbility::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
