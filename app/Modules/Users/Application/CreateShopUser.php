@@ -20,25 +20,35 @@ class CreateShopUser
     public function handle(User $actor, array $attributes): User
     {
         return DB::transaction(function () use ($actor, $attributes): User {
-            $role = $attributes['role'];
-
-            Gate::forUser($actor)->authorize('create', [User::class, $role]);
-
-            // Lock and validate the shop before checking capacity. Every future
-            // lifecycle/role service must use this same lock before mutations.
+            // Keep the shared lock order used by lifecycle mutations: shop, actor.
+            // The authenticated model may be stale, so authorize only from the
+            // freshly loaded and locked database row.
             $shop = $this->capacity->lockActiveShop($actor->shop_id);
+            $lockedActor = User::query()
+                ->whereKey($actor->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedActor->is_active
+                || (string) $lockedActor->shop_id !== (string) $shop->getKey()) {
+                abort(403, 'An active shop owner account is required.');
+            }
+
+            $role = $attributes['role'];
+            Gate::forUser($lockedActor)->authorize('create', [User::class, $role]);
+
             $this->capacity->assertCanAdd($shop, $role);
 
             $user = new User;
 
             $user->forceFill([
-                'shop_id' => $actor->shop_id,
+                'shop_id' => $shop->getKey(),
                 'name' => trim($attributes['name']),
                 'email' => mb_strtolower(trim($attributes['email'])),
                 'mobile' => trim($attributes['mobile']),
                 'password' => $attributes['temporary_password'],
                 'role' => $role,
-                'preferred_language' => $actor->preferred_language ?: 'hi',
+                'preferred_language' => $lockedActor->preferred_language ?: 'hi',
                 'is_active' => true,
                 'must_change_password' => true,
             ]);
@@ -47,7 +57,7 @@ class CreateShopUser
 
             DB::table('user_audit_logs')->insert([
                 'shop_id' => $shop->getKey(),
-                'actor_user_id' => $actor->getKey(),
+                'actor_user_id' => $lockedActor->getKey(),
                 'target_user_id' => $user->getKey(),
                 'action' => 'user.created',
                 'old_values' => null,
