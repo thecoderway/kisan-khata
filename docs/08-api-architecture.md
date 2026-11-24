@@ -234,7 +234,7 @@ Suggested endpoints:
 Supports:
 
 - Search by customer name or mobile.
-- Village filter.
+- Village/location filter using LGD codes.
 - Pagination.
 
 ### Create customer
@@ -261,11 +261,22 @@ Customer fields must follow the approved product requirements:
 
 - Name — required.
 - Mobile — optional.
-- Village — optional.
+- State, District, Subdistrict and Village LGD codes — optional and independently saved.
 - Address — optional.
 - Notes — optional.
 
-The API must enforce tenant ownership and permissions for every customer operation.
+For a new customer, the client may request the current shop location to initialize the form, but the server must treat the submitted customer location as an independently validated customer attribute. The API must never silently replace a customer's saved location when the shop location changes.
+
+Suggested read-only lookup endpoints for cascading selectors:
+
+- `GET /api/v1/locations/states`
+- `GET /api/v1/locations/districts?state_code={code}`
+- `GET /api/v1/locations/subdistricts?district_code={code}`
+- `GET /api/v1/locations/villages?subdistrict_code={code}`
+
+Lookup responses must use codes as stable identifiers and include available English/local display names. Only locations present in the currently imported dataset may be returned. These are proposed contracts; final routing and response shapes must be confirmed during implementation.
+
+The API must enforce tenant ownership and permissions for every customer operation. Geographic master data is shared read-only reference data; ordinary shop APIs must not expose import or mutation operations.
 
 ## 10. Customer Language and Translation
 
