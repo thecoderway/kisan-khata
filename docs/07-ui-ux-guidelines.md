@@ -221,22 +221,31 @@ Suggested fields:
 
 - Customer name (required).
 - Mobile number (optional).
-- Village (optional).
+- Location: State, District, Subdistrict/Tehsil and Village (optional).
 - Address (optional).
 - Notes (optional).
 
-Requirements:
+Location controls:
 
-- Clear labels.
+- Use cascading select boxes backed by the LGD master data.
+- On a new customer form, preselect the shop's current location when available.
+- Allow the user to change each selection; the shop location is not a restriction.
+- Clear dependent selections when a parent selection changes.
+- Keep all location fields blank when the customer location is unknown or the user clears the selection.
+- Display the selected village in the available local/English labels from the master data; do not ask the user to translate a canonical village name manually.
+
+General requirements:
+
+- Clear bilingual labels.
 - Required field indicators.
 - Helpful validation messages.
 - Large input fields.
-- Mobile-friendly keyboard types.
+- Mobile-friendly controls.
 - Avoid unnecessary fields.
 - Preserve original entered text.
 - Clearly indicate optional fields.
 
-Do not require customer mobile number or village.
+Do not require customer mobile number or location.
 
 ## 9. Credit Sale Form
 
