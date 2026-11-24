@@ -6,6 +6,8 @@ use App\Modules\Auth\Presentation\Controllers\ForcePasswordChangeController;
 use App\Modules\Auth\Presentation\Controllers\NewPasswordController;
 use App\Modules\Auth\Presentation\Controllers\PasswordResetLinkController;
 use App\Modules\Auth\Presentation\Controllers\RegisteredShopController;
+use App\Modules\Users\Presentation\Controllers\Web\UserAuditHistoryController;
+use App\Modules\Users\Presentation\Controllers\Web\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check()
@@ -37,6 +39,16 @@ Route::middleware(['auth', 'password.changed'])->group(function (): void {
 
 Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::prefix('users')->name('users.')->group(function (): void {
+        Route::get('/', [UserManagementController::class, 'index'])->name('index');
+        Route::get('/create', [UserManagementController::class, 'create'])->name('create');
+        Route::post('/', [UserManagementController::class, 'store'])->middleware('throttle:10,1')->name('store');
+        Route::get('/audit-history', UserAuditHistoryController::class)->name('audit');
+        Route::post('/{user}/deactivate', [UserManagementController::class, 'deactivate'])->name('deactivate');
+        Route::post('/{user}/reactivate', [UserManagementController::class, 'reactivate'])->name('reactivate');
+        Route::patch('/{user}/role', [UserManagementController::class, 'changeRole'])->name('role');
+    });
 });
 
 Route::middleware('auth')->group(function (): void {
