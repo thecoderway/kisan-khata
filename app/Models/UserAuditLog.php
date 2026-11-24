@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 class UserAuditLog extends Model
@@ -18,6 +19,22 @@ class UserAuditLog extends Model
             'new_values' => 'array',
             'created_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function target(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'target_user_id');
     }
 
     protected static function booted(): void
