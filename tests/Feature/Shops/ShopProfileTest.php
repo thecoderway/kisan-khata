@@ -131,7 +131,7 @@ class ShopProfileTest extends TestCase
         ]);
 
         $this->actingAs($owner)->getJson(route('shop-profile.locations.states'))
-            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.code', '23');
+            ->assertOk()->assertJsonCount(2, 'data')->assertJsonPath('data.0.code', '23');
 
         $this->actingAs($owner)->getJson(route('shop-profile.locations.districts', ['state' => '23']))
             ->assertOk()->assertJsonCount(2, 'data');

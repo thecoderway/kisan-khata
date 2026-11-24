@@ -50,7 +50,29 @@ class ShopProfileController
             ],
         ]);
 
-        $currentShop->require()->fill($validated)->save();
+        $shop = $currentShop->require();
+
+        // A changed parent must not leave omitted descendants pointing to the old hierarchy.
+        // Explicitly supplied descendants are retained only after hierarchy-scoped validation.
+        if (array_key_exists('state_code', $validated)
+            && $validated['state_code'] !== $shop->state_code) {
+            $validated += [
+                'district_code' => null,
+                'subdistrict_code' => null,
+                'village_code' => null,
+            ];
+        } elseif (array_key_exists('district_code', $validated)
+            && $validated['district_code'] !== $shop->district_code) {
+            $validated += [
+                'subdistrict_code' => null,
+                'village_code' => null,
+            ];
+        } elseif (array_key_exists('subdistrict_code', $validated)
+            && $validated['subdistrict_code'] !== $shop->subdistrict_code) {
+            $validated += ['village_code' => null];
+        }
+
+        $shop->fill($validated)->save();
 
         return redirect()->route('shop-profile.edit')
             ->with('status', 'दुकान की जानकारी सफलतापूर्वक अपडेट हो गई है।');
