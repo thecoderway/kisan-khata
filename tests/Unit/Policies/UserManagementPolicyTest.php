@@ -4,6 +4,7 @@ namespace Tests\Unit\Policies;
 
 use App\Models\User;
 use App\Policies\UserManagementPolicy;
+use Illuminate\Support\Facades\Gate;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
