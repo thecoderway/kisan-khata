@@ -91,19 +91,34 @@ Custom per-user permission configuration is not part of the initial release.
 8. Manager may view the Staff list and active/deactivated status, but cannot create, deactivate, reactivate or change roles.
 9. Only the Owner may administer Manager and Staff accounts and change Manager/Staff roles.
 
+### 3.3 Shop Geographic Location and Customer Defaults
+
+1. The Shop Owner can change the shop's State, District, Subdistrict/Tehsil and Village through hierarchical select boxes backed by the shared LGD geographic master data.
+2. The shop location is a convenience default only. It must not restrict customers to the shop's village, subdistrict or district.
+3. When a new customer form opens, preselect the shop's current location wherever it is configured.
+4. The authorized user may override the preselected State, District, Subdistrict and Village independently, subject to valid hierarchy relationships.
+5. Changing a parent selection clears dependent child selections: State clears District/Subdistrict/Village; District clears Subdistrict/Village; Subdistrict clears Village.
+6. A shop location change affects only defaults for subsequently opened customer forms. It must not modify any existing customer location.
+7. Shop location changes must be authorized and audited as shop-profile changes.
+
 ## 4. Customer Rules
 
 1. A customer belongs to exactly one shop.
 2. A customer cannot be accessed by another shop.
 3. Customer name is mandatory.
 4. Mobile number is optional.
-5. Village is optional.
-6. A customer can have multiple credit sales.
-7. A customer can make multiple payments.
-8. A customer has one consolidated account.
-9. A customer ledger must contain all relevant financial activity.
-10. Customer information changes must be auditable.
-11. Customer deactivation must not delete financial history.
+5. Customer location is optional and may be blank when unknown.
+6. Customer location consists of optional State, District, Subdistrict/Tehsil and Village LGD codes.
+7. Customer location is saved independently on the customer record; it is not a live reference to the shop's current location.
+8. The shop's current location is used only to preselect location fields when creating a new customer.
+9. An authorized user may override any preselected customer location.
+10. Location hierarchy must be validated server-side against the shared geographic master data.
+11. A customer can have multiple credit sales.
+12. A customer can make multiple payments.
+13. A customer has one consolidated account.
+14. A customer ledger must contain all relevant financial activity.
+15. Customer information changes must be auditable.
+16. Customer deactivation must not delete financial history.
 
 ### 4.1 Crop-Season Tagging
 
