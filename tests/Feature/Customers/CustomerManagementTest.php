@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Customers;
 
-use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Shop;
 use App\Models\User;
@@ -20,18 +19,10 @@ class CustomerManagementTest extends TestCase
     private function seedVillage(): void
     {
         DB::table('villages')->insert([
-            'villageCode' => '1001',
-            'villageNameEnglish' => 'Lotiya',
-            'villageNameLocal' => 'लोटिया',
-            'subdistrictCode' => '201',
-            'subdistrictNameEnglish' => 'Sarangpur',
-            'subdistrictNameLocal' => 'सारंगपुर',
-            'districtCode' => '301',
-            'districtNameEnglish' => 'Rajgarh',
-            'districtNameLocal' => 'राजगढ़',
-            'stateCode' => '23',
-            'stateNameEnglish' => 'Madhya Pradesh',
-            'stateNameLocal' => 'मध्य प्रदेश',
+            'villageCode' => '1001', 'villageNameEnglish' => 'Lotiya', 'villageNameLocal' => 'लोटिया',
+            'subdistrictCode' => '201', 'subdistrictNameEnglish' => 'Sarangpur', 'subdistrictNameLocal' => 'सारंगपुर',
+            'districtCode' => '301', 'districtNameEnglish' => 'Rajgarh', 'districtNameLocal' => 'राजगढ़',
+            'stateCode' => '23', 'stateNameEnglish' => 'Madhya Pradesh', 'stateNameLocal' => 'मध्य प्रदेश',
             'data_gov_update_date' => '21-04-2026',
         ]);
     }
@@ -41,29 +32,18 @@ class CustomerManagementTest extends TestCase
         $shop ??= Shop::factory()->create();
 
         return User::factory()->create([
-            'shop_id' => $shop->id,
-            'role' => $role,
-            'is_active' => true,
+            'shop_id' => $shop->id, 'role' => $role, 'is_active' => true,
         ]);
     }
 
     private function customerPayload(array $overrides = []): array
     {
         return array_merge([
-            'name_original' => 'रामलाल',
-            'name_original_language' => 'hi',
-            'name_hi' => 'रामलाल',
-            'name_en' => 'Ramlal',
-            'mobile' => '9876543210',
-            'state_code' => null,
-            'district_code' => null,
-            'subdistrict_code' => null,
-            'village_code' => null,
-            'address_original' => 'मुख्य मार्ग',
-            'address_original_language' => 'hi',
-            'address_hi' => 'मुख्य मार्ग',
-            'address_en' => 'Main Road',
-            'notes' => 'पहला ग्राहक',
+            'name_original' => 'रामलाल', 'name_original_language' => 'hi',
+            'name_hi' => 'रामलाल', 'name_en' => 'Ramlal', 'mobile' => '9876543210',
+            'state_code' => null, 'district_code' => null, 'subdistrict_code' => null, 'village_code' => null,
+            'address_original' => 'मुख्य मार्ग', 'address_original_language' => 'hi',
+            'address_hi' => 'मुख्य मार्ग', 'address_en' => 'Main Road', 'notes' => 'पहला ग्राहक',
         ], $overrides);
     }
 
@@ -73,23 +53,19 @@ class CustomerManagementTest extends TestCase
         $owner = $this->makeUser();
 
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
-            'state_code' => '23', 'district_code' => '301',
-            'subdistrict_code' => '201', 'village_code' => '1001',
+            'state_code' => '23', 'district_code' => '301', 'subdistrict_code' => '201', 'village_code' => '1001',
         ]))->assertRedirect();
 
-        $customer = Customer::query()->firstOrFail();
-        $this->assertSame($owner->shop_id, $customer->shop_id);
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+        $this->assertNotNull($customer);
         $this->assertSame($owner->id, $customer->created_by);
         $this->assertSame('1001', $customer->village_code);
         $this->assertSame('रामलाल', $customer->name_original);
         $this->assertSame('Ramlal', $customer->name_en);
 
         $this->assertDatabaseHas('audit_logs', [
-            'shop_id' => $owner->shop_id,
-            'user_id' => $owner->id,
-            'action' => 'customer.created',
-            'entity_type' => 'customer',
-            'entity_id' => $customer->id,
+            'shop_id' => $owner->shop_id, 'user_id' => $owner->id,
+            'action' => 'customer.created', 'entity_type' => 'customer', 'entity_id' => $customer->id,
         ]);
     }
 
@@ -103,15 +79,14 @@ class CustomerManagementTest extends TestCase
                 'name_original' => 'ग्राहक '.$role,
             ]))->assertRedirect();
 
-            $customer = Customer::query()->where('shop_id', $shop->id)->firstOrFail();
-            $this->actingAs($user)->put(route('customers.update', $customer), $this->customerPayload([
+            $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+            $this->assertNotNull($customer);
+
+            $this->actingAs($user)->put(route('customers.update', $customer->id), $this->customerPayload([
                 'name_original' => 'अपडेट '.$role,
             ]))->assertRedirect();
 
-            $this->assertDatabaseHas('customers', [
-                'id' => $customer->id,
-                'name_original' => 'अपडेट '.$role,
-            ]);
+            $this->assertDatabaseHas('customers', ['id' => $customer->id, 'name_original' => 'अपडेट '.$role]);
         }
     }
 
@@ -125,8 +100,7 @@ class CustomerManagementTest extends TestCase
         ]))->assertSessionHasErrors('name_original');
 
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
-            'state_code' => '23', 'district_code' => '301',
-            'subdistrict_code' => '201', 'village_code' => '9999',
+            'state_code' => '23', 'district_code' => '301', 'subdistrict_code' => '201', 'village_code' => '9999',
         ]))->assertSessionHasErrors('village_code');
 
         $this->assertDatabaseCount('customers', 0);
@@ -136,8 +110,7 @@ class CustomerManagementTest extends TestCase
     {
         $shop = Shop::factory()->create();
         DB::table('shops')->where('id', $shop->id)->update([
-            'state_code' => '23', 'district_code' => '301',
-            'subdistrict_code' => '201', 'village_code' => '1001',
+            'state_code' => '23', 'district_code' => '301', 'subdistrict_code' => '201', 'village_code' => '1001',
         ]);
         $owner = $this->makeUser(User::ROLE_OWNER, $shop);
 
@@ -146,9 +119,7 @@ class CustomerManagementTest extends TestCase
 
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
         $this->assertDatabaseHas('customers', [
-            'shop_id' => $shop->id,
-            'village_code' => null,
-            'state_code' => null,
+            'shop_id' => $shop->id, 'village_code' => null, 'state_code' => null,
         ]);
     }
 
@@ -157,14 +128,12 @@ class CustomerManagementTest extends TestCase
         $this->seedVillage();
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
-            'state_code' => '23', 'district_code' => '301',
-            'subdistrict_code' => '201', 'village_code' => '1001',
+            'state_code' => '23', 'district_code' => '301', 'subdistrict_code' => '201', 'village_code' => '1001',
         ]))->assertRedirect();
-        $customer = Customer::query()->firstOrFail();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
 
         DB::table('shops')->where('id', $owner->shop_id)->update([
-            'state_code' => null, 'district_code' => null,
-            'subdistrict_code' => null, 'village_code' => null,
+            'state_code' => null, 'district_code' => null, 'subdistrict_code' => null, 'village_code' => null,
         ]);
 
         $this->assertDatabaseHas('customers', ['id' => $customer->id, 'village_code' => '1001']);
@@ -175,36 +144,30 @@ class CustomerManagementTest extends TestCase
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
         $this->post(route('customers.store'), $this->customerPayload([
-            'name_original' => 'Mohan',
-            'name_original_language' => 'en',
-            'name_hi' => 'मोहन',
-            'name_en' => 'Mohan',
-            'mobile' => '9123456780',
+            'name_original' => 'Mohan', 'name_original_language' => 'en',
+            'name_hi' => 'मोहन', 'name_en' => 'Mohan', 'mobile' => '9123456780',
         ]))->assertRedirect();
 
-        $this->get(route('customers.index', ['q' => 'राम']))
-            ->assertOk()->assertSee('रामलाल')->assertDontSee('Mohan');
-        $this->get(route('customers.index', ['q' => '987654']))
-            ->assertOk()->assertSee('रामलाल');
-        $this->get(route('customers.index', ['q' => 'Mohan']))
-            ->assertOk()->assertSee('Mohan');
+        $this->get(route('customers.index', ['q' => 'राम']))->assertOk()->assertSee('रामलाल')->assertDontSee('Mohan');
+        $this->get(route('customers.index', ['q' => '987654']))->assertOk()->assertSee('रामलाल');
+        $this->get(route('customers.index', ['q' => 'Mohan']))->assertOk()->assertSee('Mohan');
     }
 
-    public function test_customer_audit_history_records_only_changed_fields(): void
+    public function test_customer_audit_history_records_old_and_new_values(): void
     {
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
-        $customer = Customer::query()->firstOrFail();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
 
-        $this->put(route('customers.update', $customer), $this->customerPayload([
+        $this->put(route('customers.update', $customer->id), $this->customerPayload([
             'name_original' => 'रामलाल सिंह',
         ]))->assertRedirect();
 
-        $audit = AuditLog::query()->where('entity_id', $customer->id)
-            ->where('action', 'customer.updated')->firstOrFail();
-
-        $this->assertSame('रामलाल', $audit->old_values['name_original']);
-        $this->assertSame('रामलाल सिंह', $audit->new_values['name_original']);
+        $audit = DB::table('audit_logs')->where('entity_id', $customer->id)
+            ->where('action', 'customer.updated')->first();
+        $this->assertNotNull($audit);
+        $this->assertSame('रामलाल', json_decode($audit->old_values, true)['name_original']);
+        $this->assertSame('रामलाल सिंह', json_decode($audit->new_values, true)['name_original']);
     }
 
     public function test_customer_records_are_isolated_between_shops(): void
@@ -215,10 +178,9 @@ class CustomerManagementTest extends TestCase
         $ownerB = $this->makeUser(User::ROLE_OWNER, $shopB);
 
         $this->actingAs($ownerA)->post(route('customers.store'), $this->customerPayload([
-            'name_original' => 'Private Customer',
-            'name_original_language' => 'en',
+            'name_original' => 'Private Customer', 'name_original_language' => 'en',
         ]))->assertRedirect();
-        $customer = Customer::query()->firstOrFail();
+        $customer = DB::table('customers')->where('shop_id', $shopA->id)->first();
 
         $this->actingAs($ownerB)->get(route('customers.show', $customer->id))->assertNotFound();
         $this->get(route('customers.index'))->assertOk()->assertDontSee('Private Customer');
@@ -231,14 +193,10 @@ class CustomerManagementTest extends TestCase
 
         $this->postJson('/api/v1/customers', $this->customerPayload([
             'shop_id' => 999999,
-        ]))->assertCreated()
-            ->assertJsonPath('data.name_original', 'रामलाल')
+        ]))->assertCreated()->assertJsonPath('data.name_original', 'रामलाल')
             ->assertJsonMissingPath('data.shop_id');
 
-        $this->assertDatabaseHas('customers', [
-            'shop_id' => $owner->shop_id,
-            'name_original' => 'रामलाल',
-        ]);
+        $this->assertDatabaseHas('customers', ['shop_id' => $owner->shop_id, 'name_original' => 'रामलाल']);
     }
 
     public function test_customer_deletion_is_not_exposed_or_authorized(): void
@@ -247,7 +205,8 @@ class CustomerManagementTest extends TestCase
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
             'name_original' => 'Protected',
         ]))->assertRedirect();
-        $customer = Customer::query()->firstOrFail();
+        $customerRow = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+        $customer = (new Customer)->newFromBuilder((array) $customerRow);
 
         $this->assertFalse(Route::has('customers.destroy'));
         $this->assertFalse(Gate::forUser($owner)->allows('delete', $customer));
