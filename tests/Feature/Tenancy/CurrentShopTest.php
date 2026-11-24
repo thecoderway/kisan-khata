@@ -28,7 +28,7 @@ class CurrentShopTest extends TestCase
         $response->assertOk()
             ->assertViewHas('shop', fn (Shop $resolvedShop): bool => $resolvedShop->is($shop));
 
-        $this->assertSame($shop->id, app(CurrentShop::class)->id());
+        $this->assertNull(app(CurrentShop::class)->id());
     }
 
     public function test_user_cannot_be_reassigned_to_another_shop(): void

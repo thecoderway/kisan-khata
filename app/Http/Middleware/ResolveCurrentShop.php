@@ -35,6 +35,10 @@ class ResolveCurrentShop
 
         $this->currentShop->set($shop);
 
-        return $next($request);
+        try {
+            return $next($request);
+        } finally {
+            $this->currentShop->clear();
+        }
     }
 }
