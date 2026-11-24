@@ -42,6 +42,8 @@ class ForcePasswordChangeController
                 'password' => $validated['password'],
                 'must_change_password' => false,
             ])->save();
+
+            return $user;
         });
 
         $request->session()->regenerate();
