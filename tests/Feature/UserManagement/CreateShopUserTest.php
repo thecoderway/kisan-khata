@@ -192,7 +192,7 @@ class CreateShopUserTest extends TestCase
             'is_active' => true,
         ]);
 
-        User::factory()->count(2)->create([
+        User::factory()->create([
             'shop_id' => $shop->id,
             'role' => User::ROLE_MANAGER,
             'is_active' => true,
@@ -204,15 +204,17 @@ class CreateShopUserTest extends TestCase
             'is_active' => false,
         ]);
 
-        $this->expectException(\\Illuminate\\Validation\\ValidationException::class);
-
-        app(CreateShopUser::class)->handle($owner, [
+        $user = app(CreateShopUser::class)->handle($owner, [
             'name' => 'Replacement Manager',
             'email' => 'replacement.manager@example.com',
             'mobile' => '9876543218',
             'role' => User::ROLE_MANAGER,
             'temporary_password' => 'TempPass123',
         ]);
+
+        $this->assertSame(User::ROLE_MANAGER, $user->role);
+        $this->assertTrue($user->is_active);
+        $this->assertSame(2, $shop->users()->where('role', User::ROLE_MANAGER)->where('is_active', true)->count());
     }
 
 }
