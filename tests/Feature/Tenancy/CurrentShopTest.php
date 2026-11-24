@@ -131,6 +131,7 @@ class CurrentShopTest extends TestCase
 
         $this->actingAs($user)->get(route('dashboard'))->assertForbidden();
     }
+
     public function test_platform_owner_role_is_rejected_even_if_a_shop_is_assigned(): void
     {
         $shop = Shop::factory()->create();
