@@ -19,6 +19,12 @@ class UserManagementPolicyTest extends TestCase
     }
 
     #[Test]
+    public function user_management_policy_is_registered_with_laravel_gate(): void
+    {
+        $this->assertInstanceOf(UserManagementPolicy::class, Gate::getPolicyFor(User::class));
+    }
+
+    #[Test]
     public function owner_and_manager_can_open_user_list_but_staff_and_platform_users_cannot(): void
     {
         $this->assertTrue($this->policy->viewAny($this->user(User::ROLE_OWNER)));
@@ -28,13 +34,19 @@ class UserManagementPolicyTest extends TestCase
     }
 
     #[Test]
-    public function manager_can_view_staff_accounts_only(): void
+    public function manager_can_view_staff_status_but_not_full_account_details(): void
     {
         $manager = $this->user(User::ROLE_MANAGER);
+        $activeStaff = $this->user(User::ROLE_STAFF);
+        $deactivatedStaff = $this->user(User::ROLE_STAFF, 10, false);
 
-        $this->assertTrue($this->policy->view($manager, $this->user(User::ROLE_STAFF)));
-        $this->assertFalse($this->policy->view($manager, $this->user(User::ROLE_MANAGER)));
-        $this->assertFalse($this->policy->view($manager, $this->user(User::ROLE_OWNER)));
+        $this->assertTrue($this->policy->viewAny($manager));
+        $this->assertFalse($this->policy->view($manager, $activeStaff));
+        $this->assertFalse($this->policy->view($manager, $deactivatedStaff));
+        $this->assertTrue($this->policy->viewStatus($manager, $activeStaff));
+        $this->assertTrue($this->policy->viewStatus($manager, $deactivatedStaff));
+        $this->assertFalse($this->policy->viewStatus($manager, $this->user(User::ROLE_MANAGER)));
+        $this->assertFalse($this->policy->viewStatus($manager, $this->user(User::ROLE_OWNER)));
     }
 
     #[Test]
