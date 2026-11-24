@@ -2,6 +2,7 @@
 
 use App\Modules\Auth\Presentation\Controllers\AuthenticatedSessionController;
 use App\Modules\Auth\Presentation\Controllers\DashboardController;
+use App\Modules\Auth\Presentation\Controllers\ForcePasswordChangeController;
 use App\Modules\Auth\Presentation\Controllers\NewPasswordController;
 use App\Modules\Auth\Presentation\Controllers\PasswordResetLinkController;
 use App\Modules\Auth\Presentation\Controllers\RegisteredShopController;
@@ -27,9 +28,14 @@ Route::middleware('guest')->group(function (): void {
         ->middleware('throttle:5,1')->name('password.store');
 });
 
-// Tenant business pages must pass both authentication and tenant resolution.
-// Keep logout outside the tenant group so suspended shops can still sign out.
-Route::middleware(['auth', 'tenant'])->group(function (): void {
+Route::middleware(['auth', 'password.changed'])->group(function (): void {
+    Route::get('/first-login/password', [ForcePasswordChangeController::class, 'edit'])
+        ->name('password.first-login.edit');
+    Route::post('/first-login/password', [ForcePasswordChangeController::class, 'update'])
+        ->middleware('throttle:5,1')->name('password.first-login.update');
+});
+
+Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 });
 
