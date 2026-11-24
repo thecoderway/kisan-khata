@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
-@section('page-title', auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('title', auth()->user()->role === \App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('page-title', auth()->user()->role === \App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
 
 @section('content')
     <div class="page-heading">
         <div>
             <span class="eyebrow">TEAM & ACCESS</span>
-            <h1>{{ auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'आपकी दुकान के Staff' : 'दुकान के यूज़र' }}</h1>
-            <p>{{ auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'आप Staff सदस्यों का नाम और account status देख सकते हैं।' : 'Manager और Staff accounts तथा उनकी access स्थिति प्रबंधित करें।' }}</p>
+            <h1>{{ auth()->user()->role === \App\\Models\\User::ROLE_MANAGER ? 'आपकी दुकान के Staff' : 'दुकान के यूज़र' }}</h1>
+            <p>{{ auth()->user()->role === \App\\Models\\User::ROLE_MANAGER ? 'आप Staff सदस्यों का नाम और account status देख सकते हैं।' : 'Manager और Staff accounts तथा उनकी access स्थिति प्रबंधित करें।' }}</p>
         </div>
-        @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+        @if (auth()->user()->role === \App\\Models\\User::ROLE_OWNER)
             <a href="{{ route('users.create') }}" class="btn btn-primary kk-primary"><i class="ti ti-user-plus me-1"></i> नया यूज़र</a>
         @endif
     </div>
@@ -46,13 +46,13 @@
 
     <section class="content-card">
         <div class="content-card-header">
-            <div><h2>{{ auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सदस्य' : 'Manager और Staff' }}</h2>
+            <div><h2>{{ auth()->user()->role === \App\\Models\\User::ROLE_MANAGER ? 'Staff सदस्य' : 'Manager और Staff' }}</h2>
                 <p>{{ $users->count() }} account{{ $users->count() === 1 ? '' : 's' }}</p></div>
         </div>
 
         @if ($users->isEmpty())
             <div class="empty-state"><i class="ti ti-users"></i><h3>अभी कोई यूज़र नहीं है</h3>
-                @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+                @if (auth()->user()->role === \App\\Models\\User::ROLE_OWNER)
                     <p>अपनी टीम का पहला Manager या Staff account बनाएँ।</p>
                     <a href="{{ route('users.create') }}" class="btn btn-primary kk-primary">यूज़र बनाएँ</a>
                 @else
@@ -64,17 +64,17 @@
                 <table class="table table-vcenter user-table">
                     <thead><tr>
                         <th>नाम</th>
-                        @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+                        @if (auth()->user()->role === \App\\Models\\User::ROLE_OWNER)
                             <th>ईमेल</th><th>मोबाइल</th><th>भूमिका</th>
                         @endif
                         <th>स्थिति</th>
-                        @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)<th class="actions-column">कार्रवाई</th>@endif
+                        @if (auth()->user()->role === \App\\Models\\User::ROLE_OWNER)<th class="actions-column">कार्रवाई</th>@endif
                     </tr></thead>
                     <tbody>
                     @foreach ($users as $member)
                         <tr>
                             <td><div class="member-cell"><span class="member-avatar">{{ mb_substr($member->name, 0, 1) }}</span><strong>{{ $member->name }}</strong></div></td>
-                            @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+                            @if (auth()->user()->role === \App\\Models\\User::ROLE_OWNER)
                                 <td>{{ $member->email ?: '—' }}</td>
                                 <td>{{ $member->mobile ?: '—' }}</td>
                                 <td><span class="role-pill">{{ ucfirst($member->role) }}</span></td>
@@ -82,9 +82,9 @@
                             <td><span class="account-status {{ $member->is_active ? 'is-active' : 'is-inactive' }}">
                                 <i class="ti ti-circle-filled"></i>{{ $member->is_active ? 'Active' : 'Deactivated' }}
                             </span></td>
-                            @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+                            @if (auth()->user()->role === \App\\Models\\User::ROLE_OWNER)
                                 <td>
-                                    @if (in_array($member->role, [\\App\\Models\\User::ROLE_MANAGER, \\App\\Models\\User::ROLE_STAFF], true))
+                                    @if (in_array($member->role, [\App\\Models\\User::ROLE_MANAGER, \App\\Models\\User::ROLE_STAFF], true))
                                     <div class="user-actions">
                                         @if ($member->is_active)
                                             <form method="POST" action="{{ route('users.deactivate', $member->id) }}" onsubmit="return confirm('क्या आप इस account को deactivate करना चाहते हैं? इसकी सभी sessions और mobile tokens revoke हो जाएँगे।')">
