@@ -35,15 +35,17 @@ class CustomerController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Customer $customer): CustomerResource
+    public function show(int $customer): CustomerResource
     {
+        $customer = Customer::query()->findOrFail($customer);
         Gate::authorize('view', $customer);
 
         return new CustomerResource($customer);
     }
 
-    public function update(CustomerRequest $request, Customer $customer, SaveCustomer $save): CustomerResource
+    public function update(CustomerRequest $request, int $customer, SaveCustomer $save): CustomerResource
     {
+        $customer = Customer::query()->findOrFail($customer);
         $customer = $save->update(
             $request->user(),
             $customer,

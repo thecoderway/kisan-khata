@@ -108,6 +108,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_customer_location_defaults_to_shop_location_and_can_be_cleared(): void
     {
+        $this->seedVillage();
         $shop = Shop::factory()->create();
         DB::table('shops')->where('id', $shop->id)->update([
             'state_code' => '23', 'district_code' => '301', 'subdistrict_code' => '201', 'village_code' => '1001',

@@ -56,8 +56,9 @@ class CustomerController extends Controller
             ->with('status', 'ग्राहक सफलतापूर्वक जोड़ दिया गया।');
     }
 
-    public function show(Customer $customer): View
+    public function show(int $customer): View
     {
+        $customer = Customer::query()->findOrFail($customer);
         Gate::authorize('view', $customer);
 
         $location = $customer->village_code
@@ -67,8 +68,9 @@ class CustomerController extends Controller
         return view('customers.show', compact('customer', 'location'));
     }
 
-    public function edit(Customer $customer): View
+    public function edit(int $customer): View
     {
+        $customer = Customer::query()->findOrFail($customer);
         Gate::authorize('update', $customer);
 
         return view('customers.form', [
@@ -77,8 +79,9 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function update(CustomerRequest $request, Customer $customer, SaveCustomer $save): RedirectResponse
+    public function update(CustomerRequest $request, int $customer, SaveCustomer $save): RedirectResponse
     {
+        $customer = Customer::query()->findOrFail($customer);
         $save->update(
             $request->user(),
             $customer,
