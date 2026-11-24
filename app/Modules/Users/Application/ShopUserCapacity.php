@@ -36,6 +36,35 @@ class ShopUserCapacity
     }
 
     /**
+     * Return current active-user usage and configured limits for a shop.
+     *
+     * @return array{
+     *     roles: array<string, array{active: int, limit: int}>,
+     *     active_total: int,
+     *     total_limit: int
+     * }
+     */
+    public function summary(Shop $shop): array
+    {
+        $counts = $this->activeRoleCounts($shop);
+
+        $roles = [];
+
+        foreach (self::ROLE_LIMITS as $role => $limit) {
+            $roles[$role] = [
+                'active' => $counts[$role] ?? 0,
+                'limit' => $limit,
+            ];
+        }
+
+        return [
+            'roles' => $roles,
+            'active_total' => array_sum($counts),
+            'total_limit' => self::TOTAL_ACTIVE_USER_LIMIT,
+        ];
+    }
+
+    /**
      * Assert that adding one active account preserves every role limit and
      * the shop-wide active-user limit. Caller must already hold the shop lock.
      */
