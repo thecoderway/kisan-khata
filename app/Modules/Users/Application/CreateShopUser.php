@@ -15,7 +15,7 @@ class CreateShopUser
     /**
      * Create a Manager or Staff account for the authenticated Owner's shop.
      *
-     * @param array{name: string, email: string, mobile: string, role: string, temporary_password: string} $attributes
+     * @param  array{name: string, email: string, mobile: string, role: string, temporary_password: string}  $attributes
      */
     public function handle(User $actor, array $attributes): User
     {

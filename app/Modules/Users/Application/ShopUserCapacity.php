@@ -135,7 +135,7 @@ class ShopUserCapacity
     }
 
     /**
-     * @param array<string, int> $counts
+     * @param  array<string, int>  $counts
      */
     private function assertWithinLimits(array $counts): void
     {

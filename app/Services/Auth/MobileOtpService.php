@@ -11,9 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class MobileOtpService
 {
-    public function __construct(private readonly MobileOtpSender $sender)
-    {
-    }
+    public function __construct(private readonly MobileOtpSender $sender) {}
 
     public function request(string $mobile): bool
     {
@@ -93,7 +91,7 @@ class MobileOtpService
      * Verify the OTP and issue its token while the shop/user locks are still held.
      * Failed-attempt updates commit before the validation exception is raised.
      *
-     * @param callable(User): mixed $issueToken
+     * @param  callable(User): mixed  $issueToken
      * @return array{user: User, issued: mixed}
      */
     public function verifyAndIssueToken(string $mobile, string $code, callable $issueToken): array
@@ -102,7 +100,7 @@ class MobileOtpService
     }
 
     /**
-     * @param callable(User): mixed|null $issueToken
+     * @param  callable(User): mixed|null  $issueToken
      * @return array{user: User, issued?: mixed}
      */
     private function verifyLocked(string $mobile, string $code, ?callable $issueToken = null): array

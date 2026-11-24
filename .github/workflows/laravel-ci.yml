@@ -47,17 +47,8 @@ jobs:
       - name: Validate Composer configuration
         run: composer validate --strict
 
-      - name: Diagnose PHP formatting
-        run: |
-          vendor/bin/pint
-          git diff -- app/Modules/Users/Application/CreateShopUser.php app/Modules/Users/Application/ShopUserCapacity.php app/Services/Auth/MobileOtpService.php
-
-      - name: Run Laravel test suite
-        run: composer test
-        env:
-          APP_ENV: testing
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ":memory:"
+      - name: Check PHP formatting
+        run: composer lint
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -70,3 +61,10 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+      - name: Run Laravel test suite
+        run: composer test
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
