@@ -213,13 +213,20 @@ Shop profile fields:
 - Mobile number.
 - Email.
 - Address.
-- Village.
-- Tehsil.
-- District.
-- State.
+- Geographic location: State, District, Subdistrict/Tehsil and Village.
 - PIN code.
 - Preferred application language.
 - Logo (optional).
+
+### 7.1 Shop Geographic Location
+
+- The Shop Owner can view and change the shop's State, District, Subdistrict/Tehsil and Village using hierarchical select boxes.
+- The available location options must come from the shared LGD geographic master data, not manually typed or translated free-text values.
+- Selecting a State filters District options; selecting a District filters Subdistrict options; selecting a Subdistrict filters Village options.
+- Changing a parent selection clears all dependent child selections.
+- The current imported master dataset covers Madhya Pradesh only. Do not represent it as an all-India dataset.
+- Shop location is a default-selection convenience for customer creation only. It is not a restriction on which locations the shop may serve and is not a customer ownership or discovery boundary.
+- Updating the shop location affects future customer-form defaults only; it must not update existing customers.
 
 Shop information must appear on printable customer ledgers and receipts.
 
@@ -234,9 +241,13 @@ Required:
 Optional:
 
 - Mobile number.
-- Village.
+- Geographic location: State, District, Subdistrict/Tehsil and Village.
+- Address.
+- Notes.
 
 The application must not require Father's name or other unnecessary information to create a customer.
+
+Customer location is independently stored on the customer record. When creating a customer, the form initially preselects the shop's current location where available. The authorized user may change any location selection or leave the location blank when unknown. The saved customer location must not remain dynamically linked to the shop location.
 
 ### 8.2 Customer Operations
 
