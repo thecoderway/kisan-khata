@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-24  
-**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `2d8c848` (2026-11-24)  
-**Project Status:** Phase 2 multi-tenancy foundation and Phase 3 Roles and User Management are accepted on the feature branch. Phase 2 and Phase 3 have successful MySQL 8.4 CI evidence; the latest targeted local regression run at `2d8c848` passed 15 tests and 70 assertions. No production deployment is claimed.  
+**Status Snapshot Base:** Phase 4B branch `feature/phase-4b-customer-management` at `8c78012` (2026-11-24), stacked on the Phase 4A branch.  
+**Project Status:** Phases 2 and 3 are accepted on their feature branch. Phase 4A Shop Profile/LGD location editing is implemented and manually smoke-tested on Draft PR #10. Phase 4B Customer Management is implemented and CI-verified on Draft PR #11; Phase 4 remains in progress pending review and remaining translation/product decisions. No production deployment is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -66,7 +66,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
 | Phase 2 | Multi-Tenancy Foundation | **Complete on `feat/tenant-isolation-foundation`**; request/job tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API role boundaries and regression coverage are implemented. Verified by successful MySQL 8.4 CI run #17; future business modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — accepted on `feat/tenant-isolation-foundation`**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage verified by successful MySQL 8.4 CI run #19. Cross-domain Customer/Sales/Payment permission enforcement remains a requirement for those later domain phases, not implemented ahead of them. |
-| Phase 4 | Customer Management | Not started; geographic master data is ready; location/default rules documented for Phase 4 |
+| Phase 4 | Customer Management | **In progress.** Phase 4A Shop Profile/LGD selectors are implemented and manually smoke-tested on Draft PR #10. Phase 4B customer CRUD, search, bilingual fields, LGD location defaults and versioned API are implemented and CI-verified on Draft PR #11. Translation automation/provider, customer lifecycle decisions and final Phase 4 acceptance remain open. |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
 | Phase 7 | Payments | Not started |
@@ -179,6 +179,27 @@ Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subje
 - Combined Laravel result: **139 tests passed / 432 assertions / 0 failures / 0 skipped**.
 
 Phase 3 is accepted as the complete Roles and User Management phase. This is feature-branch acceptance, not production deployment/release approval. No merge to `main` is claimed.
+
+### Phase 4 — Customer Management
+
+**Status: In progress — Phase 4A and Phase 4B implementation evidence recorded; overall Phase 4 not yet accepted.**
+
+**Phase 4A — Shop Profile and LGD selectors**
+- Implemented on branch `feature/phase-4-shop-profile-location`, Draft PR #10: https://github.com/thecoderway/kisan-khata/pull/10.
+- Owner-only shop location update; cascading MP LGD state/district/subdistrict/village selectors; server-side hierarchy validation; nullable location codes.
+- Product Owner manually confirmed the shop-profile location selection, save and reload smoke checks passed.
+- GitHub Actions Laravel CI run #75 (`45433670407`) passed for commit `cbfeac90b3a4e4554590703594de2ba0cee80acd`, including formatting, frontend build, MySQL row-lock integration and Laravel suite.
+- PR #10 remains Draft/open/unmerged.
+
+**Phase 4B — Customer Management**
+- Implemented on branch `feature/phase-4b-customer-management`, Draft PR #11: https://github.com/thecoderway/kisan-khata/pull/11. PR #11 is stacked on the Phase 4A branch so its diff contains only Phase 4B changes.
+- Tenant-scoped customer records and web CRUD/list/detail/edit; name/mobile search and pagination; Owner/Manager/Staff profile permissions; independent customer LGD location with shop-location preselection on create; Hindi/English original and translation fields; shared cascading lookup; versioned API endpoints at `/api/v1/customers`.
+- Customer create/update writes append-only, tenant-scoped audit events. Customer deletion is not exposed or authorized.
+- MySQL 8.4 CI run `45440619824` passed on commit `8c78012c2a5e99538062d4ab871d35be0a52a307`: Pint **110 files PASS**; Composer validation and Vite build passed; MySQL row-lock integration **1 test / 2 assertions passed**; remaining Laravel suite **156 tests / 518 assertions passed**. Combined result: **157 tests / 520 assertions, zero failures**.
+- No migration was run against the Product Owner's local/development database. CI migrations/tests ran only against the dedicated ephemeral `kisan_khata_test` MySQL service.
+- Explicit boundaries: customer code remains nullable (no invented generation format); automatic translation/provider integration is not enabled; customer deactivation/deletion lifecycle is not implemented pending approved rules; no sales, payments or ledger behavior is included.
+- PR #11 remains Draft/open/unmerged. Phase 4 is not declared complete until review, unresolved requirements and remaining acceptance checks are closed.
+
 
 ### Geographic master data — implemented and imported (2026-11-24)
 
@@ -293,7 +314,8 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-- Phase 3 is accepted. Do not begin Phase 4 or other later roadmap phases until the Product Owner explicitly authorizes them.
+- Phase 4 is in progress on stacked Draft PRs #10 and #11. Continue Phase 4 only within its approved customer/location scope; resolve open translation and customer-lifecycle decisions before implementing those behaviors.
+- Keep PR #10 and PR #11 Draft/unmerged until the Product Owner explicitly approves their merge.
 - Keep real SMS provider integration deferred until final integration/release readiness.
 
 This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
