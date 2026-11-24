@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
-**Last Updated:** 2026-11-23  
+**Last Updated:** 2026-11-24  
 **Status Snapshot Base:** `main` at `13ad942` (PR #5 merged; this document correction is proposed separately)  
-**Project Status:** Foundation implementation in progress; Phase 3 is the next implementation phase.  
+**Project Status:** Foundation implementation in progress; Phase 3 user-management implementation is underway on the feature branch.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
