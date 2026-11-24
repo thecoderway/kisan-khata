@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Providers;
+namespace App\Providers;
 
-use App\\Contracts\\MobileOtpSender;
-use App\\Infrastructure\\Auth\\NullMobileOtpSender;
-use App\\Models\\User;
-use App\\Policies\\UserManagementPolicy;
-use App\\Tenancy\\CurrentShop;
-use Illuminate\\Support\\Facades\\Gate;
-use Illuminate\\Support\\ServiceProvider;
+use App\Contracts\MobileOtpSender;
+use App\Infrastructure\Auth\NullMobileOtpSender;
+use App\Models\User;
+use App\Policies\UserManagementPolicy;
+use App\Tenancy\CurrentShop;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
