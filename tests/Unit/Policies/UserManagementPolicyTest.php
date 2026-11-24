@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\\Unit\\Policies;
+namespace Tests\Unit\Policies;
 
-use App\\Models\\User;
-use App\\Policies\\UserManagementPolicy;
-use PHPUnit\\Framework\\Attributes\\Test;
-use Tests\\TestCase;
+use App\Models\User;
+use App\Policies\UserManagementPolicy;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class UserManagementPolicyTest extends TestCase
 {
@@ -78,7 +78,7 @@ class UserManagementPolicyTest extends TestCase
     public function self_owner_and_platform_accounts_cannot_be_administered_through_ordinary_management(): void
     {
         $owner = $this->user(User::ROLE_OWNER);
-        $otherOwner = $this->user(User::ROLE_OWNER);
+        $otherOwner = $this->user(User::ROLE_OWNER, 11);
         $platformOwner = $this->user(User::ROLE_PLATFORM_OWNER, null);
 
         $this->assertFalse($this->policy->deactivate($owner, $owner));
@@ -114,14 +114,11 @@ class UserManagementPolicyTest extends TestCase
 
     private function user(string $role, ?int $shopId = 10, bool $active = true): User
     {
+        static $nextId = 1;
+
         $user = new User;
         $user->forceFill([
-            'id' => 100 + match ($role) {
-                User::ROLE_OWNER => 1,
-                User::ROLE_MANAGER => 2,
-                User::ROLE_STAFF => 3,
-                default => 4,
-            } + ($shopId ?? 0) * 100,
+            'id' => $nextId++,
             'shop_id' => $shopId,
             'role' => $role,
             'is_active' => $active,
