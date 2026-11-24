@@ -84,7 +84,28 @@ class MobileOtpService
 
     public function verify(string $mobile, string $code): User
     {
-        $result = DB::transaction(function () use ($mobile, $code): array {
+        return $this->verifyLocked($mobile, $code)['user'];
+    }
+
+    /**
+     * Verify the OTP and issue its token while the shop/user locks are still held.
+     * Failed-attempt updates commit before the validation exception is raised.
+     *
+     * @param callable(User): mixed $issueToken
+     * @return array{user: User, issued: mixed}
+     */
+    public function verifyAndIssueToken(string $mobile, string $code, callable $issueToken): array
+    {
+        return $this->verifyLocked($mobile, $code, $issueToken);
+    }
+
+    /**
+     * @param callable(User): mixed|null $issueToken
+     * @return array{user: User, issued?: mixed}
+     */
+    private function verifyLocked(string $mobile, string $code, ?callable $issueToken = null): array
+    {
+        $result = DB::transaction(function () use ($mobile, $code, $issueToken): array {
             // Lock the shop before the user, matching lifecycle mutations. This
             // serializes OTP verification against deactivation/reactivation.
             $lookup = User::query()->where('mobile', $mobile)->first();
@@ -147,7 +168,13 @@ class MobileOtpService
 
             $user->forceFill(['mobile_verified_at' => $user->mobile_verified_at ?? now()])->save();
 
-            return ['status' => 'verified', 'user' => $user];
+            $result = ['status' => 'verified', 'user' => $user];
+
+            if ($issueToken !== null) {
+                $result['issued'] = $issueToken($user);
+            }
+
+            return $result;
         });
 
         if ($result['status'] !== 'verified') {
@@ -158,7 +185,7 @@ class MobileOtpService
             ]);
         }
 
-        return $result['user'];
+        return $result;
     }
 
     private function isEligible(?User $user): bool
