@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Users\Application\CreateShopUser;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -149,7 +150,7 @@ class CreateShopUserTest extends TestCase
         ]);
 
         // Simulate the authenticated model becoming stale before the service runs.
-        User::query()->whereKey($owner->id)->update(['role' => User::ROLE_MANAGER]);
+        DB::table('users')->where('id', $owner->id)->update(['role' => User::ROLE_MANAGER]);
 
         $this->expectException(AuthorizationException::class);
 
