@@ -25,6 +25,7 @@ class TenantMiddlewareIsolationTest extends TestCase
         $this->assertContains('tenant', $dashboard->gatherMiddleware());
 
         $this->assertContains('auth:sanctum', $apiUser->gatherMiddleware());
+        $this->assertContains('abilities:app', $apiUser->gatherMiddleware());
         $this->assertContains('tenant', $apiUser->gatherMiddleware());
 
         $this->assertContains('auth', $webLogout->gatherMiddleware());
@@ -72,7 +73,7 @@ class TenantMiddlewareIsolationTest extends TestCase
         $shopB = Shop::factory()->create(['name' => 'Shop B']);
         $userA = $this->createOwnerFor($shopA);
 
-        Sanctum::actingAs($userA);
+        Sanctum::actingAs($userA, ['app']);
 
         $this->getJson('/api/user?shop_id='.$shopB->id)
             ->assertOk()
@@ -85,7 +86,7 @@ class TenantMiddlewareIsolationTest extends TestCase
         $shop = Shop::factory()->create();
         $user = $this->createOwnerFor($shop, ['is_active' => false]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($user, ['app']);
 
         $this->getJson('/api/user')->assertForbidden();
     }
@@ -112,7 +113,7 @@ class TenantMiddlewareIsolationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('shop.id', $shopA->id);
 
-        Sanctum::actingAs($userB);
+        Sanctum::actingAs($userB, ['app']);
         $this->getJson('/api/user')
             ->assertOk()
             ->assertJsonPath('shop.id', $shopB->id);
