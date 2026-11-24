@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Modules\\Users\\Application;
+namespace App\Modules\Users\Application;
 
-use App\\Models\\Shop;
-use App\\Models\\User;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Gate;
-use Illuminate\\Validation\\ValidationException;
+use App\Models\Shop;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class CreateShopUser
 {
