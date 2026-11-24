@@ -84,6 +84,7 @@
                             </span></td>
                             @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
                                 <td>
+                                    @if (in_array($member->role, [\\App\\Models\\User::ROLE_MANAGER, \\App\\Models\\User::ROLE_STAFF], true))
                                     <div class="user-actions">
                                         @if ($member->is_active)
                                             <form method="POST" action="{{ route('users.deactivate', $member->id) }}" onsubmit="return confirm('क्या आप इस account को deactivate करना चाहते हैं? इसकी सभी sessions और mobile tokens revoke हो जाएँगे।')">
@@ -107,6 +108,9 @@
                                             <button type="submit" class="btn btn-sm btn-outline-secondary">बदलें</button>
                                         </form>
                                     </div>
+                                    @else
+                                        <span class="text-secondary">—</span>
+                                    @endif
                                 </td>
                             @endif
                         </tr>
