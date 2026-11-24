@@ -181,5 +181,4 @@ class CurrentShopTest extends TestCase
 
         User::query()->whereKey($user->id)->update(['name' => 'No tenant context']);
     }
-
 }

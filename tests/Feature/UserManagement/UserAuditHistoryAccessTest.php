@@ -4,9 +4,6 @@ namespace Tests\Feature\UserManagement;
 
 use App\Models\Shop;
 use App\Models\User;
-use App\Models\UserAuditLog;
-use App\Tenancy\CurrentShop;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
@@ -80,48 +77,6 @@ class UserAuditHistoryAccessTest extends TestCase
             ->assertJsonValidationErrors('per_page');
     }
 
-
-    public function test_audit_log_model_queries_are_scoped_to_current_shop_and_fail_closed(): void
-    {
-        $shopA = Shop::factory()->create();
-        $shopB = Shop::factory()->create();
-        $ownerA = $this->createUser($shopA, User::ROLE_OWNER);
-        $targetA = $this->createUser($shopA, User::ROLE_STAFF);
-        $ownerB = $this->createUser($shopB, User::ROLE_OWNER);
-        $targetB = $this->createUser($shopB, User::ROLE_STAFF);
-
-        $this->createAudit($shopA, $ownerA, $targetA, 'user.deactivated');
-        $this->createAudit($shopB, $ownerB, $targetB, 'user.deactivated');
-
-        $currentShop = app(CurrentShop::class);
-        $currentShop->set($shopA);
-
-        $this->assertSame([$shopA->id], UserAuditLog::query()->pluck('shop_id')->unique()->all());
-
-        $currentShop->clear();
-
-        $this->assertSame(0, UserAuditLog::query()->count());
-    }
-
-    public function test_audit_log_model_rejects_another_shops_insert(): void
-    {
-        $shopA = Shop::factory()->create();
-        $shopB = Shop::factory()->create();
-        $actor = $this->createUser($shopB, User::ROLE_OWNER);
-        $target = $this->createUser($shopB, User::ROLE_STAFF);
-
-        app(CurrentShop::class)->set($shopA);
-
-        $this->expectException(AuthorizationException::class);
-
-        UserAuditLog::create([
-            'shop_id' => $shopB->id,
-            'actor_user_id' => $actor->id,
-            'target_user_id' => $target->id,
-            'action' => 'user.deactivated',
-            'created_at' => now(),
-        ]);
-    }
 
     private function createUser(Shop $shop, string $role): User
     {

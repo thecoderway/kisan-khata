@@ -91,6 +91,11 @@ class UserAuditLogBuilder extends Builder
         throw new LogicException('User audit records must be inserted with an explicit current shop context.');
     }
 
+    public function insertOrIgnoreReturning(array $values, array $returning = ['*'], array|string|null $uniqueBy = null)
+    {
+        throw new LogicException('User audit records must be inserted through tenant-scoped insert operations.');
+    }
+
     private function withCurrentShop(array $values): array
     {
         $shopId = app(CurrentShop::class)->id();
