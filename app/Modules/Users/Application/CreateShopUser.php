@@ -20,21 +20,31 @@ class CreateShopUser
     public function handle(User $actor, array $attributes): User
     {
         return DB::transaction(function () use ($actor, $attributes): User {
-            // Keep the shared lock order used by lifecycle mutations: shop, actor.
-            // The authenticated model may be stale, so authorize only from the
-            // freshly loaded and locked database row.
-            $shop = $this->capacity->lockActiveShop($actor->shop_id);
-            $lockedActor = User::query()
+            $role = $attributes['role'];
+
+            // Resolve and pre-authorize the current database identity first.
+            // This rejects platform owners and inactive/non-owner accounts
+            // before attempting to lock a shop that may not exist for them.
+            $currentActor = User::query()
                 ->whereKey($actor->getKey())
+                ->firstOrFail();
+
+            Gate::forUser($currentActor)->authorize('create', [User::class, $role]);
+
+            // Preserve the shared mutation lock order: shop, then actor.
+            $shop = $this->capacity->lockActiveShop($currentActor->shop_id);
+            $lockedActor = User::query()
+                ->whereKey($currentActor->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (! $lockedActor->is_active
-                || (string) $lockedActor->shop_id !== (string) $shop->getKey()) {
-                abort(403, 'An active shop owner account is required.');
+            // Re-check authorization against the locked row to close the
+            // race between the initial identity read and acquiring locks.
+            if ((string) $lockedActor->shop_id !== (string) $shop->getKey()) {
+                Gate::forUser($lockedActor)->authorize('create', [User::class, $role]);
+                abort(403, 'The user is not authorized to manage this shop.');
             }
 
-            $role = $attributes['role'];
             Gate::forUser($lockedActor)->authorize('create', [User::class, $role]);
 
             $this->capacity->assertCanAdd($shop, $role);
