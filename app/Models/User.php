@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use LogicException;
 
 #[Fillable([
     'name',
@@ -58,6 +59,10 @@ class User extends Authenticatable
                 throw new AuthorizationException('A user cannot be reassigned to another shop.');
             }
         });
+
+        static::deleting(fn () => throw new LogicException(
+            'Shop user accounts are retained; use the audited deactivation lifecycle.'
+        ));
     }
 
     /**

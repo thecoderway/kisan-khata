@@ -5,11 +5,14 @@ namespace Tests\Feature\UserManagement;
 use App\Models\Shop;
 use App\Modules\Users\Application\ShopUserCapacity;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ShopUserCapacityLockingTest extends TestCase
 {
+    use DatabaseMigrations;
+
     public function test_shop_row_lock_blocks_a_second_mysql_connection_until_transaction_ends(): void
     {
         if (DB::connection()->getDriverName() !== 'mysql') {

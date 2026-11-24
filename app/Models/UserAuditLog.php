@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\UserAuditLogBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
@@ -11,6 +12,11 @@ class UserAuditLog extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    public function newEloquentBuilder($query): UserAuditLogBuilder
+    {
+        return new UserAuditLogBuilder($query);
+    }
 
     protected function casts(): array
     {

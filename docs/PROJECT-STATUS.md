@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-24  
-**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `9a867d1` (2026-11-24)  
-**Project Status:** Phase 3 backend user-management foundation (P3.1–P3.5) implemented and locally verified; User Management Web UI, role-specific navigation, security hardening and Phase 3 acceptance remain.  
+**Status Snapshot Base:** `feat/tenant-isolation-foundation` at `7c59921` before acceptance-hardening changes (2026-11-24)  
+**Project Status:** Phase 3 user-management backend and Web UI are implemented; session-driver enforcement, append-only/retention guards and MySQL CI verification are being hardened. Phase 2/3 final acceptance remains pending fresh CI evidence.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -63,8 +63,8 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 |---|---|---|
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
-| Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; latest Product Owner-reported local verification at `bc16e8e` passed Pint and the full 60-test suite (167 assertions); P2-A/P2-B implementation verification is green, while broader Phase 2 acceptance and P2-C infrastructure work remain pending |
-| Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 implemented and locally verified on `feat/tenant-isolation-foundation` at `9a867d1`; Web UI, role-specific navigation, broader security hardening and final Phase 3 acceptance remain. |
+| Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; previous Product Owner-reported local verification at `bc16e8e` passed Pint and the full 60-test suite (167 assertions). Broader Phase 2 acceptance and future file/cache/job/export controls remain pending until those modules exist and are verified |
+| Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 and User Management Web UI/navigation are present on `feat/tenant-isolation-foundation`; acceptance hardening is in progress and final Phase 3 acceptance awaits MySQL CI evidence. |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
@@ -159,15 +159,15 @@ Recorded as complete:
 
 Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
 
-### Phase 3 — Roles and User Management (backend foundation complete; UI and acceptance in progress)
+### Phase 3 — Roles and User Management (implementation present; acceptance hardening in progress)
 
-**Implemented and locally verified on `feat/tenant-isolation-foundation`:**
+**Implemented on `feat/tenant-isolation-foundation` (latest code is subject to CI verification):**
 
 - **P3.1 Authorization foundation:** `UserManagementPolicy`, Gate registration, role-specific permissions and tenant-boundary policy tests.
 - **P3.2 User creation and first login:** Owner-only Manager/Staff creation, temporary-password handling, forced password change for Web and Mobile flows.
 - **P3.3 Capacity enforcement:** centralized role and total active-user limits with transactional Shop-row locking and MySQL locking coverage.
-- **P3.4 User lifecycle:** Owner-only deactivate/reactivate/role change, atomic capacity checks, retained accounts, Sanctum token revocation, database-session invalidation and append-only lifecycle audit records.
-- **P3.5 Audit history:** Owner-only, tenant-scoped, paginated audit-history endpoint and authorization tests.
+- **P3.4 User lifecycle:** Owner-only deactivate/reactivate/role change, atomic capacity checks, retained accounts, Sanctum token revocation, and database-session invalidation. The acceptance-hardening change explicitly rejects deactivation unless `SESSION_DRIVER=database` and the session connection shares the application DB transaction.
+- **P3.5 Audit history:** Owner-only, tenant-scoped, paginated audit-history endpoint and authorization tests. Instance and Eloquent bulk mutation guards are being added for append-only audit history and retained User accounts; raw SQL remains an explicitly privileged bypass that must stay restricted and reviewed.
 
 **Verified local results reported by Product Owner after pulling the latest feature-branch commit:**
 
@@ -177,15 +177,12 @@ Phase 2 must be accepted before exposing customer and financial modules to multi
 
 These results are Product Owner-reported local Docker execution results; they are not a CI result or production verification.
 
-**Remaining Phase 3 work:**
+**Acceptance-hardening work in this delivery:**
 
-1. User Management Web UI for Owner and Manager, reusing the existing application services.
-2. Owner-only create and lifecycle controls; Manager's restricted Staff directory/status view.
-3. Capacity summary and role-specific navigation, without exposing unfinished modules as working links.
-4. Web authorization, validation, tenant isolation, field-visibility and lifecycle regression tests.
-5. Broader API authorization/security review and final Phase 3 acceptance.
-
-The current dashboard remains a placeholder and there are no User Management Web routes/controllers/views yet. The existing API lifecycle operations and application services are reusable; do not duplicate business rules in web controllers or call the API internally over HTTP.
+1. Enforce database-backed session revocation at runtime; fail closed if the configured driver cannot support ADR-0010 deactivation semantics.
+2. Block instance and bulk Eloquent deletion of retained User accounts; block instance and bulk Eloquent mutation/deletion of UserAuditLog records.
+3. Run the existing row-lock integration test against a real MySQL 8.4 service in CI rather than allowing SQLite to skip it.
+4. Keep Phase 3 acceptance pending until the new CI workflow reports green. Database-level/raw SQL writes remain outside Eloquent guards and must be limited to controlled system operations.
 
 **Authoritative business rules (ADR-0010):**
 
@@ -198,7 +195,7 @@ The current dashboard remains a placeholder and there are no User Management Web
 - Deactivation revokes database sessions and Sanctum tokens; user accounts are retained.
 - Temporary-password first-login and mandatory password-change behavior follows the accepted ADR and implemented Web/Mobile flows.
 
-Do not mark Phase 3 complete until the Web UI, navigation, authorization/security coverage and acceptance review are complete.
+Do not mark Phase 3 complete until the Web UI/navigation, authorization/security coverage, session revocation, retained-account/audit invariants and real MySQL concurrency verification are accepted.
 
 
 ## 6. Remaining official phases — scope summary
@@ -276,12 +273,11 @@ After PR #5, the Product Owner separately confirmed local `main` synced to `13ad
 - Full `php artisan test`: **57 passed, 164 assertions, 0 failures**.
 - The cache/session/storage/jobs/database-access audit was also reported; findings are recorded in the Phase 2 section above.
 
-**Phase 3 verification reported by Product Owner (2026-11-24):**
-- Feature branch: `feat/tenant-isolation-foundation`, latest code pulled through commit `9a867d1`.
-- `php artisan test --filter=UserAuditHistoryAccessTest`: **5 passed / 14 assertions**.
-- Full `php artisan test`: **99 passed / 298 assertions / 0 failures**.
-- `vendor/bin/pint --test`: **76 files PASS**.
-- This is the latest reported application verification for the feature branch. No production deployment is claimed.
+**Phase 3 verification evidence (2026-11-24):**
+- Earlier feature-branch CI run at `7c59921` passed: Pint, Composer validation, frontend production build, and Laravel tests (**113 passed / 346 assertions / 1 skipped**).
+- The skipped test was the MySQL/InnoDB row-lock integration test because that CI run used SQLite; it did not verify MySQL concurrency.
+- The current acceptance-hardening changes switch CI to MySQL 8.4, add session-driver and append-only/retention regression tests, and must be considered unverified until the resulting GitHub Actions run completes successfully.
+- No production deployment is claimed.
 
 No production deployment or release is claimed.
 
@@ -296,12 +292,10 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-1. Complete the User Management Web UI blueprint review and obtain Product Owner approval before implementation.
-2. Implement the approved Web UI in small, testable increments, reusing the existing user-management application services and policies.
-3. Add role-specific navigation and ensure unfinished modules are not presented as functional links.
-4. Run Web authorization, tenant-isolation, validation, capacity, lifecycle and safe-field-visibility tests; rerun the full suite and Pint.
-5. Complete the Phase 3 security review and acceptance checklist; update this status document with observed results.
-6. Separately close the remaining Phase 1/2 acceptance gaps before exposing customer and financial modules or starting Phase 4.
-7. Keep production SMS provider integration deferred until final integration/release readiness.
+1. Verify the acceptance-hardening branch changes with GitHub Actions: Pint, Composer validation, frontend build, full Laravel suite and the MySQL row-lock test.
+2. Review the CI logs and address any failures without weakening tests or reverting MySQL coverage.
+3. Complete the Phase 2 acceptance checklist and document deferred file/cache/job/export controls at the time those features are introduced.
+4. Complete the Phase 3 security review and acceptance checklist only after CI evidence is green.
+5. Keep Phase 4 out of scope until separately authorized; keep production SMS provider integration deferred until final integration/release readiness.
 
 This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.

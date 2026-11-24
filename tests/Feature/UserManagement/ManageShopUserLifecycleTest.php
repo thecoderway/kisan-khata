@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 use Tests\TestCase;
 
 class ManageShopUserLifecycleTest extends TestCase
@@ -19,6 +20,8 @@ class ManageShopUserLifecycleTest extends TestCase
     public function test_owner_can_deactivate_manager_and_revoke_all_tokens_and_database_sessions(): void
     {
         [$shop, $owner, $target] = $this->shopWithOwnerAndTarget(User::ROLE_MANAGER);
+
+        config(['session.driver' => 'database']);
 
         $target->createToken('phone-one', ['app']);
         $target->createToken('phone-two', ['app']);
@@ -43,6 +46,28 @@ class ManageShopUserLifecycleTest extends TestCase
             'target_user_id' => $target->id,
             'action' => 'user.deactivated',
             'reason' => 'Left employment',
+        ]);
+    }
+
+    public function test_deactivation_fails_closed_when_session_driver_cannot_revoke_database_sessions(): void
+    {
+        [, $owner, $target] = $this->shopWithOwnerAndTarget(User::ROLE_MANAGER);
+        $target->createToken('phone-one', ['app']);
+
+        config(['session.driver' => 'array']);
+
+        try {
+            app(ManageShopUserLifecycle::class)->deactivate($owner, $target->id);
+            $this->fail('Deactivation must reject a session driver that cannot revoke persisted sessions.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('SESSION_DRIVER=database', $exception->getMessage());
+        }
+
+        $this->assertTrue($target->fresh()->is_active);
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+        $this->assertDatabaseMissing('user_audit_logs', [
+            'target_user_id' => $target->id,
+            'action' => 'user.deactivated',
         ]);
     }
 

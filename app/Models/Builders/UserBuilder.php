@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use LogicException;
 
 /**
- * Prevent bulk Eloquent mutations from changing a user's tenant association.
+ * Prevent bulk Eloquent mutations from changing a user's tenant association
+ * or deleting retained user accounts.
  *
  * @template TModel of \App\Models\User
  *
@@ -20,6 +21,16 @@ class UserBuilder extends Builder
         $this->assertShopIdIsImmutable(array_keys($values));
 
         return parent::update($values);
+    }
+
+    public function delete()
+    {
+        throw new LogicException('Shop user accounts are retained; use the audited deactivation lifecycle.');
+    }
+
+    public function truncate()
+    {
+        throw new LogicException('The users table cannot be truncated through Eloquent.');
     }
 
     public function increment($column, $amount = 1, array $extra = [])

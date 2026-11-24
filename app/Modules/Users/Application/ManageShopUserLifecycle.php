@@ -27,6 +27,23 @@ class ManageShopUserLifecycle
                 ]);
             }
 
+            // ADR-0010 requires revoking persisted database sessions. Deleting
+            // rows from the sessions table is ineffective for other drivers.
+            if (config('session.driver') !== 'database') {
+                throw new LogicException(
+                    'User deactivation requires SESSION_DRIVER=database so web sessions can be revoked.'
+                );
+            }
+
+            $sessionConnection = config('session.connection') ?: DB::getDefaultConnection();
+
+            if ($sessionConnection !== DB::getDefaultConnection()) {
+                throw new LogicException(
+                    'Database-backed session revocation must use the application database connection '
+                    .'so it remains atomic with account deactivation.'
+                );
+            }
+
             $this->capacity->assertCanTransition($shop, $target, false, $target->role);
 
             $target->forceFill(['is_active' => false])->save();
@@ -37,15 +54,6 @@ class ManageShopUserLifecycle
                 ->where('tokenable_type', $target->getMorphClass())
                 ->where('tokenable_id', $target->getKey())
                 ->delete();
-
-            $sessionConnection = config('session.connection') ?: DB::getDefaultConnection();
-
-            if ($sessionConnection !== DB::getDefaultConnection()) {
-                throw new LogicException(
-                    'Database-backed session revocation must use the application database connection '
-                    .'so it remains atomic with account deactivation.'
-                );
-            }
 
             DB::connection($sessionConnection)
                 ->table(config('session.table', 'sessions'))
