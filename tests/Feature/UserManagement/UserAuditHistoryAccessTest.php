@@ -31,8 +31,8 @@ class UserAuditHistoryAccessTest extends TestCase
 
         $this->getJson('/api/shop/users/audit-logs?per_page=1')
             ->assertOk()
-            ->assertJsonPath('meta.total', 2)
-            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonPath('total', 2)
+            ->assertJsonPath('per_page', 1)
             ->assertJsonPath('data.0.shop_id', $shopA->id)
             ->assertJsonPath('data.0.action', 'user.reactivated')
             ->assertJsonPath('data.0.actor.id', $ownerA->id)
