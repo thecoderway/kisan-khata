@@ -13,7 +13,7 @@ class ShopUserCapacityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_shop_wide_active_user_limit_is_eight_even_when_role_limits_are_not_exceeded(): void
+    public function test_shop_wide_active_user_limit_is_enforced_independently_of_role_limits(): void
     {
         $shop = Shop::factory()->create();
         User::factory()->create([
@@ -31,14 +31,16 @@ class ShopUserCapacityTest extends TestCase
             'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
-
-        $capacity = app(ShopUserCapacity::class);
-        $capacity->assertCanAdd($shop, User::ROLE_STAFF);
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => 'legacy_role',
+            'is_active' => true,
+        ]);
 
         $this->expectException(ValidationException::class);
-        $capacity->assertCanAdd($shop, User::ROLE_MANAGER);
-    }
 
+        app(ShopUserCapacity::class)->assertCanAdd($shop, User::ROLE_STAFF);
+    }
     public function test_reactivation_is_rejected_when_role_capacity_is_full(): void
     {
         $shop = Shop::factory()->create();
