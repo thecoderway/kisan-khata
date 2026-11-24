@@ -33,12 +33,16 @@ class ShopProfileTest extends TestCase
             [
                 'villageCode' => '1002',
                 'villageNameEnglish' => 'Other Village',
+                'villageNameLocal' => 'अन्य गाँव',
                 'subdistrictCode' => '202',
                 'subdistrictNameEnglish' => 'Other Tehsil',
+                'subdistrictNameLocal' => 'अन्य तहसील',
                 'districtCode' => '302',
                 'districtNameEnglish' => 'Other District',
+                'districtNameLocal' => 'अन्य जिला',
                 'stateCode' => '23',
                 'stateNameEnglish' => 'Madhya Pradesh',
+                'stateNameLocal' => 'मध्य प्रदेश',
                 'data_gov_update_date' => '21-04-2026',
             ],
         ]);
