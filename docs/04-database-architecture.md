@@ -116,10 +116,10 @@ Suggested columns:
 - `mobile`
 - `email` — nullable
 - `address` — nullable
-- `village` — nullable
-- `tehsil` — nullable
-- `district` — nullable
-- `state` — nullable
+- `state_code` — nullable; string LGD code
+- `district_code` — nullable; string LGD code
+- `subdistrict_code` — nullable; string LGD code
+- `village_code` — nullable; string LGD code referencing `villages.villageCode` where supported
 - `pincode` — nullable
 - `logo_path` — nullable
 - `timezone`
@@ -134,7 +134,13 @@ Suggested statuses:
 - SUSPENDED
 - CLOSED
 
-Each shop is an independent tenant.
+Each shop is an independent tenant. The Shop Owner can update the shop's geographic codes using hierarchical selectors. The shop's selected location is used only as the default location when a new customer form is opened; it does not constrain customer locations.
+
+### 4.1 Geographic Master Data
+
+The shared `villages` reference table stores the imported Madhya Pradesh LGD village snapshot. It is global reference data, not tenant-owned data, and must not contain `shop_id`. See [Geographic Master Data and Import Runbook](11-geographic-master-data.md) for its schema, provenance, import procedure and verification.
+
+LGD codes are strings to preserve their source representation. Shop and customer location fields use application-style snake_case names and map to the source table's camelCase code columns. The current source table contains village rows with their State, District and Subdistrict codes and names; it does not introduce separate district or subdistrict tables.
 
 ## 5. shop_settings
 
@@ -171,10 +177,10 @@ Suggested columns:
 - `name_hi` — nullable
 - `name_en` — nullable
 - `mobile` — nullable
-- `village_original` — nullable
-- `village_original_language` — nullable
-- `village_hi` — nullable
-- `village_en` — nullable
+- `state_code` — nullable; string LGD code
+- `district_code` — nullable; string LGD code
+- `subdistrict_code` — nullable; string LGD code
+- `village_code` — nullable; string LGD code
 - `address_original` — nullable
 - `address_original_language` — nullable
 - `address_hi` — nullable
@@ -189,12 +195,14 @@ Suggested columns:
 Rules:
 
 1. Customer name is mandatory.
-2. Mobile number and village are optional.
-3. Original user-entered text must be preserved.
-4. Hindi and English translations must be stored separately.
-5. Automatic translation must never overwrite original text.
-6. Translated text may be corrected independently.
-7. Translation provider and workflow will be finalized separately.
+2. Mobile number and geographic location are optional.
+3. Location codes must resolve to a valid hierarchy in the shared `villages` reference table.
+4. Customer location is independently stored and is not dynamically inherited from the shop.
+5. Original user-entered address and notes must be preserved.
+6. Hindi and English translations must be stored separately for translatable user-entered text.
+7. Automatic translation must never overwrite original text.
+8. Translated text may be corrected independently.
+9. Translation provider and workflow will be finalized separately.
 
 Indexes:
 
