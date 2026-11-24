@@ -99,6 +99,34 @@ class MobileOtpAuthenticationTest extends TestCase
         $this->assertDatabaseCount('mobile_otp_challenges', 0);
     }
 
+    public function test_otp_issued_before_deactivation_cannot_authenticate_the_deactivated_user(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+        $staff = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'mobile' => '9876543210',
+            'is_active' => true,
+        ]);
+
+        $sender = $this->requestOtp($staff);
+
+        app(\App\Modules\Users\Application\ManageShopUserLifecycle::class)
+            ->deactivate($owner, $staff->id);
+
+        $this->postJson('/api/auth/mobile/verify-otp', [
+            'mobile' => $staff->mobile,
+            'otp' => $sender->code,
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
     public function test_suspended_shop_cannot_receive_mobile_otp(): void
     {
         $shop = Shop::factory()->create(['status' => Shop::STATUS_SUSPENDED]);
