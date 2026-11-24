@@ -307,6 +307,11 @@ class MobileOtpAuthenticationTest extends TestCase
         $this->assertSame(200, $profileResponse->status(), $profileResponse->getContent());
         $profileResponse->assertJsonPath('id', $user->id);
 
+        // Each HTTP request normally gets a fresh guard lifecycle. Reset the cached
+        // guard between simulated requests so this assertion validates the revoked
+        // bearer token rather than the prior request's cached authenticated user.
+        Auth::forgetGuards();
+
         $this->withToken($firstLoginToken)
             ->postJson('/api/auth/mobile/complete-first-login', [
                 'temporary_password' => 'Temporary123',
