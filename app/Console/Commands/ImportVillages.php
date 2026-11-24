@@ -59,7 +59,7 @@ class ImportVillages extends Command
             $chunk = (int) $this->option('chunk');
             $execute = (bool) $this->option('execute');
 
-            if (! preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
+            if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
                 throw new RuntimeException('Date must use DD-MM-YYYY format.');
             }
 
@@ -67,7 +67,7 @@ class ImportVillages extends Command
                 throw new RuntimeException('Invalid expected count or chunk size.');
             }
 
-            if (! is_file($source) || ! is_readable($source)) {
+            if (!is_file($source) || !is_readable($source)) {
                 throw new RuntimeException("CSV file not found or unreadable: {$source}");
             }
 
@@ -88,7 +88,7 @@ class ImportVillages extends Command
             $existing = DB::table('villages')->count();
             $this->line("Existing villages in database: {$existing}");
 
-            if (! $execute) {
+            if (!$execute) {
                 $this->warn('DRY RUN ONLY. No database records were inserted.');
 
                 if ($existing > 0) {
