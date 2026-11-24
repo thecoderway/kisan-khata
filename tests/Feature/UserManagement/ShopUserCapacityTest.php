@@ -137,6 +137,62 @@ class ShopUserCapacityTest extends TestCase
         ]);
     }
 
+    public function test_active_role_change_is_rejected_when_destination_role_is_full(): void
+    {
+        $shop = Shop::factory()->create();
+        $target = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+        User::factory()->count(2)->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(ShopUserCapacity::class)->assertCanTransition(
+            $shop,
+            $target,
+            true,
+            User::ROLE_MANAGER,
+        );
+    }
+
+    public function test_deactivation_releases_role_and_total_capacity_for_future_reuse(): void
+    {
+        $shop = Shop::factory()->create();
+        $target = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+        User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+        User::factory()->count(2)->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        app(ShopUserCapacity::class)->assertCanTransition(
+            $shop,
+            $target,
+            false,
+            User::ROLE_MANAGER,
+        );
+    }
+
     public function test_capacity_transition_rejects_a_user_from_another_shop(): void
     {
         $shop = Shop::factory()->create();
