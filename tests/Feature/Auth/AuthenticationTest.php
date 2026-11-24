@@ -35,6 +35,23 @@ class AuthenticationTest extends TestCase
         $this->assertTrue(Hash::check('StrongPass123', $user->password));
         $this->assertDatabaseCount('shops', 1);
         $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseHas('user_audit_logs', [
+            'shop_id' => $shop->id,
+            'actor_user_id' => $user->id,
+            'target_user_id' => $user->id,
+            'action' => 'user.created',
+            'reason' => 'Initial shop registration',
+        ]);
+
+        $audit = DB::table('user_audit_logs')
+            ->where('target_user_id', $user->id)
+            ->where('action', 'user.created')
+            ->first();
+
+        $this->assertSame([
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ], json_decode($audit->new_values, true, 512, JSON_THROW_ON_ERROR));
     }
 
     public function test_registration_rejects_duplicate_owner_mobile(): void
