@@ -85,7 +85,13 @@ class MobileOtpService
     public function verify(string $mobile, string $code): User
     {
         $result = DB::transaction(function () use ($mobile, $code): array {
-            // Keep the same lock order as request(): user first, then challenge.
+            // Lock the shop before the user, matching lifecycle mutations. This
+            // serializes OTP verification against deactivation/reactivation.
+            $lookup = User::query()->where('mobile', $mobile)->first();
+            if ($lookup?->shop_id !== null) {
+                Shop::query()->whereKey($lookup->shop_id)->lockForUpdate()->first();
+            }
+
             $user = User::query()->where('mobile', $mobile)->lockForUpdate()->first();
 
             $challenge = DB::table('mobile_otp_challenges')
