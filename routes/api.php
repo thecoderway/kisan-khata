@@ -13,6 +13,7 @@ Route::prefix('auth/mobile')->group(function (): void {
 Route::middleware(['auth:sanctum', 'abilities:first-login'])->group(function (): void {
     Route::post('/auth/mobile/complete-first-login', [MobileOtpController::class, 'completeFirstLogin'])
         ->middleware('throttle:5,1');
+    Route::post('/logout', [TokenController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
