@@ -184,6 +184,14 @@ Verify:
 - Customer belongs to the correct shop.
 - A customer cannot be accessed by another shop.
 - Unauthorized users cannot modify customer information.
+- Customer location may be omitted.
+- A new customer form receives the shop's current location as initial values where configured.
+- A user can override the preselected customer location.
+- Changing the shop location does not alter existing customer locations.
+- Changing State clears District, Subdistrict and Village; changing District clears Subdistrict and Village; changing Subdistrict clears Village.
+- Unknown, stale or unsupported LGD codes are rejected.
+- Mismatched State/District/Subdistrict/Village combinations are rejected server-side.
+- Duplicate village names remain distinguishable by their LGD codes and hierarchy.
 
 ## 7. Credit Sale Tests
 

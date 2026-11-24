@@ -198,6 +198,15 @@ Frontend validation is for usability, not security.
 
 Never assume that validated input automatically has valid tenant ownership.
 
+For geographic location fields:
+
+- Accept LGD codes, not client-supplied authoritative location names.
+- Validate that each supplied code exists in the supported geographic master data.
+- Validate parent-child consistency for State → District → Subdistrict → Village.
+- If a village is supplied, verify that it belongs to the supplied subdistrict and district; derive or verify parent codes server-side.
+- Reject stale, unsupported or mismatched codes with a validation error.
+- Treat the shared `villages` table as read-only reference data in ordinary shop workflows; do not expose import or mutation operations to shop users.
+
 ## 9. Financial Operation Security
 
 Financial operations require stronger controls.

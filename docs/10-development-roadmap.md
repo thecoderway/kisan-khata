@@ -220,7 +220,10 @@ Use the following development cycle:
 - Customer editing.
 - Customer listing.
 - Customer search.
-- Village filters.
+- LGD-backed State, District, Subdistrict and Village selectors.
+- Shop Profile location editing by the Shop Owner.
+- Preselect the shop's current location when creating a customer, while allowing the user to override it.
+- Store customer location independently; shop location changes must not modify existing customers.
 - Customer details.
 - Hindi and English data handling.
 - Automatic translation support.
@@ -229,7 +232,7 @@ Use the following development cycle:
 
 - Name — required.
 - Mobile — optional.
-- Village — optional.
+- State, District, Subdistrict and Village LGD codes — optional.
 - Address — optional.
 - Notes — optional.
 
@@ -244,17 +247,24 @@ Use the following development cycle:
 
 ### Deliverables
 
-- Customer database tables.
+- Customer database tables and tenant-scoped location fields.
+- Shop Profile location fields and Owner-authorized edit workflow.
+- Read-only geographic lookup services/API for cascading selectors.
 - Customer model and services.
 - Customer policies.
 - Customer controllers and API endpoints.
-- Customer UI.
+- Customer UI with shop-location preselection and customer override.
 - Translation integration.
-- Customer tests.
+- Customer and geographic hierarchy tests.
 
 ### Acceptance criteria
 
 - Authorized users can manage customers.
+- Shop Owner can change shop location using hierarchical selectors.
+- New customer forms preselect the current shop location where available.
+- Users can override or clear customer location.
+- Customer location is saved independently and remains unchanged when shop location changes.
+- Location hierarchy is validated against the LGD master data.
 - Search works in Hindi and English.
 - Original and translated text remain separate.
 - Tenant isolation is enforced.

@@ -183,6 +183,8 @@ Examples include:
 - Subscription
 - AuditLog, where shop-specific
 
+The `villages` LGD table is shared, read-only geographic reference data and is not tenant-owned; it must not have a `shop_id`. Shop and customer geographic code fields are attributes of their respective tenant-owned records and remain protected by the same tenant authorization and query boundaries as the rest of those records.
+
 Every tenant-owned model must have a `shop_id` relationship.
 
 Example:
@@ -223,6 +225,13 @@ Important rules:
 6. Any intentional tenant-scope bypass must be restricted to explicitly authorized system operations.
 
 ## 9. Relationship Validation
+
+When creating or updating a shop/customer location:
+
+- The shop or customer record must be resolved within the authenticated user's current shop.
+- Geographic codes must be validated against the shared `villages` master data and against each other; a village must belong to the submitted subdistrict and district.
+- The client must not be allowed to assign a location by supplying an arbitrary display name or mismatched hierarchy.
+- The shared reference data may be read across tenants, but writes/imports are restricted to controlled administrative or deployment operations.
 
 When creating a sale:
 
