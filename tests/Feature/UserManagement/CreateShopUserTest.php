@@ -139,6 +139,29 @@ class CreateShopUserTest extends TestCase
         ]);
     }
 
+    public function test_stale_owner_model_cannot_create_users_after_database_role_is_demoted(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        // Simulate the authenticated model becoming stale before the service runs.
+        User::query()->whereKey($owner->id)->update(['role' => User::ROLE_MANAGER]);
+
+        $this->expectException(AuthorizationException::class);
+
+        app(CreateShopUser::class)->handle($owner, [
+            'name' => 'Unauthorized Staff',
+            'email' => 'unauthorized.staff@example.com',
+            'mobile' => '9876543220',
+            'role' => User::ROLE_STAFF,
+            'temporary_password' => 'TempPass123',
+        ]);
+    }
+
     public function test_owner_cannot_create_a_third_active_manager(): void
     {
         $shop = Shop::factory()->create();
