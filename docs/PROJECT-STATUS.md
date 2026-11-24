@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-11-24  
 **Status Snapshot Base:** `feat/tenant-isolation-foundation` at `7c59921` before acceptance-hardening changes (2026-11-24)  
-**Project Status:** Phase 3 user-management backend and Web UI are implemented; session-driver enforcement and append-only/retention guards are implemented; MySQL CI verification is being repaired after migration/test-isolation failures. Phase 2/3 final acceptance remains pending fresh CI evidence.  
+**Project Status:** Phase 3 user-management backend and Web UI are implemented; session-driver enforcement and append-only/retention guards are implemented; GitHub Actions CI run #10 is green on MySQL 8.4. Phase 2/3 final acceptance reviews remain pending; no production deployment is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -64,7 +64,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 0 | Existing Project Audit and Foundation | Complete, based on recorded initial audit/foundation evidence |
 | Phase 1 | Authentication and Shop Foundation | Partially implemented; core registration/authentication exists; user profile and shop profile deliverables/acceptance are not yet verified complete |
 | Phase 2 | Multi-Tenancy Foundation | Tenant context, tenant-owned builder protections, route-level web/API security coverage and immutable user-to-shop association implemented on the feature branch; previous Product Owner-reported local verification at `bc16e8e` passed Pint and the full 60-test suite (167 assertions). Broader Phase 2 acceptance and future file/cache/job/export controls remain pending until those modules exist and are verified |
-| Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 and User Management Web UI/navigation are present on `feat/tenant-isolation-foundation`; acceptance hardening is in progress and final Phase 3 acceptance awaits MySQL CI evidence. |
+| Phase 3 | Roles and User Management | Backend foundation P3.1–P3.5 and User Management Web UI/navigation are present on `feat/tenant-isolation-foundation`; acceptance-hardening changes and MySQL 8.4 CI verification are complete; formal Phase 3 acceptance review remains pending. |
 | Phase 4 | Customer Management | Not started |
 | Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
 | Phase 6 | Credit Sales | Not started |
@@ -159,15 +159,15 @@ Recorded as complete:
 
 Phase 2 must be accepted before exposing customer and financial modules to multiple shops.
 
-### Phase 3 — Roles and User Management (implementation present; acceptance hardening in progress)
+### Phase 3 — Roles and User Management (implementation and CI verification complete; acceptance review pending)
 
-**Implemented on `feat/tenant-isolation-foundation` (latest code is subject to CI verification):**
+**Implemented on `feat/tenant-isolation-foundation` (CI-verified in GitHub Actions run #10):**
 
 - **P3.1 Authorization foundation:** `UserManagementPolicy`, Gate registration, role-specific permissions and tenant-boundary policy tests.
 - **P3.2 User creation and first login:** Owner-only Manager/Staff creation, temporary-password handling, forced password change for Web and Mobile flows.
 - **P3.3 Capacity enforcement:** centralized role and total active-user limits with transactional Shop-row locking and MySQL locking coverage.
 - **P3.4 User lifecycle:** Owner-only deactivate/reactivate/role change, atomic capacity checks, retained accounts, Sanctum token revocation, and database-session invalidation. The acceptance-hardening change explicitly rejects deactivation unless `SESSION_DRIVER=database` and the session connection shares the application DB transaction.
-- **P3.5 Audit history:** Owner-only, tenant-scoped, paginated audit-history endpoint and authorization tests. Instance and Eloquent bulk mutation guards are being added for append-only audit history and retained User accounts; raw SQL remains an explicitly privileged bypass that must stay restricted and reviewed.
+- **P3.5 Audit history:** Owner-only, tenant-scoped, paginated audit-history endpoint and authorization tests. Instance and Eloquent bulk mutation guards are implemented for append-only audit history and retained User accounts; raw SQL remains an explicitly privileged bypass that must stay restricted and reviewed.
 
 **Verified local results reported by Product Owner after pulling the latest feature-branch commit:**
 
@@ -181,8 +181,8 @@ These results are Product Owner-reported local Docker execution results; they ar
 
 1. Enforce database-backed session revocation at runtime; fail closed if the configured driver cannot support ADR-0010 deactivation semantics.
 2. Block instance and bulk Eloquent deletion of retained User accounts; block instance and bulk Eloquent mutation/deletion of UserAuditLog records.
-3. Run the row-lock integration test in an isolated MySQL 8.4 CI process, separate from the RefreshDatabase suite, without allowing SQLite to skip it.
-4. Keep Phase 3 acceptance pending until the new CI workflow reports green. Database-level/raw SQL writes remain outside Eloquent guards and must be limited to controlled system operations.
+3. Run the row-lock integration test in an isolated MySQL 8.4 CI process, separate from the RefreshDatabase suite, without allowing SQLite to skip it — **verified successful in CI run #10**.
+4. CI is green; complete the broader Phase 3 acceptance review against ADR-0010 and the approved security/testing documents. Database-level/raw SQL writes remain outside Eloquent guards and must be limited to controlled system operations.
 
 **Authoritative business rules (ADR-0010):**
 
@@ -274,10 +274,10 @@ After PR #5, the Product Owner separately confirmed local `main` synced to `13ad
 - The cache/session/storage/jobs/database-access audit was also reported; findings are recorded in the Phase 2 section above.
 
 **Phase 3 verification evidence (2026-11-24):**
-- Earlier feature-branch CI run at `7c59921` passed: Pint, Composer validation, frontend production build, and Laravel tests (**113 passed / 346 assertions / 1 skipped**).
-- The skipped test was the MySQL/InnoDB row-lock integration test because that CI run used SQLite; it did not verify MySQL concurrency.
-- The acceptance-hardening changes switch CI to MySQL 8.4 and add session-driver and append-only/retention regression tests. The first MySQL run exposed a migration rollback foreign-key/index ordering defect and shared test-process migration-state interference (missing later migration tables/columns). These are being addressed by correcting rollback order and isolating the MySQL row-lock group in its own CI process. The revised CI remains unverified until a complete GitHub Actions run succeeds.
-- No production deployment is claimed.
+- Earlier feature-branch CI run at `7c59921` passed: Pint, Composer validation, frontend production build, and Laravel tests (**113 passed / 346 assertions / 1 skipped**). The skipped test was the MySQL/InnoDB row-lock integration test because that run used SQLite, so it did not verify MySQL concurrency.
+- The first MySQL 8.4 run (#9, `45348114561`) exposed a migration rollback foreign-key/index ordering defect and shared test-process migration-state interference. These were corrected in commit `b7de55665f02fc010a754e38b88b46ceedda0c4c` by fixing rollback order and isolating the MySQL row-lock group in its own CI process.
+- **GitHub Actions Laravel CI run #10:** [run `45349066353`](https://github.com/thecoderway/kisan-khata/actions/runs/45349066353), commit `b7de55665f02fc010a754e38b88b46ceedda0c4c`, completed successfully against **MySQL 8.4**. Pint passed for **83 files**; Composer validation passed; Vite production build passed; MySQL row-lock integration test passed (**1 test / 2 assertions**); remaining Laravel suite passed (**117 tests / 360 assertions**). Combined Laravel result: **118 tests passed, 362 assertions, 0 failed, 0 skipped**.
+- This is CI verification of the current branch, not formal Phase 2/3 acceptance or production verification. No production deployment is claimed.
 
 No production deployment or release is claimed.
 
@@ -292,10 +292,8 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-1. Verify the acceptance-hardening branch changes with GitHub Actions: Pint, Composer validation, frontend build, full Laravel suite and the MySQL row-lock test.
-2. Review the CI logs and address any failures without weakening tests or reverting MySQL coverage.
-3. Complete the Phase 2 acceptance checklist and document deferred file/cache/job/export controls at the time those features are introduced.
-4. Complete the Phase 3 security review and acceptance checklist only after CI evidence is green.
+1. Complete the Phase 2 acceptance checklist against Docs 04/05/06/09 and ADR-0002/ADR-0005; retain deferred file/cache/job/export controls as future acceptance obligations when those features are introduced.
+2. Complete the Phase 3 security and acceptance review against ADR-0010 and the approved Docs 06/09, using the successful MySQL 8.4 CI run #10 as verification evidence.
 5. Keep Phase 4 out of scope until separately authorized; keep production SMS provider integration deferred until final integration/release readiness.
 
 This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
