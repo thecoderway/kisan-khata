@@ -10,14 +10,17 @@ Route::prefix('auth/mobile')->group(function (): void {
     Route::post('/verify-otp', [MobileOtpController::class, 'verify'])->middleware('throttle:20,1');
 });
 
-Route::middleware('auth:sanctum')->group(function (): void {
-    // Authenticated business API routes must also resolve the user's tenant.
+Route::middleware(['auth:sanctum', 'abilities:first-login'])->group(function (): void {
+    Route::post('/auth/mobile/complete-first-login', [MobileOtpController::class, 'completeFirstLogin'])
+        ->middleware('throttle:5,1');
+});
+
+Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
     Route::middleware('tenant')->group(function (): void {
         Route::get('/user', function (Request $request) {
             return $request->user()->load('shop:id,name');
         });
     });
 
-    // Logout only revokes the current token and remains available for suspended shops.
     Route::post('/logout', [TokenController::class, 'destroy']);
 });
