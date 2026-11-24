@@ -7,10 +7,10 @@ use App\Models\Customer;
 use App\Modules\Customers\Application\CustomerDirectoryQuery;
 use App\Modules\Customers\Application\SaveCustomer;
 use App\Modules\Customers\Presentation\Requests\CustomerRequest;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerController extends Controller
 {
