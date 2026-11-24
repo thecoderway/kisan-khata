@@ -23,6 +23,11 @@ class CurrentShop
         return $this->shop?->getKey();
     }
 
+    public function clear(): void
+    {
+        $this->shop = null;
+    }
+
     public function require(): Shop
     {
         return $this->shop ?? throw new \LogicException('The current shop context has not been resolved.');

@@ -131,4 +131,54 @@ class CurrentShopTest extends TestCase
 
         $this->actingAs($user)->get(route('dashboard'))->assertForbidden();
     }
+    public function test_platform_owner_role_is_rejected_even_if_a_shop_is_assigned(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_PLATFORM_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->get(route('dashboard'))->assertForbidden();
+    }
+
+    public function test_bulk_user_update_is_restricted_to_the_current_shop(): void
+    {
+        $shopA = Shop::factory()->create();
+        $shopB = Shop::factory()->create();
+        $userA = User::factory()->create([
+            'shop_id' => $shopA->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+        $userB = User::factory()->create([
+            'shop_id' => $shopB->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        app(CurrentShop::class)->set($shopA);
+
+        User::query()->whereKey($userB->id)->update(['name' => 'Cross-tenant mutation']);
+        User::query()->whereKey($userB->id)->increment('is_active');
+
+        $this->assertDatabaseHas('users', ['id' => $userA->id, 'name' => $userA->name]);
+        $this->assertDatabaseHas('users', ['id' => $userB->id, 'name' => $userB->name, 'is_active' => true]);
+    }
+
+    public function test_bulk_user_mutations_fail_closed_without_tenant_context(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+        ]);
+
+        $this->expectException(LogicException::class);
+
+        User::query()->whereKey($user->id)->update(['name' => 'No tenant context']);
+    }
+
 }

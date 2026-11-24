@@ -141,6 +141,20 @@ class TenantMiddlewareIsolationTest extends TestCase
             ->assertJsonPath('message', 'लॉगआउट सफल हुआ।');
     }
 
+    public function test_api_tenant_routes_reject_platform_roles_even_when_shop_is_assigned(): void
+    {
+        $shop = Shop::factory()->create();
+        $platformUser = User::factory()->create([
+            'shop_id' => $shop->id,
+            'role' => User::ROLE_PLATFORM_OWNER,
+            'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($platformUser, ['app']);
+
+        $this->getJson('/api/user')->assertForbidden();
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      */

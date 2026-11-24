@@ -2,6 +2,7 @@
 
 namespace App\Models\Builders;
 
+use App\Tenancy\CurrentShop;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use LogicException;
@@ -19,6 +20,7 @@ class UserBuilder extends Builder
     public function update(array $values)
     {
         $this->assertShopIdIsImmutable(array_keys($values));
+        $this->scopeToCurrentShop();
 
         return parent::update($values);
     }
@@ -36,6 +38,7 @@ class UserBuilder extends Builder
     public function increment($column, $amount = 1, array $extra = [])
     {
         $this->assertShopIdIsImmutable([$column, ...array_keys($extra)]);
+        $this->scopeToCurrentShop();
 
         return parent::increment($column, $amount, $extra);
     }
@@ -43,6 +46,7 @@ class UserBuilder extends Builder
     public function decrement($column, $amount = 1, array $extra = [])
     {
         $this->assertShopIdIsImmutable([$column, ...array_keys($extra)]);
+        $this->scopeToCurrentShop();
 
         return parent::decrement($column, $amount, $extra);
     }
@@ -50,6 +54,7 @@ class UserBuilder extends Builder
     public function incrementEach(array $columns, array $extra = [])
     {
         $this->assertShopIdIsImmutable([...array_keys($columns), ...array_keys($extra)]);
+        $this->scopeToCurrentShop();
 
         return parent::incrementEach($columns, $extra);
     }
@@ -57,8 +62,14 @@ class UserBuilder extends Builder
     public function decrementEach(array $columns, array $extra = [])
     {
         $this->assertShopIdIsImmutable([...array_keys($columns), ...array_keys($extra)]);
+        $this->scopeToCurrentShop();
 
         return parent::decrementEach($columns, $extra);
+    }
+
+    public function updateOrInsert(array $attributes, array|callable $values = []): bool
+    {
+        throw new LogicException('Bulk user updateOrInsert is not supported; use the audited user lifecycle.');
     }
 
     public function upsert(array $values, $uniqueBy, $update = null)
@@ -94,6 +105,21 @@ class UserBuilder extends Builder
     public function insertOrIgnoreReturning(array $values, array $returning = ['*'], array|string|null $uniqueBy = null)
     {
         throw new LogicException('Bulk user inserts are not supported; create User models explicitly.');
+    }
+
+    private function scopeToCurrentShop(): void
+    {
+        $shopId = app(CurrentShop::class)->id();
+
+        if ($shopId === null && $this->getModel()->exists) {
+            $shopId = $this->getModel()->getRawOriginal('shop_id');
+        }
+
+        if ($shopId === null) {
+            throw new LogicException('A current shop context is required for bulk user mutations.');
+        }
+
+        $this->where($this->getModel()->qualifyColumn('shop_id'), $shopId);
     }
 
     private function assertShopIdIsImmutable(array $columns): void
