@@ -41,6 +41,7 @@ class ShopUserCapacityTest extends TestCase
 
         app(ShopUserCapacity::class)->assertCanAdd($shop, User::ROLE_STAFF);
     }
+
     public function test_reactivation_is_rejected_when_role_capacity_is_full(): void
     {
         $shop = Shop::factory()->create();
@@ -99,7 +100,7 @@ class ShopUserCapacityTest extends TestCase
         );
     }
 
-    public function test_active_role_change_releases_source_capacity_and_checks_destination_capacity(): void
+    public function test_active_role_change_releases_source_capacity_before_checking_destination(): void
     {
         $shop = Shop::factory()->create();
         $target = User::factory()->create([
