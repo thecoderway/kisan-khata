@@ -14,16 +14,8 @@ class UserManagementPolicy
 
     public function view(User $actor, User $target): bool
     {
-        if (! $this->belongsToSameShop($actor, $target)) {
-            return false;
-        }
-
-        if ($actor->role === User::ROLE_OWNER) {
-            return true;
-        }
-
-        return $actor->role === User::ROLE_MANAGER
-            && $target->role === User::ROLE_STAFF;
+        return $actor->role === User::ROLE_OWNER
+            && $this->belongsToSameShop($actor, $target);
     }
 
     public function create(User $actor, string $role): bool
