@@ -27,7 +27,7 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function create(CurrentShop $currentShop): View
+    public function create(CurrentShop $currentShop, Request $request): View
     {
         Gate::authorize('create', Customer::class);
 
@@ -69,7 +69,7 @@ class CustomerController extends Controller
         return view('customers.show', compact('customer', 'location'));
     }
 
-    public function edit(int $customer): View
+    public function edit(int $customer, Request $request): View
     {
         $customer = Customer::query()->findOrFail($customer);
         Gate::authorize('update', $customer);
