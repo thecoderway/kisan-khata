@@ -22,6 +22,24 @@ class CustomerController extends Controller
     {
         Gate::authorize('viewAny', Customer::class);
 
+        if ($request->expectsJson() && $request->boolean('fragment')) {
+            $customers = $directory->paginate($request);
+            $search = trim((string) $request->query('q', ''));
+            $status = in_array($request->query('status'), ['active', 'inactive', 'deleted'], true)
+                ? $request->query('status')
+                : 'active';
+
+            return response()->json([
+                'html' => view('customers.partials.results', compact('customers', 'search', 'status'))->render(),
+                'meta' => [
+                    'current_page' => $customers->currentPage(),
+                    'last_page' => $customers->lastPage(),
+                    'per_page' => $customers->perPage(),
+                    'total' => $customers->total(),
+                ],
+            ]);
+        }
+
         $drawerAction = $request->query('drawer_action');
         $drawerCustomer = null;
         $drawerContent = null;
@@ -65,18 +83,6 @@ class CustomerController extends Controller
         $status = in_array($request->query('status'), ['active', 'inactive', 'deleted'], true)
             ? $request->query('status')
             : 'active';
-
-        if ($request->expectsJson() && $request->boolean('fragment')) {
-            return response()->json([
-                'html' => view('customers.partials.results', compact('customers', 'search', 'status'))->render(),
-                'meta' => [
-                    'current_page' => $customers->currentPage(),
-                    'last_page' => $customers->lastPage(),
-                    'per_page' => $customers->perPage(),
-                    'total' => $customers->total(),
-                ],
-            ]);
-        }
 
         return view('customers.index', [
             'customers' => $customers,
