@@ -863,3 +863,39 @@ Requirements:
 - Cross-tenant references are rejected.
 - Customer account projections can be rebuilt.
 - Financial history is not cascade-deleted.
+
+
+---
+
+## 32. Product Owner-approved Financial Schema Constraints — Phase 5 (2026-11-25)
+
+This addendum supersedes conflicting statements elsewhere in this document and in ADR-0004. ADR-0012 controls.
+
+1. A dedicated internal `payment_allocations` (or equivalently named immutable allocation) table is required for FIFO. This reverses the previous no-allocation decision.
+2. Each allocation must be shop-scoped and reference the consolidated payment, customer, and sale (plus the relevant principal/posted-interest component). Store applied principal amount, applied interest amount, FIFO sequence, effective timestamp, policy version and reversal linkage as needed.
+3. Enforce tenant-safe composite foreign keys or equivalent constraints so payment, sale, customer and shop references cannot cross tenants.
+4. Allocation records are append-only. Reversals are separate records; do not update/delete original allocation history.
+5. Sale original amount remains unchanged. Remaining principal/interest is a projection derived from immutable postings, allocations and reversals.
+6. A Paid sale's same-day automatic payment is linked to that sale and must have an allocation limited to that originating sale. It must not be applied to older balances.
+7. Customer-facing normal payments remain consolidated. FIFO allocations are internal accounting evidence and do not change the customer-facing payment model.
+8. Customer advances are not part of the approved schema. Excess payment is rejected before posting.
+9. Add Shop/Customer effective-dated policy storage for monthly rate, grace period, capitalization, payment waterfall and the two annual Interest Auto Settlement dates. Customer-level monthly-rate and capitalization overrides are supported; grace period and payment waterfall remain Shop-level settings.
+10. Preserve policy version/effective date on calculation and allocation records. Historical policy changes must not rewrite existing postings.
+11. Payment amount must be constrained by a transactionally rechecked payable balance (outstanding principal plus posted unpaid interest); enforce concurrency with customer-account row locking.
+12. The schema must represent separate Sale Payment Status and Interest Settlement Status.
+13. Financial corrections must preserve immutable revisions/reversals and audit references. Sales before a later posted Payment or annual Interest Auto Settlement are locked against ordinary editing.
+14. Store INR amounts in MySQL DECIMAL with 2-decimal posted values; interest calculations must preserve adequate intermediate precision for HALF_UP rounding.
+
+### 32.1 Minimum allocation record fields (logical contract)
+
+- `id`, `shop_id`, `customer_id`, `payment_id`, `sale_id`
+- `allocation_sequence` (FIFO order within a payment)
+- `applied_principal_amount` DECIMAL(15,2)
+- `applied_interest_amount` DECIMAL(15,2)
+- `effective_at`
+- `policy_version_id`
+- `reversal_of_allocation_id` nullable
+- `created_by`, `created_at`
+
+Exact physical indexes, uniqueness constraints and whether sale components require a child allocation table are to be finalized in the Phase 5 implementation blueprint after schema-level reconciliation. Do not create an implementation migration until that blueprint is approved.
+
