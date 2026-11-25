@@ -485,15 +485,16 @@ class CustomerManagementTest extends TestCase
             'name_original_language' => 'en',
         ]))->assertRedirect();
 
-        $this->getJson(route('customers.index', [
+        $response = $this->getJson(route('customers.index', [
             'q' => 'Filter Match',
             'status' => 'active',
             'fragment' => 1,
         ]))->assertOk()
             ->assertJsonStructure(['html', 'meta' => ['current_page', 'last_page', 'per_page', 'total']])
             ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('meta.current_page', 1)
-            ->assertSee('Filter Match');
+            ->assertJsonPath('meta.current_page', 1);
+
+        $this->assertStringContainsString('Filter Match', $response->json('html'));
     }
 
     public function test_customer_lifecycle_drawer_returns_json_validation_and_success_responses(): void
