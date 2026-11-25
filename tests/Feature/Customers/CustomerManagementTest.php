@@ -501,4 +501,44 @@ class CustomerManagementTest extends TestCase
         ]))->assertOk()->assertSee('data-drawer-error-summary', false);
     }
 
+    public function test_customer_lifecycle_drawer_renders_authorized_reason_forms_and_recovers_validation_errors(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $url = route('customers.index', [
+            'drawer_action' => 'deactivate',
+            'drawer_customer_id' => $customer->id,
+        ]);
+
+        $this->get($url)->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="reason"', false)
+            ->assertSee('drawer_context', false);
+
+        $this->from($url)->post(route('customers.deactivate', $customer->id), [
+            'reason' => '   ',
+            'drawer_context' => '1',
+        ])->assertRedirect($url)->assertSessionHasErrors('reason');
+
+        $this->get($url)->assertOk()
+            ->assertSee('data-drawer-error-summary', false)
+            ->assertSee('name="reason"', false);
+    }
+
+    public function test_customer_lifecycle_drawer_does_not_authorize_staff(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        $this->actingAs($staff)->get(route('customers.index', [
+            'drawer_action' => 'deactivate',
+            'drawer_customer_id' => $customer->id,
+        ]))->assertForbidden();
+    }
+
 }
