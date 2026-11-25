@@ -4,12 +4,14 @@ import Alpine from 'alpinejs';
 import { registerCustomerLocation } from './customer-location';
 import { registerCustomerDirectory } from './customer-directory';
 import { registerUserDirectory } from './user-directory';
+import { registerUserAuditHistory } from './user-audit-history';
 
 window.Alpine = Alpine;
 
 registerCustomerLocation(Alpine);
 registerCustomerDirectory();
 registerUserDirectory();
+registerUserAuditHistory();
 
 Alpine.data('actionDrawer', () => ({
     isOpen: false,

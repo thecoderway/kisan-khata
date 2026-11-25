@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Modules\Users\Presentation\Controllers\Web;
+namespace App\\Modules\\Users\\Presentation\\Controllers\\Web;
 
-use App\Http\Controllers\Controller;
-use App\Models\UserAuditLog;
-use App\Tenancy\CurrentShop;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\UserAuditLog;
+use App\\Tenancy\\CurrentShop;
+use Illuminate\\Http\\JsonResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Gate;
+use Illuminate\\View\\View;
 
 class UserAuditHistoryController extends Controller
 {
-    public function __invoke(Request $request, CurrentShop $currentShop): View
+    public function __invoke(Request $request, CurrentShop $currentShop): View|JsonResponse
     {
         Gate::authorize('viewAny', UserAuditLog::class);
 
@@ -29,8 +30,9 @@ class UserAuditHistoryController extends Controller
             $query->where('action', $data['action']);
         }
 
-        if (! empty($data['q'])) {
-            $search = trim($data['q']);
+        $search = trim($data['q'] ?? '');
+
+        if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
                 $builder->where('reason', 'like', '%'.$search.'%')
                     ->orWhereHas('actor', fn ($actor) => $actor->where('name', 'like', '%'.$search.'%'))
@@ -39,7 +41,20 @@ class UserAuditHistoryController extends Controller
         }
 
         $logs = $query->orderByDesc('created_at')->orderByDesc('id')
-            ->paginate($data['pageSize'] ?? 20)->withQueryString();
+            ->paginate($data['pageSize'] ?? 20)
+            ->withQueryString();
+
+        if ($request->expectsJson() && $request->boolean('fragment')) {
+            return response()->json([
+                'html' => view('users.partials.audit-results', compact('logs'))->render(),
+                'meta' => [
+                    'current_page' => $logs->currentPage(),
+                    'last_page' => $logs->lastPage(),
+                    'per_page' => $logs->perPage(),
+                    'total' => $logs->total(),
+                ],
+            ]);
+        }
 
         return view('users.audit', ['logs' => $logs]);
     }
