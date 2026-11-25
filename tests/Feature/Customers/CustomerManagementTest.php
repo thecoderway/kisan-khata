@@ -4,12 +4,15 @@ namespace Tests\Feature\Customers;
 
 use App\Models\Customer;
 use App\Models\Shop;
+use App\Models\ShopSetting;
 use App\Models\User;
+use App\Tenancy\CurrentShop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
+use LogicException;
 use Tests\TestCase;
 
 class CustomerManagementTest extends TestCase
@@ -198,6 +201,64 @@ class CustomerManagementTest extends TestCase
             ->assertJsonMissingPath('data.shop_id');
 
         $this->assertDatabaseHas('customers', ['shop_id' => $owner->shop_id, 'name_original' => 'रामलाल']);
+    }
+
+    public function test_customer_bulk_delete_is_blocked_to_preserve_lifecycle_and_audit_rules(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
+            'name_original' => 'Bulk Delete Guard',
+        ]))->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        app(CurrentShop::class)->set($owner->shop);
+
+        try {
+            Customer::query()->whereKey($customer->id)->delete();
+            $this->fail('Bulk deletion of soft-deletable customers must be rejected.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('Bulk deletion is disabled', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'shop_id' => $owner->shop_id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_customer_bulk_delete_requires_a_current_shop_context(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        app(CurrentShop::class)->clear();
+
+        try {
+            Customer::query()->whereKey($customer->id)->delete();
+            $this->fail('Tenant-owned bulk deletion must require a current shop.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('current shop context is required', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => null]);
+    }
+
+    public function test_bulk_delete_remains_available_for_tenant_models_without_soft_deletes(): void
+    {
+        $owner = $this->makeUser();
+        app(CurrentShop::class)->set($owner->shop);
+
+        $setting = ShopSetting::query()->create([
+            'setting_key' => 'temporary.test',
+            'setting_value' => 'value',
+        ]);
+
+        $deleted = ShopSetting::query()->whereKey($setting->id)->delete();
+
+        $this->assertSame(1, $deleted);
+        $this->assertDatabaseMissing('shop_settings', ['id' => $setting->id]);
     }
 
     public function test_customer_deletion_is_not_exposed_or_authorized(): void

@@ -34,10 +34,16 @@ class TenantOwnedBuilder extends Builder
             $this->whereKey($id);
         }
 
-        return $this->where(
-            $this->getModel()->qualifyColumn('shop_id'),
-            $this->requireCurrentShopId(),
-        )->toBase()->delete();
+        $shopId = $this->requireCurrentShopId();
+        $this->where($this->getModel()->qualifyColumn('shop_id'), $shopId);
+
+        if (method_exists($this->getModel(), 'getDeletedAtColumn')) {
+            throw new LogicException(
+                'Bulk deletion is disabled for soft-deletable tenant records; use the authorized lifecycle service.',
+            );
+        }
+
+        return $this->toBase()->delete();
     }
 
     public function touch($column = null)
