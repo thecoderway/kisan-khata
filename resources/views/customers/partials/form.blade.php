@@ -5,7 +5,7 @@
     </div>
 @endif
 
-<form method="POST" action="{{ $customer ? route('customers.update', $customer) : route('customers.store') }}" id="customer-form" class="customer-drawer-form">
+<form method="POST" action="{{ $customer ? route('customers.update', $customer) : route('customers.store') }}" id="customer-form" class="customer-drawer-form" data-drawer-ajax>
         @csrf
         @if ($drawerMode ?? false)
             <input type="hidden" name="drawer_context" value="1">
