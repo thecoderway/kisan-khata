@@ -62,7 +62,7 @@ class GroupOneFinancialSchemaTest extends TestCase
         $this->insertCustomerAccount($shop->id, $customer->id);
     }
 
-    public function test_customer_account_rejects_negative_or_inconsistent_projection_values(): void
+    public function test_customer_account_rejects_negative_projection_values(): void
     {
         [$shop, $customer] = $this->shopAndCustomer();
 
@@ -70,6 +70,18 @@ class GroupOneFinancialSchemaTest extends TestCase
         DB::table('customer_accounts')->insert($this->accountAttributes($shop->id, $customer->id, [
             'principal_balance' => '-1.00',
             'total_payable' => '-1.00',
+        ]));
+    }
+
+    public function test_customer_account_rejects_inconsistent_total_projection(): void
+    {
+        [$shop, $customer] = $this->shopAndCustomer();
+
+        $this->expectException(QueryException::class);
+        DB::table('customer_accounts')->insert($this->accountAttributes($shop->id, $customer->id, [
+            'principal_balance' => '10.00',
+            'interest_balance' => '2.00',
+            'total_payable' => '11.00',
         ]));
     }
 
