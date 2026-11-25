@@ -111,3 +111,16 @@ The previously open initial values are now decided:
 ## Clarification: detailed date and rounding conventions (2026-11-25)
 
 The Product Owner approved Actual Days / 30 and two-decimal posted interest. The following were proposed during documentation drafting but have not been explicitly confirmed by the Product Owner: HALF_UP rounding mode, [start inclusive, end exclusive) interval convention, and Sale Date as grace-period Day 0. These are recommendations only until separately confirmed. Implementation must not treat them as final approved policy yet.
+
+
+## Product Owner-approved convention decisions (2026-11-25)
+
+These five decisions finalize the previously pending conventions:
+
+1. **Rounding:** HALF_UP to 2 decimal places for posted INR interest.
+2. **Interest interval:** [start inclusive, end exclusive).
+3. **Grace period:** Sale Date = Day 0; with 30 calendar days, the first eligible interest day is after 30 complete calendar days.
+4. **FIFO/waterfall ordering:** FIFO across Sales first; within each Sale, apply the configured Principal First or Interest First waterfall before proceeding to the next Sale.
+5. **Locked Sale correction:** No exceptional correction path is approved. Reject/stop any attempt to correct a Sale locked by a later Payment or annual Interest Auto Settlement. A future exception requires separate explicit Product Owner approval and a separately designed workflow.
+
+These are binding decisions. They replace any earlier statements in this ADR or related documents describing these items as pending or recommendations.
