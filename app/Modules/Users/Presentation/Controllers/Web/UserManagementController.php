@@ -101,7 +101,7 @@ class UserManagementController extends Controller
         Request $request,
         int $user,
         ManageShopUserLifecycle $lifecycle,
-    ): RedirectResponse {
+    ): JsonResponse|RedirectResponse {
         $data = $request->validate([
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
@@ -115,7 +115,7 @@ class UserManagementController extends Controller
         Request $request,
         int $user,
         ManageShopUserLifecycle $lifecycle,
-    ): RedirectResponse {
+    ): JsonResponse|RedirectResponse {
         $data = $request->validate([
             'role' => ['required', 'string', Rule::in([User::ROLE_MANAGER, User::ROLE_STAFF])],
             'reason' => ['nullable', 'string', 'max:500'],
@@ -125,6 +125,7 @@ class UserManagementController extends Controller
 
         return $this->lifecycleResponse($request, 'यूज़र की भूमिका सफलतापूर्वक बदल दी गई।');
     }
+
     private function lifecycleResponse(Request $request, string $message): JsonResponse|RedirectResponse
     {
         return $request->expectsJson()
