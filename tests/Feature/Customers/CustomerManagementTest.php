@@ -370,6 +370,7 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.restored', 'entity_id' => $customer->id,
         ]);
     }
+
     public function test_customer_directory_can_filter_inactive_and_soft_deleted_records(): void
     {
         $owner = $this->makeUser();
