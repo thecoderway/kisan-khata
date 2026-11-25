@@ -56,3 +56,9 @@ Every data table created or modified in the UI MUST be paginated. Never render a
 
 ## Workflow
 Read relevant approved docs and ADRs; inspect existing code; propose scope and schema impact; identify unresolved decisions; obtain approval where needed; implement small steps; test and review tenant/security/financial integrity; update documentation and report actual results. Do not modify files or GitHub without explicit user authorization.
+
+
+## Mandatory theme consistency
+- Tabler Core is the only approved UI theme/component system for authenticated application UI. All new or modified UI MUST follow Tabler component patterns, markup, responsive behavior and accessibility conventions, customized only with the approved Kisan Khata design tokens.
+- Consult https://preview.tabler.io/ and https://github.com/tabler/tabler when component behavior or presentation is unclear. Match the installed Tabler package version; do not blindly copy newer APIs.
+- Do not introduce another UI framework or unrelated visual system without an approved architecture decision. Any deliberate Tabler deviation requires documented product-owner approval.
