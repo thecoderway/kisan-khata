@@ -16,19 +16,30 @@ class UserAuditHistoryController extends Controller
         Gate::authorize('viewAny', UserAuditLog::class);
 
         $data = $request->validate([
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'q' => ['sometimes', 'string', 'max:100'],
+            'action' => ['sometimes', 'string', 'in:all,user.created,user.deactivated,user.reactivated,user.role_changed'],
+            'pageSize' => ['sometimes', 'integer', 'in:10,20,50,100'],
         ]);
 
-        $logs = UserAuditLog::query()
+        $query = UserAuditLog::query()
             ->where('shop_id', $currentShop->require()->getKey())
-            ->with([
-                'actor:id,name',
-                'target:id,name',
-            ])
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->paginate($data['per_page'] ?? 25)
-            ->withQueryString();
+            ->with(['actor:id,name', 'target:id,name']);
+
+        if (! empty($data['action']) && $data['action'] !== 'all') {
+            $query->where('action', $data['action']);
+        }
+
+        if (! empty($data['q'])) {
+            $search = trim($data['q']);
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('reason', 'like', '%'.$search.'%')
+                    ->orWhereHas('actor', fn ($actor) => $actor->where('name', 'like', '%'.$search.'%'))
+                    ->orWhereHas('target', fn ($target) => $target->where('name', 'like', '%'.$search.'%'));
+            });
+        }
+
+        $logs = $query->orderByDesc('created_at')->orderByDesc('id')
+            ->paginate($data['pageSize'] ?? 20)->withQueryString();
 
         return view('users.audit', ['logs' => $logs]);
     }

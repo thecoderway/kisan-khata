@@ -4,7 +4,7 @@
         <ul class="mb-0 mt-2">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
     </div>
 @endif
-<form id="user-create-form" method="POST" action="{{ route('users.store') }}" data-drawer-ajax>
+<form id="user-drawer-form" method="POST" action="{{ route('users.store') }}" data-drawer-ajax>
     @csrf
     <input type="hidden" name="drawer_context" value="1">
     <div class="form-section-heading"><i class="ti ti-user-plus"></i><div><h2>Account जानकारी</h2><p>Manager या Staff की व्यक्तिगत और login जानकारी दर्ज करें।</p></div></div>

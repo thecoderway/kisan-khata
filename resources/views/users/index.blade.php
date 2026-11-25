@@ -82,7 +82,7 @@
             <div class="empty-state"><i class="ti ti-users"></i><h3>कोई यूज़र नहीं मिला</h3>
                 @if ($isOwner)
                     <p>फ़िल्टर बदलें या अपनी टीम का पहला Manager अथवा Staff account बनाएँ।</p>
-                    <a href="{{ route('users.create') }}" class="btn btn-primary kk-primary">यूज़र बनाएँ</a>
+                    <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया यूज़र" data-width="wide">यूज़र बनाएँ</button>
                 @else
                     <p>आपकी खोज या स्थिति फ़िल्टर से मेल खाता Staff account उपलब्ध नहीं है।</p>
                 @endif
@@ -112,19 +112,11 @@
                                     @if (in_array($member->role, [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_STAFF], true))
                                         <div class="user-actions">
                                             @if ($member->is_active)
-                                                <form method="POST" action="{{ route('users.deactivate', $member->id) }}" onsubmit="return confirm('क्या आप इस account को deactivate करना चाहते हैं? इसकी सभी sessions और mobile tokens revoke हो जाएँगे।')">@csrf<button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button></form>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'deactivate']) }}" data-title="यूज़र Deactivate करें">Deactivate</button>
                                             @else
-                                                <form method="POST" action="{{ route('users.reactivate', $member->id) }}" onsubmit="return confirm('क्या आप इस account को फिर से active करना चाहते हैं?')">@csrf<button type="submit" class="btn btn-sm btn-outline-success">Reactivate</button></form>
+                                                <button type="button" class="btn btn-sm btn-outline-success" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'reactivate']) }}" data-title="यूज़र Reactivate करें">Reactivate</button>
                                             @endif
-                                            <form method="POST" action="{{ route('users.role', $member->id) }}" class="role-change-form" onsubmit="return confirm('क्या आप इस यूज़र की भूमिका बदलना चाहते हैं?')">
-                                                @csrf @method('PATCH')
-                                                <label class="visually-hidden" for="role-{{ $member->id }}">नई भूमिका</label>
-                                                <select id="role-{{ $member->id }}" name="role" class="form-select form-select-sm" required>
-                                                    <option value="" selected disabled>भूमिका बदलें</option>
-                                                    @if ($member->role === 'manager')<option value="staff">Staff</option>@else<option value="manager">Manager</option>@endif
-                                                </select>
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary">बदलें</button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'role']) }}" data-title="यूज़र की भूमिका बदलें">भूमिका बदलें</button>
                                         </div>
                                     @else
                                         <span class="text-secondary">—</span>
@@ -166,7 +158,7 @@
         <x-ui.action-drawer id="user-action-drawer" title="नया यूज़र" width="wide">
             <x-slot:footer>
                 <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
-                <button type="submit" form="user-create-form" class="btn btn-primary kk-primary">यूज़र बनाएँ <i class="ti ti-check ms-1"></i></button>
+                <button type="submit" form="user-drawer-form" class="btn btn-primary kk-primary">जारी रखें <i class="ti ti-check ms-1"></i></button>
             </x-slot:footer>
         </x-ui.action-drawer>
     @endpush

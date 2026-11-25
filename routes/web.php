@@ -55,6 +55,7 @@ Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): vo
     Route::prefix('users')->name('users.')->group(function (): void {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
         Route::get('/create', [UserManagementController::class, 'create'])->name('create');
+        Route::get('/{user}/actions/{action}', [UserManagementController::class, 'lifecycleForm'])->whereNumber('user')->name('lifecycle-form');
         Route::post('/', [UserManagementController::class, 'store'])->middleware('throttle:10,1')->name('store');
         Route::get('/audit-history', UserAuditHistoryController::class)->name('audit');
         Route::post('/{user}/deactivate', [UserManagementController::class, 'deactivate'])->name('deactivate');

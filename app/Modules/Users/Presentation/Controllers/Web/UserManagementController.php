@@ -46,6 +46,20 @@ class UserManagementController extends Controller
             : view('users.create');
     }
 
+    public function lifecycleForm(Request $request, int $user, string $action): View
+    {
+        abort_unless(in_array($action, ['deactivate', 'reactivate', 'role'], true), 404);
+        $member = User::query()->findOrFail($user);
+        Gate::authorize('view', $member);
+
+        if (($action === 'deactivate' && ! $member->is_active)
+            || ($action === 'reactivate' && $member->is_active)) {
+            abort(422, 'यह account इस कार्रवाई की स्थिति में नहीं है।');
+        }
+
+        return view('users.partials.lifecycle-form', compact('member', 'action'));
+    }
+
     public function store(Request $request, CreateShopUser $createShopUser): JsonResponse|RedirectResponse
     {
         Gate::authorize('create', [User::class, User::ROLE_STAFF]);
@@ -73,14 +87,14 @@ class UserManagementController extends Controller
         Request $request,
         int $user,
         ManageShopUserLifecycle $lifecycle,
-    ): RedirectResponse {
+    ): JsonResponse|RedirectResponse {
         $data = $request->validate([
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         $lifecycle->deactivate($request->user(), $user, $data['reason'] ?? null);
 
-        return back()->with('status', 'यूज़र अकाउंट deactivated कर दिया गया।');
+        return $this->lifecycleResponse($request, 'यूज़र अकाउंट deactivated कर दिया गया।');
     }
 
     public function reactivate(
@@ -94,7 +108,7 @@ class UserManagementController extends Controller
 
         $lifecycle->reactivate($request->user(), $user, $data['reason'] ?? null);
 
-        return back()->with('status', 'यूज़र अकाउंट फिर से active कर दिया गया।');
+        return $this->lifecycleResponse($request, 'यूज़र अकाउंट फिर से active कर दिया गया।');
     }
 
     public function changeRole(
@@ -109,6 +123,13 @@ class UserManagementController extends Controller
 
         $lifecycle->changeRole($request->user(), $user, $data['role'], $data['reason'] ?? null);
 
-        return back()->with('status', 'यूज़र की भूमिका सफलतापूर्वक बदल दी गई।');
+        return $this->lifecycleResponse($request, 'यूज़र की भूमिका सफलतापूर्वक बदल दी गई।');
+    }
+    private function lifecycleResponse(Request $request, string $message): JsonResponse|RedirectResponse
+    {
+        return $request->expectsJson()
+            ? response()->json(['success' => true, 'message' => $message])
+            : back()->with('status', $message);
     }
 }
+
