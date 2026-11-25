@@ -1,8 +1,11 @@
 import '@tabler/core/dist/js/tabler.min.js';
 
 import Alpine from 'alpinejs';
+import { registerCustomerLocation } from './customer-location';
 
 window.Alpine = Alpine;
+
+registerCustomerLocation(Alpine);
 
 Alpine.data('actionDrawer', () => ({
     isOpen: false,
