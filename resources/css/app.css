@@ -267,3 +267,10 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
         min-height: 200px;
     }
 }
+
+.kk-dropdown-menu-portal {
+    z-index: 1105;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+}
