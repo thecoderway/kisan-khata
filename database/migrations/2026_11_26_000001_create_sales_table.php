@@ -76,7 +76,6 @@ return new class extends Migration
         }
 
         Schema::dropIfExists('sales');
-        $this->dropFinancialTransactionCustomerKeyIfPresent();
     }
 
     private function assertMySql(): void
@@ -104,19 +103,4 @@ return new class extends Migration
         });
     }
 
-    private function dropFinancialTransactionCustomerKeyIfPresent(): void
-    {
-        if (! Schema::hasTable('financial_transactions')) {
-            return;
-        }
-
-        $exists = collect(Schema::getIndexes('financial_transactions'))
-            ->contains(fn (array $index): bool => $index['name'] === 'ft_shop_customer_id_unique');
-
-        if ($exists) {
-            Schema::table('financial_transactions', function (Blueprint $table): void {
-                $table->dropUnique('ft_shop_customer_id_unique');
-            });
-        }
-    }
 };
