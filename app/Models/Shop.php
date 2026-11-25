@@ -41,6 +41,18 @@ class Shop extends Model
         return $this->hasMany(IdempotencyKey::class);
     }
 
+    /** @return HasMany<Sale, $this> */
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    /** @return HasMany<Payment, $this> */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     /** @return HasMany<User, $this> */
     public function users(): HasMany
     {
