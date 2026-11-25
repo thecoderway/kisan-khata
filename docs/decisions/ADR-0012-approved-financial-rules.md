@@ -99,3 +99,10 @@ docs/decisions/ADR-0007-interest-calculation-events.md
 ## Reconsideration
 
 Any change to these approved rules requires explicit Product Owner approval and a superseding ADR.
+
+
+## Product Owner clarification — finalized initial values (2026-11-25)
+
+The previously open initial values are now decided:
+- **Capitalization initial default: OFF** at Shop level. Customer-level override is supported; if no override is set, the Shop's OFF value applies.
+- **Annual Interest Auto Settlement dates: 30 March and 30 October** each year as the initial Shop dates. The Owner may configure the Shop's two dates through Shop Settings.
