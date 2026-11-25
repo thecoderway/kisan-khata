@@ -6,6 +6,8 @@ use App\Models\Customer;
 use App\Models\FinancialTransaction;
 use App\Models\Payment;
 use App\Models\Sale;
+use App\Models\SaleRevision;
+use App\Models\PaymentRevision;
 use App\Models\Shop;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
@@ -245,16 +247,16 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
 
         app(CurrentShop::class)->set($shop);
 
-        $saleRevision = \App\Models\SaleRevision::withoutGlobalScopes()->findOrFail($saleRevisionId);
+        $saleRevision = SaleRevision::withoutGlobalScopes()->findOrFail($saleRevisionId);
         try {
             $saleRevision->setAttribute('correction_reason', 'mutated');
             $saleRevision->save();
             $this->fail('Expected Sale revision update to be blocked.');
-        } catch (\LogicException $exception) {
+        } catch (LogicException $exception) {
             $this->assertStringContainsString('append-only', $exception->getMessage());
         }
 
-        $paymentRevision = \App\Models\PaymentRevision::withoutGlobalScopes()->findOrFail($paymentRevisionId);
+        $paymentRevision = PaymentRevision::withoutGlobalScopes()->findOrFail($paymentRevisionId);
         try {
             $paymentRevision->delete();
             $this->fail('Expected Payment revision deletion to be blocked.');
