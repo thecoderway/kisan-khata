@@ -3,7 +3,6 @@
 namespace Tests\Feature\Database;
 
 use App\Models\Customer;
-use App\Models\FinancialTransaction;
 use App\Models\Payment;
 use App\Models\PaymentRevision;
 use App\Models\Sale;
