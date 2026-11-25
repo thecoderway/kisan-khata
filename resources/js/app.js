@@ -93,6 +93,23 @@ Alpine.data('actionDrawer', () => ({
             first.focus();
         }
     },
+
+    onSubmit(event) {
+        const form = event.target;
+
+        if (!this.isOpen || !this.$refs.panel?.contains(form)) return;
+
+        const submitButtons = Array.from(this.$refs.panel.querySelectorAll('button[type="submit"], input[type="submit"]'))
+            .filter((button) => button.form === form);
+
+        if (submitButtons.every((button) => button.disabled)) return;
+
+        form.setAttribute('aria-busy', 'true');
+        submitButtons.forEach((button) => {
+            button.disabled = true;
+            button.setAttribute('aria-disabled', 'true');
+        });
+    },
 }));
 
 Alpine.start();
