@@ -79,4 +79,4 @@ See:
 - [Table Guidelines](TABLE-GUIDELINES.md)
 - [Filter Guidelines](FILTER-GUIDELINES.md)
 
-All drawer forms use the shared asynchronous submission contract. All production data tables follow the table container, sticky edge-column, spacing and overlay rules. Listing filters follow the automatic-filtering and request lifecycle standards. These standards apply to future modules unless an approved, documented exception exists.
+All drawer forms use the shared asynchronous submission contract, including a stable overlaid pending indicator, replacement of validation errors on retries and a reusable floating success toast. All production data tables use a horizontal scroll container with only the first column sticky on the left; the last and all other columns scroll normally. Equal outer spacing and unclipped overlays remain mandatory. Listing filters follow the automatic-filtering and request lifecycle standards. These standards apply to future modules unless an approved, documented exception exists.
