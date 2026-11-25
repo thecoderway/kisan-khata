@@ -1,6 +1,6 @@
 # Kisan Khata — UI/UX Guidelines
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Status:** Approved  
 **Languages:** Hindi and English  
 **Primary Users:** Indian agricultural merchants, traders and shop operators  
@@ -614,7 +614,7 @@ Test at:
 - Small Android phone.
 - Large Android phone.
 
-The interface must remain usable at common mobile widths. Every production data table MUST use a horizontally scrollable container and follow [Table Guidelines](ui/TABLE-GUIDELINES.md). The table container, not the page, owns horizontal overflow. Only the first column remains sticky at the left edge; the last and all other columns scroll normally. Preserve equal outer horizontal content padding, readable column widths, visible focus and unclipped row-action menus. Do not silently replace a required table with cards or hide its edge columns; a different mobile presentation requires a documented, approved usability/accessibility exception.
+The interface must remain usable at common mobile widths. Every production data table MUST use a horizontally scrollable container and follow [Table Guidelines](ui/TABLE-GUIDELINES.md). The table container, not the page, owns horizontal overflow. Only the first column remains sticky at the left edge; the last and all other columns scroll normally. Preserve equal outer horizontal content padding, readable column widths, visible focus and unclipped row-action menus. Do not silently replace a required table with cards or hide the sticky first column; a different mobile presentation requires a documented, approved usability/accessibility exception.
 
 Routine listing filters SHOULD apply automatically. Text search uses a default 350–400 ms debounce; discrete filters apply on change. Keep server-side filtering authoritative and handle stale requests, loading/error states, pagination reset and URL state according to [Filter Guidelines](ui/FILTER-GUIDELINES.md).
 
