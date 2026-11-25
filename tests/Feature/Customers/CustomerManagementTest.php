@@ -514,7 +514,7 @@ class CustomerManagementTest extends TestCase
             ]);
         }
 
-        $this->actingAs($owner)->getJson(route('customers.index', [
+        $response = $this->actingAs($owner)->getJson(route('customers.index', [
             'status' => 'active',
             'page' => 2,
             'pageSize' => 10,
@@ -523,11 +523,13 @@ class CustomerManagementTest extends TestCase
             ->assertJsonPath('meta.current_page', 2)
             ->assertJsonPath('meta.per_page', 10)
             ->assertJsonPath('meta.total', 23)
-            ->assertJsonPath('meta.last_page', 3)
-            ->assertJsonPath('html', fn (string $html): bool => str_contains($html, 'Showing')
-                && str_contains($html, '11–20')
-                && str_contains($html, '23')
-                && str_contains($html, 'value="10" selected'));
+            ->assertJsonPath('meta.last_page', 3);
+
+        $html = $response->json('html');
+        $this->assertStringContainsString('Showing', $html);
+        $this->assertStringContainsString('11–20', $html);
+        $this->assertStringContainsString('23', $html);
+        $this->assertStringContainsString('value="10" selected', $html);
     }
 
     public function test_customer_directory_normalizes_unsupported_page_sizes_to_default(): void
