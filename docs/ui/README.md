@@ -80,3 +80,6 @@ See:
 - [Filter Guidelines](FILTER-GUIDELINES.md)
 
 All drawer forms use the shared asynchronous submission contract, including a stable overlaid pending indicator, replacement of validation errors on retries and a reusable floating success toast. All production data tables use a horizontal scroll container with only the first column sticky on the left; the last and all other columns scroll normally. Equal outer spacing and unclipped overlays remain mandatory. Listing filters follow the automatic-filtering and request lifecycle standards. These standards apply to future modules unless an approved, documented exception exists.
+
+
+Pagination is mandatory for every production data table. Use server-side fetching with a default page size of 10 or 20, a 10/20/50/100 page-size selector, Previous/Next controls disabled at boundaries, and a "Showing X–Y of Z" range/total indicator. Backend requests must carry and validate page and page-size parameters; never load all rows for client-side pagination. See [Table Guidelines](TABLE-GUIDELINES.md).
