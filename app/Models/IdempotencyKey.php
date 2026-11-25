@@ -44,6 +44,6 @@ class IdempotencyKey extends Model
     /** @return HasOne<FinancialTransaction, $this> */
     public function financialTransaction(): HasOne
     {
-        return $this->hasOne(FinancialTransaction::class);
+        return $this->hasOne(FinancialTransaction::class, 'idempotency_key_id');
     }
 }
