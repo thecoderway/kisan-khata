@@ -5,6 +5,10 @@
     </div>
 @endif
 
+@if ($drawerMode ?? false)
+    <input type="hidden" name="drawer_context" value="1">
+@endif
+
 <form method="POST" action="{{ $customer ? route('customers.update', $customer) : route('customers.store') }}" id="customer-form" class="customer-drawer-form">
         @csrf
         @if ($customer) @method('PUT') @endif
