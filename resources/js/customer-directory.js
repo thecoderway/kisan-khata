@@ -123,7 +123,6 @@ export function registerCustomerDirectory() {
     });
 
     statusInput?.addEventListener('change', () => {
-        if (feedbackRegion) feedbackRegion.hidden = true;
         updateResetVisibility();
         applyFilters('replace');
     });
