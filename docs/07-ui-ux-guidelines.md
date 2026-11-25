@@ -1,6 +1,6 @@
 # Kisan Khata — UI/UX Guidelines
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Status:** Approved  
 **Languages:** Hindi and English  
 **Primary Users:** Indian agricultural merchants, traders and shop operators  
