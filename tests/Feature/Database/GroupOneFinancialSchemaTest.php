@@ -135,22 +135,25 @@ class GroupOneFinancialSchemaTest extends TestCase
 
     public function test_financial_transaction_model_prevents_mutation_and_deletion(): void
     {
-        $transaction = new FinancialTransaction;
+        [$shop, $customer, $actor] = $this->shopCustomerAndActor();
+        $id = $this->insertFinancialTransaction($shop->id, $customer->id, $actor->id, $actor->id);
 
-        try {
-            $transaction->delete();
-            $this->fail('Expected deletion to be blocked.');
-        } catch (LogicException $exception) {
-            $this->assertStringContainsString('cannot be deleted', $exception->getMessage());
-        }
-
-        $transaction->exists = true;
+        $transaction = FinancialTransaction::withoutGlobalScopes()->findOrFail($id);
 
         try {
             $transaction->update(['source_type' => 'changed']);
             $this->fail('Expected update to be blocked.');
         } catch (LogicException $exception) {
             $this->assertStringContainsString('immutable', $exception->getMessage());
+        }
+
+        $transaction = FinancialTransaction::withoutGlobalScopes()->findOrFail($id);
+
+        try {
+            $transaction->delete();
+            $this->fail('Expected deletion to be blocked.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('cannot be deleted', $exception->getMessage());
         }
     }
 
@@ -162,12 +165,17 @@ class GroupOneFinancialSchemaTest extends TestCase
             'role' => User::ROLE_OWNER,
         ]);
 
-        $customer = Customer::withoutGlobalScopes()->create([
+        $customerId = (int) DB::table('customers')->insertGetId([
             'shop_id' => $shop->id,
             'created_by' => $actor->id,
             'name_original' => 'Financial Test Customer',
             'name_original_language' => 'en',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+
+        $customer = Customer::withoutGlobalScopes()->findOrFail($customerId);
 
         return [$shop, $customer];
     }
