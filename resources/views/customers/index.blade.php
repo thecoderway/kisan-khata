@@ -134,13 +134,13 @@
 @endsection
 
 @push('drawers')
-    <x-ui.action-drawer id="customer-action-drawer" title="ग्राहक" width="wide">
+    <x-ui.action-drawer id="customer-action-drawer" title="{{ $drawerAction === 'edit' ? 'ग्राहक संपादित करें' : 'नया ग्राहक' }}" width="wide">
         @if ($drawerContent)
             {!! $drawerContent !!}
         @endif
         <x-slot:footer>
             <button type="button" class="btn btn-outline-secondary" data-drawer-close>बंद करें</button>
-            <button type="submit" form="customer-form" class="btn btn-primary kk-primary" @disabled(! $drawerContent)>सेव करें <i class="ti ti-check ms-1"></i></button>
+            <button type="submit" form="customer-form" class="btn btn-primary kk-primary">सेव करें <i class="ti ti-check ms-1"></i></button>
         </x-slot:footer>
     </x-ui.action-drawer>
 @endpush
