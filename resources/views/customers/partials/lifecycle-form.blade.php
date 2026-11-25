@@ -5,7 +5,7 @@
     </div>
 @endif
 
-<form id="customer-form" method="POST" action="{{ $action === 'deactivate'
+<form id="customer-form" method="POST" data-drawer-ajax action="{{ $action === 'deactivate'
     ? route('customers.deactivate', $customer)
     : ($action === 'reactivate'
         ? route('customers.reactivate', $customer)
