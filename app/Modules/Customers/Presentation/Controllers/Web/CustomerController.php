@@ -10,13 +10,14 @@ use App\Modules\Customers\Presentation\Requests\CustomerRequest;
 use App\Tenancy\CurrentShop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View
+    public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View|Response
     {
         Gate::authorize('viewAny', Customer::class);
 
@@ -52,6 +53,10 @@ class CustomerController extends Controller
                 'customer' => $drawerCustomer,
                 'action' => $drawerAction,
             ])->render();
+        }
+
+        if ($request->ajax() && $drawerContent !== null) {
+            return response($drawerContent);
         }
 
         return view('customers.index', [
