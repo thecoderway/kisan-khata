@@ -26,8 +26,8 @@ return new class extends Migration
             $table->string('sale_payment_choice', 10);
             $table->unsignedBigInteger('financial_transaction_id');
             $table->unsignedBigInteger('created_by');
-            $table->unsignedBigInteger('posted_by');
-            $table->dateTime('posted_at', 6);
+            $table->unsignedBigInteger('posted_by')->nullable();
+            $table->dateTime('posted_at', 6)->nullable();
             $table->dateTime('created_at', 6);
 
             $table->unique(['shop_id', 'sale_number'], 'sales_shop_number_unique');
