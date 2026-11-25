@@ -16,12 +16,12 @@ These rules apply to every data table in the authenticated application, includin
 ## Sticky edge columns
 
 - The first column MUST remain sticky at the left edge while the table scrolls horizontally.
-- The last column MUST remain sticky at the right edge while the table scrolls horizontally.
-- Sticky columns MUST have opaque surface backgrounds, appropriate borders/shadows and a deliberate stacking order so scrolling cells never show through them.
+- Every column after the first, including the last/action column, MUST scroll normally with the table. Do not make the last column sticky.
+- The first sticky column MUST have an opaque surface background, an appropriate right-edge divider/shadow and a deliberate stacking order so scrolling cells never show through it.
 - Header cells must layer correctly above body cells. The intersection of sticky header and sticky edge columns must remain visible and readable.
-- The implementation MUST account for actual first/last column widths and responsive changes. Do not hardcode offsets that become incorrect when column widths change.
-- When a table has only one column, apply one coherent sticky treatment rather than creating overlapping left and right layers.
-- Sticky behavior MUST not obscure focus outlines, validation feedback, row content or actionable controls.
+- The first-column sticky treatment MUST account for its actual width and responsive changes. Do not hardcode offsets that become incorrect when column widths change.
+- When a table has only one column, its first column may remain sticky at the left; do not add a second sticky treatment.
+- First-column sticky behavior MUST not obscure focus outlines, validation feedback, row content or actionable controls.
 
 ## Consistent horizontal spacing
 
@@ -64,15 +64,15 @@ Do not present stale results as if they were current after a failed refresh. Pre
 - Ensure sticky layers do not cover keyboard focus.
 - Use visible focus states and sufficient contrast.
 - Do not communicate status using color alone.
-- On narrow screens, verify the first and last sticky columns do not consume so much width that the remaining table becomes unusable. If the data model needs a different mobile presentation, document and approve the exception rather than silently dropping required columns.
+- On narrow screens, verify the first sticky column does not consume so much width that the remaining table becomes unusable. If the data model needs a different mobile presentation, document and approve the exception rather than silently dropping required columns.
 
 ## Acceptance checklist
 
 - [ ] Table is inside a horizontally scrollable container.
 - [ ] No page-level horizontal overflow is introduced.
 - [ ] First column remains visible on the left during horizontal scrolling.
-- [ ] Last column remains visible on the right during horizontal scrolling.
-- [ ] Sticky backgrounds, borders, stacking and focus states are correct.
+- [ ] Last column and all other non-first columns scroll normally.
+- [ ] First-column background, divider, stacking and focus states are correct.
 - [ ] Left and right outer content insets are equal.
 - [ ] One-row and few-row tables have a balanced minimum height.
 - [ ] Action dropdowns are not clipped and remain in the viewport.
