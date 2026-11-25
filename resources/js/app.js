@@ -407,7 +407,7 @@ window.addEventListener('kk-toast:show', (event) => {
     toast.append(icon, text, close);
     region.appendChild(toast);
 
-    const timeout = let timeout = window.setTimeout(dismiss, 8000);
+    let timeout = window.setTimeout(dismiss, 8000);
 
     toast.addEventListener('mouseenter', () => window.clearTimeout(timeout));
     toast.addEventListener('mouseleave', () => {
