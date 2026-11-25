@@ -16,14 +16,42 @@ use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request, CustomerDirectoryQuery $directory): View
+    public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View
     {
         Gate::authorize('viewAny', Customer::class);
+
+        $drawerAction = $request->query('drawer_action');
+        $drawerCustomer = null;
+        $drawerContent = null;
+
+        if ($drawerAction === 'create') {
+            Gate::authorize('create', Customer::class);
+            $shop = $currentShop->require();
+            $drawerContent = view('customers.partials.form', [
+                'customer' => null,
+                'locationDefaults' => [
+                    'state_code' => $shop->state_code,
+                    'district_code' => $shop->district_code,
+                    'subdistrict_code' => $shop->subdistrict_code,
+                    'village_code' => $shop->village_code,
+                ],
+            ])->render();
+        } elseif ($drawerAction === 'edit' && $request->filled('drawer_customer_id')) {
+            $drawerCustomer = Customer::query()->findOrFail((int) $request->query('drawer_customer_id'));
+            Gate::authorize('update', $drawerCustomer);
+            $drawerContent = view('customers.partials.form', [
+                'customer' => $drawerCustomer,
+                'locationDefaults' => [],
+            ])->render();
+        }
 
         return view('customers.index', [
             'customers' => $directory->paginate($request),
             'search' => trim((string) $request->query('q', '')),
             'status' => in_array($request->query('status'), ['active', 'inactive', 'deleted'], true) ? $request->query('status') : 'active',
+            'drawerAction' => $drawerContent ? $drawerAction : null,
+            'drawerCustomer' => $drawerCustomer,
+            'drawerContent' => $drawerContent,
         ]);
     }
 
@@ -32,8 +60,7 @@ class CustomerController extends Controller
         Gate::authorize('create', Customer::class);
 
         $shop = $currentShop->require();
-
-        return view('customers.form', [
+        $data = [
             'customer' => null,
             'locationDefaults' => [
                 'state_code' => $shop->state_code,
@@ -41,7 +68,11 @@ class CustomerController extends Controller
                 'subdistrict_code' => $shop->subdistrict_code,
                 'village_code' => $shop->village_code,
             ],
-        ]);
+        ];
+
+        return $request->boolean('drawer')
+            ? view('customers.partials.form', $data)
+            : view('customers.form', $data);
     }
 
     public function store(CustomerRequest $request, SaveCustomer $save): RedirectResponse
@@ -53,8 +84,11 @@ class CustomerController extends Controller
             $request->userAgent(),
         );
 
-        return redirect()->route('customers.show', $customer)
-            ->with('status', 'ग्राहक सफलतापूर्वक जोड़ दिया गया।');
+        $redirect = $request->boolean('drawer_context')
+            ? redirect()->route('customers.index')
+            : redirect()->route('customers.show', $customer);
+
+        return $redirect->with('status', 'ग्राहक सफलतापूर्वक जोड़ दिया गया।');
     }
 
     public function show(int $customer): View
@@ -74,10 +108,14 @@ class CustomerController extends Controller
         $customer = Customer::query()->findOrFail($customer);
         Gate::authorize('update', $customer);
 
-        return view('customers.form', [
+        $data = [
             'customer' => $customer,
             'locationDefaults' => [],
-        ]);
+        ];
+
+        return $request->boolean('drawer')
+            ? view('customers.partials.form', $data)
+            : view('customers.form', $data);
     }
 
     public function update(CustomerRequest $request, int $customer, SaveCustomer $save): RedirectResponse
@@ -91,7 +129,10 @@ class CustomerController extends Controller
             $request->userAgent(),
         );
 
-        return redirect()->route('customers.show', $customer)
-            ->with('status', 'ग्राहक की जानकारी अपडेट हो गई है।');
+        $redirect = $request->boolean('drawer_context')
+            ? redirect()->route('customers.index')
+            : redirect()->route('customers.show', $customer);
+
+        return $redirect->with('status', 'ग्राहक की जानकारी अपडेट हो गई है।');
     }
 }
