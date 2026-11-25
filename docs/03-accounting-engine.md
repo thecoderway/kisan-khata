@@ -520,3 +520,8 @@ Same-day subsequent normal payments must not recalculate the same elapsed interv
 
 - Initial Shop capitalization default: **OFF**. Customer override remains supported; when absent, the Shop's OFF setting applies.
 - Annual Interest Auto Settlement dates: **30 March** and **30 October** each year. These are the initial Shop defaults; retain Owner configuration as already approved.
+
+
+### 21.9 Convention approval boundary (2026-11-25)
+
+Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries, and Sale Date as grace-period Day 0 were proposed in drafting but are not explicitly confirmed by the Product Owner. Treat them as recommendations pending confirmation before implementation.
