@@ -377,3 +377,15 @@ These two values are no longer pending. Remaining blueprint-level design items a
 ### Interest convention clarification — 2026-11-25
 
 Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding mode, [start inclusive, end exclusive) interval boundaries and Sale Date as grace-period Day 0 were drafting recommendations, not explicitly confirmed decisions. They remain pending Product Owner confirmation before implementation.
+
+
+### Finalized convention decisions — 2026-11-25
+
+The Product Owner has finalized all five convention decisions:
+- HALF_UP rounding to two decimal places.
+- Interest interval [start inclusive, end exclusive).
+- Sale Date is Grace Period Day 0; interest begins after 30 complete calendar days under the default grace period.
+- FIFO Sale ordering first, then the configured Principal First/Interest First waterfall within each Sale.
+- Locked historical Sales have no exceptional correction path in the approved scope; stop pending separate approval and workflow design.
+
+These are approved requirements and are no longer open blueprint decisions.
