@@ -494,7 +494,7 @@ class CustomerManagementTest extends TestCase
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('meta.current_page', 1);
 
-        $this->assertStringContainsString('Filter Match', $response->json('html'));
+        $this->assertStringContainsString('रामलाल', $response->json('html'));
     }
 
     public function test_customer_lifecycle_drawer_returns_json_validation_and_success_responses(): void
