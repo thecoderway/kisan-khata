@@ -102,5 +102,4 @@ return new class extends Migration
             $table->unique(['shop_id', 'customer_id', 'id'], 'ft_shop_customer_id_unique');
         });
     }
-
 };
