@@ -114,3 +114,8 @@ Follow [Filter Guidelines](FILTER-GUIDELINES.md). Use server-side query services
 ## Production data tables
 
 Follow [Table Guidelines](TABLE-GUIDELINES.md). Every production data table must use a horizontally scrollable wrapper; only the first column is sticky at the left edge. The last and all other columns scroll normally. Preserve equal outer horizontal content insets, appropriate minimum height for short result sets and overlay positioning that prevents action menus from being clipped. Verify sticky stacking and focus visibility at supported viewports.
+
+
+## Mandatory table pagination
+
+Every production data table MUST use server-side pagination. Default to 10 or 20 rows and provide a page-size selector (10, 20, 50, 100), Previous/Next controls disabled at their boundaries, and a current-range/total-count indicator. Pass and validate `page` and `limit`/`pageSize` parameters through backend queries; never fetch all records for browser-side pagination. Preserve filters and sort state, enforce a server-side maximum of 100, and document any product-owner-approved exception. Follow [Table Guidelines](TABLE-GUIDELINES.md).
