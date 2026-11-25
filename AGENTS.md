@@ -32,3 +32,9 @@ Mandatory UI table pagination:
 - Follow docs/ui/TABLE-GUIDELINES.md for the reusable UI and backend contract.
 
 Inspect first, plan small changes, identify unresolved business rules, request approval for scope/architecture changes, implement, test and report verified results. Approved docs/ and accepted ADRs override conflicting legacy guidance.
+
+
+Mandatory theme consistency:
+- Tabler Core is the only approved UI theme/component system for authenticated application UI. All new or modified UI MUST follow Tabler component patterns, markup, responsive behavior and accessibility conventions, customized only with the approved Kisan Khata design tokens.
+- Consult https://preview.tabler.io/ and https://github.com/tabler/tabler when component behavior or presentation is unclear. Match the installed Tabler package version; do not blindly copy newer APIs.
+- Do not introduce another UI framework or unrelated visual system without an approved architecture decision. Any deliberate Tabler deviation requires documented product-owner approval.
