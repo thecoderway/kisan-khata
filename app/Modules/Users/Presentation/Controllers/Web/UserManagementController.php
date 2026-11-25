@@ -24,14 +24,29 @@ class UserManagementController extends Controller
         ShopUserCapacity $capacity,
         CurrentShop $currentShop,
         Request $request,
-    ): View {
+    ): View|JsonResponse {
         Gate::authorize('viewAny', User::class);
 
         $actor = $request->user();
+        $users = $directory->forActor($actor, $request);
+        $isOwner = $actor->role === User::ROLE_OWNER;
+
+        if ($request->expectsJson() && $request->boolean('fragment')) {
+            return response()->json([
+                'html' => view('users.partials.results', compact('users', 'isOwner'))->render(),
+                'meta' => [
+                    'current_page' => $users->currentPage(),
+                    'last_page' => $users->lastPage(),
+                    'per_page' => $users->perPage(),
+                    'total' => $users->total(),
+                ],
+            ]);
+        }
 
         return view('users.index', [
-            'users' => $directory->forActor($actor, $request),
-            'capacity' => $actor->role === User::ROLE_OWNER
+            'users' => $users,
+            'isOwner' => $isOwner,
+            'capacity' => $isOwner
                 ? $capacity->summary($currentShop->require())
                 : null,
         ]);

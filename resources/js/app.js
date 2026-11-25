@@ -3,11 +3,13 @@ import '@tabler/core/dist/js/tabler.min.js';
 import Alpine from 'alpinejs';
 import { registerCustomerLocation } from './customer-location';
 import { registerCustomerDirectory } from './customer-directory';
+import { registerUserDirectory } from './user-directory';
 
 window.Alpine = Alpine;
 
 registerCustomerLocation(Alpine);
 registerCustomerDirectory();
+registerUserDirectory();
 
 Alpine.data('actionDrawer', () => ({
     isOpen: false,
@@ -405,9 +407,12 @@ window.addEventListener('kk-toast:show', (event) => {
     toast.append(icon, text, close);
     region.appendChild(toast);
 
-    const timeout = window.setTimeout(dismiss, 5000);
+    const timeout = let timeout = window.setTimeout(dismiss, 8000);
+
+    toast.addEventListener('mouseenter', () => window.clearTimeout(timeout));
+    toast.addEventListener('mouseleave', () => {
+        window.clearTimeout(timeout);
+        timeout = window.setTimeout(dismiss, 8000);
+    });
 });
 
-window.addEventListener('kk-drawer:success', () => {
-    if (document.querySelector('[data-user-directory]')) window.location.reload();
-});
