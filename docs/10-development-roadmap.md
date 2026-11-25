@@ -845,3 +845,62 @@ If implementation reveals a conflict or missing requirement:
 7. Resume implementation only after approval.
 
 This prevents implementation decisions from silently changing the product.
+
+---
+
+## 24. Phase 5 Financial Rule Update — Product Owner Approval (2026-11-25)
+
+The Product Owner has finalized the financial business rules in ADR-0012. This section supersedes conflicting Phase 5–9 roadmap descriptions above.
+
+### Phase 5 — Financial Foundation
+
+- Decimal-safe INR money and append-only financial ledger.
+- Customer financial account and balance projections.
+- Sale Paid/Unpaid state and atomic sale-day automatic payment.
+- Consolidated customer-level normal payments with internal FIFO allocation records.
+- Shop-level Principal First / Interest First payment waterfall.
+- Reject excess payments; no customer advances.
+- Immutable posting, reversal, revision, audit, idempotency and concurrency controls.
+- Separate Payment Status and Interest Settlement Status.
+- MySQL 8.4 integration tests for transaction rollback, locking, FIFO and reconciliation.
+
+### Phase 6–8 — Sales, Payments and Ledger
+
+- Sales require Paid/Unpaid; Paid uses linked automatic payment, Unpaid adds principal.
+- Normal Payment remains consolidated in customer-facing ledger; internal FIFO allocation is not exposed as sale-specific payment entry.
+- Posted Sales are locked against ordinary edits after a later Payment or annual Interest Auto Settlement.
+- Posted Payments are corrected through reversal and optional replacement, not direct overwrite.
+- Ledger displays Paid Sale and its linked automatic Payment as Already Paid; original sale amount is unchanged.
+
+### Phase 9 — Interest Engine
+
+- Shop default monthly rate 0%, optional customer rate override.
+- Shop default grace period 30 calendar days, configurable by Owner; Sale Date is Day 0.
+- Shop capitalization setting with optional Customer override.
+- Actual Days / 30; posted interest 2 decimals HALF_UP; interval [start inclusive, end exclusive].
+- Interest events: normal customer Payment and two Owner-configured annual Interest Auto Settlement dates only.
+- Payment precedes Auto Settlement on a shared date; no duplicate accrual.
+- Policy changes are effective-dated and prospective.
+
+### Decisions now finalized
+
+- FIFO internal allocation.
+- Excess payment rejected; no advances.
+- Principal First / Interest First Shop setting.
+- Sale-day Paid automatic payment exception.
+- Payment-first same-day event ordering.
+- 30-day grace period and Day 0 convention.
+- HALF_UP 2-decimal posted interest.
+- Start-inclusive/end-exclusive interest interval.
+- Shop/Customer capitalization inheritance and effective-dated behavior.
+
+### Still requiring separate Product Owner decision before affected implementation
+
+- Initial default value for capitalization (ON or OFF), because configurability and inheritance are approved but the initial Shop default selection has not been explicitly chosen.
+- Detailed mapping of interest tranches to originating Sale when capitalization and FIFO waterfall interact; blueprint must propose a deterministic representation and request approval if it changes the approved customer-facing behavior.
+- Exceptional correction/recalculation of a Sale locked by a later Payment or annual Interest Auto Settlement.
+- Exact two annual Auto Settlement calendar dates (Owner configures them; initial values are not specified).
+- Crop-season settlement accounting details.
+- Physical schema details beyond the logical allocation contract in docs/04.
+
+Phase 5 remains not started until implementation is separately authorized and accepted. This documentation update does not authorize code, migrations or database changes.
