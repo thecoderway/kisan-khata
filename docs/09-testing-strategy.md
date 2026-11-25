@@ -729,7 +729,7 @@ ADR-0012 defines expected behavior. Add deterministic unit, feature and MySQL 8.
 ### Normal payment and FIFO
 - Interest is calculated and persisted through payment effective date before normal payment application.
 - Interest status Settled is independent of Payment status.
-- FIFO applies payment to oldest eligible unpaid Sale/component first, then subsequent components.
+- FIFO applies payment to oldest eligible Sale first, then applies the selected Principal First or Interest First waterfall within that Sale before moving to the next Sale.
 - A single consolidated Payment can have multiple internal allocations.
 - Original Sale amounts remain unchanged.
 - Fully Paid and sale-day Paid Sales are excluded from later FIFO.
@@ -739,37 +739,23 @@ ADR-0012 defines expected behavior. Add deterministic unit, feature and MySQL 8.
 - Same-date subsequent payments do not duplicate interest.
 
 ### Interest policy and settlement
-- Shop rate default 0%; customer rate override and fallback.
-- Shop grace period default 30 days; Sale Date Day 0; exact first eligible day.
+- Shop rate default 0%; Customer rate override and fallback.
+- Shop grace period default 30 days; Sale Date Day 0; first eligible day follows 30 complete calendar days.
 - Start-inclusive/end-exclusive adjacent intervals do not double-count.
-- Actual Days / 30 formula and HALF_UP 2-decimal posted result.
-- Shop capitalization default and customer override/inheritance.
+- Actual Days / 30 formula and HALF_UP 2-decimal posted result, including half-cent boundary tests.
+- Shop capitalization default OFF and Customer override/inheritance.
 - Effective-dated rate/capitalization changes do not rewrite prior postings.
-- Two annual Owner-configured settlement dates; idempotent repeated execution.
+- Initial annual settlement dates 30 March and 30 October; Owner-configurable and idempotent.
 - Normal Payment precedes annual Auto Settlement on the same date.
 - Paid-sale automatic Payment is not an interest event.
 
 ### Revisions, reversals and integrity
 - Sale lock after later Payment or annual Auto Settlement.
-- Sale revision stores before/after, actor, timestamp and reason.
+- Locked Sale correction is rejected; no Owner bypass exists in current scope.
+- Sale revision stores before/after, actor, timestamp and reason where correction is permitted.
 - Payment reversal reverses original allocations without deleting them.
 - Tenant-crossing allocation/payment/sale references are rejected.
 - Every failure rolls back financial, allocation, projection and audit writes together.
 - Ledger/projection rebuild reconciles against immutable source postings.
 
 MySQL 8.4 is mandatory for row locks, concurrent posting, foreign-key and tenant-integrity tests. SQLite-only results are not sufficient evidence for these behaviors. Run tests only against an independently isolated test database; never point destructive test setup at a development database.
-
-
-### 25.1 Interest convention tests pending Product Owner confirmation
-
-Tests for Actual Days / 30 and two-decimal posted interest are required. Tests asserting HALF_UP rounding, [start inclusive, end exclusive) date boundaries or Sale Date Day 0 must be finalized only after the Product Owner confirms those conventions. Until then, retain them as candidate test cases, not accepted expected outcomes.
-
-
-### 25.2 Product Owner-approved interest and allocation conventions (2026-11-25)
-
-The following are required expected outcomes, not pending candidate tests:
-- HALF_UP rounding to two decimal places, including exact half-cent boundary cases.
-- [start inclusive, end exclusive) interval behavior, including adjacent intervals and no duplicate day.
-- Grace period Sale Date Day 0; 30 complete calendar days elapse before the first eligible interest day.
-- FIFO Sale ordering first, followed by Principal First or Interest First within each Sale; verify that a later Sale is not allocated before the older Sale's components are exhausted according to the selected waterfall.
-- Locked historical Sale correction is rejected; no Owner bypass exists in the approved scope. Verify rejection and audit/security trace where appropriate.
