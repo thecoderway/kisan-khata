@@ -542,4 +542,23 @@ class CustomerManagementTest extends TestCase
         ]))->assertForbidden();
     }
 
+    public function test_lifecycle_drawer_ajax_request_returns_only_the_form_fragment(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $url = route('customers.index', [
+            'drawer_action' => 'deactivate',
+            'drawer_customer_id' => $customer->id,
+        ]);
+
+        $this->withHeader('X-Requested-With', 'XMLHttpRequest')->get($url)
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="reason"', false)
+            ->assertDontSee('<!doctype html', false)
+            ->assertDontSee('customer-action-drawer');
+    }
+
 }
