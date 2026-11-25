@@ -437,4 +437,68 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.deactivated',
         ]);
     }
+    public function test_customer_create_and_edit_forms_can_be_rendered_as_drawer_fragments(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->get(route('customers.create', ['drawer' => 1]))
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="drawer_context"', false)
+            ->assertDontSee('<!doctype html', false);
+
+        $this->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->get(route('customers.edit', [$customer->id, 'drawer' => 1]))
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('रामलाल')
+            ->assertDontSee('<!doctype html', false);
+    }
+
+    public function test_customer_drawer_validation_redirect_restores_the_correct_create_context_and_old_input(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->from(route('customers.create', ['drawer' => 1]))
+            ->post(route('customers.store'), $this->customerPayload([
+                'name_original' => '',
+                'drawer_context' => '1',
+                'mobile' => 'not-a-mobile',
+            ]))
+            ->assertRedirect(route('customers.index', ['drawer_action' => 'create']))
+            ->assertSessionHasErrors(['name_original', 'mobile'])
+            ->assertSessionHas('_old_input.name_original', '')
+            ->assertSessionHas('_old_input.drawer_context', '1');
+
+        $this->get(route('customers.index', ['drawer_action' => 'create']))
+            ->assertOk()
+            ->assertSee('data-drawer-error-summary', false)
+            ->assertSee('name="drawer_context"', false);
+    }
+
+    public function test_customer_edit_drawer_validation_redirect_preserves_customer_identity(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->from(route('customers.edit', [$customer->id, 'drawer' => 1]))
+            ->put(route('customers.update', $customer->id), $this->customerPayload([
+                'name_original' => '',
+                'drawer_context' => '1',
+            ]))
+            ->assertRedirect(route('customers.index', [
+                'drawer_action' => 'edit',
+                'drawer_customer_id' => $customer->id,
+            ]))
+            ->assertSessionHasErrors('name_original');
+
+        $this->get(route('customers.index', [
+            'drawer_action' => 'edit',
+            'drawer_customer_id' => $customer->id,
+        ]))->assertOk()->assertSee('data-drawer-error-summary', false);
+    }
+
 }
