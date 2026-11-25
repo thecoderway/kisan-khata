@@ -400,4 +400,41 @@ class CustomerManagementTest extends TestCase
             ->assertOk()->assertSee('रामलाल')->assertDontSee('पुनः सक्रिय करें');
     }
 
+    public function test_api_customer_lifecycle_uses_the_same_owner_authorization_and_audit_flow(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->postJson('/api/v1/customers/'.$customer->id.'/deactivate', ['reason' => 'API lifecycle test'])
+            ->assertOk()->assertJsonPath('data.status', 'inactive');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $owner->shop_id,
+            'user_id' => $owner->id,
+            'action' => 'customer.deactivated',
+            'entity_id' => $customer->id,
+        ]);
+    }
+
+    public function test_api_staff_cannot_deactivate_customer(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        Sanctum::actingAs($staff, ['app']);
+        $this->postJson('/api/v1/customers/'.$customer->id.'/deactivate', ['reason' => 'Unauthorized API call'])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'status' => 'active']);
+        $this->assertDatabaseMissing('audit_logs', [
+            'entity_id' => $customer->id,
+            'action' => 'customer.deactivated',
+        ]);
+    }
+
 }
