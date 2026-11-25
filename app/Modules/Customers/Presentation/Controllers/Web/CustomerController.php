@@ -18,7 +18,7 @@ use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View|Response
+    public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View|Response|JsonResponse
     {
         Gate::authorize('viewAny', Customer::class);
 
