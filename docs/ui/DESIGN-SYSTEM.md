@@ -45,3 +45,12 @@ Do not introduce another CSS framework or frontend SPA framework without an arch
 - Neutral: slate
 
 Color must not be the only way to communicate status.
+
+
+## Mandatory theme and component source
+
+- Tabler Core is the application's single approved UI theme and component system. All new or modified authenticated UI must follow Tabler's official components, markup conventions, spacing, responsive behavior and accessibility patterns.
+- Use the Tabler components already installed in the project; do not recreate a visually unrelated design or introduce a competing UI framework.
+- The Kisan Khata brand palette in [Color Palette](COLOR-PALETTE.md) remains the approved brand customization layered on Tabler.
+- When a Tabler component pattern is unclear, consult the official [Tabler preview](https://preview.tabler.io/) and [public source repository](https://github.com/tabler/tabler). Prefer the installed package version over copying markup or APIs from a newer preview version.
+- Any deliberate deviation from Tabler requires documented product-owner approval.
