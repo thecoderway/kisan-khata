@@ -22,9 +22,9 @@ ADRs record important accepted or proposed technical/business architecture decis
 | ADR-0009 | Shop-Level Subscriptions | ACCEPTED |
 | ADR-0010 | User Lifecycle and Role Permissions | ACCEPTED |
 | ADR-0011 | Geographic Master Data and Shop/Customer Location Defaults | ACCEPTED |
+| ADR-0012 | Application-Wide Right-Side Drawer Standard | ACCEPTED |
 
 ## ADR template
 Each ADR must include context, decision, consequences, security/data-integrity impact, related docs and reconsideration criteria. Preserve accepted decision history; changes require explicit approval and a superseding ADR.
 
 If an ADR conflicts with docs/01–10 v2.0 or an explicitly approved later decision, stop and report the conflict. Do not silently change accepted decisions.
-| ADR-0012 | Application-Wide Right-Side Drawer Standard | ACCEPTED |
