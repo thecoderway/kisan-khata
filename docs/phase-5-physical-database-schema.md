@@ -817,17 +817,21 @@ The implementation must provide a repeatable reconciliation path:
 
 Snapshots and account balance columns are caches/projections. Ledger plus immutable source/allocation/lot events are the reconstruction evidence.
 
-## 15. Migration delivery groups (proposal only)
+## 15. Migration delivery groups (proposal only; aligned to the controlling readiness plan)
 
-Migration order should follow FK dependencies and be split into reviewable slices:
+The [Phase 5 Migration Readiness & Data-Safety Plan](phase-5-migration-readiness-data-safety-plan.md) is authoritative for migration grouping, order and data-safety gates. This section records the physical-schema mapping to that sequence; it does not override the readiness plan.
 
-1. **5.1 Core:** customer_accounts, financial_transactions, ledger_entries, idempotency_keys; supporting composite unique indexes.
-2. **5.2 Sales and Payments:** sales, sale_revisions, payments, payment_revisions.
-3. **5.3 Allocation:** payment_allocations, payment_allocation_items and reversal references.
-4. **5.4 Policy and Interest:** policy aggregates/versions, calculation runs/items, interest_lots and interest_lot_events.
-5. **5.5 Settlement and projections:** interest_settlement_runs/items, account_balance_snapshots and final reconciliation constraints.
+1. **Group 0 — Existing-table prerequisites:** supporting unique keys on existing users and customers. This group is complete locally.
+2. **Group 1 — Idempotency, account anchor and operation header:** idempotency_keys, customer_accounts and financial_transactions, including their required tenant-safe supporting indexes/constraints. ledger_entries is explicitly excluded.
+3. **Group 2 — Sales and Payments:** sales, sale_revisions, payments and payment_revisions.
+4. **Group 3 — Payment allocation:** payment_allocations, payment_allocation_items and reversal references.
+5. **Group 4 — Ledger and snapshots:** ledger_entries and account_balance_snapshots.
+6. **Group 5 — Effective-dated policy:** policy aggregates and versions.
+7. **Group 6 — Interest calculations and lots:** calculation runs/items, interest_lots and interest_lot_events.
+8. **Group 7 — Annual Interest Auto Settlement:** interest_settlement_runs and interest_settlement_items.
+9. **Group 8 — Final constraints and reconciliation:** deferred foreign keys, CHECK constraints, supporting indexes and reconciliation acceptance.
 
-Actual migration order may need adjustment to avoid circular foreign keys. Prefer nullable forward references followed by a later constraint migration where necessary. Every migration needs a tested rollback strategy; do not run local migrations against the development database during design review.
+Actual migration order within a group must follow FK dependencies and avoid circular foreign keys. Prefer nullable forward references followed by a later constraint migration where necessary. Every migration needs a tested rollback/recovery strategy; do not run local migrations against the development database during design review.
 
 ## 16. Required MySQL 8.4 acceptance tests
 
