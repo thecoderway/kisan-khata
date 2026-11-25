@@ -12,7 +12,7 @@
             <p>{{ $isOwner ? 'Manager और Staff accounts तथा उनकी access स्थिति प्रबंधित करें।' : 'आप Staff सदस्यों का नाम और account status देख सकते हैं।' }}</p>
         </div>
         @if ($isOwner)
-            <a href="{{ route('users.create') }}" class="btn btn-primary kk-primary"><i class="ti ti-user-plus me-1"></i> नया यूज़र</a>
+            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया यूज़र" data-width="wide"><i class="ti ti-user-plus me-1"></i> नया यूज़र</button>
         @endif
     </div>
 
@@ -45,7 +45,7 @@
         </section>
     @endif
 
-    <section class="content-card">
+    <section class="content-card" data-user-directory>
         <div class="content-card-header">
             <div><h2>{{ $isOwner ? 'Manager और Staff' : 'Staff सदस्य' }}</h2><p>{{ $users->total() }} accounts</p></div>
         </div>
@@ -160,3 +160,12 @@
         </div>
     </section>
 @endsection
+
+@push('drawers')
+    <x-ui.action-drawer id="user-action-drawer" title="नया यूज़र" width="wide">
+        <x-slot:footer>
+            <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+            <button type="submit" form="user-create-form" class="btn btn-primary kk-primary">यूज़र बनाएँ <i class="ti ti-check ms-1"></i></button>
+        </x-slot:footer>
+    </x-ui.action-drawer>
+@endpush

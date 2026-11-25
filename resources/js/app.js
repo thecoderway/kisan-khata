@@ -278,7 +278,7 @@ document.addEventListener('click', async (event) => {
         return;
     }
 
-    const trigger = event.target.closest('[data-customer-drawer]');
+    const trigger = event.target.closest('[data-customer-drawer], [data-user-drawer]');
     if (!trigger) return;
 
     event.preventDefault();
@@ -297,7 +297,7 @@ document.addEventListener('click', async (event) => {
         body.innerHTML = await response.text();
         root.dispatchEvent(new CustomEvent('kk-drawer:open', {
             bubbles: true,
-            detail: { title: trigger.dataset.title || 'ग्राहक', width: trigger.dataset.width || 'default' },
+            detail: { title: trigger.dataset.title || (trigger.hasAttribute('data-user-drawer') ? 'यूज़र' : 'ग्राहक'), width: trigger.dataset.width || 'default' },
         }));
     } catch (error) {
         body.innerHTML = '<div class="alert alert-danger" role="alert"></div>';
@@ -406,4 +406,8 @@ window.addEventListener('kk-toast:show', (event) => {
     region.appendChild(toast);
 
     const timeout = window.setTimeout(dismiss, 5000);
+});
+
+window.addEventListener('kk-drawer:success', () => {
+    if (document.querySelector('[data-user-directory]')) window.location.reload();
 });

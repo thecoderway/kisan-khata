@@ -9,6 +9,7 @@ use App\Modules\Users\Application\ManageShopUserLifecycle;
 use App\Modules\Users\Application\ShopUserCapacity;
 use App\Modules\Users\Application\UserDirectoryQuery;
 use App\Tenancy\CurrentShop;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -36,14 +37,16 @@ class UserManagementController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         Gate::authorize('create', [User::class, User::ROLE_STAFF]);
 
-        return view('users.create');
+        return $request->boolean('drawer')
+            ? view('users.partials.create-form')
+            : view('users.create');
     }
 
-    public function store(Request $request, CreateShopUser $createShopUser): RedirectResponse
+    public function store(Request $request, CreateShopUser $createShopUser): JsonResponse|RedirectResponse
     {
         Gate::authorize('create', [User::class, User::ROLE_STAFF]);
 
@@ -57,9 +60,13 @@ class UserManagementController extends Controller
 
         $createShopUser->handle($request->user(), $data);
 
-        return redirect()
-            ->route('users.index')
-            ->with('status', 'नया यूज़र सफलतापूर्वक बनाया गया। पहली बार लॉगिन पर नया पासवर्ड बनाना अनिवार्य होगा।');
+        $message = 'नया यूज़र सफलतापूर्वक बनाया गया। पहली बार लॉगिन पर नया पासवर्ड बनाना अनिवार्य होगा।';
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $message], 201);
+        }
+
+        return redirect()->route('users.index')->with('status', $message);
     }
 
     public function deactivate(
