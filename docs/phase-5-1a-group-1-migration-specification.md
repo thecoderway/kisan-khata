@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-11-25  
-**Status:** Engineering specification for Product Owner review; implementation not authorized  
+**Status:** Product Owner-approved engineering specification; implementation authorized for PR preparation only  
 **Target:** Laravel 13 / PHP 8.3 / MySQL 8.4 / InnoDB
 
 **Controlling documents:**
@@ -12,7 +12,7 @@
 - [ADR-0012 — Approved Financial Rules](decisions/ADR-0012-approved-financial-rules.md)
 - [ADR-0010 — User Lifecycle and Role Permissions](decisions/ADR-0010-user-lifecycle-and-role-permissions.md)
 
-> This document defines Group 1 only. It authorizes no code changes, Composer changes, migrations, tests against local databases, database mutation, backfills or production deployment. Implementation requires separate explicit Product Owner authorization.
+ > This document defines Group 1 only. The Product Owner has approved the three decisions in Section 12 and authorized preparation of the implementation PR. This does not authorize local/production database migrations, database mutation, backfills or deployment.
 
 ## 1. Scope lock
 
@@ -259,21 +259,18 @@ SQLite is not evidence for MySQL composite-FK, CHECK, locking or concurrency beh
 - Do not run migrations, destructive test setup or database mutation as part of this review.
 - No local PHPUnit, Pint, migration or database command is claimed as run for this document.
 
-## 12. Decisions required before implementation
+## 12. Product Owner decisions — approved
 
-These are the only Group 1 design choices left for Product Owner confirmation:
+The Product Owner explicitly approved all three recommendations on 2026-11-25:
 
-1. **Idempotency-key requirement:** Recommended: mandatory for user-initiated financial posting requests; nullable only for trusted internal operations that have their own deterministic event identity. Confirm this split or require a key for every operation header.
-2. **Transaction number format:** Recommended: server-generated per-Shop sequence/number with collision-safe unique constraint; never derive it from client input. Exact format can be selected during implementation without changing financial semantics.
-3. **FAILED idempotency status:** Recommended: persist FAILED only for deterministic terminal outcomes intentionally committed without a financial posting. Unexpected exceptions roll back the whole transaction and leave no idempotency row. Confirm this behavior.
+1. **Idempotency-key requirement:** Mandatory for user-initiated financial posting requests; nullable only for trusted internal operations with deterministic event identity.
+2. **Transaction number format:** Server-generated per-Shop sequence/number with a collision-safe unique constraint; never client-supplied. Exact presentation format is an implementation detail.
+3. **FAILED idempotency status:** Persist FAILED only for deterministic terminal outcomes intentionally committed without posting. Unexpected exceptions roll back the operation and its uncommitted idempotency row.
 
-All other table contracts and migration order above are engineering translations of the already approved architecture and ADRs, not requests to reopen business rules.
+These decisions are frozen for Group 1 implementation. Do not reopen them without a concrete technical blocker and Product Owner review.
 
-## 13. Approval gate
+## 13. Implementation readiness
 
-After Product Owner review:
-1. Confirm the three decisions in Section 12.
-2. Freeze this specification.
-3. Re-fetch current `main` and audit exact migration/model conventions.
-4. Prepare PR 5.1-A with only these three tables, required indexes/FKs, direct decimal dependency and focused CI tests.
-5. Keep PR unmerged and migrations unexecuted until a separate explicit implementation approval.
+1. Re-fetch current `main` and audit exact migration/model conventions, dependency versions and CI isolation.
+2. Prepare PR 5.1-A with only these three tables, required indexes/FKs, direct decimal dependency and focused MySQL 8.4 CI tests.
+3. Keep PR unmerged until implementation review; no local or production migrations, database mutation, backfills or deployment are authorized by this PR-preparation approval.
