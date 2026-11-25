@@ -126,7 +126,7 @@ Alpine.data('actionDrawer', () => ({
             element.classList.remove('is-invalid');
             element.removeAttribute('aria-invalid');
         });
-        form.querySelectorAll('[data-drawer-error-summary]').forEach((element) => element.remove());
+        this.$refs.body?.querySelectorAll('[data-drawer-error-summary]').forEach((element) => element.remove());
         form.querySelectorAll('[aria-describedby]').forEach((field) => {
             const remaining = (field.getAttribute('aria-describedby') || '')
                 .split(' ')
