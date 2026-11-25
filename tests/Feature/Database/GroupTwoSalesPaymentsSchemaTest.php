@@ -260,7 +260,7 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
         try {
             $paymentRevision->delete();
             $this->fail('Expected Payment revision deletion to be blocked.');
-        } catch (\LogicException $exception) {
+        } catch (LogicException $exception) {
             $this->assertStringContainsString('cannot be deleted', $exception->getMessage());
         }
     }
