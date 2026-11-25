@@ -3,9 +3,7 @@
 namespace Tests\Feature\Database;
 
 use App\Models\Customer;
-use App\Models\CustomerAccount;
 use App\Models\FinancialTransaction;
-use App\Models\IdempotencyKey;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\QueryException;
