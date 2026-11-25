@@ -437,6 +437,7 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.deactivated',
         ]);
     }
+
     public function test_customer_create_and_edit_forms_can_be_rendered_as_drawer_fragments(): void
     {
         $owner = $this->makeUser();
