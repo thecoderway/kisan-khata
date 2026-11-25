@@ -13,6 +13,8 @@ class Customer extends Model
 
     public const STATUS_ACTIVE = 'active';
 
+    public const STATUS_INACTIVE = 'inactive';
+
     protected $fillable = [
         'customer_code', 'name_original', 'name_original_language', 'name_hi', 'name_en',
         'mobile', 'state_code', 'district_code', 'subdistrict_code', 'village_code',
