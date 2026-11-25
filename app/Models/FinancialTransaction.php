@@ -25,6 +25,7 @@ class FinancialTransaction extends Model
 
     protected $fillable = [
         'customer_id',
+        'transaction_number',
         'transaction_type',
         'effective_date',
         'occurred_at',
