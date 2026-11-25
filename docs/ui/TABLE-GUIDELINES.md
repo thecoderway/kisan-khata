@@ -2,7 +2,23 @@
 
 ## Purpose and scope
 
-These rules apply to every data table in the authenticated application, including current and future modules. A module may use a different presentation only when a documented usability or accessibility reason justifies the exception.
+These rules apply to every data table in the authenticated application, including current and future modules. Pagination is mandatory for every production data table; there is no small-dataset or short-result exemption unless the product owner explicitly approves and documents it.
+
+## Mandatory pagination
+
+- Every data table created or modified in the UI MUST implement pagination. Never render an unbounded or unpaginated data table.
+- Use a default page size of 10 or 20 rows. Choose 10 for dense/large listings and 20 where row content and viewport support it.
+- Provide a page-size selector with options 10, 20, 50 and 100.
+- Provide Previous and Next navigation controls. Previous MUST be disabled on the first page; Next MUST be disabled on the last page.
+- Display a current-range and total-count indicator, such as "Showing 1–10 of 245". For an empty result set, show a clear zero-result state without an invalid range.
+- Pagination MUST be server-side. Backend queries must retrieve only the requested page; never fetch the complete dataset and paginate only in JavaScript/browser memory.
+- Pass the current page and page-size parameter (`page` and `limit` or `pageSize`) between frontend and backend. Use one consistent parameter naming convention per endpoint and document it.
+- Validate page and page size server-side. Enforce a maximum page size of 100 and reject or safely normalize invalid values. Do not trust client-supplied limits.
+- Preserve active filters, search terms and sort state when moving between pages or changing page size. When filters change, reset to page 1.
+- Return a stable total count from the server for the current filtered query. Do not derive total count from the current page length.
+- Pagination controls must be keyboard accessible, have clear accessible names, and expose disabled/current-page state semantically.
+- For AJAX listings, keep page, page size, filters and sort state synchronized with the URL where practical. Cancel or ignore stale requests and do not replace current results on a failed request.
+- Any exception must be explicitly approved by the product owner and documented with its rationale. Do not silently omit pagination for small datasets, lookup tables or short current result sets.
 
 ## Required responsive container
 
