@@ -676,3 +676,12 @@ This section is the latest approved product decision record for Sales, Payments,
 The Product Owner has finalized the two previously open configuration values:
 - Initial Shop capitalization default is **OFF**. A Customer may explicitly override it; absent an override, OFF is inherited.
 - The two initial annual Interest Auto Settlement dates are **30 March** and **30 October** each year, configured as the Shop's two annual settlement dates. Owner configuration remains available under the approved settings model.
+
+
+### 13.10 Convention approval boundary (2026-11-25)
+
+The Product Owner explicitly approved Actual Days / 30 and two-decimal posted interest. The following detailed conventions were proposed during documentation drafting but have **not** yet received explicit Product Owner confirmation; treat them as blueprint recommendations, not immutable approved requirements:
+- HALF_UP as the 2-decimal rounding mode.
+- [start inclusive, end exclusive) interval boundary.
+- Sale Date as grace-period Day 0 and first eligible day after 30 complete calendar days.
+The blueprint must show these proposals and obtain confirmation before implementation. Do not represent them as final PO-approved decisions.
