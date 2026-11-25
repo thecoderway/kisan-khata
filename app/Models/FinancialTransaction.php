@@ -48,6 +48,10 @@ class FinancialTransaction extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (FinancialTransaction $transaction): void {
+            $transaction->setAttribute('created_at', $transaction->getAttribute('created_at') ?? now());
+        });
+
         static::updating(fn () => throw new LogicException('Posted financial transaction headers are immutable.'));
         static::deleting(fn () => throw new LogicException('Posted financial transaction headers cannot be deleted.'));
     }
