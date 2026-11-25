@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Modules\\Customers\\Application;
+namespace App\Modules\Customers\Application;
 
-use App\\Models\\Customer;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Schema;
+use App\Models\Customer;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerDeletionEligibility
 {
