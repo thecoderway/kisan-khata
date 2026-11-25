@@ -52,7 +52,7 @@ class UserManagementController extends Controller
         $member = User::query()->findOrFail($user);
         Gate::authorize('view', $member);
 
-        if (($action === 'deactivate' && ! $member->is_active)
+        if (($action === 'deactivate' && $member->is_active === false)
             || ($action === 'reactivate' && $member->is_active)) {
             abort(422, 'यह account इस कार्रवाई की स्थिति में नहीं है।');
         }
@@ -133,4 +133,3 @@ class UserManagementController extends Controller
             : back()->with('status', $message);
     }
 }
-
