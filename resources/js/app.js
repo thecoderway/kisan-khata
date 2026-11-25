@@ -45,7 +45,7 @@ Alpine.data('actionDrawer', () => ({
     },
 
     close() {
-        if (!this.isOpen) return;
+        if (!this.isOpen || this.$refs.panel?.querySelector('form[data-submitting="true"]')) return;
 
         this.isOpen = false;
         document.body.style.overflow = this.previousBodyOverflow;
@@ -127,6 +127,16 @@ Alpine.data('actionDrawer', () => ({
             element.removeAttribute('aria-invalid');
         });
         form.querySelectorAll('[data-drawer-error-summary]').forEach((element) => element.remove());
+        form.querySelectorAll('[aria-describedby]').forEach((field) => {
+            const remaining = (field.getAttribute('aria-describedby') || '')
+                .split(' ')
+                .filter((id) => id && !id.endsWith('-server-error'));
+            if (remaining.length) {
+                field.setAttribute('aria-describedby', remaining.join(' '));
+            } else {
+                field.removeAttribute('aria-describedby');
+            }
+        });
     },
 
     showDrawerMessage(form, message, errors = {}) {
@@ -221,6 +231,7 @@ Alpine.data('actionDrawer', () => ({
                 return;
             }
 
+            delete form.dataset.submitting;
             this.close();
             window.dispatchEvent(new CustomEvent('kk-drawer:success', { detail: payload }));
         } catch (error) {
