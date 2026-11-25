@@ -11,6 +11,7 @@ Alpine.data('actionDrawer', () => ({
     width: 'default',
     previousFocus: null,
     previousBodyOverflow: '',
+    previousInertStates: [],
 
     init() {
         this.$el.addEventListener('kk-drawer:open', (event) => this.open(event.detail || {}));
@@ -24,6 +25,8 @@ Alpine.data('actionDrawer', () => ({
         this.previousBodyOverflow = document.body.style.overflow;
         this.isOpen = true;
         document.body.style.overflow = 'hidden';
+        this.previousInertStates = Array.from(document.querySelectorAll('.app-main, .app-sidebar')).map((element) => ({ element, inert: element.inert }));
+        this.previousInertStates.forEach(({ element }) => { element.inert = true; });
 
         this.$nextTick(() => {
             const first = this.focusableElements()[0];
@@ -36,6 +39,8 @@ Alpine.data('actionDrawer', () => ({
 
         this.isOpen = false;
         document.body.style.overflow = this.previousBodyOverflow;
+        this.previousInertStates.forEach(({ element, inert }) => { element.inert = inert; });
+        this.previousInertStates = [];
 
         this.$nextTick(() => {
             if (this.previousFocus?.isConnected) this.previousFocus.focus();
