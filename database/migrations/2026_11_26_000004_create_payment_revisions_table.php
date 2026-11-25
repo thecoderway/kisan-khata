@@ -13,6 +13,7 @@ return new class extends Migration
             $table->engine = 'InnoDB';
             $table->id();
             $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('payment_id');
             $table->unsignedInteger('revision_number');
             $table->string('revision_type', 24);
@@ -31,14 +32,14 @@ return new class extends Migration
             $table->foreign('shop_id', 'payment_rev_shop_fk')
                 ->references('id')->on('shops')
                 ->restrictOnDelete()->restrictOnUpdate();
-            $table->foreign(['shop_id', 'payment_id'], 'payment_rev_shop_payment_fk')
-                ->references(['shop_id', 'id'])->on('payments')
+            $table->foreign(['shop_id', 'customer_id', 'payment_id'], 'payment_rev_shop_customer_payment_fk')
+                ->references(['shop_id', 'customer_id', 'id'])->on('payments')
                 ->restrictOnDelete()->restrictOnUpdate();
-            $table->foreign(['shop_id', 'reversal_payment_id'], 'payment_rev_shop_reversal_fk')
-                ->references(['shop_id', 'id'])->on('payments')
+            $table->foreign(['shop_id', 'customer_id', 'reversal_payment_id'], 'payment_rev_shop_customer_reversal_fk')
+                ->references(['shop_id', 'customer_id', 'id'])->on('payments')
                 ->restrictOnDelete()->restrictOnUpdate();
-            $table->foreign(['shop_id', 'replacement_payment_id'], 'payment_rev_shop_replacement_fk')
-                ->references(['shop_id', 'id'])->on('payments')
+            $table->foreign(['shop_id', 'customer_id', 'replacement_payment_id'], 'payment_rev_shop_customer_replacement_fk')
+                ->references(['shop_id', 'customer_id', 'id'])->on('payments')
                 ->restrictOnDelete()->restrictOnUpdate();
             $table->foreign(['shop_id', 'changed_by'], 'payment_rev_shop_actor_fk')
                 ->references(['shop_id', 'id'])->on('users')
