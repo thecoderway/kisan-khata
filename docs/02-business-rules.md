@@ -685,3 +685,16 @@ The Product Owner explicitly approved Actual Days / 30 and two-decimal posted in
 - [start inclusive, end exclusive) interval boundary.
 - Sale Date as grace-period Day 0 and first eligible day after 30 complete calendar days.
 The blueprint must show these proposals and obtain confirmation before implementation. Do not represent them as final PO-approved decisions.
+
+
+### 13.11 Product Owner-approved interest and allocation conventions (2026-11-25)
+
+The Product Owner explicitly approved the following conventions; they are binding requirements, not proposals:
+
+1. **Rounding:** HALF_UP to two decimal places for posted INR interest. Preserve sufficient decimal precision before final posting.
+2. **Interest interval:** [start date inclusive, end date exclusive). Adjacent calculation periods must not count the same day twice.
+3. **Grace-period counting:** Sale Date is Day 0. With a 30-calendar-day grace period, the first eligible interest day is after 30 complete calendar days have elapsed.
+4. **Allocation order:** Apply FIFO at Sale level first. Within each Sale, apply the Shop's effective-dated Principal First or Interest First waterfall to that Sale's eligible outstanding components. Do not apply a global account-wide waterfall before FIFO.
+5. **Locked Sale correction:** A Sale locked by a later posted Payment or annual Interest Auto Settlement cannot be exceptionally edited or recalculated under the current approved scope. Stop and require a separate explicit Product Owner approval and a separately designed workflow. No automatic Owner bypass.
+
+These conventions apply to all new financial calculations and allocation postings. Historical posted records are not silently recomputed.
