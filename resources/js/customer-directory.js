@@ -7,13 +7,20 @@ export function registerCustomerDirectory() {
     const searchInput = form.querySelector('[name="q"]');
     const statusInput = form.querySelector('[name="status"]');
     const statusRegion = document.querySelector('[data-customer-filter-status]');
+    const resetLink = form.querySelector('[data-customer-filter-reset]');
     let debounceTimer = null;
     let activeController = null;
     let composing = false;
 
+    const updateResetVisibility = () => {
+        if (!resetLink) return;
+        resetLink.hidden = !((searchInput?.value || '').trim() || (statusInput?.value && statusInput.value !== 'active'));
+    };
+
     const syncFiltersFromUrl = (url) => {
         if (searchInput) searchInput.value = url.searchParams.get('q') || '';
         if (statusInput) statusInput.value = url.searchParams.get('status') || 'active';
+        updateResetVisibility();
     };
 
     const buildFilterUrl = () => {
@@ -104,13 +111,17 @@ export function registerCustomerDirectory() {
     });
 
     searchInput?.addEventListener('input', () => {
+        updateResetVisibility();
         if (composing) return;
 
         window.clearTimeout(debounceTimer);
         debounceTimer = window.setTimeout(() => applyFilters('replace'), 375);
     });
 
-    statusInput?.addEventListener('change', () => applyFilters('replace'));
+    statusInput?.addEventListener('change', () => {
+        updateResetVisibility();
+        applyFilters('replace');
+    });
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -123,6 +134,7 @@ export function registerCustomerDirectory() {
             event.preventDefault();
             if (searchInput) searchInput.value = '';
             if (statusInput) statusInput.value = 'active';
+            updateResetVisibility();
             applyFilters('push');
             return;
         }
