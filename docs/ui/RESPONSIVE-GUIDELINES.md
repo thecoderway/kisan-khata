@@ -31,11 +31,12 @@ Use responsive CSS based on available space, not device detection.
 
 Every production data table MUST use the shared horizontally scrollable table container defined in [Table Guidelines](TABLE-GUIDELINES.md). Horizontal scrolling is the standard table behavior at every viewport; it is not conditional on a developer deciding that comparison is essential.
 
-- Keep the first column sticky on the left and the last column sticky on the right while the table scrolls horizontally.
+- Keep only the first column sticky at the left edge while the table scrolls horizontally.
+- The last column and every other column MUST scroll normally; do not pin the action column to the right.
 - Preserve equal horizontal content padding at the outer left and right edges.
-- Use opaque sticky-cell backgrounds, correct stacking and responsive offsets.
+- Use an opaque background, right-edge divider and correct stacking for the first sticky column only.
 - Keep the table readable at narrow widths without causing page-level horizontal overflow.
-- Do not silently replace the table with cards or hide the required sticky columns. A materially different mobile presentation requires a documented, approved usability/accessibility exception.
+- Do not silently replace the table with cards or change the first-column-only sticky rule. A materially different mobile presentation requires a documented, approved usability/accessibility exception.
 - Ensure row menus and overlays are not clipped by scroll containers or ancestor overflow.
 
 ## Touch and testing
@@ -53,6 +54,8 @@ The action drawer is separate from the navigation drawer. It opens on explicit u
 - Keep the underlying page's scroll position when opening and closing.
 - Prevent background interaction and scrolling while the modal drawer is open, then restore the prior state on close.
 - Test at the documented viewport sizes, with long Hindi/English labels, validation errors, browser zoom and the on-screen keyboard.
+- Verify drawer submission loading does not change button dimensions, unmount form content or shift the layout.
+- Verify floating success toasts remain visible, readable and dismissible at mobile widths.
 - Do not confuse the contextual action drawer with the responsive navigation drawer.
 
 
