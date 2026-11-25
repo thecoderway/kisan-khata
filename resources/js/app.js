@@ -201,6 +201,7 @@ Alpine.data('actionDrawer', () => ({
             button.disabled = true;
             button.setAttribute('aria-disabled', 'true');
             button.setAttribute('aria-busy', 'true');
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span><span>प्रक्रिया जारी है…</span>';
         });
 
         try {
