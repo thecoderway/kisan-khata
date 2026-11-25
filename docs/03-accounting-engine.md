@@ -514,3 +514,9 @@ Same-day subsequent normal payments must not recalculate the same elapsed interv
 - Customer payment cannot exceed outstanding principal plus posted unpaid interest.
 - Excess payment is rejected. No customer advance balance or automatic future-sale adjustment is part of the approved model.
 
+
+
+### 21.8 Finalized initial settings (Product Owner clarification, 2026-11-25)
+
+- Initial Shop capitalization default: **OFF**. Customer override remains supported; when absent, the Shop's OFF setting applies.
+- Annual Interest Auto Settlement dates: **30 March** and **30 October** each year. These are the initial Shop defaults; retain Owner configuration as already approved.
