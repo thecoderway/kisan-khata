@@ -905,3 +905,8 @@ Exact physical indexes, uniqueness constraints and whether sale components requi
 
 - Initial Shop capitalization setting must default to **OFF**; a Customer-level override is optional and inherits OFF when absent.
 - Initial annual Interest Auto Settlement dates must be initialized to **30 March** and **30 October**. Keep both dates Owner-configurable at Shop level and version/configuration-auditable.
+
+
+### 32.3 Interest convention approval boundary (2026-11-25)
+
+Actual Days / 30 and two-decimal posted interest are approved. The specific rounding mode (including HALF_UP), interval boundary convention, and grace-period Day 0 convention remain pending Product Owner confirmation. Store enough precision and event-boundary metadata to support the final approved convention without migration redesign.
