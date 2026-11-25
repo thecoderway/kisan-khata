@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Modules\\Customers\\Application;
+namespace App\Modules\Customers\Application;
 
-use App\\Models\\AuditLog;
-use App\\Models\\Customer;
-use App\\Models\\User;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Gate;
-use Illuminate\\Validation\\ValidationException;
+use App\Models\AuditLog;
+use App\Models\Customer;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class ManageCustomerLifecycle
 {
