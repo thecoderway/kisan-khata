@@ -560,4 +560,30 @@ class CustomerManagementTest extends TestCase
             ->assertDontSee('<!doctype html', false)
             ->assertDontSee('customer-action-drawer');
     }
+    public function test_customer_lifecycle_business_validation_restores_the_drawer_context(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $url = route('customers.index', [
+            'drawer_action' => 'soft-delete',
+            'drawer_customer_id' => $customer->id,
+        ]);
+
+        $this->delete(route('customers.soft-delete', $customer->id), [
+            'reason' => 'Requested cleanup',
+            'drawer_context' => '1',
+        ])->assertRedirect($url)->assertSessionHasErrors('customer');
+
+        $this->get($url)->assertOk()
+            ->assertSee('data-drawer-error-summary', false)
+            ->assertSee('name="reason"', false);
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'deleted_at' => null,
+        ]);
+    }
+
 }
