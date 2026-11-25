@@ -60,7 +60,7 @@
                 @endif
             </div>
         @else
-            <div class="table-responsive">
+            <div class="table-responsive kk-data-table-wrap">
                 <table class="table table-vcenter user-table">
                     <thead><tr>
                         <th>नाम</th>
