@@ -49,7 +49,7 @@ The initial dashboard prototype uses illustrative values only.
 It is not a functional accounting interface.
 ## Contextual action drawer and page decision
 
-The application-wide default for routine Create, Edit and record-level actions is the shared right-side overlay drawer (see [ADR-0012](../decisions/ADR-0012-application-wide-right-side-drawer-standard.md)).
+The application-wide default for routine Create, Edit and record-level actions is the shared right-side overlay drawer (see [ADR-0014](../decisions/ADR-0014-application-wide-right-side-drawer-standard.md)).
 
 - Listing pages show record data, status, search/filter/pagination and a compact action trigger.
 - Do not render per-record action forms or reason inputs inline in table rows.
