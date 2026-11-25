@@ -21,6 +21,20 @@ class CustomerRequest extends FormRequest
         return $this->user()?->can('create', Customer::class) ?? false;
     }
 
+    protected function getRedirectUrl(): string
+    {
+        if (! $this->boolean('drawer_context')) {
+            return parent::getRedirectUrl();
+        }
+
+        $customerId = $this->route('customer');
+
+        return route('customers.index', array_filter([
+            'drawer_action' => $customerId ? 'edit' : 'create',
+            'drawer_customer_id' => $customerId,
+        ], fn ($value) => $value !== null));
+    }
+
     public function rules(): array
     {
         return [
