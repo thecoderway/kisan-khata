@@ -61,5 +61,6 @@
         <main class="app-content">@yield('content')</main>
         <footer class="app-footer">© {{ date('Y') }} Kisan Khata · सरल, सुरक्षित और भरोसेमंद</footer>
     </div>
+    @stack('drawers')
 </body>
 </html>
