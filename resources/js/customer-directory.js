@@ -20,6 +20,8 @@ export function registerCustomerDirectory() {
     const syncFiltersFromUrl = (url) => {
         if (searchInput) searchInput.value = url.searchParams.get('q') || '';
         if (statusInput) statusInput.value = url.searchParams.get('status') || 'active';
+        const pageSizeInput = results.querySelector('[data-customer-page-size]');
+        if (pageSizeInput) pageSizeInput.value = url.searchParams.get('pageSize') || '20';
         updateResetVisibility();
     };
 
@@ -37,6 +39,8 @@ export function registerCustomerDirectory() {
             }
         }
 
+        const currentUrl = new URL(window.location.href);
+        url.searchParams.set('pageSize', currentUrl.searchParams.get('pageSize') || '20');
         url.searchParams.delete('page');
 
         return url;
@@ -137,6 +141,15 @@ export function registerCustomerDirectory() {
             if (statusInput) statusInput.value = 'active';
             updateResetVisibility();
             applyFilters('push');
+            return;
+        }
+
+        const pageSizeSelect = event.target.closest('[data-customer-page-size]');
+        if (pageSizeSelect) {
+            const targetUrl = new URL(window.location.href);
+            targetUrl.searchParams.set('pageSize', pageSizeSelect.value);
+            targetUrl.searchParams.delete('page');
+            loadResults(targetUrl, 'push');
             return;
         }
 
