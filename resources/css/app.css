@@ -219,30 +219,6 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
     z-index: 2;
 }
 
-.customer-directory-table thead th:last-child,
-.customer-directory-table tbody td:last-child {
-    position: sticky;
-    right: 0;
-    min-width: 132px;
-    background: #fff;
-    box-shadow: -1px 0 0 #e2e8f0, -8px 0 12px rgb(15 23 42 / 4%);
-}
-
-.customer-directory-table thead th:last-child {
-    z-index: 4;
-    background: #f8fafc;
-}
-
-.customer-directory-table tbody td:last-child {
-    z-index: 3;
-}
-
-.customer-directory-table thead th:first-child:last-child,
-.customer-directory-table tbody td:first-child:last-child {
-    right: auto;
-    left: 0;
-}
-
 .customer-directory-table .dropdown-menu {
     z-index: 1100;
 }
@@ -309,27 +285,6 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
     z-index: 2;
 }
 
-.user-table:not(.customer-directory-table) thead th:last-child,
-.user-table:not(.customer-directory-table) tbody td:last-child,
-.audit-table thead th:last-child,
-.audit-table tbody td:last-child {
-    position: sticky;
-    right: 0;
-    background: #fff;
-    box-shadow: -1px 0 0 #e2e8f0, -8px 0 12px rgb(15 23 42 / 4%);
-}
-
-.user-table:not(.customer-directory-table) thead th:last-child,
-.audit-table thead th:last-child {
-    z-index: 4;
-    background: #f8fafc;
-}
-
-.user-table:not(.customer-directory-table) tbody td:last-child,
-.audit-table tbody td:last-child {
-    z-index: 3;
-}
-
 @media(max-width:767px) {
     .customer-directory-table thead th:first-child,
     .customer-directory-table tbody td:first-child {
@@ -342,33 +297,118 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
         white-space: normal;
     }
 
-    .customer-directory-table thead th:last-child,
-    .customer-directory-table tbody td:last-child {
-        min-width: 112px;
-        max-width: 112px;
-    }
-
-    .customer-directory-table tbody td:last-child {
-        white-space: nowrap;
-    }
-
     .user-table:not(.customer-directory-table) thead th:first-child,
     .user-table:not(.customer-directory-table) tbody td:first-child {
         min-width: 120px;
         max-width: 120px;
     }
 
-    .user-table:not(.customer-directory-table) thead th:last-child,
-    .user-table:not(.customer-directory-table) tbody td:last-child {
-        min-width: 150px;
-        max-width: 150px;
-    }
+}
 
-    .audit-table thead th:first-child,
-    .audit-table tbody td:first-child,
-    .audit-table thead th:last-child,
-    .audit-table tbody td:last-child {
-        min-width: 130px;
-        max-width: 150px;
+
+/* Stable drawer submission and reusable floating feedback */
+.kk-drawer-submit-pending {
+    position: relative;
+    overflow: hidden;
+    cursor: wait;
+}
+
+.kk-drawer-submit-indicator {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 12px;
+    background: inherit;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+}
+
+.kk-drawer-submit-indicator .spinner-border {
+    flex: 0 0 auto;
+}
+
+.kk-toast-region {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    width: min(420px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.kk-floating-toast {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-height: 56px;
+    padding: 12px 14px;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #15803d;
+    border-radius: 10px;
+    background: #fff;
+    color: #14532d;
+    box-shadow: 0 12px 32px rgb(15 23 42 / 16%);
+    pointer-events: auto;
+    animation: kk-toast-enter .18s ease-out;
+}
+
+.kk-floating-toast.is-error {
+    border-color: #fecaca;
+    border-left-color: #dc2626;
+    color: #991b1b;
+}
+
+.kk-floating-toast > i {
+    flex: 0 0 auto;
+    font-size: 19px;
+}
+
+.kk-floating-toast-message {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.kk-floating-toast-close {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+}
+
+.kk-floating-toast-close:hover {
+    background: rgb(15 23 42 / 6%);
+}
+
+@keyframes kk-toast-enter {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media(max-width:767px) {
+    .kk-toast-region {
+        top: 12px;
+        right: 12px;
+        width: calc(100vw - 24px);
     }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .kk-floating-toast { animation: none; }
 }
