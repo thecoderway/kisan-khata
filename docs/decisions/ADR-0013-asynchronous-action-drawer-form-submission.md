@@ -24,11 +24,11 @@ This decision supplements ADR-0012. It does not require ordinary full-page forms
 1. Submitting a drawer form MUST NOT cause a full-page navigation or reload.
 2. The drawer MUST remain open while the request is pending and after validation, authorization, server or network failures.
 3. User-entered values MUST remain available after an unsuccessful request. Do not replace the form with a blank form on validation failure.
-4. The submit control MUST expose a clear pending state and prevent duplicate submissions while the request is in flight.
+4. The submit control MUST expose a clear pending state and prevent duplicate submissions while the request is in flight. The pending indicator MUST be overlaid within the existing submit control without replacing its original content, changing its dimensions, unmounting the form, or shifting surrounding layout. Restore the original control presentation after the request settles.
 5. A drawer MUST close only after the server returns a response that the client recognizes as successful for the requested operation.
-6. After confirmed success, update or refresh the relevant listing/context and show server-confirmed feedback. Do not optimistically claim that a write succeeded.
+6. After confirmed success, close the drawer, update or refresh the relevant listing/context, and show the server-confirmed message in the shared floating toast region. Do not use an inline page alert for routine drawer success. Do not optimistically claim that a write succeeded.
 7. Network failures and ambiguous responses MUST NOT trigger automatic blind resubmission of a write request. Explain the uncertainty and allow the user to verify the current record state before retrying.
-8. A request that returns validation errors MUST display field-level errors beside the relevant controls and an accessible summary when appropriate.
+8. A request that returns validation errors MUST display field-level errors beside the relevant controls and an accessible summary when appropriate. On every new submission attempt, remove the previous server-generated summary and field errors before presenting the latest response; repeated validation failures MUST replace prior errors rather than append duplicate messages. Preserve all user-entered values.
 9. Non-validation failures MUST display a useful, localized message without exposing stack traces, SQL details, secrets or internal exception content.
 10. Preserve the user's listing context, active filters, pagination state and scroll position when the drawer closes or its result is refreshed.
 
@@ -47,6 +47,9 @@ This decision supplements ADR-0012. It does not require ordinary full-page forms
 The shared drawer submission mechanism owns transport state and presentation only:
 
 - submit interception for opted-in drawer forms;
+- stable, non-layout-shifting pending indicator within the submit control;
+- replacement/cleanup of prior server validation errors on each attempt;
+- shared floating toast feedback after confirmed success;
 - pending/disabled state and duplicate-submit prevention;
 - field error rendering and clearing;
 - general success/error feedback;
@@ -59,6 +62,8 @@ Use the existing Alpine.js and Fetch API foundation. Do not add jQuery or anothe
 ## Accessibility and resilience
 
 - Associate field errors with their inputs and expose invalid state accessibly.
+- Pending indicators and floating toasts MUST expose appropriate accessible status/live-region semantics.
+- Floating toasts MUST be keyboard dismissible, readable over the page, responsive on mobile and automatically dismiss after a reasonable interval; users must also be able to dismiss them manually.
 - Announce pending and completion/error feedback through appropriate live regions.
 - Keep focus behavior consistent with the modal drawer contract in ADR-0012.
 - Do not rely on color alone to communicate errors or success.
@@ -104,6 +109,17 @@ This is a presentation and transport decision, not a relaxation of server-side c
 - [Filter Guidelines](../ui/FILTER-GUIDELINES.md)
 - [Table Guidelines](../ui/TABLE-GUIDELINES.md)
 - [Responsive Guidelines](../ui/RESPONSIVE-GUIDELINES.md)
+
+## Implementation refinement — 2026-11-25
+
+The Product Owner approved the following refinements to this ADR:
+
+- Pending UI is a positioned overlay inside the existing submit button. Do not replace button contents or resize the button; do not unmount or replace the form while the request is pending.
+- Each retry clears all prior server-generated error summaries, field feedback and invalid-state associations before rendering the newest response. Never append duplicate error blocks across repeated 422 responses.
+- A confirmed success closes the drawer and emits a shared floating toast using the server's message. The toast is independent of any particular module and is mounted once in the authenticated application layout.
+- The shared toast supports success/error semantics, a live region, manual dismissal and timed dismissal. Routine successful drawer submissions must not use an inline alert inside the listing.
+
+These refinements are mandatory for all future drawer forms and are part of the original accepted asynchronous submission contract.
 
 ## Reconsideration
 
