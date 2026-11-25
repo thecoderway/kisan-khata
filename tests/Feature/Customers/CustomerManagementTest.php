@@ -370,5 +370,4 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.restored', 'entity_id' => $customer->id,
         ]);
     }
-
 }
