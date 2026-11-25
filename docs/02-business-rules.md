@@ -578,3 +578,94 @@ If a feature request conflicts with an approved financial rule:
 3. Explain the conflict.
 4. Request Product Owner approval.
 5. Update documentation after approval.
+
+
+---
+
+## 13. Product Owner-approved Financial Rules — Phase 5 (2026-11-25)
+
+This section is the latest approved product decision record for Sales, Payments, Interest, Customer Ledger and annual Interest Auto Settlement. Where an earlier section in this document conflicts with this section, this section takes precedence. The superseding architecture decision is ADR-0012.
+
+### 13.1 Sale payment choice
+
+1. Sale creation must require an explicit payment state: `Paid` or `Unpaid`.
+2. For `Unpaid`, the full sale amount enters the customer's outstanding principal.
+3. For `Paid`, the system must create a separate automatic payment entry for exactly the sale amount in the same atomic database transaction as the sale.
+4. The automatic payment must be permanently linked to the originating sale and must not affect any pre-existing customer balance.
+5. A sale created as `Paid` is excluded from future outstanding and interest calculations, is visible in the ledger as already paid, and must never be charged or collected again.
+6. A sale-day automatic payment does not trigger interest calculation or an interest settlement event for the customer's older outstanding.
+7. If either the sale or its automatic payment cannot be posted, neither may be committed.
+8. Payment status and interest settlement status are separate concepts. A sale may be Interest-Settled while still Unpaid or Partially Paid.
+
+### 13.2 Sale revisions and edit lock
+
+1. Posted sales are never physically deleted.
+2. A permitted correction creates an immutable revision containing before/after values, actor, timestamp and mandatory reason.
+3. Once a later customer payment or annual Interest Auto Settlement has been posted, sales effective before that event are locked against ordinary editing.
+4. The lock must be enforced server-side, not only in the UI.
+5. Any exceptional correction of a locked historical sale requires a separately designed and approved reversal/recalculation workflow; do not bypass the lock or silently rewrite posted history.
+6. Manager and Staff cannot edit posted financial transactions. Owner-only correction authority remains subject to the lock above.
+
+### 13.3 Normal customer payments, pre-payment interest settlement and FIFO
+
+1. A normal payment is recorded once against the customer's consolidated account; the customer-facing payment is not manually assigned to one sale.
+2. Before accepting/posting a normal payment, the system must complete and persist the required interest calculation through the payment's effective date for every earlier eligible unpaid sale/account component. This means Interest Settlement Status becomes `Settled`; it does not mean the sale's Payment Status becomes `Paid`.
+3. A sale created as Paid on its sale date is excluded from this later settlement and payment calculation.
+4. Normal payments are internally applied by FIFO (First In, First Out): oldest eligible unpaid sale/component first, then the next oldest. This internal allocation must not change original sale amounts or make the customer-facing payment a sale-specific payment.
+5. Internal allocation records must preserve the payment, sale/component, applied principal, applied posted interest, ordering and effective timestamp. Allocation history is immutable; corrections use reversal/replacement records.
+6. A payment may be split across multiple oldest-first sale components. Fully paid sales are excluded from later allocations.
+7. The Shop Owner selects the payment waterfall in Shop Settings: `Principal First` or `Interest First`. The selected order is applied within the FIFO allocation process. The policy and its effective date must be recorded; changing it must not rewrite earlier allocations.
+8. Payment amount must be greater than zero and must not exceed the customer's total payable balance (outstanding principal plus posted, unpaid interest). Excess payments are rejected. Customer advances and automatic future-sale advance application are not supported.
+9. Concurrent payment requests must serialize on the customer financial account and re-check the payable balance inside the transaction before posting.
+
+### 13.4 Payment history and corrections
+
+1. A posted payment is never physically deleted.
+2. A mistaken payment is corrected through an auditable reversal and, where appropriate, a replacement payment; preserve the original payment and its allocations.
+3. Record actor, timestamp, mandatory correction reason, original transaction reference and reversal/replacement references.
+4. Managers and Staff cannot correct posted payments. Owner-only correction authority is enforced server-side.
+5. Reversals must reverse corresponding internal allocations and rebuild affected balances/interest without mutating historical entries.
+
+### 13.5 Shop and customer interest settings
+
+1. Shop default monthly interest rate is `0%`.
+2. Owner may change the Shop default monthly rate in Shop Settings.
+3. A customer may have an optional customer-specific monthly rate configured during customer creation or editing. When present, it takes precedence over the Shop default.
+4. Shop default grace period is `30 calendar days`; Owner may change it in Shop Settings. No customer-specific grace-period override is approved.
+5. Shop Settings must hold two annual Interest Auto Settlement dates, both configured by the Owner.
+6. Shop Settings must hold the payment waterfall: `Principal First` or `Interest First`.
+7. Capitalization is configurable at Shop level and may be overridden at Customer level. If the customer has no explicit override, the Shop setting applies.
+8. Shop and customer interest settings must be effective-dated/versioned. A rate or policy change applies from its effective date forward; prior periods retain the policy version that applied then.
+9. A capitalization toggle affects only interest calculated for periods from its effective date onward. It must not retroactively reclassify previously posted interest.
+
+### 13.6 Interest calculation conventions
+
+1. Formula: `Eligible Principal × (Monthly Rate / 100) × (Actual Eligible Days / 30)`.
+2. Use Actual Days / 30.
+3. Round the posted interest amount to two decimal places using decimal-safe arithmetic and `HALF_UP` rounding. Preserve sufficient unrounded calculation precision for reproducibility.
+4. Interest periods use a half-open date interval: start date inclusive, end date exclusive. Adjacent periods must not count the same day twice.
+5. Sale date is Day 0 for grace-period counting. With the default 30-day grace period, the first eligible interest day is after 30 complete calendar days have elapsed.
+6. Monthly rate defaults to zero; a zero rate produces zero interest.
+7. Interest capitalization ON adds posted eligible interest to the future interest-bearing base according to the effective-dated policy. OFF keeps interest separate and excludes previously accrued interest from the future interest-bearing principal.
+8. Interest calculation events are (a) normal customer payment, after calculating through that payment date and before applying the payment, and (b) the two Owner-configured annual Auto Settlement dates.
+9. A sale-day automatic payment for a Paid sale is not a normal customer payment event and does not trigger interest calculation for older balances.
+10. On a date shared by a normal payment and annual Auto Settlement, process the normal payment first; the annual settlement must not duplicate the same elapsed interval.
+11. No ordinary daily or monthly interest-posting job is permitted.
+
+### 13.7 Interest settlement status and annual settlement
+
+1. Interest settlement status (`Pending` / `Settled`) is distinct from payment status (`Unpaid` / `Partially Paid` / `Paid`).
+2. `Settled` means the required interest calculation through the relevant event date has been completed and recorded. It does not mean the sale or customer balance is fully paid.
+3. Annual Auto Settlement dates are configured by the Shop Owner in Shop Settings.
+4. Each settlement run must retain customer, effective date, eligible components, rate/policy versions, grace-period treatment, eligible days, principal/interest basis, unrounded and rounded results, posting references and idempotency identity.
+5. Re-running the same event must not duplicate interest.
+
+### 13.8 Ledger and balance invariants
+
+1. Original sale amounts never decrease when a payment is received. Remaining balances are derived from immutable sale, payment, allocation, interest and reversal records.
+2. Paid sales and their linked automatic payment remain visible in the ledger with an explicit `Already Paid` indication; their net outstanding contribution is zero.
+3. Normal customer payments appear as one consolidated customer-level transaction. Internal FIFO allocations are supporting accounting records, not separate customer-facing payment transactions.
+4. Ledger entries are append-only. Corrections use reversals and replacement entries; no posted financial history is silently overwritten.
+5. Every financial record and allocation is tenant-scoped, auditable, idempotent and transactionally consistent.
+6. Crop-season settlement is a separate business workflow from the annual Interest Auto Settlement event. Do not conflate their meanings.
+
