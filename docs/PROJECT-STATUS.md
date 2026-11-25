@@ -334,58 +334,34 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-- Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and CI-verified for the recorded scope.
-- **Next official development phase: Phase 5 — Financial Foundation and Accounting Engine.** Begin with a read-only audit of existing financial-related code, migrations, services, tests and ADR constraints before proposing implementation.
-- Do not begin full production Sales/Payment workflows until Phase 5 financial foundation passes its critical acceptance tests.
-- Resolve open financial decisions before implementing affected behavior: capitalization policy, rounding precision/mode, date-boundary/grace-period conventions, same-date payment/auto-settlement ordering, backdated correction recalculation, advance application and crop-season settlement rules.
+- Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and accepted for its recorded scope.
+- **Current phase: Phase 5 — Financial Foundation and Accounting Engine.**
+- Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
+- The detailed Phase 5 implementation blueprint is `docs/phase-5-implementation-blueprint.md`.
+- Next action: complete a read-only audit of existing financial-related code, models, migrations, services, tenant constraints, authorization, audit logging, routes and tests. Do not modify files or database during this audit.
+- After the audit, reconcile the proposed logical model with existing migrations and present a physical schema/implementation plan for separate Product Owner approval.
+- Do not begin production Sales/Payment workflows until Phase 5 foundation passes its critical acceptance tests.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
-This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
+## 13. Phase 5 status — 2026-11-25
 
+**Business rules and blueprint: documented. Implementation: NOT STARTED.**
 
----
+Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
-## Phase 5 financial rules approval — 2026-11-25
+Finalized rules include:
+- Paid/Unpaid Sale; Paid creates an equal linked automatic Payment atomically.
+- Normal customer Payments remain consolidated in the customer-facing ledger and are internally allocated FIFO by Sale, then by the Shop's Principal First/Interest First waterfall within each Sale.
+- Excess Payment is rejected; no advances.
+- Shop monthly rate default 0%, optional Customer rate override.
+- Shop grace period default 30 calendar days; Sale Date is Day 0; no Customer-specific grace override.
+- Shop capitalization default OFF; optional Customer override.
+- Actual Days / 30; HALF_UP rounding to two decimal places; [start inclusive, end exclusive) interval.
+- Annual Interest Auto Settlement defaults to 30 March and 30 October.
+- Normal Payment precedes annual Auto Settlement on a shared date.
+- Locked historical Sale correction has no exception in the current approved scope; stop and require separate approval and workflow design.
+- Financial history is append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable.
 
-**Status: Business rules and architecture decisions documented; Phase 5 implementation NOT STARTED.**
+**Next approved work:** read-only existing-code/schema audit. No implementation, migrations or database changes are authorized by the blueprint alone.
 
-Product Owner-approved rules are recorded in:
-- `docs/02-business-rules.md` — approved Sales, Payments, Interest, Ledger and settlement rules.
-- `docs/03-accounting-engine.md` — posting sequence and accounting invariants.
-- `docs/04-database-architecture.md` — logical FIFO allocation and policy-versioning constraints.
-- `docs/decisions/ADR-0012-approved-financial-rules.md` — controlling decision record.
-- ADR-0004 is marked superseded; ADR-0006 and ADR-0007 are clarified.
-- `.claude/rules/financial-integrity.md` — AI implementation guardrails.
-- Docs 06, 09 and 10 — security, testing and roadmap requirements.
-
-Confirmed decisions include Paid/Unpaid Sale with linked atomic sale-day payment; normal consolidated customer payment with internal FIFO allocations; Shop-level Principal First/Interest First waterfall; no advances and rejection of excess payment; 0% Shop default monthly rate with optional Customer override; 30-day Shop grace period with Sale Date Day 0; effective-dated Shop/Customer capitalization settings; Actual Days / 30; HALF_UP two-decimal posted interest; start-inclusive/end-exclusive interval; two Owner-configured annual Interest Auto Settlement dates; Payment before annual Auto Settlement on the same date; separate Payment and Interest Settlement statuses; append-only financial history and reversal-based Payment corrections.
-
-**Remaining design decisions before implementation:** initial capitalization default (ON/OFF); exact two annual dates to be entered by each Owner; detailed interest-tranche-to-Sale representation for FIFO plus capitalization/waterfall; exceptional correction workflow for locked historical Sales; crop-season settlement accounting details. The Phase 5 blueprint must expose these explicitly rather than invent defaults.
-
-No application code, migrations, database or financial workflows were changed by this documentation approval. No tests or CI were run as part of this documentation-only update.
-
-
-### Finalized configuration values — 2026-11-25
-
-The Product Owner confirmed:
-- Shop capitalization initial default = **OFF**; Customer override remains available and otherwise inherits Shop OFF.
-- Initial annual Interest Auto Settlement dates = **30 March** and **30 October**; both remain configurable by the Shop Owner.
-
-These two values are no longer pending. Remaining blueprint-level design items are the deterministic interest-tranche-to-Sale model for FIFO/capitalization/waterfall and the exceptional correction workflow for locked historical Sales.
-
-
-### Interest convention clarification — 2026-11-25
-
-Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding mode, [start inclusive, end exclusive) interval boundaries and Sale Date as grace-period Day 0 were drafting recommendations, not explicitly confirmed decisions. They remain pending Product Owner confirmation before implementation.
-
-
-### Finalized convention decisions — 2026-11-25
-
-The Product Owner has finalized all five convention decisions:
-- HALF_UP rounding to two decimal places.
-- Interest interval [start inclusive, end exclusive).
-- Sale Date is Grace Period Day 0; interest begins after 30 complete calendar days under the default grace period.
-- FIFO Sale ordering first, then the configured Principal First/Interest First waterfall within each Sale.
-- Locked historical Sales have no exceptional correction path in the approved scope; stop pending separate approval and workflow design.
-
-These are approved requirements and are no longer open blueprint decisions.
+**Verification:** this documentation-only update did not run tests or CI. Do not infer test or runtime verification from the documentation changes.
