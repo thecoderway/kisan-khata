@@ -4,6 +4,7 @@
 **Date:** 2026-11-25  
 **Status:** Updated design proposal; implementation not authorized  
 **Controlling decision:** ADR-0012
+**Migration sequence authority:** [Phase 5 Migration Readiness & Data-Safety Plan](phase-5-migration-readiness-data-safety-plan.md). Its migration groups supersede any older delivery-slice grouping in this blueprint.  
 
 ## 1. Purpose and scope
 
@@ -229,13 +230,18 @@ Run tests only against an independently isolated test database. Never point dest
 
 ## 10. Delivery slices
 
-1. **5.1 Financial core:** money strategy, customer account, ledger foundation, transaction service, idempotency, audit integration.
-2. **5.2 Integrity infrastructure:** tenant-safe relationships, locking, atomic posting, projections, reconciliation.
-3. **5.3 Allocation engine:** allocation header/items, FIFO Sale ordering, per-Sale waterfall, reversal-aware history.
-4. **5.4 Policy and interest foundation:** effective-dated policies, Shop/Customer inheritance, interest lots and calculation events.
-5. **5.5 Settlement and acceptance:** 30 March/30 October events, same-day ordering, MySQL 8.4 integration suite and documentation.
+The [Phase 5 Migration Readiness & Data-Safety Plan](phase-5-migration-readiness-data-safety-plan.md) controls migration group boundaries and order. The following blueprint workstreams are aligned to that plan:
 
-Each slice requires reviewable PRs and acceptance evidence. Pint is mandatory for PHP changes. Do not claim local tests, Pint, CI or database verification passed without observed results.
+1. **Group 1 — Idempotency, account anchor and operation header:** decimal strategy, idempotency_keys, customer_accounts, financial_transactions and their tenant-safe constraints. ledger_entries is not part of Group 1.
+2. **Group 2 — Sales and Payments:** sales, sale_revisions, payments and payment_revisions.
+3. **Group 3 — Payment allocation:** allocation header/items, FIFO Sale ordering, per-Sale waterfall and reversal-aware history.
+4. **Group 4 — Ledger and snapshots:** append-only ledger foundation, account_balance_snapshots and rebuildable projections.
+5. **Group 5 — Effective-dated policy:** Shop/Customer policy aggregates, versions and inheritance.
+6. **Group 6 — Interest calculations and lots:** calculation runs/items, interest lots and events.
+7. **Group 7 — Annual Interest Auto Settlement:** 30 March/30 October event processing, same-day ordering and settlement run/items.
+8. **Group 8 — Final constraints and reconciliation:** deferred constraints, supporting indexes, MySQL 8.4 integration acceptance and reconciliation.
+
+The logical data model in Section 4 describes the full Phase 5 target and is not a statement that all listed tables belong in Group 1. Each migration slice requires a separately reviewed PR and acceptance evidence. Pint is mandatory for PHP changes. Do not claim local tests, Pint, CI or database verification passed without observed results.
 
 ## 11. Explicitly outside current approval
 
