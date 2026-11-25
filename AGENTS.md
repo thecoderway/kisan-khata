@@ -19,4 +19,16 @@ Mandatory product invariants:
 - Preserve original customer text and store Hindi/English translations separately.
 - Use decimal-safe financial arithmetic, transactions, locking and idempotency where applicable.
 
+Mandatory UI table pagination:
+- Every data table created or modified in the UI MUST implement pagination. Never render an unbounded or unpaginated data table.
+- Use a default page size of 10 or 20 rows.
+- Provide a page-size selector with options 10, 20, 50 and 100.
+- Provide Previous and Next controls; disable Previous on the first page and Next on the last page.
+- Show the current range and total record count, e.g. "Showing 1–10 of 245".
+- Fetch only the requested page from the backend. Pass and validate page plus limit/pageSize parameters; never fetch all records and paginate only in the browser.
+- Preserve active filters and relevant sort state when changing page size or page.
+- Enforce a safe maximum page size of 100 on the server. Invalid values must be validated or safely normalized server-side.
+- Any exception requires explicit, documented product-owner approval; do not silently omit pagination for small datasets, lookup tables or currently short result sets.
+- Follow docs/ui/TABLE-GUIDELINES.md for the reusable UI and backend contract.
+
 Inspect first, plan small changes, identify unresolved business rules, request approval for scope/architecture changes, implement, test and report verified results. Approved docs/ and accepted ADRs override conflicting legacy guidance.
