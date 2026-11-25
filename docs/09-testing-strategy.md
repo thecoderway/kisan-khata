@@ -758,3 +758,8 @@ ADR-0012 defines expected behavior. Add deterministic unit, feature and MySQL 8.
 - Ledger/projection rebuild reconciles against immutable source postings.
 
 MySQL 8.4 is mandatory for row locks, concurrent posting, foreign-key and tenant-integrity tests. SQLite-only results are not sufficient evidence for these behaviors. Run tests only against an independently isolated test database; never point destructive test setup at a development database.
+
+
+### 25.1 Interest convention tests pending Product Owner confirmation
+
+Tests for Actual Days / 30 and two-decimal posted interest are required. Tests asserting HALF_UP rounding, [start inclusive, end exclusive) date boundaries or Sale Date Day 0 must be finalized only after the Product Owner confirms those conventions. Until then, retain them as candidate test cases, not accepted expected outcomes.
