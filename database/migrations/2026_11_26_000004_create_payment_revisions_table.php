@@ -55,8 +55,8 @@ return new class extends Migration
                  CHECK (CHAR_LENGTH(TRIM(`correction_reason`)) > 0),
              ADD CONSTRAINT `payment_rev_reference_check`
                  CHECK (
-                     (`revision_type` = 'REVERSAL' AND `reversal_payment_id` IS NOT NULL)
-                     OR (`revision_type` = 'REPLACEMENT' AND `replacement_payment_id` IS NOT NULL)
+                     (`revision_type` = 'REVERSAL' AND `reversal_payment_id` IS NOT NULL AND `replacement_payment_id` IS NULL)
+                     OR (`revision_type` = 'REPLACEMENT' AND `replacement_payment_id` IS NOT NULL AND `reversal_payment_id` IS NULL)
                  )"
         );
     }
