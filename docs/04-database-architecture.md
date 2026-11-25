@@ -899,3 +899,9 @@ This addendum supersedes conflicting statements elsewhere in this document and i
 
 Exact physical indexes, uniqueness constraints and whether sale components require a child allocation table are to be finalized in the Phase 5 implementation blueprint after schema-level reconciliation. Do not create an implementation migration until that blueprint is approved.
 
+
+
+### 32.2 Finalized policy defaults (Product Owner clarification, 2026-11-25)
+
+- Initial Shop capitalization setting must default to **OFF**; a Customer-level override is optional and inherits OFF when absent.
+- Initial annual Interest Auto Settlement dates must be initialized to **30 March** and **30 October**. Keep both dates Owner-configurable at Shop level and version/configuration-auditable.
