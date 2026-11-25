@@ -669,3 +669,10 @@ This section is the latest approved product decision record for Sales, Payments,
 5. Every financial record and allocation is tenant-scoped, auditable, idempotent and transactionally consistent.
 6. Crop-season settlement is a separate business workflow from the annual Interest Auto Settlement event. Do not conflate their meanings.
 
+
+
+### 13.9 Product Owner clarification — finalized defaults (2026-11-25)
+
+The Product Owner has finalized the two previously open configuration values:
+- Initial Shop capitalization default is **OFF**. A Customer may explicitly override it; absent an override, OFF is inherited.
+- The two initial annual Interest Auto Settlement dates are **30 March** and **30 October** each year, configured as the Shop's two annual settlement dates. Owner configuration remains available under the approved settings model.
