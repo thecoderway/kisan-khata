@@ -35,6 +35,10 @@ Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): vo
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::resource('customers', CustomerController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+    Route::post('/customers/{customer}/deactivate', [CustomerLifecycleController::class, 'deactivate'])->name('customers.deactivate');
+    Route::post('/customers/{customer}/reactivate', [CustomerLifecycleController::class, 'reactivate'])->name('customers.reactivate');
+    Route::delete('/customers/{customer}', [CustomerLifecycleController::class, 'softDelete'])->name('customers.soft-delete');
+    Route::post('/customers/{customer}/restore', [CustomerLifecycleController::class, 'restore'])->name('customers.restore');
 
     Route::prefix('shop-profile')->name('shop-profile.')->group(function (): void {
         Route::get('/', [ShopProfileController::class, 'edit'])->name('edit');
