@@ -55,6 +55,10 @@ class CustomerLifecycleController extends Controller
             ]);
         }
 
-        $redirect = $request->boolean('drawer_context')\n            ? redirect()->route('customers.index')\n            : back();\n\n        return $redirect->with('status', $message);
+        $redirect = $request->boolean('drawer_context')
+            ? redirect()->route('customers.index')
+            : back();
+
+        return $redirect->with('status', $message);
     }
 }
