@@ -7,6 +7,7 @@ export function registerCustomerDirectory() {
     const searchInput = form.querySelector('[name="q"]');
     const statusInput = form.querySelector('[name="status"]');
     const statusRegion = document.querySelector('[data-customer-filter-status]');
+    const feedbackRegion = document.querySelector('[data-customer-feedback]');
     const resetLink = form.querySelector('[data-customer-filter-reset]');
     let debounceTimer = null;
     let activeController = null;
@@ -111,6 +112,7 @@ export function registerCustomerDirectory() {
     });
 
     searchInput?.addEventListener('input', () => {
+        if (feedbackRegion) feedbackRegion.hidden = true;
         updateResetVisibility();
         if (composing) return;
 
@@ -119,6 +121,7 @@ export function registerCustomerDirectory() {
     });
 
     statusInput?.addEventListener('change', () => {
+        if (feedbackRegion) feedbackRegion.hidden = true;
         updateResetVisibility();
         applyFilters('replace');
     });
@@ -154,7 +157,11 @@ export function registerCustomerDirectory() {
         loadResults(currentUrl, 'none');
     });
 
-    window.addEventListener('kk-drawer:success', () => {
+    window.addEventListener('kk-drawer:success', (event) => {
+        if (feedbackRegion && event.detail?.message) {
+            feedbackRegion.textContent = event.detail.message;
+            feedbackRegion.hidden = false;
+        }
         loadResults(new URL(window.location.href), 'none');
     });
 }
