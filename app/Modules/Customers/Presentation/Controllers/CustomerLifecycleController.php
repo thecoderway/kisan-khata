@@ -79,6 +79,7 @@ class CustomerLifecycleController extends Controller
     {
         if ($request->expectsJson()) {
             return response()->json([
+                'success' => true,
                 'message' => $message,
                 'data' => [
                     'id' => $customer->getKey(),
