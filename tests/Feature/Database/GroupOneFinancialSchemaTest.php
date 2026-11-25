@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\FinancialTransaction;
 use App\Models\Shop;
 use App\Models\User;
+use App\Tenancy\CurrentShop;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -159,6 +160,7 @@ class GroupOneFinancialSchemaTest extends TestCase
     {
         [$shop, $customer, $actor] = $this->shopCustomerAndActor();
         $id = $this->insertFinancialTransaction($shop->id, $customer->id, $actor->id, $actor->id);
+        app(CurrentShop::class)->set($shop);
 
         $transaction = FinancialTransaction::withoutGlobalScopes()->findOrFail($id);
 
