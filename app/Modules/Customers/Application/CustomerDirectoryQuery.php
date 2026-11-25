@@ -11,15 +11,25 @@ class CustomerDirectoryQuery
     public function paginate(Request $request): LengthAwarePaginator
     {
         $search = trim((string) $request->query('q', ''));
+        $status = (string) $request->query('status', Customer::STATUS_ACTIVE);
 
-        $query = Customer::query()
-            ->leftJoin('villages', 'customers.village_code', '=', 'villages.villageCode')
+        $query = $status === 'deleted' ? Customer::withTrashed() : Customer::query();
+
+        $query->leftJoin('villages', 'customers.village_code', '=', 'villages.villageCode')
             ->select([
                 'customers.*',
                 'villages.villageNameLocal as village_name_local',
                 'villages.villageNameEnglish as village_name_english',
-            ])
-            ->where('customers.status', Customer::STATUS_ACTIVE);
+            ]);
+
+        if ($status === 'deleted') {
+            $query->whereNotNull('customers.deleted_at');
+        } elseif ($status === Customer::STATUS_INACTIVE) {
+            $query->where('customers.status', Customer::STATUS_INACTIVE);
+        } else {
+            $status = Customer::STATUS_ACTIVE;
+            $query->where('customers.status', Customer::STATUS_ACTIVE);
+        }
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
