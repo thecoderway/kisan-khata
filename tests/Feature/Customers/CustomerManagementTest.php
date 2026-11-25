@@ -370,4 +370,34 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.restored', 'entity_id' => $customer->id,
         ]);
     }
+    public function test_customer_directory_can_filter_inactive_and_soft_deleted_records(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        DB::table('customers')->where('id', $customer->id)->update(['status' => 'inactive']);
+
+        $this->get(route('customers.index', ['status' => 'inactive']))
+            ->assertOk()->assertSee('रामलाल')->assertSee('पुनः सक्रिय करें');
+
+        DB::table('customers')->where('id', $customer->id)->update(['deleted_at' => now()]);
+
+        $this->get(route('customers.index', ['status' => 'deleted']))
+            ->assertOk()->assertSee('रामलाल')->assertSee('Restore');
+    }
+
+    public function test_staff_can_view_inactive_directory_but_does_not_receive_lifecycle_controls(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+        DB::table('customers')->where('id', $customer->id)->update(['status' => 'inactive']);
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        $this->actingAs($staff)->get(route('customers.index', ['status' => 'inactive']))
+            ->assertOk()->assertSee('रामलाल')->assertDontSee('पुनः सक्रिय करें');
+    }
+
 }
