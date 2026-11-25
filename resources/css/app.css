@@ -412,3 +412,92 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
 @media(prefers-reduced-motion:reduce) {
     .kk-floating-toast { animation: none; }
 }
+
+
+/* Customer Directory pagination — Tabler/Bootstrap-native controls */
+.customer-pagination-wrap {
+    min-height: 76px;
+    padding: 14px 20px;
+    border-top: 1px solid #edf1f5;
+    background: #fff;
+}
+
+.customer-page-size {
+    white-space: nowrap;
+}
+
+.customer-page-size .form-select {
+    width: 76px;
+    min-height: 34px;
+    border-color: #dbe3ec;
+    border-radius: 7px;
+    color: #334155;
+    font-size: 12px;
+}
+
+.customer-pagination-controls {
+    min-width: 0;
+}
+
+.customer-pagination-controls .pagination {
+    flex-wrap: wrap;
+    gap: 3px;
+    margin: 0;
+}
+
+.customer-pagination-controls .page-link {
+    display: inline-flex;
+    min-width: 34px;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: #475569;
+    font-size: 12px;
+    box-shadow: none;
+}
+
+.customer-pagination-controls .page-item.active .page-link {
+    border-color: var(--kk-green);
+    background: var(--kk-green);
+    color: #fff;
+}
+
+.customer-pagination-controls .page-item.disabled .page-link {
+    border-color: transparent;
+    background: #f8fafc;
+    color: #94a3b8;
+    opacity: 1;
+}
+
+.customer-pagination-controls .page-link:focus-visible,
+.customer-page-size .form-select:focus-visible {
+    outline: 2px solid var(--kk-green-strong);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+@media(max-width:767px) {
+    .customer-pagination-wrap {
+        align-items: flex-start !important;
+        padding: 14px 16px;
+    }
+
+    .customer-pagination-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .customer-pagination-controls .pagination {
+        max-width: 100%;
+    }
+}
+
+@media(max-width:420px) {
+    .customer-pagination-controls {
+        align-items: flex-start !important;
+        flex-direction: column;
+    }
+}
