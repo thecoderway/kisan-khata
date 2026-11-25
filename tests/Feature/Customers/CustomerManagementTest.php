@@ -5,11 +5,13 @@ namespace Tests\Feature\Customers;
 use App\Models\Customer;
 use App\Models\Shop;
 use App\Models\User;
+use App\Tenancy\CurrentShop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
+use LogicException;
 use Tests\TestCase;
 
 class CustomerManagementTest extends TestCase
