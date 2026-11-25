@@ -13,8 +13,8 @@
         <div class="mb-3">
             <label for="user-new-role" class="form-label">नई भूमिका <span class="text-danger">*</span></label>
             <select id="user-new-role" name="role" class="form-select" required>
-                <option value="manager" @selected($member->role === 'staff')>Manager</option>
-                <option value="staff" @selected($member->role === 'manager')>Staff</option>
+                <option value="manager" @selected($member->role === 'manager')>Manager</option>
+                <option value="staff" @selected($member->role === 'staff')>Staff</option>
             </select>
         </div>
     @else
