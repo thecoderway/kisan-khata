@@ -560,6 +560,7 @@ class CustomerManagementTest extends TestCase
             ->assertDontSee('<!doctype html', false)
             ->assertDontSee('customer-action-drawer');
     }
+
     public function test_customer_lifecycle_business_validation_restores_the_drawer_context(): void
     {
         $owner = $this->makeUser();
