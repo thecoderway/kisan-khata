@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\\Feature\\UserManagement;
+namespace Tests\Feature\UserManagement;
 
-use App\\Models\\Shop;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\DB;
-use Tests\\TestCase;
+use App\Models\Shop;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 class UserAuditHistoryWebTest extends TestCase
 {
