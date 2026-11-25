@@ -4,6 +4,7 @@ namespace Tests\Feature\Customers;
 
 use App\Models\Customer;
 use App\Models\Shop;
+use App\Models\ShopSetting;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -242,6 +243,22 @@ class CustomerManagementTest extends TestCase
         }
 
         $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => null]);
+    }
+
+    public function test_bulk_delete_remains_available_for_tenant_models_without_soft_deletes(): void
+    {
+        $owner = $this->makeUser();
+        app(CurrentShop::class)->set($owner->shop);
+
+        $setting = ShopSetting::query()->create([
+            'setting_key' => 'temporary.test',
+            'setting_value' => 'value',
+        ]);
+
+        $deleted = ShopSetting::query()->whereKey($setting->id)->delete();
+
+        $this->assertSame(1, $deleted);
+        $this->assertDatabaseMissing('shop_settings', ['id' => $setting->id]);
     }
 
     public function test_customer_deletion_is_not_exposed_or_authorized(): void
