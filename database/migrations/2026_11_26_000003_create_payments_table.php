@@ -66,18 +66,18 @@ return new class extends Migration
         });
 
         DB::statement(
-            "ALTER TABLE \`payments\`
-             ADD CONSTRAINT \`payments_amount_check\` CHECK (\`amount\` > 0),
-             ADD CONSTRAINT \`payments_type_check\`
-                 CHECK (\`payment_type\` IN ('NORMAL', 'SALE_DAY_AUTO', 'REVERSAL')),
-             ADD CONSTRAINT \`payments_source_type_check\`
+            "ALTER TABLE `payments`
+             ADD CONSTRAINT `payments_amount_check` CHECK (`amount` > 0),
+             ADD CONSTRAINT `payments_type_check`
+                 CHECK (`payment_type` IN ('NORMAL', 'SALE_DAY_AUTO', 'REVERSAL')),
+             ADD CONSTRAINT `payments_source_type_check`
                  CHECK (
-                     (\`payment_type\` = 'NORMAL' AND \`source_sale_id\` IS NULL AND \`reversal_of_payment_id\` IS NULL)
-                     OR (\`payment_type\` = 'SALE_DAY_AUTO' AND \`source_sale_id\` IS NOT NULL AND \`reversal_of_payment_id\` IS NULL)
-                     OR (\`payment_type\` = 'REVERSAL' AND \`source_sale_id\` IS NULL AND \`reversal_of_payment_id\` IS NOT NULL)
+                     (`payment_type` = 'NORMAL' AND `source_sale_id` IS NULL AND `reversal_of_payment_id` IS NULL)
+                     OR (`payment_type` = 'SALE_DAY_AUTO' AND `source_sale_id` IS NOT NULL AND `reversal_of_payment_id` IS NULL)
+                     OR (`payment_type` = 'REVERSAL' AND `source_sale_id` IS NULL AND `reversal_of_payment_id` IS NOT NULL)
                  ),
-             ADD CONSTRAINT \`payments_replacement_type_check\`
-                 CHECK (\`replacement_for_payment_id\` IS NULL OR \`payment_type\` = 'NORMAL')"
+             ADD CONSTRAINT `payments_replacement_type_check`
+                 CHECK (`replacement_for_payment_id` IS NULL OR `payment_type` = 'NORMAL')"
         );
     }
 
