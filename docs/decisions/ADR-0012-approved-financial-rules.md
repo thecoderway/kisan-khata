@@ -106,3 +106,8 @@ Any change to these approved rules requires explicit Product Owner approval and 
 The previously open initial values are now decided:
 - **Capitalization initial default: OFF** at Shop level. Customer-level override is supported; if no override is set, the Shop's OFF value applies.
 - **Annual Interest Auto Settlement dates: 30 March and 30 October** each year as the initial Shop dates. The Owner may configure the Shop's two dates through Shop Settings.
+
+
+## Clarification: detailed date and rounding conventions (2026-11-25)
+
+The Product Owner approved Actual Days / 30 and two-decimal posted interest. The following were proposed during documentation drafting but have not been explicitly confirmed by the Product Owner: HALF_UP rounding mode, [start inclusive, end exclusive) interval convention, and Sale Date as grace-period Day 0. These are recommendations only until separately confirmed. Implementation must not treat them as final approved policy yet.
