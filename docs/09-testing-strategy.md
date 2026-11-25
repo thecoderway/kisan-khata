@@ -1,6 +1,6 @@
 # Kisan Khata — Testing Strategy
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Status:** Approved  
 **Testing Framework:** Pest (preferred) or PHPUnit, following the existing Laravel project  
 **Backend:** Laravel 13  
@@ -192,6 +192,49 @@ Verify:
 - Unknown, stale or unsupported LGD codes are rejected.
 - Mismatched State/District/Subdistrict/Village combinations are rejected server-side.
 - Duplicate village names remain distinguishable by their LGD codes and hierarchy.
+
+### 6.1 Customer Lifecycle Tests
+
+Verify all lifecycle behavior through Web and API requests, independently of UI visibility:
+
+**State transitions**
+- Active customer can be deactivated by Owner and Manager.
+- Deactivation requires a non-empty reason; blank or missing reasons are rejected.
+- Deactivation changes status to Inactive, retains the customer and all history, removes the customer from the default directory and prevents selection for new transactions.
+- Inactive customer can be reactivated by Owner and Manager.
+- Reactivation reason is optional and is retained when supplied.
+- Reactivation changes status to Active and restores default-directory/new-transaction eligibility.
+- Only Soft Deleted customers can be restored.
+- Restore clears `deleted_at` and preserves the exact pre-deletion Active or Inactive status.
+- Restoring an Inactive customer does not activate it.
+- Invalid, repeated or stale state transitions are rejected safely.
+
+**Role authorization**
+- Owner and Manager can perform permitted customer lifecycle actions.
+- Staff cannot deactivate, reactivate, soft-delete or restore customers, even by calling endpoints directly.
+- Unauthenticated users and users without an active authorized shop context are denied.
+- Authorization is enforced server-side for every lifecycle endpoint.
+
+**Deletion eligibility and retention**
+- Soft deletion requires a non-empty reason.
+- Soft deletion is allowed only when no financial or transaction records are associated with the customer.
+- Soft deletion is rejected when Sales, Payments, Udhaar/Outstanding or Ledger records exist.
+- Inactive status does not make a customer eligible for deletion when financial history exists.
+- The eligibility checker includes relationships introduced by future financial modules; unknown or unverifiable eligibility fails closed.
+- Soft deletion sets `deleted_at`, never physically removes the customer, and preserves the prior Active/Inactive status.
+- No ordinary Web/API route can permanently delete a customer.
+
+**Tenant isolation**
+- Owner/Manager of Shop A cannot deactivate, reactivate, soft-delete or restore Shop B customers.
+- Cross-tenant identifiers and client-supplied `shop_id` values cannot bypass tenant scoping.
+- Lifecycle lookup, dependency checks and audit writes remain within the authenticated shop.
+
+**Audit and concurrency**
+- Every successful lifecycle action creates exactly one append-only audit event with shop, actor, customer, action, previous/new state, timestamp and applicable reason.
+- Failed operations create no misleading success event and do not partially change customer state.
+- Audit history cannot be updated or deleted through ordinary model or bulk-query operations.
+- Concurrent lifecycle requests cannot produce conflicting states or duplicate success events.
+- Restore validates tenant ownership and applicable duplicate/uniqueness constraints.
 
 ## 7. Credit Sale Tests
 

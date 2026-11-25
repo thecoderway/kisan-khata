@@ -1,6 +1,6 @@
 # Kisan Khata — Business Rules
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Status:** Approved  
 **Related Document:** `docs/01-product-requirements.md`
 
@@ -120,7 +120,71 @@ Custom per-user permission configuration is not part of the initial release.
 15. Customer information changes must be auditable.
 16. Customer deactivation must not delete financial history.
 
-### 4.1 Crop-Season Tagging
+### 4.1 Customer Lifecycle
+
+Customer lifecycle has exactly three states:
+
+- **Active:** The customer is available in the default customer directory and may be selected for new transactions.
+- **Inactive:** The customer profile and all history are retained, but the customer is excluded from the default customer directory and cannot be selected for new transactions.
+- **Soft Deleted:** The customer is logically deleted using the existing soft-delete mechanism. The record and audit history remain retained and are not available in ordinary customer workflows.
+
+#### Authorization and tenant boundary
+
+1. Only the Shop Owner and Manager may deactivate, reactivate, soft-delete or restore a customer.
+2. Staff may view, create and edit customer profile information as otherwise permitted, but may not perform any customer lifecycle action.
+3. Every lifecycle action must be authorized server-side for both Web and API requests. Hiding a control in the UI is not authorization.
+4. The target customer must belong to the authenticated user's current shop. Cross-shop lifecycle access must fail closed.
+5. The client must not choose or override the authoritative shop ID, actor ID or lifecycle state.
+6. Lifecycle operations must be transactional and protected against concurrent requests so the final state and audit history cannot contradict one another.
+
+#### Deactivation
+
+1. Owner or Manager may deactivate an Active customer.
+2. A deactivation reason is mandatory and must not be blank.
+3. The customer status becomes `inactive`; the customer is not physically deleted.
+4. Customer profile, historical activity and financial history remain unchanged and retained.
+5. Inactive customers are excluded from the default customer list and cannot be selected for new transactions.
+6. The action must append an audit event containing the shop, actor, customer, action, previous and new lifecycle state, reason and timestamp.
+
+#### Reactivation
+
+1. Owner or Manager may reactivate an Inactive customer.
+2. A reactivation reason is optional; if supplied, it must be retained in the audit event.
+3. The customer status becomes `active`.
+4. Existing profile, historical activity and financial history remain unchanged.
+5. The customer becomes available in the default customer list and for new transactions.
+6. The action must append an audit event containing the shop, actor, customer, action, previous and new lifecycle state, optional reason and timestamp.
+
+#### Soft deletion
+
+1. Owner or Manager may soft-delete a customer only when the customer has no associated financial or transaction history.
+2. A deletion reason is mandatory and must not be blank.
+3. If the customer has any Sales, Payments, Udhaar/Outstanding or Ledger records, soft deletion is prohibited. An Inactive status does not bypass this restriction.
+4. The eligibility check must be designed as a centralized, extensible domain check so future financial modules and relationships are included when introduced. The absence of a relationship in the current codebase must not be treated as proof that the customer is safe to delete.
+5. Soft deletion must set `deleted_at`; ordinary application workflows must never physically delete the customer.
+6. The customer's prior Active or Inactive status must be preserved. Soft deletion is represented by the soft-delete marker and must not overwrite that status.
+7. The action must append an audit event containing the shop, actor, customer, action, preserved prior state, soft-deleted state, reason and timestamp.
+8. If eligibility cannot be established safely, deletion must fail closed.
+
+#### Restore
+
+1. Owner or Manager may restore a Soft Deleted customer.
+2. Restore must clear `deleted_at` and preserve the customer's pre-deletion Active or Inactive status.
+3. Restore must not automatically activate an Inactive customer.
+4. Tenant ownership and applicable duplicate/uniqueness validation must be checked before restoration.
+5. Existing profile, historical activity and financial history must remain unchanged.
+6. The action must append an audit event containing the shop, actor, customer, action, previous soft-deleted state, restored lifecycle state and timestamp.
+
+#### Audit and integrity
+
+1. Lifecycle audit events are append-only and tenant-scoped.
+2. Each event must identify the actor, customer, shop, action, previous/new state, timestamp and reason where required or supplied.
+3. Audit records must not be updated or deleted through ordinary application workflows.
+4. A failed lifecycle operation must not leave a partial customer-state change or a misleading success audit event.
+5. Concurrent lifecycle requests must serialize or otherwise use safe locking so invalid transitions cannot both succeed.
+6. No permanent-delete action is available in the normal customer UI or API.
+
+### 4.2 Crop-Season Tagging
 
 1. A sale may be associated with a crop season.
 2. Examples include Kharif and Rabi.
