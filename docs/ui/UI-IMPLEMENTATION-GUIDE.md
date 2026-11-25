@@ -53,7 +53,7 @@ Create these incrementally when implementing real pages.
 7. No business data is hardcoded in production views.
 ## Shared contextual action drawer
 
-The application-wide drawer decision is defined in [ADR-0012](../decisions/ADR-0012-application-wide-right-side-drawer-standard.md).
+The application-wide drawer decisions are defined in [ADR-0012](../decisions/ADR-0012-application-wide-right-side-drawer-standard.md) and [ADR-0013](../decisions/ADR-0013-asynchronous-action-drawer-form-submission.md).
 
 ### Component responsibilities
 
@@ -88,3 +88,26 @@ Do not create all suggested files automatically; implement the smallest reusable
 ### Full-page exception
 
 Use a full-page workflow only when the drawer materially harms usability due to multi-step navigation, complex tables/calculations, required workspace width or independent sections that must be compared. Document the reason. Field count alone is not a decision rule.
+
+
+## Asynchronous drawer form submission
+
+All forms rendered in the contextual action drawer MUST use the shared asynchronous submission mechanism described by [ADR-0013](../decisions/ADR-0013-asynchronous-action-drawer-form-submission.md).
+
+- Use the browser Fetch API, Alpine.js and FormData; do not add jQuery solely for drawer submission.
+- Intercept only forms explicitly opted into the shared drawer contract. Do not globally intercept ordinary page forms.
+- Send Accept: application/json and preserve same-origin session/CSRF behavior. FormData must preserve CSRF tokens, file controls and Laravel method spoofing.
+- Define and document a predictable JSON success response for each operation. Handle Laravel validation JSON (HTTP 422) by mapping errors to the corresponding fields and retaining entered values.
+- Keep the drawer open on validation, authorization, server, session or network errors. Never treat an ambiguous response as success.
+- Show pending state, prevent duplicate browser submissions, announce feedback accessibly and close only after confirmed success.
+- Refresh/update the relevant listing after success without discarding filters, pagination, sort or scroll context.
+- Keep validation, authorization, tenant isolation, audit and domain logic in Laravel. Client-side visibility or disabled controls are not security or idempotency controls.
+- Preserve existing non-AJAX behavior for non-drawer forms and non-drawer callers.
+
+## Listing filters and asynchronous result refresh
+
+Follow [Filter Guidelines](FILTER-GUIDELINES.md). Use server-side query services as the source of truth; apply text search with a default 350–400 ms debounce; apply discrete filters on change; cancel/ignore stale requests; reset pagination when filters change; synchronize URL state where practical; and preserve current results on request failure.
+
+## Production data tables
+
+Follow [Table Guidelines](TABLE-GUIDELINES.md). Every production data table must use a horizontally scrollable wrapper, sticky first/last columns, equal outer horizontal content insets, appropriate minimum height for short result sets and overlay positioning that prevents action menus from being clipped. Verify sticky stacking and focus visibility at supported viewports.
