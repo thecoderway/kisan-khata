@@ -161,11 +161,13 @@
     </section>
 @endsection
 
-@push('drawers')
-    <x-ui.action-drawer id="user-action-drawer" title="नया यूज़र" width="wide">
-        <x-slot:footer>
-            <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
-            <button type="submit" form="user-create-form" class="btn btn-primary kk-primary">यूज़र बनाएँ <i class="ti ti-check ms-1"></i></button>
-        </x-slot:footer>
-    </x-ui.action-drawer>
-@endpush
+@if ($isOwner)
+    @push('drawers')
+        <x-ui.action-drawer id="user-action-drawer" title="नया यूज़र" width="wide">
+            <x-slot:footer>
+                <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+                <button type="submit" form="user-create-form" class="btn btn-primary kk-primary">यूज़र बनाएँ <i class="ti ti-check ms-1"></i></button>
+            </x-slot:footer>
+        </x-ui.action-drawer>
+    @endpush
+@endif
