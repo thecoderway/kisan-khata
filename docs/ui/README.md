@@ -35,6 +35,8 @@ Status: Complete — design system, frontend foundation, and reviewed UI prototy
 - COLOR-PALETTE.md
 - TYPOGRAPHY.md
 - RESPONSIVE-GUIDELINES.md
+- TABLE-GUIDELINES.md
+- FILTER-GUIDELINES.md
 - COMPONENT-GUIDELINES.md
 - PAGE-LAYOUTS.md
 - ACCESSIBILITY.md
@@ -69,3 +71,12 @@ See:
 - [Responsive Guidelines](RESPONSIVE-GUIDELINES.md)
 - [Accessibility](ACCESSIBILITY.md)
 - [UI Implementation Guide](UI-IMPLEMENTATION-GUIDE.md)
+
+
+## Application-wide interaction and data presentation standards
+
+- [ADR-0013 — Asynchronous Action Drawer Form Submission](../decisions/ADR-0013-asynchronous-action-drawer-form-submission.md)
+- [Table Guidelines](TABLE-GUIDELINES.md)
+- [Filter Guidelines](FILTER-GUIDELINES.md)
+
+All drawer forms use the shared asynchronous submission contract. All production data tables follow the table container, sticky edge-column, spacing and overlay rules. Listing filters follow the automatic-filtering and request lifecycle standards. These standards apply to future modules unless an approved, documented exception exists.
