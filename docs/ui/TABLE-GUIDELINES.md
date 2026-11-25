@@ -13,12 +13,12 @@ These rules apply to every data table in the authenticated application, includin
 - Provide an accessible name or context for the table and its scroll region where needed. Ensure keyboard users can reach and operate horizontal scrolling.
 - Do not nest unnecessary horizontal scroll containers.
 
-## Sticky edge columns
+## Sticky first column
 
 - The first column MUST remain sticky at the left edge while the table scrolls horizontally.
 - Every column after the first, including the last/action column, MUST scroll normally with the table. Do not make the last column sticky.
 - The first sticky column MUST have an opaque surface background, an appropriate right-edge divider/shadow and a deliberate stacking order so scrolling cells never show through it.
-- Header cells must layer correctly above body cells. The intersection of sticky header and sticky edge columns must remain visible and readable.
+- Header cells must layer correctly above body cells. The intersection of the sticky header and sticky first column must remain visible and readable.
 - The first-column sticky treatment MUST account for its actual width and responsive changes. Do not hardcode offsets that become incorrect when column widths change.
 - When a table has only one column, its first column may remain sticky at the left; do not add a second sticky treatment.
 - First-column sticky behavior MUST not obscure focus outlines, validation feedback, row content or actionable controls.
@@ -27,7 +27,7 @@ These rules apply to every data table in the authenticated application, includin
 
 - Use a consistent horizontal cell-padding token across the table.
 - The content inset from the table's outer left border to the first column's content MUST match the inset from the last column's content to the outer right border.
-- First/last column sticky styling MUST preserve this spacing; do not compensate by adding arbitrary one-off margins to individual pages.
+- First-column sticky styling MUST preserve this spacing; do not compensate by adding arbitrary one-off margins to individual pages.
 - Align headers and body cells consistently. Numeric and currency alignment may differ by data type, but the cell's horizontal padding remains consistent.
 - Verify spacing at desktop, tablet and mobile widths.
 
