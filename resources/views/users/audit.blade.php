@@ -26,7 +26,6 @@
                 </select>
             </div>
             <input type="hidden" name="pageSize" value="{{ $logs->perPage() }}">
-            <button type="submit" class="btn btn-primary kk-primary">फ़िल्टर</button>
             <a href="{{ route('users.audit') }}" class="btn btn-outline-secondary" data-audit-filter-reset @if (!request('q') && request('action', 'all') === 'all') hidden @endif>Reset</a>
         </form>
         <div class="visually-hidden" data-audit-filter-status role="status" aria-live="polite"></div>

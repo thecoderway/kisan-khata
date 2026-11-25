@@ -74,7 +74,6 @@
                 </select>
             </div>
             <input type="hidden" name="pageSize" value="{{ $users->perPage() }}">
-            <button type="submit" class="btn btn-primary kk-primary">फ़िल्टर</button>
             <a href="{{ route('users.index') }}" class="btn btn-outline-secondary" data-user-filter-reset @if (!request('q') && request('role', 'all') === 'all' && request('status', 'all') === 'all') hidden @endif>Reset</a>
         </form>
 

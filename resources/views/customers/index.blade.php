@@ -43,7 +43,6 @@
                     <option value="deleted" @selected($status === 'deleted')>Soft Deleted ग्राहक</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-outline-secondary"><i class="ti ti-search me-1"></i> खोजें</button>
             <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary" data-customer-filter-reset @if ($search === '' && $status === 'active') hidden @endif>साफ़ करें</a>
         </form>
 
