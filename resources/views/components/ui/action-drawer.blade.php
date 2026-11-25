@@ -10,6 +10,7 @@
     x-on:keydown.escape.window="onEscape($event)"
     x-on:kk-drawer:close="close()"
     x-on:keydown.tab="trapFocus($event)"
+    x-on:submit="onSubmit($event)"
     class="kk-drawer-root"
     :aria-hidden="(!isOpen).toString()"
 >
