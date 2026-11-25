@@ -16,7 +16,12 @@
         </a>
         <div class="sidebar-shop">
             <span class="sidebar-shop-icon"><i class="ti ti-building-store"></i></span>
-            <span><small>आपकी दुकान</small><strong>{{ app(\App\Tenancy\CurrentShop::class)->require()->name }}</strong></span>
+            <span class="sidebar-shop-details"><small>आपकी दुकान</small><strong>{{ app(\App\Tenancy\CurrentShop::class)->require()->name }}</strong></span>
+            @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
+                <a href="{{ route('shop-profile.edit') }}" class="sidebar-shop-edit" aria-label="दुकान की जानकारी संपादित करें" title="दुकान की जानकारी संपादित करें">
+                    <i class="ti ti-pencil"></i>
+                </a>
+            @endif
         </div>
         <nav class="app-navigation" aria-label="मुख्य नेविगेशन">
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -25,11 +30,6 @@
             <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">
                 <i class="ti ti-users"></i><span>ग्राहक</span>
             </a>
-            @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
-                <a href="{{ route('shop-profile.edit') }}" class="{{ request()->routeIs('shop-profile.*') ? 'active' : '' }}">
-                    <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>
-                </a>
-            @endif
             @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
                 <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index', 'users.create') ? 'active' : '' }}">
                     <i class="ti ti-users"></i><span>{{ auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन' }}</span>
@@ -42,9 +42,21 @@
             @endif
         </nav>
         <div class="sidebar-bottom">
-            <div class="sidebar-user">
-                <span class="user-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
-                <span><strong>{{ auth()->user()->name }}</strong><small>{{ ucfirst(auth()->user()->role) }}</small></span>
+            <div class="sidebar-user-settings" x-data="{ settingsOpen: false }">
+                <div class="sidebar-user">
+                    <span class="user-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
+                    <span class="sidebar-user-details"><strong>{{ auth()->user()->name }}</strong><small>{{ ucfirst(auth()->user()->role) }}</small></span>
+                    @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
+                        <button type="button" class="sidebar-settings-button" aria-label="सेटिंग्स खोलें" :aria-expanded="settingsOpen.toString()" @click.stop="settingsOpen = !settingsOpen">
+                            <i class="ti ti-settings"></i>
+                        </button>
+                        <div class="sidebar-settings-menu" x-cloak x-show="settingsOpen" x-transition.origin.bottom.right @click.outside="settingsOpen = false" @keydown.escape.window="settingsOpen = false">
+                            <a href="{{ route('shop-profile.edit') }}" @click="settingsOpen = false; sidebarOpen = false">
+                                <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>
+                            </a>
+                        </div>
+                    @endif
+                </div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

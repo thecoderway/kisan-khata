@@ -501,3 +501,82 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
         flex-direction: column;
     }
 }
+
+
+/* Sidebar shop shortcut and owner settings dropdown */
+.sidebar-shop-details {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sidebar-shop-edit,
+.sidebar-settings-button {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #64748b;
+    font-size: 18px;
+    text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+}
+
+.sidebar-shop-edit:hover,
+.sidebar-settings-button:hover,
+.sidebar-settings-button[aria-expanded="true"] {
+    background: var(--kk-green-soft);
+    color: var(--kk-green);
+}
+
+.sidebar-user-settings {
+    position: relative;
+}
+
+.sidebar-user-settings .sidebar-user {
+    min-width: 0;
+}
+
+.sidebar-user-details {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sidebar-settings-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    z-index: 1110;
+    width: 220px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgb(15 23 42 / 14%);
+}
+
+.sidebar-settings-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 10px;
+    border-radius: 7px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+.sidebar-settings-menu a:hover {
+    background: #f1f5f9;
+    color: var(--kk-green);
+}
+
+.sidebar-settings-menu a i {
+    color: var(--kk-green);
+    font-size: 17px;
+}
