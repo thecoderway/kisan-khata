@@ -497,6 +497,50 @@ class CustomerManagementTest extends TestCase
         $this->assertStringContainsString('रामलाल', $response->json('html'));
     }
 
+    public function test_customer_directory_uses_requested_server_side_page_size_and_preserves_query_state(): void
+    {
+        $owner = $this->makeUser();
+
+        for ($index = 1; $index <= 23; $index++) {
+            DB::table('customers')->insert([
+                'shop_id' => $owner->shop_id,
+                'name_original' => sprintf('Customer %02d', $index),
+                'name_original_language' => 'en',
+                'name_en' => sprintf('Customer %02d', $index),
+                'status' => Customer::STATUS_ACTIVE,
+                'created_by' => $owner->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->actingAs($owner)->getJson(route('customers.index', [
+            'status' => 'active',
+            'page' => 2,
+            'pageSize' => 10,
+            'fragment' => 1,
+        ]))->assertOk()
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.per_page', 10)
+            ->assertJsonPath('meta.total', 23)
+            ->assertJsonPath('meta.last_page', 3)
+            ->assertJsonPath('html', fn (string $html): bool => str_contains($html, 'Showing')
+                && str_contains($html, '11–20')
+                && str_contains($html, '23')
+                && str_contains($html, 'value="10" selected'));
+    }
+
+    public function test_customer_directory_normalizes_unsupported_page_sizes_to_default(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->getJson(route('customers.index', [
+            'pageSize' => 500,
+            'fragment' => 1,
+        ]))->assertOk()
+            ->assertJsonPath('meta.per_page', 20);
+    }
+
     public function test_customer_lifecycle_drawer_returns_json_validation_and_success_responses(): void
     {
         $owner = $this->makeUser();
