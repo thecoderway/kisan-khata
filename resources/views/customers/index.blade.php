@@ -134,13 +134,13 @@
 @endsection
 
 @push('drawers')
-    <x-ui.action-drawer id="customer-action-drawer" title="{{ $drawerAction === 'edit' ? 'ग्राहक संपादित करें' : 'नया ग्राहक' }}" width="wide">
+    <x-ui.action-drawer id="customer-action-drawer" title="{{ match($drawerAction) { 'edit' => 'ग्राहक संपादित करें', 'deactivate' => 'ग्राहक निष्क्रिय करें', 'reactivate' => 'ग्राहक पुनः सक्रिय करें', 'soft-delete' => 'ग्राहक Soft Delete करें', 'restore' => 'ग्राहक Restore करें', default => 'नया ग्राहक' } }}" width="wide">
         @if ($drawerContent)
             {!! $drawerContent !!}
         @endif
         <x-slot:footer>
             <button type="button" class="btn btn-outline-secondary" data-drawer-close>बंद करें</button>
-            <button type="submit" form="customer-form" class="btn btn-primary kk-primary">सेव करें <i class="ti ti-check ms-1"></i></button>
+            <button type="submit" form="customer-form" class="btn btn-primary kk-primary">{{ match($drawerAction) { "deactivate" => "निष्क्रिय करें", "reactivate" => "पुनः सक्रिय करें", "soft-delete" => "Soft Delete", "restore" => "Restore", default => "सेव करें" } }} <i class="ti ti-check ms-1"></i></button>
         </x-slot:footer>
     </x-ui.action-drawer>
 @endpush
