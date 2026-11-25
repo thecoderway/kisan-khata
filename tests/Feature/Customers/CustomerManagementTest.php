@@ -274,6 +274,7 @@ class CustomerManagementTest extends TestCase
         $this->assertFalse(Gate::forUser($owner)->allows('delete', $customer));
         $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => null]);
     }
+
     public function test_owner_and_manager_can_deactivate_and_reactivate_with_audit_history(): void
     {
         foreach ([User::ROLE_OWNER, User::ROLE_MANAGER] as $role) {
