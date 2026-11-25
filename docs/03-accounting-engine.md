@@ -525,3 +525,12 @@ Same-day subsequent normal payments must not recalculate the same elapsed interv
 ### 21.9 Convention approval boundary (2026-11-25)
 
 Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries, and Sale Date as grace-period Day 0 were proposed in drafting but are not explicitly confirmed by the Product Owner. Treat them as recommendations pending confirmation before implementation.
+
+
+### 21.10 Product Owner-approved calculation and allocation conventions (2026-11-25)
+
+- Posted interest uses HALF_UP rounding to 2 decimal places, using decimal-safe arithmetic and sufficient intermediate precision.
+- Interest calculation intervals are [start inclusive, end exclusive).
+- Sale Date is Grace Period Day 0. The first eligible day is after 30 complete calendar days when the Shop grace period is 30 days.
+- Allocation order is **Sale FIFO first, then per-Sale waterfall**. For each oldest eligible Sale, apply the Shop's selected Principal First or Interest First policy to that Sale's eligible principal/interest components before moving to the next Sale.
+- A historical Sale locked by a later Payment or annual Interest Auto Settlement has no exceptional correction path in the approved scope. Stop; obtain separate Product Owner approval and design before any such correction.
