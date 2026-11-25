@@ -7,7 +7,7 @@
 
 ## Context
 
-ADR-0012 established the application-wide right-side action drawer and requires it to remain open when validation or server errors occur, preserve entered values, and close only after server-confirmed success.
+ADR-0014 established the application-wide right-side action drawer and requires it to remain open when validation or server errors occur, preserve entered values, and close only after server-confirmed success.
 
 The initial drawer implementation used ordinary browser form submissions. A redirect after validation failure reloads the page and requires the drawer context to be restored. This interrupts the user's workflow and creates avoidable UI state complexity.
 
@@ -17,7 +17,7 @@ The approved frontend foundation is Laravel Blade, Tabler Core, Alpine.js, Vite 
 
 All forms submitted from the shared contextual action drawer MUST use asynchronous submission. Use the browser Fetch API with the existing Alpine.js and Blade architecture unless a future superseding ADR approves a different transport or framework.
 
-This decision supplements ADR-0012. It does not require ordinary full-page forms outside the action drawer to use AJAX.
+This decision supplements ADR-0014. It does not require ordinary full-page forms outside the action drawer to use AJAX.
 
 ## Interaction contract
 
@@ -65,7 +65,7 @@ Use the existing Alpine.js and Fetch API foundation. Do not add jQuery or anothe
 - Pending indicators and floating toasts MUST expose appropriate accessible status/live-region semantics.
 - Floating toasts MUST be keyboard dismissible, readable over the page, responsive on mobile and automatically dismiss after a reasonable interval; users must also be able to dismiss them manually.
 - Announce pending and completion/error feedback through appropriate live regions.
-- Keep focus behavior consistent with the modal drawer contract in ADR-0012.
+- Keep focus behavior consistent with the modal drawer contract in ADR-0014.
 - Do not rely on color alone to communicate errors or success.
 - Ensure the form remains usable when JavaScript is unavailable only where a deliberate progressive-enhancement fallback is provided; otherwise, the application must fail clearly rather than silently discard a submission.
 - Test slow responses, validation errors, session expiry, server errors, network interruption and repeated activation.
@@ -103,7 +103,7 @@ This is a presentation and transport decision, not a relaxation of server-side c
 
 ## Related decisions and documents
 
-- [ADR-0012 — Application-Wide Right-Side Drawer Standard](ADR-0012-application-wide-right-side-drawer-standard.md)
+- [ADR-0014 — Application-Wide Right-Side Drawer Standard](ADR-0014-application-wide-right-side-drawer-standard.md)
 - [UI Implementation Guide](../ui/UI-IMPLEMENTATION-GUIDE.md)
 - [Component Guidelines](../ui/COMPONENT-GUIDELINES.md)
 - [Filter Guidelines](../ui/FILTER-GUIDELINES.md)

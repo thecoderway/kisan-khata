@@ -38,7 +38,7 @@
 - Never imply a transaction succeeded before the server confirms it.
 ## Right-side action drawer
 
-The application-wide default for routine Create, Edit and record-level actions is the shared right-side action drawer. See [ADR-0012](../decisions/ADR-0012-application-wide-right-side-drawer-standard.md) and [ADR-0013](../decisions/ADR-0013-asynchronous-action-drawer-form-submission.md).
+The application-wide default for routine Create, Edit and record-level actions is the shared right-side action drawer. See [ADR-0014](../decisions/ADR-0014-application-wide-right-side-drawer-standard.md) and [ADR-0013](../decisions/ADR-0013-asynchronous-action-drawer-form-submission.md).
 
 - Open only in response to an explicit user click; do not keep the drawer permanently open.
 - On desktop, overlay the page from the right. Use approximately 480 CSS px as the default width; use a wider variant only when the form needs it.

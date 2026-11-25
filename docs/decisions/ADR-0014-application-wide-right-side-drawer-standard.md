@@ -1,4 +1,4 @@
-# ADR-0012: Application-Wide Right-Side Drawer Standard
+# ADR-0014: Application-Wide Right-Side Drawer Standard
 
 - **Status:** ACCEPTED
 - **Date:** 2026-11-25
