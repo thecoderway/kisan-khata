@@ -18,6 +18,7 @@ Approved target stack: PHP 8.3, Laravel 13, MySQL 8.4. Inspect actual environmen
 9. For payments, implement consolidated payable reduction only; no sale-level allocation. Apply interest through payment date, avoid duplicate same-day interest, preserve new-sale dates and carry-forward cycle start.
 10. Owner-only posted Sale/Payment edits must retain immutable before/after audit history; Manager/Staff cannot edit.
 11. Write success, validation, authorization, tenant, financial boundary and concurrency tests.
-12. Run relevant tests/formatting/static analysis and report exact results and remaining risks.
+12. For every new or modified PHP file, run Laravel Pint on the touched file(s), inspect any formatter diff, and run `composer lint` before commit/push. The project lint script is check-only (`vendor/bin/pint --test`). If Pint fails, fix the exact reported formatting and rerun; never disable rules, add ignores, or weaken Pint configuration without explicit approval. Repeat after any subsequent PHP edit.
+13. Run relevant tests and static analysis only under the project's approved database-isolation and environment-safety rules. Report exact results and remaining risks; do not infer test success from formatting success.
 
 Stop and ask if behavior depends on unresolved policy.
