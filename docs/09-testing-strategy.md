@@ -763,3 +763,13 @@ MySQL 8.4 is mandatory for row locks, concurrent posting, foreign-key and tenant
 ### 25.1 Interest convention tests pending Product Owner confirmation
 
 Tests for Actual Days / 30 and two-decimal posted interest are required. Tests asserting HALF_UP rounding, [start inclusive, end exclusive) date boundaries or Sale Date Day 0 must be finalized only after the Product Owner confirms those conventions. Until then, retain them as candidate test cases, not accepted expected outcomes.
+
+
+### 25.2 Product Owner-approved interest and allocation conventions (2026-11-25)
+
+The following are required expected outcomes, not pending candidate tests:
+- HALF_UP rounding to two decimal places, including exact half-cent boundary cases.
+- [start inclusive, end exclusive) interval behavior, including adjacent intervals and no duplicate day.
+- Grace period Sale Date Day 0; 30 complete calendar days elapse before the first eligible interest day.
+- FIFO Sale ordering first, followed by Principal First or Interest First within each Sale; verify that a later Sale is not allocated before the older Sale's components are exhausted according to the selected waterfall.
+- Locked historical Sale correction is rejected; no Owner bypass exists in the approved scope. Verify rejection and audit/security trace where appropriate.
