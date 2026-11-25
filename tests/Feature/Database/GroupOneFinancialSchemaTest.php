@@ -165,7 +165,8 @@ class GroupOneFinancialSchemaTest extends TestCase
         $transaction = FinancialTransaction::withoutGlobalScopes()->findOrFail($id);
 
         try {
-            $transaction->update(['source_type' => 'changed']);
+            $transaction->setAttribute('source_type', 'changed');
+            $transaction->save();
             $this->fail('Expected update to be blocked.');
         } catch (LogicException $exception) {
             $this->assertStringContainsString('immutable', $exception->getMessage());
