@@ -191,7 +191,7 @@ Alpine.data('actionDrawer', () => ({
     async submitDrawerForm(form) {
         const submitButtons = Array.from(this.$refs.panel.querySelectorAll('button[type="submit"], input[type="submit"]'))
             .filter((button) => button.form === form);
-        const originalLabels = submitButtons.map((button) => button.innerHTML);
+        const pendingIndicators = [];
 
         form.dataset.submitting = 'true';
         form.setAttribute('aria-busy', 'true');
@@ -201,7 +201,17 @@ Alpine.data('actionDrawer', () => ({
             button.disabled = true;
             button.setAttribute('aria-disabled', 'true');
             button.setAttribute('aria-busy', 'true');
-            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span><span>प्रक्रिया जारी है…</span>';
+
+            if (button instanceof HTMLButtonElement) {
+                button.classList.add('kk-drawer-submit-pending');
+
+                const indicator = document.createElement('span');
+                indicator.className = 'kk-drawer-submit-indicator';
+                indicator.setAttribute('role', 'status');
+                indicator.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span>प्रक्रिया जारी है…</span>';
+                button.appendChild(indicator);
+                pendingIndicators.push({ button, indicator });
+            }
         });
 
         try {
@@ -234,19 +244,26 @@ Alpine.data('actionDrawer', () => ({
 
             delete form.dataset.submitting;
             this.close();
+            window.dispatchEvent(new CustomEvent('kk-toast:show', {
+                detail: {
+                    message: payload.message || 'कार्रवाई सफलतापूर्वक पूरी हुई।',
+                    variant: 'success',
+                },
+            }));
             window.dispatchEvent(new CustomEvent('kk-drawer:success', { detail: payload }));
         } catch (error) {
             this.showDrawerMessage(form, 'नेटवर्क समस्या के कारण परिणाम की पुष्टि नहीं हो सकी। दोबारा भेजने से पहले रिकॉर्ड की स्थिति जाँचें।');
         } finally {
             delete form.dataset.submitting;
             form.removeAttribute('aria-busy');
-            submitButtons.forEach((button, index) => {
+            pendingIndicators.forEach(({ button, indicator }) => {
+                indicator.remove();
+                button.classList.remove('kk-drawer-submit-pending');
+            });
+            submitButtons.forEach((button) => {
                 button.disabled = false;
                 button.removeAttribute('aria-disabled');
                 button.removeAttribute('aria-busy');
-                if (button.innerHTML !== originalLabels[index] && !button.dataset.keepLabel) {
-                    button.innerHTML = originalLabels[index];
-                }
             });
         }
     },
@@ -352,4 +369,41 @@ document.addEventListener('hidden.bs.dropdown', (event) => {
     }
 
     customerDropdownPortals.delete(event.target);
+});
+
+
+document.addEventListener('kk-toast:show', (event) => {
+    const region = document.getElementById('kk-toast-region');
+    const message = String(event.detail?.message || '').trim();
+
+    if (!region || !message) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'kk-floating-toast is-' + (event.detail?.variant === 'error' ? 'error' : 'success');
+    toast.setAttribute('role', event.detail?.variant === 'error' ? 'alert' : 'status');
+
+    const icon = document.createElement('i');
+    icon.className = event.detail?.variant === 'error' ? 'ti ti-alert-circle' : 'ti ti-circle-check';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const text = document.createElement('span');
+    text.className = 'kk-floating-toast-message';
+    text.textContent = message;
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'kk-floating-toast-close';
+    close.setAttribute('aria-label', 'सूचना बंद करें');
+    close.innerHTML = '<i class="ti ti-x" aria-hidden="true"></i>';
+
+    const dismiss = () => {
+        window.clearTimeout(timeout);
+        toast.remove();
+    };
+    close.addEventListener('click', dismiss);
+
+    toast.append(icon, text, close);
+    region.appendChild(toast);
+
+    const timeout = window.setTimeout(dismiss, 5000);
 });
