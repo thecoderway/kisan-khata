@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Auth\TokenController;
 use App\Http\Controllers\Api\Users\ShopUserLifecycleController;
 use App\Http\Controllers\Api\Users\UserAuditHistoryController;
 use App\Modules\Customers\Presentation\Controllers\Api\CustomerController;
+use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
