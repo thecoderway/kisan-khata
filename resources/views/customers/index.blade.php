@@ -48,7 +48,6 @@
         </form>
 
         <div class="visually-hidden" data-customer-filter-status role="status" aria-live="polite"></div>
-        <div class="alert alert-success" data-customer-feedback role="status" hidden></div>
         <div id="customer-results" data-customer-results>
             @include('customers.partials.results', ['customers' => $customers, 'search' => $search, 'status' => $status])
         </div>
