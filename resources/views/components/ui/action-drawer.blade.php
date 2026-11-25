@@ -6,7 +6,9 @@
 
 <div
     x-data="actionDrawer()"
+    x-init="if ($refs.body.querySelector('[data-drawer-error-summary]')) open({ title: @js($title), width: @js($width) })"
     x-on:keydown.escape.window="onEscape($event)"
+    x-on:kk-drawer:close="close()"
     x-on:keydown.tab="trapFocus($event)"
     x-show="isOpen"
     x-cloak
