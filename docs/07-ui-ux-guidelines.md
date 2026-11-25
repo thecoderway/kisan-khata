@@ -614,11 +614,9 @@ Test at:
 - Small Android phone.
 - Large Android phone.
 
-The interface must remain usable at common mobile widths.
+The interface must remain usable at common mobile widths. Every production data table MUST use a horizontally scrollable container and follow [Table Guidelines](ui/TABLE-GUIDELINES.md). The table container, not the page, owns horizontal overflow. The first and last columns remain sticky at the left and right edges respectively. Preserve equal outer horizontal content padding, readable column widths, visible focus and unclipped row-action menus. Do not silently replace a required table with cards or hide its edge columns; a different mobile presentation requires a documented, approved usability/accessibility exception.
 
-Tables should adapt to mobile-friendly transaction lists or responsive layouts.
-
-Do not force users to scroll horizontally for routine operations wherever avoidable.
+Routine listing filters SHOULD apply automatically. Text search uses a default 350–400 ms debounce; discrete filters apply on change. Keep server-side filtering authoritative and handle stale requests, loading/error states, pagination reset and URL state according to [Filter Guidelines](ui/FILTER-GUIDELINES.md).
 
 ## 25. Role-Based UI
 
@@ -743,3 +741,35 @@ Use the approved Blade, Tabler, Alpine.js and Vite stack. The shared drawer owns
 Use dialog semantics and an accessible name; move focus into the drawer on open, contain keyboard focus while modal, return focus to the trigger on close, support Escape and a visible close control, lock/restore background scroll and interaction, respect reduced motion, and maintain visible focus and labelled validation. Touch targets should be at least 44 × 44 CSS px where practical.
 
 Implementation details and acceptance requirements are maintained in the UI component, page layout, responsive, accessibility and implementation guides.
+
+
+## 29. Application-Wide Table and Listing Filter Standards
+
+These rules apply to Customer Directory and all current/future modules:
+
+- Every production data table is wrapped in a horizontally scrollable container; page-level horizontal overflow is not permitted.
+- The first column stays sticky on the left and the last column stays sticky on the right while scrolling horizontally. Sticky backgrounds, stacking and focus states must remain correct.
+- Horizontal content inset between the table outer border and the first/last column content must be equal.
+- One-row and few-row tables retain a balanced minimum height. Row-action dropdowns must not be clipped by table/card ancestor overflow; z-index alone is not a fix for clipping.
+- Routine filters apply automatically. Text search uses a default 350–400 ms debounce; discrete filters apply on change. Cancel or ignore stale requests, reset pagination when filters change, and preserve current results on failure.
+- Filtering remains server-side and must retain validation, authorization and tenant isolation.
+
+Implementation details and acceptance checks are maintained in [Table Guidelines](ui/TABLE-GUIDELINES.md) and [Filter Guidelines](ui/FILTER-GUIDELINES.md).
+
+## 30. Asynchronous Action Drawer Forms
+
+**Status:** Approved by the Product Owner on 2026-11-25. See [ADR-0013](decisions/ADR-0013-asynchronous-action-drawer-form-submission.md), which supplements ADR-0012.
+
+All forms submitted from the shared contextual action drawer MUST use the shared asynchronous submission mechanism based on the existing Fetch API and Alpine.js stack. Do not introduce jQuery solely for drawer forms.
+
+- Drawer form submission must not reload or navigate the page.
+- Keep the drawer open and preserve entered values on validation, authorization, server, session and network errors.
+- Map Laravel JSON validation errors (HTTP 422) to fields and show accessible error feedback.
+- Show pending state and prevent duplicate browser submissions.
+- Close only after an explicitly recognized server-confirmed success; then refresh/update the relevant listing and show feedback.
+- Preserve filters, pagination, sort and scroll context.
+- Keep CSRF, server validation, authorization, tenant isolation, audit logging and domain/business rules authoritative on the server.
+- Do not blindly retry a write after a network failure or ambiguous response.
+- Non-drawer forms retain their existing intended submission behavior unless separately approved.
+
+See [UI Implementation Guide](ui/UI-IMPLEMENTATION-GUIDE.md) and [Component Guidelines](ui/COMPONENT-GUIDELINES.md) for implementation requirements.
