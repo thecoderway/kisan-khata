@@ -28,10 +28,15 @@ Use responsive CSS based on available space, not device detection.
 - Primary actions must remain easy to reach.
 
 ## Tables
-- Prefer compact cards on narrow screens for customer/transaction records.
-- Use controlled horizontal scrolling only when tabular comparison is essential.
-- Keep important identifiers and financial values visible.
-- Never cause page-level horizontal overflow.
+
+Every production data table MUST use the shared horizontally scrollable table container defined in [Table Guidelines](TABLE-GUIDELINES.md). Horizontal scrolling is the standard table behavior at every viewport; it is not conditional on a developer deciding that comparison is essential.
+
+- Keep the first column sticky on the left and the last column sticky on the right while the table scrolls horizontally.
+- Preserve equal horizontal content padding at the outer left and right edges.
+- Use opaque sticky-cell backgrounds, correct stacking and responsive offsets.
+- Keep the table readable at narrow widths without causing page-level horizontal overflow.
+- Do not silently replace the table with cards or hide the required sticky columns. A materially different mobile presentation requires a documented, approved usability/accessibility exception.
+- Ensure row menus and overlays are not clipped by scroll containers or ancestor overflow.
 
 ## Touch and testing
 - Minimum target: 44 × 44 CSS px.
@@ -49,3 +54,8 @@ The action drawer is separate from the navigation drawer. It opens on explicit u
 - Prevent background interaction and scrolling while the modal drawer is open, then restore the prior state on close.
 - Test at the documented viewport sizes, with long Hindi/English labels, validation errors, browser zoom and the on-screen keyboard.
 - Do not confuse the contextual action drawer with the responsive navigation drawer.
+
+
+## Listing filters
+
+Routine listing filters should apply automatically. Debounce text search (default 350–400 ms), apply discrete filters on change, handle stale requests and preserve usable loading, empty and error states. See [Filter Guidelines](FILTER-GUIDELINES.md).
