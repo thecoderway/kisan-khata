@@ -536,3 +536,19 @@ The application must demonstrate:
 - Automated security and cross-tenant tests.
 
 All critical security tests must pass before production release.
+
+
+---
+
+## 24. Approved Phase 5 Financial Security Rules (2026-11-25)
+
+ADR-0012 is authoritative where earlier wording in this document conflicts.
+
+- Normal customer payments remain customer-account consolidated but are internally allocated FIFO across eligible unpaid Sales. This is not client-selectable; the server derives allocation order and amount.
+- A Paid Sale's automatic Payment is restricted to its originating Sale and must never settle older customer balances.
+- Reject any normal payment exceeding outstanding principal plus posted unpaid interest. Recalculate and validate under a locked customer account inside the posting transaction; never trust a client-provided payable balance.
+- Enforce sale edit locks after later Payment/annual Interest Auto Settlement events server-side. Payment corrections are reversal-based; no physical deletion or direct overwrite.
+- Enforce Owner-only financial policy configuration and correction permissions. Manager/Staff must not bypass restrictions through Web, API, jobs or direct resource identifiers.
+- Tenant-scope every allocation, payment, sale, interest item, reversal, policy version and ledger entry. Validate composite ownership among Shop, Customer, Payment and Sale.
+- Idempotency keys must be scoped to the tenant and operation; duplicate submissions must not create duplicate financial postings, allocations or interest.
+- All posting, allocation, reversal, balance projection and audit writes must be atomic and concurrency-safe.
