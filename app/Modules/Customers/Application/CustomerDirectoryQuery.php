@@ -41,10 +41,15 @@ class CustomerDirectoryQuery
             });
         }
 
+        $requestedPageSize = filter_var($request->query('pageSize', 20), FILTER_VALIDATE_INT);
+        $pageSize = in_array($requestedPageSize, [10, 20, 50, 100], true)
+            ? $requestedPageSize
+            : 20;
+
         return $query
             ->orderBy('customers.name_original')
             ->orderBy('customers.id')
-            ->paginate(20)
+            ->paginate($pageSize)
             ->withQueryString();
     }
 }
