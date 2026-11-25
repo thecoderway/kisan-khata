@@ -131,10 +131,22 @@ class GroupOneFinancialSchemaTest extends TestCase
     public function test_financial_transaction_number_is_unique_per_shop(): void
     {
         [$shop, $customer, $actor] = $this->shopCustomerAndActor();
-        $this->insertFinancialTransaction($shop->id, $customer->id, $actor->id, $actor->id);
+        $this->insertFinancialTransaction(
+            $shop->id,
+            $customer->id,
+            $actor->id,
+            $actor->id,
+            transactionNumber: 'TXN-DUPLICATE'
+        );
 
         $this->expectException(QueryException::class);
-        $this->insertFinancialTransaction($shop->id, $customer->id, $actor->id, $actor->id);
+        $this->insertFinancialTransaction(
+            $shop->id,
+            $customer->id,
+            $actor->id,
+            $actor->id,
+            transactionNumber: 'TXN-DUPLICATE'
+        );
     }
 
     public function test_financial_transaction_rejects_unknown_type(): void
@@ -245,7 +257,8 @@ class GroupOneFinancialSchemaTest extends TestCase
         int $customerId,
         int $createdBy,
         int $postedBy,
-        string $type = 'SALE_POSTING'
+        string $type = 'SALE_POSTING',
+        ?string $transactionNumber = null
     ): int {
         static $number = 0;
         $number++;
@@ -253,7 +266,7 @@ class GroupOneFinancialSchemaTest extends TestCase
         return (int) DB::table('financial_transactions')->insertGetId([
             'shop_id' => $shopId,
             'customer_id' => $customerId,
-            'transaction_number' => 'TXN-'.str_pad((string) $number, 8, '0', STR_PAD_LEFT),
+            'transaction_number' => $transactionNumber ?? 'TXN-'.str_pad((string) $number, 8, '0', STR_PAD_LEFT),
             'transaction_type' => $type,
             'effective_date' => now()->toDateString(),
             'occurred_at' => now(),
