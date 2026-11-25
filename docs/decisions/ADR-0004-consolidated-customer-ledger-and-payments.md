@@ -1,22 +1,26 @@
 # ADR-0004 — Consolidated Customer Ledger and Payments
 
-**Status:** ACCEPTED  
-**Date:** 2026-11-23
+**Status:** SUPERSEDED by ADR-0012  
+**Date:** 2026-11-23  
+**Superseded:** 2026-11-25
 
-## Context
-Payments are recorded against the customer's consolidated payable, not allocated to individual sales. New sales still retain their own dates for interest calculations.
+## Historical context
 
-## Decision
-Do not allocate payments to individual sales, split payments into sale-level principal/interest components, or create payment allocation records. At payment, calculate eligible interest through that date, determine consolidated payable, subtract payment and carry the remainder forward from that date. Same-day subsequent payments must not accrue the same interval twice. New sales retain their own dates. Excess payment is retained as customer advance.
+The original decision recorded consolidated customer-level payments without sale-level allocations. It prohibited a `payment_allocations` table and retained excess payments as customer advances.
 
-## Consequences
-The calculation engine tracks the carried-forward balance cycle start separately from each new sale date. Advance application details remain subject to approved business rules.
+## Current controlling decision
 
-## Security and Financial Integrity
-Use decimal-safe arithmetic, transactions, locks, idempotency, tenant scoping and audit history. No payment_allocations table or equivalent allocation workflow is permitted.
+ADR-0012 supersedes the original allocation and excess-payment rules. The current model is:
 
-## Related Docs
-docs/02-business-rules.md, docs/03-accounting-engine.md, docs/04-database-architecture.md, docs/09-testing-strategy.md.
+- Customer-facing normal payments remain consolidated at customer-account level.
+- Internally, normal payments are allocated FIFO across oldest eligible unpaid Sales/components.
+- Allocation order is FIFO Sale first, then the selected Principal First / Interest First waterfall within that Sale.
+- A Paid Sale creates a same-day automatic Payment linked only to that Sale; it cannot reduce older balances.
+- Original Sale amounts are immutable; outstanding is derived from immutable postings, allocations and reversals.
+- Excess payment is rejected; customer advances are not supported.
+
+See ADR-0012 and the current financial rules in docs/02, docs/03 and docs/04.
 
 ## Reconsideration
-Requires explicit product-owner approval and a superseding ADR.
+
+Any further change requires explicit Product Owner approval and a superseding ADR.

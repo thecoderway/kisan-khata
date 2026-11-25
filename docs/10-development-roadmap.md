@@ -845,3 +845,35 @@ If implementation reveals a conflict or missing requirement:
 7. Resume implementation only after approval.
 
 This prevents implementation decisions from silently changing the product.
+
+---
+
+## 24. Phase 5 Financial Rules and Delivery Baseline (2026-11-25)
+
+ADR-0012 is the controlling Product Owner decision for Phase 5 financial behavior. This section and ADR-0012 supersede conflicting older roadmap statements.
+
+### Phase 5 — Financial Foundation
+- Decimal-safe INR money, customer account, append-only ledger and balance projections.
+- Paid/Unpaid Sale posting; Paid creates an equal linked automatic Payment atomically.
+- Consolidated normal Customer Payments with internal FIFO allocation across Sales.
+- FIFO Sale order first, then Shop Principal First / Interest First waterfall within each Sale.
+- Reject excess Payment; no customer advances.
+- Effective-dated Shop/Customer interest policy, Shop capitalization default OFF, Customer override, 30-day Shop grace period and Sale Date Day 0.
+- Actual Days / 30; HALF_UP two-decimal posted interest; [start inclusive, end exclusive) interval.
+- Annual Interest Auto Settlement defaults 30 March and 30 October; Payment precedes settlement on a shared date.
+- Immutable financial history, reversal-based Payment correction, Sale edit locks, audit, idempotency, tenant isolation and concurrency protection.
+- MySQL 8.4 integration tests for transaction rollback, locking, FIFO, rounding, interval boundaries and reconciliation.
+
+### Implementation sequence
+1. Phase 5.1 Financial core and money/ledger foundation.
+2. Phase 5.2 Tenant integrity, locking, idempotency, balance projection and reconciliation.
+3. Phase 5.3 FIFO allocation and per-Sale waterfall.
+4. Phase 5.4 Effective-dated interest policy and calculation foundation.
+5. Phase 5.5 Annual settlement and full MySQL 8.4 acceptance suite.
+
+### Explicit scope boundaries
+- No advances, daily/monthly interest posting jobs or Customer-specific grace-period override.
+- Locked historical Sales cannot be exceptionally corrected in the current approved scope; stop and seek separate approval and workflow design.
+- Crop-season settlement accounting remains a separate design decision.
+- Phase 5 implementation remains NOT STARTED until the read-only code/schema audit, physical schema review and separate implementation authorization are complete.
+

@@ -863,3 +863,59 @@ Requirements:
 - Cross-tenant references are rejected.
 - Customer account projections can be rebuilt.
 - Financial history is not cascade-deleted.
+
+
+---
+
+## 32. Product Owner-approved Financial Schema Constraints — Phase 5 (2026-11-25)
+
+This addendum supersedes conflicting statements elsewhere in this document and in ADR-0004. ADR-0012 controls.
+
+1. A dedicated internal `payment_allocations` (or equivalently named immutable allocation) table is required for FIFO. This reverses the previous no-allocation decision.
+2. Each allocation must be shop-scoped and reference the consolidated payment, customer, and sale (plus the relevant principal/posted-interest component). Store applied principal amount, applied interest amount, FIFO sequence, effective timestamp, policy version and reversal linkage as needed.
+3. Enforce tenant-safe composite foreign keys or equivalent constraints so payment, sale, customer and shop references cannot cross tenants.
+4. Allocation records are append-only. Reversals are separate records; do not update/delete original allocation history.
+5. Sale original amount remains unchanged. Remaining principal/interest is a projection derived from immutable postings, allocations and reversals.
+6. A Paid sale's same-day automatic payment is linked to that sale and must have an allocation limited to that originating sale. It must not be applied to older balances.
+7. Customer-facing normal payments remain consolidated. FIFO allocations are internal accounting evidence and do not change the customer-facing payment model.
+8. Customer advances are not part of the approved schema. Excess payment is rejected before posting.
+9. Add Shop/Customer effective-dated policy storage for monthly rate, grace period, capitalization, payment waterfall and the two annual Interest Auto Settlement dates. Customer-level monthly-rate and capitalization overrides are supported; grace period and payment waterfall remain Shop-level settings.
+10. Preserve policy version/effective date on calculation and allocation records. Historical policy changes must not rewrite existing postings.
+11. Payment amount must be constrained by a transactionally rechecked payable balance (outstanding principal plus posted unpaid interest); enforce concurrency with customer-account row locking.
+12. The schema must represent separate Sale Payment Status and Interest Settlement Status.
+13. Financial corrections must preserve immutable revisions/reversals and audit references. Sales before a later posted Payment or annual Interest Auto Settlement are locked against ordinary editing.
+14. Store INR amounts in MySQL DECIMAL with 2-decimal posted values; interest calculations must preserve adequate intermediate precision for HALF_UP rounding.
+
+### 32.1 Minimum allocation record fields (logical contract)
+
+- `id`, `shop_id`, `customer_id`, `payment_id`, `sale_id`
+- `allocation_sequence` (FIFO order within a payment)
+- `applied_principal_amount` DECIMAL(15,2)
+- `applied_interest_amount` DECIMAL(15,2)
+- `effective_at`
+- `policy_version_id`
+- `reversal_of_allocation_id` nullable
+- `created_by`, `created_at`
+
+Exact physical indexes, uniqueness constraints and whether sale components require a child allocation table are to be finalized in the Phase 5 implementation blueprint after schema-level reconciliation. Do not create an implementation migration until that blueprint is approved.
+
+
+
+### 32.2 Finalized policy defaults (Product Owner clarification, 2026-11-25)
+
+- Initial Shop capitalization setting must default to **OFF**; a Customer-level override is optional and inherits OFF when absent.
+- Initial annual Interest Auto Settlement dates must be initialized to **30 March** and **30 October**. Keep both dates Owner-configurable at Shop level and version/configuration-auditable.
+
+
+### 32.3 Interest convention approval boundary (2026-11-25)
+
+Actual Days / 30 and two-decimal posted interest are approved. The specific rounding mode (including HALF_UP), interval boundary convention, and grace-period Day 0 convention remain pending Product Owner confirmation. Store enough precision and event-boundary metadata to support the final approved convention without migration redesign.
+
+
+### 32.4 Approved allocation and interest conventions (2026-11-25)
+
+1. Allocation ordering must be deterministic and represented at two levels: (a) FIFO Sale sequence, then (b) per-Sale Principal/Interest waterfall sequence.
+2. Allocation items must preserve sale_id, source component/interest-lot reference where applicable, applied principal, applied interest, sequence at both levels, effective timestamp and policy version.
+3. Interest calculation run/items must persist interval start and exclusive end, eligible day count, grace-period evaluation result, applied rate/version, unrounded amount and posted HALF_UP amount.
+4. Sale Date is Day 0. For a 30-calendar-day grace period, no interest day is eligible until 30 complete calendar days have elapsed.
+5. Do not implement an exceptional correction bypass for a locked Sale. The service must reject the operation and preserve an audit/security event where appropriate. Any future exception requires a new approved workflow and ADR.

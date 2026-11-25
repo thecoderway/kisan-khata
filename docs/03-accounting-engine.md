@@ -440,3 +440,97 @@ The following decisions must be finalized before implementing the corresponding 
 9. Final financial database schema and ledger representation.
 
 No implementation may silently assume these unresolved rules.
+
+
+---
+
+## 21. Product Owner-approved Accounting Rules — Phase 5 (2026-11-25)
+
+This addendum supersedes conflicting statements elsewhere in this architecture document. ADR-0012 is the controlling decision.
+
+### 21.1 Sale and same-day payment posting
+
+- Sale creation requires Paid/Unpaid.
+- Paid creates an exactly equal, sale-linked automatic payment atomically with the sale. It has zero net effect on older customer balances and is excluded from future payable/interest calculations.
+- Sale-day automatic payment is not an interest calculation trigger.
+- Original sale amount remains immutable. Paid sales remain visible as Already Paid.
+- Payment status and Interest Settlement Status are separate.
+
+### 21.2 Normal payment sequence
+
+Within one database transaction and customer-account lock:
+
+1. Resolve the customer and tenant context from authenticated membership.
+2. Calculate and persist eligible interest through the payment effective date for all earlier eligible unpaid components.
+3. Mark the relevant interest calculation checkpoint Settled (not the Sale Paid).
+4. Recompute total payable as outstanding principal plus posted unpaid interest.
+5. Reject payment if amount exceeds total payable.
+6. Apply payment internally using FIFO across oldest eligible unpaid sale/components.
+7. Within FIFO, apply the Shop's effective-dated waterfall: Principal First or Interest First.
+8. Persist immutable allocation rows and consolidated payment/ledger postings.
+9. Reconcile the resulting account projection and commit atomically.
+
+Same-day subsequent normal payments must not recalculate the same elapsed interval. A Paid sale's automatic payment is excluded from this sequence.
+
+### 21.3 FIFO allocation and original amounts
+
+- Customer-facing payment remains consolidated at customer-account level; internal FIFO allocation is required.
+- Original sale amounts are never changed to represent remaining balances.
+- Remaining per-sale/component balances are derived from original postings minus immutable applied allocations and reversals.
+- Allocation records identify payment, sale/component, applied principal, applied posted interest, FIFO sequence and effective timestamp.
+- Fully paid sales are excluded from later allocations.
+- Sale-day automatic payment is allocated only to its originating sale.
+- Reversal reverses the relevant allocation records; it does not delete them.
+
+### 21.4 Payment waterfall and capitalization
+
+- Shop setting selects Principal First or Interest First; record effective-dated policy version on every allocation.
+- Customer-specific capitalization may override Shop capitalization; otherwise inherit Shop setting.
+- Capitalized interest joins the future interest-bearing base from the policy effective date; separate interest remains outside that base.
+- Capitalization changes do not retroactively reclassify posted interest.
+
+### 21.5 Interest calculation conventions
+
+- Monthly rate: Shop default 0%; optional customer-specific override.
+- Grace period: Shop default 30 calendar days; Owner-configurable; Sale Date is Day 0.
+- Customer-specific grace-period override is not approved.
+- Two annual Interest Auto Settlement dates are Owner-configured.
+- Formula uses Actual Days / 30.
+- Posted interest is rounded to 2 decimal places using HALF_UP; calculations use decimal-safe arithmetic.
+- Calculation interval is [start date, end date): start inclusive, end exclusive.
+- Events: normal customer payment and the two annual Auto Settlement dates only; no daily/monthly posting job.
+- Payment precedes Auto Settlement on the same date, without duplicate interval accrual.
+
+### 21.6 Correction and immutability
+
+- Posted Sales are not physically deleted. Corrections retain immutable revisions, before/after values, actor, timestamp and reason.
+- Sales effective before a posted later Payment or annual Interest Auto Settlement are locked against ordinary editing.
+- Posted Payments are not deleted or directly overwritten; use auditable reversal and optional replacement entries, reversing their allocations.
+- Exceptional correction of a locked historical sale is not authorized by this addendum and requires a separately approved workflow.
+- All postings, allocations and reversals are atomic, idempotent, tenant-scoped and concurrency-safe.
+
+### 21.7 No advance balance
+
+- Customer payment cannot exceed outstanding principal plus posted unpaid interest.
+- Excess payment is rejected. No customer advance balance or automatic future-sale adjustment is part of the approved model.
+
+
+
+### 21.8 Finalized initial settings (Product Owner clarification, 2026-11-25)
+
+- Initial Shop capitalization default: **OFF**. Customer override remains supported; when absent, the Shop's OFF setting applies.
+- Annual Interest Auto Settlement dates: **30 March** and **30 October** each year. These are the initial Shop defaults; retain Owner configuration as already approved.
+
+
+### 21.9 Convention approval boundary (2026-11-25)
+
+Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries, and Sale Date as grace-period Day 0 were proposed in drafting but are not explicitly confirmed by the Product Owner. Treat them as recommendations pending confirmation before implementation.
+
+
+### 21.10 Product Owner-approved calculation and allocation conventions (2026-11-25)
+
+- Posted interest uses HALF_UP rounding to 2 decimal places, using decimal-safe arithmetic and sufficient intermediate precision.
+- Interest calculation intervals are [start inclusive, end exclusive).
+- Sale Date is Grace Period Day 0. The first eligible day is after 30 complete calendar days when the Shop grace period is 30 days.
+- Allocation order is **Sale FIFO first, then per-Sale waterfall**. For each oldest eligible Sale, apply the Shop's selected Principal First or Interest First policy to that Sale's eligible principal/interest components before moving to the next Sale.
+- A historical Sale locked by a later Payment or annual Interest Auto Settlement has no exceptional correction path in the approved scope. Stop; obtain separate Product Owner approval and design before any such correction.

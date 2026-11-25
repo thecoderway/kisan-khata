@@ -334,10 +334,34 @@ No production deployment or release is claimed.
 
 ## 12. Immediate next steps
 
-- Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and CI-verified for the recorded scope.
-- **Next official development phase: Phase 5 — Financial Foundation and Accounting Engine.** Begin with a read-only audit of existing financial-related code, migrations, services, tests and ADR constraints before proposing implementation.
-- Do not begin full production Sales/Payment workflows until Phase 5 financial foundation passes its critical acceptance tests.
-- Resolve open financial decisions before implementing affected behavior: capitalization policy, rounding precision/mode, date-boundary/grace-period conventions, same-date payment/auto-settlement ordering, backdated correction recalculation, advance application and crop-season settlement rules.
+- Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and accepted for its recorded scope.
+- **Current phase: Phase 5 — Financial Foundation and Accounting Engine.**
+- Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
+- The detailed Phase 5 implementation blueprint is `docs/phase-5-implementation-blueprint.md`.
+- Next action: complete a read-only audit of existing financial-related code, models, migrations, services, tenant constraints, authorization, audit logging, routes and tests. Do not modify files or database during this audit.
+- After the audit, reconcile the proposed logical model with existing migrations and present a physical schema/implementation plan for separate Product Owner approval.
+- Do not begin production Sales/Payment workflows until Phase 5 foundation passes its critical acceptance tests.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
-This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
+## 13. Phase 5 status — 2026-11-25
+
+**Business rules and blueprint: documented. Implementation: NOT STARTED.**
+
+Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
+
+Finalized rules include:
+- Paid/Unpaid Sale; Paid creates an equal linked automatic Payment atomically.
+- Normal customer Payments remain consolidated in the customer-facing ledger and are internally allocated FIFO by Sale, then by the Shop's Principal First/Interest First waterfall within each Sale.
+- Excess Payment is rejected; no advances.
+- Shop monthly rate default 0%, optional Customer rate override.
+- Shop grace period default 30 calendar days; Sale Date is Day 0; no Customer-specific grace override.
+- Shop capitalization default OFF; optional Customer override.
+- Actual Days / 30; HALF_UP rounding to two decimal places; [start inclusive, end exclusive) interval.
+- Annual Interest Auto Settlement defaults to 30 March and 30 October.
+- Normal Payment precedes annual Auto Settlement on a shared date.
+- Locked historical Sale correction has no exception in the current approved scope; stop and require separate approval and workflow design.
+- Financial history is append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable.
+
+**Next approved work:** read-only existing-code/schema audit. No implementation, migrations or database changes are authorized by the blueprint alone.
+
+**Verification:** this documentation-only update did not run tests or CI. Do not infer test or runtime verification from the documentation changes.
