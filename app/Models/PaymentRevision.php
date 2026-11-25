@@ -18,6 +18,7 @@ class PaymentRevision extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'customer_id',
         'payment_id',
         'revision_number',
         'revision_type',
