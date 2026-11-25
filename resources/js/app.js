@@ -126,7 +126,7 @@ Alpine.data('actionDrawer', () => ({
             element.classList.remove('is-invalid');
             element.removeAttribute('aria-invalid');
         });
-        form.querySelectorAll('[data-server-error-summary]').forEach((element) => element.remove());
+        form.querySelectorAll('[data-drawer-error-summary]').forEach((element) => element.remove());
     },
 
     showDrawerMessage(form, message, errors = {}) {
@@ -280,3 +280,64 @@ document.addEventListener('click', async (event) => {
     }
 });
 
+
+
+const customerDropdownPortals = new WeakMap();
+
+document.addEventListener('shown.bs.dropdown', (event) => {
+    const toggle = event.target;
+    const dropdown = toggle.closest('[data-customer-dropdown-portal]');
+    const menu = dropdown?.querySelector('.dropdown-menu');
+
+    if (!menu || customerDropdownPortals.has(toggle)) return;
+
+    const placeholder = document.createComment('customer-dropdown-menu');
+    menu.parentNode.insertBefore(placeholder, menu);
+    document.body.appendChild(menu);
+    menu.classList.add('kk-dropdown-menu-portal');
+
+    const positionMenu = () => {
+        if (!menu.isConnected || !toggle.isConnected) return;
+
+        const triggerRect = toggle.getBoundingClientRect();
+        const menuWidth = menu.offsetWidth;
+        const menuHeight = menu.offsetHeight;
+        const spaceBelow = window.innerHeight - triggerRect.bottom;
+        const placeBelow = spaceBelow >= menuHeight + 8 || spaceBelow >= triggerRect.top;
+        const top = placeBelow
+            ? Math.min(triggerRect.bottom + 4, window.innerHeight - menuHeight - 8)
+            : Math.max(8, triggerRect.top - menuHeight - 4);
+        const left = Math.max(8, Math.min(triggerRect.right - menuWidth, window.innerWidth - menuWidth - 8));
+
+        menu.style.position = 'fixed';
+        menu.style.inset = 'auto';
+        menu.style.top = top + 'px';
+        menu.style.left = left + 'px';
+        menu.style.right = 'auto';
+        menu.style.transform = 'none';
+        menu.style.margin = '0';
+    };
+
+    const state = { menu, placeholder, positionMenu };
+    customerDropdownPortals.set(toggle, state);
+    positionMenu();
+    window.addEventListener('resize', positionMenu);
+    window.addEventListener('scroll', positionMenu, true);
+});
+
+document.addEventListener('hidden.bs.dropdown', (event) => {
+    const state = customerDropdownPortals.get(event.target);
+    if (!state) return;
+
+    window.removeEventListener('resize', state.positionMenu);
+    window.removeEventListener('scroll', state.positionMenu, true);
+    state.menu.classList.remove('kk-dropdown-menu-portal');
+    state.menu.removeAttribute('style');
+
+    if (state.placeholder.parentNode) {
+        state.placeholder.parentNode.insertBefore(state.menu, state.placeholder);
+        state.placeholder.remove();
+    }
+
+    customerDropdownPortals.delete(event.target);
+});
