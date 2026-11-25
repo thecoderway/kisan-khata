@@ -150,6 +150,118 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
         }
     }
 
+    public function test_sale_revision_requires_reason_and_is_unique_per_revision_number(): void
+    {
+        [$shop, $customer, $actor, $transaction] = $this->shopCustomerActorAndTransaction();
+        $saleId = $this->insertSale($shop, $customer, $actor, $transaction);
+
+        DB::table('sale_revisions')->insert([
+            'shop_id' => $shop->id,
+            'sale_id' => $saleId,
+            'revision_number' => 1,
+            'old_values' => json_encode(['description' => 'old']),
+            'new_values' => json_encode(['description' => 'new']),
+            'correction_reason' => 'Corrected description',
+            'changed_by' => $actor->id,
+            'changed_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        DB::table('sale_revisions')->insert([
+            'shop_id' => $shop->id,
+            'sale_id' => $saleId,
+            'revision_number' => 1,
+            'old_values' => json_encode(['description' => 'old']),
+            'new_values' => json_encode(['description' => 'other']),
+            'correction_reason' => 'Duplicate revision',
+            'changed_by' => $actor->id,
+            'changed_at' => now(),
+            'created_at' => now(),
+        ]);
+    }
+
+    public function test_payment_revision_requires_customer_consistent_payment_references(): void
+    {
+        [$shop, $customer, $actor, $transaction] = $this->shopCustomerActorAndTransaction();
+        $paymentId = $this->insertPayment($shop, $customer, $actor, $transaction);
+        $otherCustomer = $this->createCustomer($shop, $actor);
+        $otherTransaction = $this->createFinancialTransaction($shop, $otherCustomer, $actor);
+        $otherPaymentId = $this->insertPayment($shop, $otherCustomer, $actor, $otherTransaction);
+
+        $this->expectException(QueryException::class);
+        DB::table('payment_revisions')->insert([
+            'shop_id' => $shop->id,
+            'customer_id' => $customer->id,
+            'payment_id' => $paymentId,
+            'revision_number' => 1,
+            'revision_type' => 'REVERSAL',
+            'old_values' => json_encode(['amount' => '100.00']),
+            'correction_reason' => 'Correction',
+            'changed_by' => $actor->id,
+            'changed_at' => now(),
+            'reversal_payment_id' => $otherPaymentId,
+            'created_at' => now(),
+        ]);
+    }
+
+    public function test_sale_revision_and_payment_revision_models_are_append_only(): void
+    {
+        [$shop, $customer, $actor, $transaction] = $this->shopCustomerActorAndTransaction();
+        $saleId = $this->insertSale($shop, $customer, $actor, $transaction);
+        $paymentId = $this->insertPayment($shop, $customer, $actor, $transaction);
+
+        $saleRevisionId = (int) DB::table('sale_revisions')->insertGetId([
+            'shop_id' => $shop->id,
+            'sale_id' => $saleId,
+            'revision_number' => 1,
+            'old_values' => json_encode(['description' => 'old']),
+            'new_values' => json_encode(['description' => 'new']),
+            'correction_reason' => 'Corrected description',
+            'changed_by' => $actor->id,
+            'changed_at' => now(),
+            'created_at' => now(),
+        ]);
+        $paymentRevisionId = (int) DB::table('payment_revisions')->insertGetId([
+            'shop_id' => $shop->id,
+            'customer_id' => $customer->id,
+            'payment_id' => $paymentId,
+            'revision_number' => 1,
+            'revision_type' => 'REVERSAL',
+            'old_values' => json_encode(['amount' => '100.00']),
+            'correction_reason' => 'Reversed duplicate receipt',
+            'changed_by' => $actor->id,
+            'changed_at' => now(),
+            'reversal_payment_id' => $this->insertPayment(
+                $shop,
+                $customer,
+                $actor,
+                $transaction,
+                type: 'REVERSAL',
+                reversalOfPaymentId: $paymentId
+            ),
+            'created_at' => now(),
+        ]);
+
+        app(CurrentShop::class)->set($shop);
+
+        $saleRevision = \App\Models\SaleRevision::withoutGlobalScopes()->findOrFail($saleRevisionId);
+        try {
+            $saleRevision->save();
+            $this->fail('Expected Sale revision update to be blocked.');
+        } catch (\LogicException $exception) {
+            $this->assertStringContainsString('append-only', $exception->getMessage());
+        }
+
+        $paymentRevision = \App\Models\PaymentRevision::withoutGlobalScopes()->findOrFail($paymentRevisionId);
+        try {
+            $paymentRevision->delete();
+            $this->fail('Expected Payment revision deletion to be blocked.');
+        } catch (\LogicException $exception) {
+            $this->assertStringContainsString('cannot be deleted', $exception->getMessage());
+        }
+    }
+
     private function shopCustomerActorAndTransaction(): array
     {
         $shop = Shop::factory()->create();
