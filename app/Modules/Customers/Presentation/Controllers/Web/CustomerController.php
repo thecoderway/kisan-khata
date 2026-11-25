@@ -29,6 +29,7 @@ class CustomerController extends Controller
             $shop = $currentShop->require();
             $drawerContent = view('customers.partials.form', [
                 'customer' => null,
+                'drawerMode' => true,
                 'locationDefaults' => [
                     'state_code' => $shop->state_code,
                     'district_code' => $shop->district_code,
@@ -41,6 +42,7 @@ class CustomerController extends Controller
             Gate::authorize('update', $drawerCustomer);
             $drawerContent = view('customers.partials.form', [
                 'customer' => $drawerCustomer,
+                'drawerMode' => true,
                 'locationDefaults' => [],
             ])->render();
         }
@@ -62,6 +64,7 @@ class CustomerController extends Controller
         $shop = $currentShop->require();
         $data = [
             'customer' => null,
+            'drawerMode' => $request->boolean('drawer'),
             'locationDefaults' => [
                 'state_code' => $shop->state_code,
                 'district_code' => $shop->district_code,
@@ -110,6 +113,7 @@ class CustomerController extends Controller
 
         $data = [
             'customer' => $customer,
+            'drawerMode' => $request->boolean('drawer'),
             'locationDefaults' => [],
         ];
 
