@@ -32,6 +32,11 @@ Alpine.data('actionDrawer', () => ({
         this.previousInertStates.forEach(({ element }) => { element.inert = true; });
 
         this.$nextTick(() => {
+            const errorSummary = this.$refs.body?.querySelector('[data-drawer-error-summary]');
+            if (errorSummary) {
+                errorSummary.focus();
+                return;
+            }
             const first = this.focusableElements()[0];
             (first || this.$refs.panel)?.focus();
         });
@@ -77,7 +82,10 @@ Alpine.data('actionDrawer', () => ({
         const first = elements[0];
         const last = elements[elements.length - 1];
 
-        if (event.shiftKey && (document.activeElement === first || document.activeElement === this.$refs.panel)) {
+        if (!this.$refs.panel.contains(document.activeElement)) {
+            event.preventDefault();
+            (event.shiftKey ? last : first).focus();
+        } else if (event.shiftKey && (document.activeElement === first || document.activeElement === this.$refs.panel)) {
             event.preventDefault();
             last.focus();
         } else if (!event.shiftKey && document.activeElement === last) {
