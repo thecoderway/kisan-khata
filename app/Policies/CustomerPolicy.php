@@ -27,9 +27,35 @@ class CustomerPolicy
         return $this->belongsToSameShop($actor, $customer);
     }
 
+    public function deactivate(User $actor, Customer $customer): bool
+    {
+        return $this->isLifecycleManager($actor, $customer);
+    }
+
+    public function reactivate(User $actor, Customer $customer): bool
+    {
+        return $this->isLifecycleManager($actor, $customer);
+    }
+
+    public function softDelete(User $actor, Customer $customer): bool
+    {
+        return $this->isLifecycleManager($actor, $customer);
+    }
+
+    public function restore(User $actor, Customer $customer): bool
+    {
+        return $this->isLifecycleManager($actor, $customer);
+    }
+
     public function delete(User $actor, Customer $customer): bool
     {
         return false;
+    }
+
+    private function isLifecycleManager(User $actor, Customer $customer): bool
+    {
+        return $this->belongsToSameShop($actor, $customer)
+            && in_array($actor->role, [User::ROLE_OWNER, User::ROLE_MANAGER], true);
     }
 
     private function isActiveShopUser(User $actor): bool
