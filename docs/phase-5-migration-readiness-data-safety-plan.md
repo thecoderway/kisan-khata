@@ -11,6 +11,21 @@
 > Documentation only. This plan authorizes no application-code changes, dependency changes, migrations, tests, database operations, data backfills, or production work. PR 5.1 requires separate explicit Product Owner authorization.
 
 ## 1. Purpose and readiness decision
+## 1.1 Document authority and migration-scope precedence
+
+This plan is the controlling document for Phase 5 migration grouping, migration order, data-safety gates and implementation-slice boundaries. Where an older physical-schema proposal or implementation-blueprint delivery slice conflicts with this plan, follow this plan for migration sequencing and scope; retain the other documents for their respective logical and physical design details unless a specific conflict is explicitly resolved here.
+
+The approved Group 1 / PR 5.1-A migration scope is exactly:
+- idempotency_keys;
+- customer_accounts;
+- financial_transactions;
+- the supporting tenant-safe indexes/constraints required by those tables;
+- the selected decimal-arithmetic dependency, after its separate implementation review.
+
+ledger_entries and account_balance_snapshots are Group 4, not Group 1. Sales and Payments are Group 2. This ordering does not remove those tables from the overall Phase 5 logical/physical target model; it only assigns them to their later migration groups.
+
+The controlling financial business rules remain [ADR-0012](decisions/ADR-0012-approved-financial-rules.md). The application-wide right-side drawer standard is a separate UI decision and is indexed as ADR-0014.
+
 
 This plan converts the physical schema proposal and read-only repository review into a safe, ordered migration strategy.
 
