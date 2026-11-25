@@ -29,7 +29,7 @@ class UserManagementController extends Controller
         $actor = $request->user();
 
         return view('users.index', [
-            'users' => $directory->forActor($actor),
+            'users' => $directory->forActor($actor, $request),
             'capacity' => $actor->role === User::ROLE_OWNER
                 ? $capacity->summary($currentShop->require())
                 : null,
