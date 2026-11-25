@@ -910,3 +910,12 @@ Exact physical indexes, uniqueness constraints and whether sale components requi
 ### 32.3 Interest convention approval boundary (2026-11-25)
 
 Actual Days / 30 and two-decimal posted interest are approved. The specific rounding mode (including HALF_UP), interval boundary convention, and grace-period Day 0 convention remain pending Product Owner confirmation. Store enough precision and event-boundary metadata to support the final approved convention without migration redesign.
+
+
+### 32.4 Approved allocation and interest conventions (2026-11-25)
+
+1. Allocation ordering must be deterministic and represented at two levels: (a) FIFO Sale sequence, then (b) per-Sale Principal/Interest waterfall sequence.
+2. Allocation items must preserve sale_id, source component/interest-lot reference where applicable, applied principal, applied interest, sequence at both levels, effective timestamp and policy version.
+3. Interest calculation run/items must persist interval start and exclusive end, eligible day count, grace-period evaluation result, applied rate/version, unrounded amount and posted HALF_UP amount.
+4. Sale Date is Day 0. For a 30-calendar-day grace period, no interest day is eligible until 30 complete calendar days have elapsed.
+5. Do not implement an exceptional correction bypass for a locked Sale. The service must reject the operation and preserve an audit/security event where appropriate. Any future exception requires a new approved workflow and ADR.
