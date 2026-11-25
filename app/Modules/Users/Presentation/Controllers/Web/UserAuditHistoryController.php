@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Modules\\Users\\Presentation\\Controllers\\Web;
+namespace App\Modules\Users\Presentation\Controllers\Web;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\UserAuditLog;
-use App\\Tenancy\\CurrentShop;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Gate;
-use Illuminate\\View\\View;
+use App\Http\Controllers\Controller;
+use App\Models\UserAuditLog;
+use App\Tenancy\CurrentShop;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class UserAuditHistoryController extends Controller
 {
