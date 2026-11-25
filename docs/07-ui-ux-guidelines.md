@@ -701,7 +701,7 @@ The interface is acceptable when:
 - Backend-confirmed results are displayed accurately.
 ## 28. Application-Wide Right-Side Drawer Standard
 
-**Status:** Approved by the Product Owner on 2026-11-25. See [ADR-0012](decisions/ADR-0012-application-wide-right-side-drawer-standard.md).
+**Status:** Approved by the Product Owner on 2026-11-25. See [ADR-0014](decisions/ADR-0014-application-wide-right-side-drawer-standard.md).
 
 ### Default rule
 
@@ -758,7 +758,7 @@ Implementation details and acceptance checks are maintained in [Table Guidelines
 
 ## 30. Asynchronous Action Drawer Forms
 
-**Status:** Approved by the Product Owner on 2026-11-25. See [ADR-0013](decisions/ADR-0013-asynchronous-action-drawer-form-submission.md), which supplements ADR-0012.
+**Status:** Approved by the Product Owner on 2026-11-25. See [ADR-0013](decisions/ADR-0013-asynchronous-action-drawer-form-submission.md), which supplements ADR-0014.
 
 All forms submitted from the shared contextual action drawer MUST use the shared asynchronous submission mechanism based on the existing Fetch API and Alpine.js stack. Do not introduce jQuery solely for drawer forms.
 
