@@ -518,7 +518,7 @@ class CustomerManagementTest extends TestCase
             ->assertSee('name="reason"', false)
             ->assertSee('drawer_context', false);
 
-        $this->from($url)->post(route('customers.deactivate', $customer->id), [
+        $this->post(route('customers.deactivate', $customer->id), [
             'reason' => '   ',
             'drawer_context' => '1',
         ])->assertRedirect($url)->assertSessionHasErrors('reason');
