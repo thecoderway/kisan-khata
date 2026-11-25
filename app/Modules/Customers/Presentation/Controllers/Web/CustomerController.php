@@ -23,6 +23,7 @@ class CustomerController extends Controller
         return view('customers.index', [
             'customers' => $directory->paginate($request),
             'search' => trim((string) $request->query('q', '')),
+            'status' => in_array($request->query('status'), ['active', 'inactive', 'deleted'], true) ? $request->query('status') : 'active',
         ]);
     }
 

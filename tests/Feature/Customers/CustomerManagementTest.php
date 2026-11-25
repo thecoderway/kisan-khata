@@ -274,4 +274,167 @@ class CustomerManagementTest extends TestCase
         $this->assertFalse(Gate::forUser($owner)->allows('delete', $customer));
         $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => null]);
     }
+
+    public function test_owner_and_manager_can_deactivate_and_reactivate_with_audit_history(): void
+    {
+        foreach ([User::ROLE_OWNER, User::ROLE_MANAGER] as $role) {
+            $shop = Shop::factory()->create();
+            $actor = $this->makeUser($role, $shop);
+            $this->actingAs($actor)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+            $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+
+            $this->post(route('customers.deactivate', $customer->id), ['reason' => 'Customer requested pause'])
+                ->assertRedirect();
+
+            $this->assertDatabaseHas('customers', ['id' => $customer->id, 'status' => 'inactive', 'deleted_at' => null]);
+            $this->assertDatabaseHas('audit_logs', [
+                'shop_id' => $shop->id, 'user_id' => $actor->id,
+                'action' => 'customer.deactivated', 'entity_id' => $customer->id,
+                'reason' => 'Customer requested pause',
+            ]);
+
+            $this->post(route('customers.reactivate', $customer->id), ['reason' => 'Customer returned'])
+                ->assertRedirect();
+
+            $this->assertDatabaseHas('customers', ['id' => $customer->id, 'status' => 'active', 'deleted_at' => null]);
+            $this->assertDatabaseHas('audit_logs', [
+                'shop_id' => $shop->id, 'user_id' => $actor->id,
+                'action' => 'customer.reactivated', 'entity_id' => $customer->id,
+            ]);
+        }
+    }
+
+    public function test_staff_cannot_run_customer_lifecycle_actions(): void
+    {
+        $shop = Shop::factory()->create();
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        $this->actingAs($staff)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+
+        $this->post(route('customers.deactivate', $customer->id), ['reason' => 'Not authorized'])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'status' => 'active']);
+        $this->assertDatabaseMissing('audit_logs', [
+            'entity_id' => $customer->id, 'action' => 'customer.deactivated',
+        ]);
+    }
+
+    public function test_customer_deactivation_requires_a_nonblank_reason_and_valid_state(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->post(route('customers.deactivate', $customer->id), ['reason' => '   '])
+            ->assertSessionHasErrors('reason');
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'status' => 'active']);
+
+        $this->post(route('customers.deactivate', $customer->id), ['reason' => 'Valid reason'])->assertRedirect();
+        $this->post(route('customers.deactivate', $customer->id), ['reason' => 'Duplicate transition'])
+            ->assertSessionHasErrors('status');
+    }
+
+    public function test_customer_soft_delete_fails_closed_when_financial_dependencies_are_not_verifiable(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->delete(route('customers.soft-delete', $customer->id), ['reason' => 'Requested cleanup'])
+            ->assertSessionHasErrors('customer');
+
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => null]);
+        $this->assertDatabaseMissing('audit_logs', [
+            'entity_id' => $customer->id, 'action' => 'customer.soft_deleted',
+        ]);
+    }
+
+    public function test_restore_preserves_inactive_status_and_creates_audit_event(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        DB::table('customers')->where('id', $customer->id)->update([
+            'status' => 'inactive', 'deleted_at' => now(),
+        ]);
+
+        $this->post(route('customers.restore', $customer->id))->assertRedirect();
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id, 'status' => 'inactive', 'deleted_at' => null,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $owner->shop_id, 'user_id' => $owner->id,
+            'action' => 'customer.restored', 'entity_id' => $customer->id,
+        ]);
+    }
+
+    public function test_customer_directory_can_filter_inactive_and_soft_deleted_records(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        DB::table('customers')->where('id', $customer->id)->update(['status' => 'inactive']);
+
+        $this->get(route('customers.index', ['status' => 'inactive']))
+            ->assertOk()->assertSee('रामलाल')->assertSee('पुनः सक्रिय करें');
+
+        DB::table('customers')->where('id', $customer->id)->update(['deleted_at' => now()]);
+
+        $this->get(route('customers.index', ['status' => 'deleted']))
+            ->assertOk()->assertSee('रामलाल')->assertSee('Restore');
+    }
+
+    public function test_staff_can_view_inactive_directory_but_does_not_receive_lifecycle_controls(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+        DB::table('customers')->where('id', $customer->id)->update(['status' => 'inactive']);
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        $this->actingAs($staff)->get(route('customers.index', ['status' => 'inactive']))
+            ->assertOk()->assertSee('रामलाल')->assertDontSee('पुनः सक्रिय करें');
+    }
+
+    public function test_api_customer_lifecycle_uses_the_same_owner_authorization_and_audit_flow(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->postJson('/api/v1/customers/'.$customer->id.'/deactivate', ['reason' => 'API lifecycle test'])
+            ->assertOk()->assertJsonPath('data.status', 'inactive');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $owner->shop_id,
+            'user_id' => $owner->id,
+            'action' => 'customer.deactivated',
+            'entity_id' => $customer->id,
+        ]);
+    }
+
+    public function test_api_staff_cannot_deactivate_customer(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        Sanctum::actingAs($staff, ['app']);
+        $this->postJson('/api/v1/customers/'.$customer->id.'/deactivate', ['reason' => 'Unauthorized API call'])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'status' => 'active']);
+        $this->assertDatabaseMissing('audit_logs', [
+            'entity_id' => $customer->id,
+            'action' => 'customer.deactivated',
+        ]);
+    }
 }

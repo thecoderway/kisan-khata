@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Auth\TokenController;
 use App\Http\Controllers\Api\Users\ShopUserLifecycleController;
 use App\Http\Controllers\Api\Users\UserAuditHistoryController;
 use App\Modules\Customers\Presentation\Controllers\Api\CustomerController;
+use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,10 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::post('/customers', [CustomerController::class, 'store']);
             Route::get('/customers/{customer}', [CustomerController::class, 'show']);
             Route::put('/customers/{customer}', [CustomerController::class, 'update']);
+            Route::post('/customers/{customer}/deactivate', [CustomerLifecycleController::class, 'deactivate']);
+            Route::post('/customers/{customer}/reactivate', [CustomerLifecycleController::class, 'reactivate']);
+            Route::delete('/customers/{customer}', [CustomerLifecycleController::class, 'softDelete']);
+            Route::post('/customers/{customer}/restore', [CustomerLifecycleController::class, 'restore']);
         });
     });
 });
