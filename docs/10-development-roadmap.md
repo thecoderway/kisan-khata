@@ -904,3 +904,10 @@ The Product Owner has finalized the financial business rules in ADR-0012. This s
 - Physical schema details beyond the logical allocation contract in docs/04.
 
 Phase 5 remains not started until implementation is separately authorized and accepted. This documentation update does not authorize code, migrations or database changes.
+
+
+### 24.1 Product Owner clarification — previously pending defaults finalized (2026-11-25)
+
+- Initial capitalization default is **OFF**. Customer override may explicitly enable/disable it; absent override, Shop OFF applies.
+- Initial annual Interest Auto Settlement dates are **30 March** and **30 October**. Both remain Owner-configurable in Shop Settings.
+- These two items are no longer pending decisions. The detailed FIFO/interest-tranche representation and exceptional locked-Sale correction workflow remain design items for the Phase 5 blueprint.
