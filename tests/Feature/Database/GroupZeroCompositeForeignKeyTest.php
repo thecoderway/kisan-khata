@@ -1,14 +1,14 @@
 <?php
 
-namespace Tests\\Feature\\Database;
+namespace Tests\Feature\Database;
 
-use App\\Models\\Shop;
-use App\\Models\\User;
-use Illuminate\\Database\\QueryException;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Schema;
-use Tests\\TestCase;
+use App\Models\Shop;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 class GroupZeroCompositeForeignKeyTest extends TestCase
 {
