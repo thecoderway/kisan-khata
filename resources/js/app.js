@@ -372,7 +372,7 @@ document.addEventListener('hidden.bs.dropdown', (event) => {
 });
 
 
-document.addEventListener('kk-toast:show', (event) => {
+window.addEventListener('kk-toast:show', (event) => {
     const region = document.getElementById('kk-toast-region');
     const message = String(event.detail?.message || '').trim();
 
