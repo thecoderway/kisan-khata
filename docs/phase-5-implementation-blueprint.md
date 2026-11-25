@@ -3,7 +3,7 @@
 **Version:** 1.1  
 **Date:** 2026-11-25  
 **Status:** Updated design proposal; implementation not authorized  
-**Controlling decision:** ADR-0012
+**Controlling financial business decision:** [ADR-0012 — Approved Financial Rules](decisions/ADR-0012-approved-financial-rules.md)
 **Migration sequence authority:** [Phase 5 Migration Readiness & Data-Safety Plan](phase-5-migration-readiness-data-safety-plan.md). Its migration groups supersede any older delivery-slice grouping in this blueprint.  
 
 ## 1. Purpose and scope
