@@ -85,5 +85,27 @@
             </tbody>
         </table>
     </div>
-    <div class="p-3">{{ $customers->links() }}</div>
 @endif
+
+<div class="customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="customer-pagination-summary text-secondary small" aria-live="polite">
+        @if ($customers->total() > 0)
+            Showing <strong>{{ $customers->firstItem() }}–{{ $customers->lastItem() }}</strong> of
+            <strong>{{ $customers->total() }}</strong> customers
+        @else
+            Showing <strong>0–0</strong> of <strong>0</strong> customers
+        @endif
+    </div>
+
+    <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
+        <label class="customer-page-size d-flex align-items-center gap-2 small text-secondary">
+            <span>Rows per page</span>
+            <select class="form-select form-select-sm" data-customer-page-size aria-label="Rows per page">
+                @foreach ([10, 20, 50, 100] as $size)
+                    <option value="{{ $size }}" @selected($customers->perPage() === $size)>{{ $size }}</option>
+                @endforeach
+            </select>
+        </label>
+        {{ $customers->onEachSide(1)->links('pagination::bootstrap-5') }}
+    </div>
+</div>
