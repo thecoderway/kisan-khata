@@ -45,6 +45,13 @@ class CustomerController extends Controller
                 'drawerMode' => true,
                 'locationDefaults' => [],
             ])->render();
+        } elseif (in_array($drawerAction, ['deactivate', 'reactivate', 'soft-delete', 'restore'], true) && $request->filled('drawer_customer_id')) {
+            $drawerCustomer = Customer::withTrashed()->findOrFail((int) $request->query('drawer_customer_id'));
+            Gate::authorize($drawerAction === 'soft-delete' ? 'softDelete' : $drawerAction, $drawerCustomer);
+            $drawerContent = view('customers.partials.lifecycle-form', [
+                'customer' => $drawerCustomer,
+                'action' => $drawerAction,
+            ])->render();
         }
 
         return view('customers.index', [
