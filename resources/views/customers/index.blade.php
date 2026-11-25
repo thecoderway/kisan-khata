@@ -50,7 +50,7 @@
         </form>
 
         <div class="visually-hidden" data-customer-filter-status role="status" aria-live="polite"></div>
-        <div id="customer-results" data-customer-results aria-live="polite">
+        <div id="customer-results" data-customer-results>
             @include('customers.partials.results', ['customers' => $customers, 'search' => $search, 'status' => $status])
         </div>
     </section>
