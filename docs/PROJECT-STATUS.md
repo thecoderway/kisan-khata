@@ -363,3 +363,12 @@ Confirmed decisions include Paid/Unpaid Sale with linked atomic sale-day payment
 **Remaining design decisions before implementation:** initial capitalization default (ON/OFF); exact two annual dates to be entered by each Owner; detailed interest-tranche-to-Sale representation for FIFO plus capitalization/waterfall; exceptional correction workflow for locked historical Sales; crop-season settlement accounting details. The Phase 5 blueprint must expose these explicitly rather than invent defaults.
 
 No application code, migrations, database or financial workflows were changed by this documentation approval. No tests or CI were run as part of this documentation-only update.
+
+
+### Finalized configuration values — 2026-11-25
+
+The Product Owner confirmed:
+- Shop capitalization initial default = **OFF**; Customer override remains available and otherwise inherits Shop OFF.
+- Initial annual Interest Auto Settlement dates = **30 March** and **30 October**; both remain configurable by the Shop Owner.
+
+These two values are no longer pending. Remaining blueprint-level design items are the deterministic interest-tranche-to-Sale model for FIFO/capitalization/waterfall and the exceptional correction workflow for locked historical Sales.
