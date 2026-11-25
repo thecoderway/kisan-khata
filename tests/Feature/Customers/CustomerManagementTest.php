@@ -437,4 +437,153 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.deactivated',
         ]);
     }
+
+    public function test_customer_create_and_edit_forms_can_be_rendered_as_drawer_fragments(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->get(route('customers.create', ['drawer' => 1]))
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="drawer_context"', false)
+            ->assertDontSee('<!doctype html', false);
+
+        $this->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->get(route('customers.edit', [$customer->id, 'drawer' => 1]))
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('रामलाल')
+            ->assertDontSee('<!doctype html', false);
+    }
+
+    public function test_customer_drawer_validation_redirect_restores_the_correct_create_context_and_old_input(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->from(route('customers.create', ['drawer' => 1]))
+            ->post(route('customers.store'), $this->customerPayload([
+                'name_original' => '',
+                'drawer_context' => '1',
+                'mobile' => 'not-a-mobile',
+            ]))
+            ->assertRedirect(route('customers.index', ['drawer_action' => 'create']))
+            ->assertSessionHasErrors(['name_original', 'mobile'])
+            ->assertSessionHas('_old_input.name_original', '')
+            ->assertSessionHas('_old_input.drawer_context', '1');
+
+        $this->get(route('customers.index', ['drawer_action' => 'create']))
+            ->assertOk()
+            ->assertSee('data-drawer-error-summary', false)
+            ->assertSee('name="drawer_context"', false);
+    }
+
+    public function test_customer_edit_drawer_validation_redirect_preserves_customer_identity(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->from(route('customers.edit', [$customer->id, 'drawer' => 1]))
+            ->put(route('customers.update', $customer->id), $this->customerPayload([
+                'name_original' => '',
+                'drawer_context' => '1',
+            ]))
+            ->assertRedirect(route('customers.index', [
+                'drawer_action' => 'edit',
+                'drawer_customer_id' => $customer->id,
+            ]))
+            ->assertSessionHasErrors('name_original');
+
+        $this->get(route('customers.index', [
+            'drawer_action' => 'edit',
+            'drawer_customer_id' => $customer->id,
+        ]))->assertOk()->assertSee('data-drawer-error-summary', false);
+    }
+
+    public function test_customer_lifecycle_drawer_renders_authorized_reason_forms_and_recovers_validation_errors(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $url = route('customers.index', [
+            'drawer_action' => 'deactivate',
+            'drawer_customer_id' => $customer->id,
+        ]);
+
+        $this->get($url)->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="reason"', false)
+            ->assertSee('drawer_context', false);
+
+        $this->post(route('customers.deactivate', $customer->id), [
+            'reason' => '   ',
+            'drawer_context' => '1',
+        ])->assertRedirect($url)->assertSessionHasErrors('reason');
+
+        $this->get($url)->assertOk()
+            ->assertSee('data-drawer-error-summary', false)
+            ->assertSee('name="reason"', false);
+    }
+
+    public function test_customer_lifecycle_drawer_does_not_authorize_staff(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->first();
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        $this->actingAs($staff)->get(route('customers.index', [
+            'drawer_action' => 'deactivate',
+            'drawer_customer_id' => $customer->id,
+        ]))->assertForbidden();
+    }
+
+    public function test_lifecycle_drawer_ajax_request_returns_only_the_form_fragment(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $url = route('customers.index', [
+            'drawer_action' => 'deactivate',
+            'drawer_customer_id' => $customer->id,
+        ]);
+
+        $this->withHeader('X-Requested-With', 'XMLHttpRequest')->get($url)
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="reason"', false)
+            ->assertDontSee('<!doctype html', false)
+            ->assertDontSee('customer-action-drawer');
+    }
+
+    public function test_customer_lifecycle_business_validation_restores_the_drawer_context(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $url = route('customers.index', [
+            'drawer_action' => 'soft-delete',
+            'drawer_customer_id' => $customer->id,
+        ]);
+
+        $this->delete(route('customers.soft-delete', $customer->id), [
+            'reason' => 'Requested cleanup',
+            'drawer_context' => '1',
+        ])->assertRedirect($url)->assertSessionHasErrors('customer');
+
+        $this->get($url)->assertOk()
+            ->assertSee('data-drawer-error-summary', false)
+            ->assertSee('name="reason"', false);
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'deleted_at' => null,
+        ]);
+    }
 }
