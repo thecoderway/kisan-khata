@@ -372,3 +372,8 @@ The Product Owner confirmed:
 - Initial annual Interest Auto Settlement dates = **30 March** and **30 October**; both remain configurable by the Shop Owner.
 
 These two values are no longer pending. Remaining blueprint-level design items are the deterministic interest-tranche-to-Sale model for FIFO/capitalization/waterfall and the exceptional correction workflow for locked historical Sales.
+
+
+### Interest convention clarification — 2026-11-25
+
+Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding mode, [start inclusive, end exclusive) interval boundaries and Sale Date as grace-period Day 0 were drafting recommendations, not explicitly confirmed decisions. They remain pending Product Owner confirmation before implementation.
