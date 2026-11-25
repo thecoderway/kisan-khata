@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Users\Application\UserDirectoryQuery;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class UserDirectoryQueryTest extends TestCase
