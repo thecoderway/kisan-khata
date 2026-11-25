@@ -911,3 +911,8 @@ Phase 5 remains not started until implementation is separately authorized and ac
 - Initial capitalization default is **OFF**. Customer override may explicitly enable/disable it; absent override, Shop OFF applies.
 - Initial annual Interest Auto Settlement dates are **30 March** and **30 October**. Both remain Owner-configurable in Shop Settings.
 - These two items are no longer pending decisions. The detailed FIFO/interest-tranche representation and exceptional locked-Sale correction workflow remain design items for the Phase 5 blueprint.
+
+
+### 24.2 Interest convention approval boundary (2026-11-25)
+
+Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries and Sale Date Day 0 are proposals pending explicit Product Owner confirmation. They must remain implementation gates.
