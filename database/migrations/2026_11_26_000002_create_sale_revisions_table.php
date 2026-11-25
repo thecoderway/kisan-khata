@@ -37,10 +37,10 @@ return new class extends Migration
         });
 
         DB::statement(
-            "ALTER TABLE \`sale_revisions\`
-             ADD CONSTRAINT \`sale_rev_number_check\` CHECK (\`revision_number\` > 0),
-             ADD CONSTRAINT \`sale_rev_reason_check\`
-                 CHECK (CHAR_LENGTH(TRIM(\`correction_reason\`)) > 0)"
+            "ALTER TABLE `sale_revisions`
+             ADD CONSTRAINT `sale_rev_number_check` CHECK (`revision_number` > 0),
+             ADD CONSTRAINT `sale_rev_reason_check`
+                 CHECK (CHAR_LENGTH(TRIM(`correction_reason`)) > 0)"
         );
     }
 
