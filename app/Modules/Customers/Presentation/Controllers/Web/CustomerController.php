@@ -8,6 +8,7 @@ use App\Modules\Customers\Application\CustomerDirectoryQuery;
 use App\Modules\Customers\Application\SaveCustomer;
 use App\Modules\Customers\Presentation\Requests\CustomerRequest;
 use App\Tenancy\CurrentShop;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -59,10 +60,28 @@ class CustomerController extends Controller
             return response($drawerContent);
         }
 
+        $customers = $directory->paginate($request);
+        $search = trim((string) $request->query('q', ''));
+        $status = in_array($request->query('status'), ['active', 'inactive', 'deleted'], true)
+            ? $request->query('status')
+            : 'active';
+
+        if ($request->expectsJson() && $request->boolean('fragment')) {
+            return response()->json([
+                'html' => view('customers.partials.results', compact('customers', 'search', 'status'))->render(),
+                'meta' => [
+                    'current_page' => $customers->currentPage(),
+                    'last_page' => $customers->lastPage(),
+                    'per_page' => $customers->perPage(),
+                    'total' => $customers->total(),
+                ],
+            ]);
+        }
+
         return view('customers.index', [
-            'customers' => $directory->paginate($request),
-            'search' => trim((string) $request->query('q', '')),
-            'status' => in_array($request->query('status'), ['active', 'inactive', 'deleted'], true) ? $request->query('status') : 'active',
+            'customers' => $customers,
+            'search' => $search,
+            'status' => $status,
             'drawerAction' => $drawerContent ? $drawerAction : null,
             'drawerCustomer' => $drawerCustomer,
             'drawerContent' => $drawerContent,
@@ -90,7 +109,7 @@ class CustomerController extends Controller
             : view('customers.form', $data);
     }
 
-    public function store(CustomerRequest $request, SaveCustomer $save): RedirectResponse
+    public function store(CustomerRequest $request, SaveCustomer $save): JsonResponse|RedirectResponse
     {
         $customer = $save->create(
             $request->user(),
@@ -99,11 +118,21 @@ class CustomerController extends Controller
             $request->userAgent(),
         );
 
+        $message = 'ग्राहक सफलतापूर्वक जोड़ दिया गया।';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => ['id' => $customer->getKey()],
+            ], 201);
+        }
+
         $redirect = $request->boolean('drawer_context')
             ? redirect()->route('customers.index')
             : redirect()->route('customers.show', $customer);
 
-        return $redirect->with('status', 'ग्राहक सफलतापूर्वक जोड़ दिया गया।');
+        return $redirect->with('status', $message);
     }
 
     public function show(int $customer): View
@@ -134,7 +163,7 @@ class CustomerController extends Controller
             : view('customers.form', $data);
     }
 
-    public function update(CustomerRequest $request, int $customer, SaveCustomer $save): RedirectResponse
+    public function update(CustomerRequest $request, int $customer, SaveCustomer $save): JsonResponse|RedirectResponse
     {
         $customer = Customer::query()->findOrFail($customer);
         $save->update(
@@ -145,10 +174,20 @@ class CustomerController extends Controller
             $request->userAgent(),
         );
 
+        $message = 'ग्राहक की जानकारी अपडेट हो गई है।';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => ['id' => $customer->getKey()],
+            ]);
+        }
+
         $redirect = $request->boolean('drawer_context')
             ? redirect()->route('customers.index')
             : redirect()->route('customers.show', $customer);
 
-        return $redirect->with('status', 'ग्राहक की जानकारी अपडेट हो गई है।');
+        return $redirect->with('status', $message);
     }
 }
