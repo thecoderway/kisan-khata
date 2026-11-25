@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Contracts\MobileOtpSender;
 use App\Infrastructure\Auth\NullMobileOtpSender;
+use App\Models\Customer;
 use App\Models\User;
 use App\Models\UserAuditLog;
+use App\Policies\CustomerPolicy;
 use App\Policies\UserAuditLogPolicy;
 use App\Policies\UserManagementPolicy;
 use App\Tenancy\CurrentShop;
@@ -33,5 +35,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(User::class, UserManagementPolicy::class);
         Gate::policy(UserAuditLog::class, UserAuditLogPolicy::class);
+        Gate::policy(Customer::class, CustomerPolicy::class);
     }
 }

@@ -22,6 +22,9 @@
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="ti ti-layout-dashboard"></i><span>डैशबोर्ड</span>
             </a>
+            <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">
+                <i class="ti ti-users"></i><span>ग्राहक</span>
+            </a>
             @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                 <a href="{{ route('shop-profile.edit') }}" class="{{ request()->routeIs('shop-profile.*') ? 'active' : '' }}">
                     <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>

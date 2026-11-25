@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Auth\MobileOtpController;
 use App\Http\Controllers\Api\Auth\TokenController;
 use App\Http\Controllers\Api\Users\ShopUserLifecycleController;
 use App\Http\Controllers\Api\Users\UserAuditHistoryController;
+use App\Modules\Customers\Presentation\Controllers\Api\CustomerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,13 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::post('/{user}/deactivate', [ShopUserLifecycleController::class, 'deactivate']);
             Route::post('/{user}/reactivate', [ShopUserLifecycleController::class, 'reactivate']);
             Route::patch('/{user}/role', [ShopUserLifecycleController::class, 'changeRole']);
+        });
+
+        Route::prefix('v1')->group(function (): void {
+            Route::get('/customers', [CustomerController::class, 'index']);
+            Route::post('/customers', [CustomerController::class, 'store']);
+            Route::get('/customers/{customer}', [CustomerController::class, 'show']);
+            Route::put('/customers/{customer}', [CustomerController::class, 'update']);
         });
     });
 });

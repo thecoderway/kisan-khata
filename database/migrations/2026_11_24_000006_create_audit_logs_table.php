@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('audit_logs', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('shop_id')->nullable()->constrained()->restrictOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->restrictOnDelete();
+            $table->string('action', 100);
+            $table->string('entity_type', 100);
+            $table->unsignedBigInteger('entity_id');
+            $table->string('reason', 500)->nullable();
+            $table->json('old_values')->nullable();
+            $table->json('new_values')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->string('user_agent', 500)->nullable();
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->index(['shop_id', 'entity_type', 'entity_id', 'created_at'], 'audit_entity_history_idx');
+            $table->index(['shop_id', 'action', 'created_at'], 'audit_action_history_idx');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('audit_logs');
+    }
+};

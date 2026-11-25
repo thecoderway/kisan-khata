@@ -6,6 +6,7 @@ use App\Modules\Auth\Presentation\Controllers\ForcePasswordChangeController;
 use App\Modules\Auth\Presentation\Controllers\NewPasswordController;
 use App\Modules\Auth\Presentation\Controllers\PasswordResetLinkController;
 use App\Modules\Auth\Presentation\Controllers\RegisteredShopController;
+use App\Modules\Customers\Presentation\Controllers\Web\CustomerController;
 use App\Modules\Shops\Presentation\Controllers\Web\GeographicLookupController;
 use App\Modules\Shops\Presentation\Controllers\Web\ShopProfileController;
 use App\Modules\Users\Presentation\Controllers\Web\UserAuditHistoryController;
@@ -32,6 +33,8 @@ Route::middleware(['auth', 'password.changed'])->group(function (): void {
 
 Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::resource('customers', CustomerController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
 
     Route::prefix('shop-profile')->name('shop-profile.')->group(function (): void {
         Route::get('/', [ShopProfileController::class, 'edit'])->name('edit');
