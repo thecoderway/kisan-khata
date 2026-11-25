@@ -6,6 +6,7 @@ use App\Modules\Auth\Presentation\Controllers\ForcePasswordChangeController;
 use App\Modules\Auth\Presentation\Controllers\NewPasswordController;
 use App\Modules\Auth\Presentation\Controllers\PasswordResetLinkController;
 use App\Modules\Auth\Presentation\Controllers\RegisteredShopController;
+use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use App\Modules\Customers\Presentation\Controllers\Web\CustomerController;
 use App\Modules\Shops\Presentation\Controllers\Web\GeographicLookupController;
 use App\Modules\Shops\Presentation\Controllers\Web\ShopProfileController;
