@@ -437,5 +437,4 @@ class CustomerManagementTest extends TestCase
             'action' => 'customer.deactivated',
         ]);
     }
-
 }
