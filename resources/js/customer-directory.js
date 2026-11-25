@@ -143,21 +143,22 @@ export function registerCustomerDirectory() {
             return;
         }
 
-        const pageSizeSelect = event.target.closest('[data-customer-page-size]');
-        if (pageSizeSelect) {
-            const targetUrl = new URL(window.location.href);
-            targetUrl.searchParams.set('pageSize', pageSizeSelect.value);
-            targetUrl.searchParams.delete('page');
-            loadResults(targetUrl, 'push');
-            return;
-        }
-
         const pageLink = event.target.closest('[data-customer-results] .pagination a');
         if (!pageLink) return;
 
         event.preventDefault();
         const targetUrl = new URL(pageLink.href, window.location.origin);
         syncFiltersFromUrl(targetUrl);
+        loadResults(targetUrl, 'push');
+    });
+
+    document.addEventListener('change', (event) => {
+        const pageSizeSelect = event.target.closest('[data-customer-page-size]');
+        if (!pageSizeSelect) return;
+
+        const targetUrl = new URL(window.location.href);
+        targetUrl.searchParams.set('pageSize', pageSizeSelect.value);
+        targetUrl.searchParams.delete('page');
         loadResults(targetUrl, 'push');
     });
 
