@@ -58,3 +58,14 @@ Status: Complete — design system, frontend foundation, and reviewed UI prototy
 
 ## Scope
 This phase establishes the frontend dependency foundation, design guidelines, and standalone UI prototypes. The prototypes are not connected to Laravel routes, authentication, business logic, or MySQL. Integration into the actual application will happen in subsequent phases.
+## Application-wide interaction standard
+
+The approved default for routine Create, Edit and record-level actions is the right-side overlay action drawer. It opens on explicit user click; it is not permanently visible. Listing pages remain data-focused and must not contain repeated inline action forms. Mobile uses a full-screen or near-full-screen presentation. Complex workflows may use a dedicated page only with a documented usability justification.
+
+See:
+- [ADR-0012 — Application-Wide Right-Side Drawer Standard](../decisions/ADR-0012-application-wide-right-side-drawer-standard.md)
+- [Component Guidelines](COMPONENT-GUIDELINES.md)
+- [Page Layouts](PAGE-LAYOUTS.md)
+- [Responsive Guidelines](RESPONSIVE-GUIDELINES.md)
+- [Accessibility](ACCESSIBILITY.md)
+- [UI Implementation Guide](UI-IMPLEMENTATION-GUIDE.md)
