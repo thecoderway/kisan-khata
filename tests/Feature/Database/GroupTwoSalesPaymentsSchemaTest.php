@@ -247,6 +247,7 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
 
         $saleRevision = \App\Models\SaleRevision::withoutGlobalScopes()->findOrFail($saleRevisionId);
         try {
+            $saleRevision->setAttribute('correction_reason', 'mutated');
             $saleRevision->save();
             $this->fail('Expected Sale revision update to be blocked.');
         } catch (\LogicException $exception) {
