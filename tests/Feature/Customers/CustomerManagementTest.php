@@ -560,5 +560,4 @@ class CustomerManagementTest extends TestCase
             ->assertDontSee('<!doctype html', false)
             ->assertDontSee('customer-action-drawer');
     }
-
 }
