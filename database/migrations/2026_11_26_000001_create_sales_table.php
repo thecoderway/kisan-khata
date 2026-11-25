@@ -56,14 +56,14 @@ return new class extends Migration
         });
 
         DB::statement(
-            "ALTER TABLE \`sales\`
-             ADD CONSTRAINT \`sales_amount_check\` CHECK (\`amount\` > 0),
-             ADD CONSTRAINT \`sales_payment_status_check\`
-                 CHECK (\`payment_status\` IN ('UNPAID', 'PARTIALLY_PAID', 'PAID')),
-             ADD CONSTRAINT \`sales_interest_status_check\`
-                 CHECK (\`interest_settlement_status\` IN ('PENDING', 'SETTLED')),
-             ADD CONSTRAINT \`sales_payment_choice_check\`
-                 CHECK (\`sale_payment_choice\` IN ('PAID', 'UNPAID'))"
+            "ALTER TABLE `sales`
+             ADD CONSTRAINT `sales_amount_check` CHECK (`amount` > 0),
+             ADD CONSTRAINT `sales_payment_status_check`
+                 CHECK (`payment_status` IN ('UNPAID', 'PARTIALLY_PAID', 'PAID')),
+             ADD CONSTRAINT `sales_interest_status_check`
+                 CHECK (`interest_settlement_status` IN ('PENDING', 'SETTLED')),
+             ADD CONSTRAINT `sales_payment_choice_check`
+                 CHECK (`sale_payment_choice` IN ('PAID', 'UNPAID'))"
         );
     }
 
