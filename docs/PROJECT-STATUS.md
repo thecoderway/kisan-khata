@@ -341,3 +341,25 @@ No production deployment or release is claimed.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
 This status file is a progress record. Approved product/technical documents and accepted ADRs remain authoritative.
+
+
+---
+
+## Phase 5 financial rules approval — 2026-11-25
+
+**Status: Business rules and architecture decisions documented; Phase 5 implementation NOT STARTED.**
+
+Product Owner-approved rules are recorded in:
+- `docs/02-business-rules.md` — approved Sales, Payments, Interest, Ledger and settlement rules.
+- `docs/03-accounting-engine.md` — posting sequence and accounting invariants.
+- `docs/04-database-architecture.md` — logical FIFO allocation and policy-versioning constraints.
+- `docs/decisions/ADR-0012-approved-financial-rules.md` — controlling decision record.
+- ADR-0004 is marked superseded; ADR-0006 and ADR-0007 are clarified.
+- `.claude/rules/financial-integrity.md` — AI implementation guardrails.
+- Docs 06, 09 and 10 — security, testing and roadmap requirements.
+
+Confirmed decisions include Paid/Unpaid Sale with linked atomic sale-day payment; normal consolidated customer payment with internal FIFO allocations; Shop-level Principal First/Interest First waterfall; no advances and rejection of excess payment; 0% Shop default monthly rate with optional Customer override; 30-day Shop grace period with Sale Date Day 0; effective-dated Shop/Customer capitalization settings; Actual Days / 30; HALF_UP two-decimal posted interest; start-inclusive/end-exclusive interval; two Owner-configured annual Interest Auto Settlement dates; Payment before annual Auto Settlement on the same date; separate Payment and Interest Settlement statuses; append-only financial history and reversal-based Payment corrections.
+
+**Remaining design decisions before implementation:** initial capitalization default (ON/OFF); exact two annual dates to be entered by each Owner; detailed interest-tranche-to-Sale representation for FIFO plus capitalization/waterfall; exceptional correction workflow for locked historical Sales; crop-season settlement accounting details. The Phase 5 blueprint must expose these explicitly rather than invent defaults.
+
+No application code, migrations, database or financial workflows were changed by this documentation approval. No tests or CI were run as part of this documentation-only update.
