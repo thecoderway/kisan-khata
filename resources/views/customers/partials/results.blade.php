@@ -47,7 +47,7 @@
                         </td>
                         <td>
                             <div class="dropdown customer-row-dropdown" data-customer-dropdown-portal>
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-boundary="viewport" aria-expanded="false">
                                     कार्रवाई
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-end">
