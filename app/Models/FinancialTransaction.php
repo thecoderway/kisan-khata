@@ -23,18 +23,13 @@ class FinancialTransaction extends Model
 
     public $timestamps = false;
 
+    // Server-controlled identity, actor, idempotency and posting fields must be
+    // assigned explicitly by the posting service, never mass-assigned from input.
     protected $fillable = [
         'customer_id',
-        'transaction_number',
         'transaction_type',
         'effective_date',
         'occurred_at',
-        'source_type',
-        'source_id',
-        'idempotency_key_id',
-        'created_by',
-        'posted_by',
-        'posted_at',
     ];
 
     protected function casts(): array
