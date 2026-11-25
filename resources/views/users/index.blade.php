@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
-@section('page-title', auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('page-title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
 
 @section('content')
-    @php($isOwner = auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+    @php($isOwner = auth()->user()->role === \App\Models\User::ROLE_OWNER)
     <div class="page-heading">
         <div>
             <span class="eyebrow">TEAM & ACCESS</span>
