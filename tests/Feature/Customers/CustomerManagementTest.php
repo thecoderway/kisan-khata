@@ -585,5 +585,4 @@ class CustomerManagementTest extends TestCase
             'deleted_at' => null,
         ]);
     }
-
 }
