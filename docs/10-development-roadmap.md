@@ -916,3 +916,15 @@ Phase 5 remains not started until implementation is separately authorized and ac
 ### 24.2 Interest convention approval boundary (2026-11-25)
 
 Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries and Sale Date Day 0 are proposals pending explicit Product Owner confirmation. They must remain implementation gates.
+
+
+### 24.3 Product Owner convention decisions finalized (2026-11-25)
+
+The following decisions are final and must be used by implementation and acceptance tests:
+- HALF_UP rounding to 2 decimal places.
+- [start inclusive, end exclusive) interest interval.
+- Sale Date is Grace Period Day 0; first eligible day follows 30 complete calendar days under the default grace period.
+- FIFO at Sale level, then selected Principal First/Interest First waterfall within each Sale.
+- No exceptional correction for a locked Sale; stop and require a separate approval and workflow before any future exception.
+
+These items are no longer pending.
