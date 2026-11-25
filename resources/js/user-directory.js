@@ -177,6 +177,7 @@ export function registerUserDirectory() {
 
         const targetUrl = new URL(window.location.href);
         targetUrl.searchParams.set('pageSize', pageSizeSelect.value);
+        if (pageSizeInput) pageSizeInput.value = pageSizeSelect.value;
         targetUrl.searchParams.delete('page');
         loadResults(targetUrl, 'push');
     });
