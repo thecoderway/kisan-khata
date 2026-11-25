@@ -614,7 +614,7 @@ Test at:
 - Small Android phone.
 - Large Android phone.
 
-The interface must remain usable at common mobile widths. Every production data table MUST use a horizontally scrollable container and follow [Table Guidelines](ui/TABLE-GUIDELINES.md). The table container, not the page, owns horizontal overflow. The first and last columns remain sticky at the left and right edges respectively. Preserve equal outer horizontal content padding, readable column widths, visible focus and unclipped row-action menus. Do not silently replace a required table with cards or hide its edge columns; a different mobile presentation requires a documented, approved usability/accessibility exception.
+The interface must remain usable at common mobile widths. Every production data table MUST use a horizontally scrollable container and follow [Table Guidelines](ui/TABLE-GUIDELINES.md). The table container, not the page, owns horizontal overflow. Only the first column remains sticky at the left edge; the last and all other columns scroll normally. Preserve equal outer horizontal content padding, readable column widths, visible focus and unclipped row-action menus. Do not silently replace a required table with cards or hide its edge columns; a different mobile presentation requires a documented, approved usability/accessibility exception.
 
 Routine listing filters SHOULD apply automatically. Text search uses a default 350–400 ms debounce; discrete filters apply on change. Keep server-side filtering authoritative and handle stale requests, loading/error states, pagination reset and URL state according to [Filter Guidelines](ui/FILTER-GUIDELINES.md).
 
@@ -718,7 +718,7 @@ Keep listing pages focused on record information, status, search, filters, pagin
 - Keep the header and action footer visible while the drawer body scrolls independently.
 - Provide visible Close and appropriate Cancel actions.
 - Preserve entered values and keep the drawer open on validation/server errors.
-- Close only after server-confirmed success; then update the listing and provide feedback.
+- Close only after server-confirmed success; then update the listing and show the server-confirmed message in a shared floating toast.
 - Keep destructive actions visually distinct and preserve existing confirmation/reason requirements.
 
 ### Responsive layout
@@ -748,7 +748,7 @@ Implementation details and acceptance requirements are maintained in the UI comp
 These rules apply to Customer Directory and all current/future modules:
 
 - Every production data table is wrapped in a horizontally scrollable container; page-level horizontal overflow is not permitted.
-- The first column stays sticky on the left and the last column stays sticky on the right while scrolling horizontally. Sticky backgrounds, stacking and focus states must remain correct.
+- Only the first column stays sticky on the left while scrolling horizontally. The last and all other columns scroll normally. The first-column background, divider, stacking and focus states must remain correct.
 - Horizontal content inset between the table outer border and the first/last column content must be equal.
 - One-row and few-row tables retain a balanced minimum height. Row-action dropdowns must not be clipped by table/card ancestor overflow; z-index alone is not a fix for clipping.
 - Routine filters apply automatically. Text search uses a default 350–400 ms debounce; discrete filters apply on change. Cancel or ignore stale requests, reset pagination when filters change, and preserve current results on failure.
@@ -765,7 +765,10 @@ All forms submitted from the shared contextual action drawer MUST use the shared
 - Drawer form submission must not reload or navigate the page.
 - Keep the drawer open and preserve entered values on validation, authorization, server, session and network errors.
 - Map Laravel JSON validation errors (HTTP 422) to fields and show accessible error feedback.
-- Show pending state and prevent duplicate browser submissions.
+- Show a pending indicator overlaid inside the existing submit control without changing its dimensions, replacing its original content or shifting surrounding layout; keep the form mounted.
+- On every validation retry, replace prior server-generated error summaries and field messages instead of appending duplicates; preserve entered values.
+- On confirmed success, close the drawer and show the server-confirmed message through the shared floating toast region.
+- Prevent duplicate browser submissions.
 - Close only after an explicitly recognized server-confirmed success; then refresh/update the relevant listing and show feedback.
 - Preserve filters, pagination, sort and scroll context.
 - Keep CSRF, server validation, authorization, tenant isolation, audit logging and domain/business rules authoritative on the server.
