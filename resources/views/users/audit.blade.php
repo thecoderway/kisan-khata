@@ -16,7 +16,7 @@
             <div class="empty-state"><i class="ti ti-history"></i><h3>अभी कोई audit activity नहीं है</h3>
                 <p>यूज़र create, deactivate, reactivate या role change होने पर record यहाँ दिखाई देगा।</p></div>
         @else
-            <div class="table-responsive">
+            <div class="table-responsive kk-data-table-wrap">
                 <table class="table table-vcenter audit-table">
                     <thead><tr><th>समय</th><th>कार्रवाई</th><th>किसने की</th><th>किस पर</th><th>बदलाव</th><th>कारण</th></tr></thead>
                     <tbody>
