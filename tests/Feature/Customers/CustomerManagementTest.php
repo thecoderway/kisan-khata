@@ -438,6 +438,91 @@ class CustomerManagementTest extends TestCase
         ]);
     }
 
+    public function test_customer_drawer_create_and_update_return_confirmed_json_success_responses(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->postJson(route('customers.store'), $this->customerPayload())
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'ग्राहक सफलतापूर्वक जोड़ दिया गया।');
+
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->putJson(route('customers.update', $customer->id), $this->customerPayload([
+            'name_original' => 'रामलाल अपडेट',
+        ]))->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.id', $customer->id);
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'shop_id' => $owner->shop_id,
+            'name_original' => 'रामलाल अपडेट',
+        ]);
+    }
+
+    public function test_customer_drawer_validation_returns_json_errors_without_redirecting(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->postJson(route('customers.store'), $this->customerPayload([
+            'name_original' => '',
+            'mobile' => 'not-a-mobile',
+            'drawer_context' => '1',
+        ]))->assertUnprocessable()
+            ->assertJsonValidationErrors(['name_original', 'mobile']);
+
+        $this->assertDatabaseCount('customers', 0);
+    }
+
+    public function test_customer_directory_returns_json_results_for_asynchronous_filters(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
+            'name_original' => 'Filter Match',
+            'name_original_language' => 'en',
+        ]))->assertRedirect();
+
+        $this->getJson(route('customers.index', [
+            'q' => 'Filter Match',
+            'status' => 'active',
+            'fragment' => 1,
+        ]))->assertOk()
+            ->assertJsonStructure(['html', 'meta' => ['current_page', 'last_page', 'per_page', 'total']])
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonFragment(['name' => 'Filter Match']);
+    }
+
+    public function test_customer_lifecycle_drawer_returns_json_validation_and_success_responses(): void
+    {
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        $this->postJson(route('customers.deactivate', $customer->id), [
+            'reason' => '   ',
+            'drawer_context' => '1',
+        ])->assertUnprocessable()->assertJsonValidationErrors('reason');
+
+        $this->postJson(route('customers.deactivate', $customer->id), [
+            'reason' => 'Requested pause',
+            'drawer_context' => '1',
+        ])->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'inactive');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $owner->shop_id,
+            'user_id' => $owner->id,
+            'action' => 'customer.deactivated',
+            'entity_id' => $customer->id,
+        ]);
+    }
+
     public function test_customer_create_and_edit_forms_can_be_rendered_as_drawer_fragments(): void
     {
         $owner = $this->makeUser();
