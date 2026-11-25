@@ -23,6 +23,24 @@ class Shop extends Model
         'pincode', 'logo_path', 'timezone', 'preferred_language',
     ];
 
+    /** @return HasMany<CustomerAccount, $this> */
+    public function customerAccounts(): HasMany
+    {
+        return $this->hasMany(CustomerAccount::class);
+    }
+
+    /** @return HasMany<FinancialTransaction, $this> */
+    public function financialTransactions(): HasMany
+    {
+        return $this->hasMany(FinancialTransaction::class);
+    }
+
+    /** @return HasMany<IdempotencyKey, $this> */
+    public function idempotencyKeys(): HasMany
+    {
+        return $this->hasMany(IdempotencyKey::class);
+    }
+
     /** @return HasMany<User, $this> */
     public function users(): HasMany
     {
