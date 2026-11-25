@@ -701,3 +701,45 @@ The interface is acceptable when:
 - Mobile screens are usable.
 - Printing and exports work correctly.
 - Backend-confirmed results are displayed accurately.
+## 28. Application-Wide Right-Side Drawer Standard
+
+**Status:** Approved by the Product Owner on 2026-11-25. See [ADR-0012](decisions/ADR-0012-application-wide-right-side-drawer-standard.md).
+
+### Default rule
+
+Across all current and future application modules, routine Create, Edit and record-level actions must use a shared right-side action drawer by default. The drawer opens only after the user clicks the relevant Add, Edit or action control. It overlays the current page; it does not remain permanently open and does not push/reflow the underlying content.
+
+### Listing pages
+
+Keep listing pages focused on record information, status, search, filters, pagination and a compact contextual action trigger. Do not place action forms, reason inputs or multiple lifecycle forms inline in every table row. Selecting an action opens the drawer for that record and task.
+
+### Drawer contents
+
+- Show a clear localized title and selected-record context where applicable.
+- Show only the selected action/form, not all possible forms at once.
+- Keep the header and action footer visible while the drawer body scrolls independently.
+- Provide visible Close and appropriate Cancel actions.
+- Preserve entered values and keep the drawer open on validation/server errors.
+- Close only after server-confirmed success; then update the listing and provide feedback.
+- Keep destructive actions visually distinct and preserve existing confirmation/reason requirements.
+
+### Responsive layout
+
+- Desktop: right-side overlay drawer; approximately 480 CSS px default width, with a wider variant only when justified by the form.
+- Mobile: full-screen or near-full-screen drawer with independently scrolling content and reachable actions.
+- Preserve the underlying listing's scroll position and context.
+- Prevent background interaction while the modal drawer is open.
+
+### Full-page exception
+
+A dedicated page is allowed only when workflow complexity or required workspace makes a drawer materially less usable—for example, a multi-step process, complex editable table/calculation workspace, or several independent sections that must be viewed together. Field count alone is not sufficient. The implementation/design review must record why the exception is necessary. When uncertain, prefer the drawer and validate usability.
+
+### Shared implementation boundary
+
+Use the approved Blade, Tabler, Alpine.js and Vite stack. The shared drawer owns presentation and interaction only; module-specific forms and business logic remain in their modules. Backend routes, validation, authorization, tenant isolation, audit logging, lifecycle rules and financial safeguards remain authoritative and must not be weakened. Keep the navigation sidebar separate from the contextual action drawer.
+
+### Accessibility
+
+Use dialog semantics and an accessible name; move focus into the drawer on open, contain keyboard focus while modal, return focus to the trigger on close, support Escape and a visible close control, lock/restore background scroll and interaction, respect reduced motion, and maintain visible focus and labelled validation. Touch targets should be at least 44 × 44 CSS px where practical.
+
+Implementation details and acceptance requirements are maintained in the UI component, page layout, responsive, accessibility and implementation guides.
