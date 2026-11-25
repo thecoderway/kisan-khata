@@ -16,6 +16,7 @@
 >
     <div
         class="kk-drawer-backdrop"
+        x-cloak
         x-show="isOpen"
         x-transition.opacity
         x-on:click="close()"
@@ -25,6 +26,7 @@
     <section
         id="{{ $id }}"
         class="kk-action-drawer"
+        x-cloak
         :class="{ 'is-wide': width === 'wide' }"
         x-show="isOpen"
         x-transition:enter="kk-drawer-enter"
