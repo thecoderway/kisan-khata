@@ -40,7 +40,14 @@ class UserDirectoryQuery
         }
 
         if ($search !== '') {
-            $query->where('name', 'like', '%'.$search.'%');
+            $query->where(function ($nested) use ($search, $actor): void {
+                $nested->where('name', 'like', '%'.$search.'%');
+
+                if ($actor->role === User::ROLE_OWNER) {
+                    $nested->orWhere('email', 'like', '%'.$search.'%')
+                        ->orWhere('mobile', 'like', '%'.$search.'%');
+                }
+            });
         }
 
         $pageSize = filter_var($request->query('pageSize', 20), FILTER_VALIDATE_INT);

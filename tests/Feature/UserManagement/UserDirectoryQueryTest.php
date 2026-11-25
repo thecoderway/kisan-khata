@@ -61,7 +61,7 @@ class UserDirectoryQueryTest extends TestCase
             'is_active' => true,
         ]);
 
-        $users = app(UserDirectoryQuery::class)->forActor($owner);
+        $users = app(UserDirectoryQuery::class)->forActor($owner, Request::create('/users'));
 
         $this->assertFalse($users->getCollection()->contains('id', $otherUser->id));
     }
@@ -116,7 +116,7 @@ class UserDirectoryQueryTest extends TestCase
             'is_active' => true,
         ]);
 
-        $users = app(UserDirectoryQuery::class)->forActor($manager);
+        $users = app(UserDirectoryQuery::class)->forActor($manager, Request::create('/users'));
 
         $this->assertFalse($users->getCollection()->contains('id', $otherStaff->id));
     }

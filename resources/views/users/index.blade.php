@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
-@section('page-title', auth()->user()->role === \\App\\Models\\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('page-title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
 
 @section('content')
-    @php($isOwner = auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+    @php($isOwner = auth()->user()->role === \App\Models\User::ROLE_OWNER)
     <div class="page-heading">
         <div>
             <span class="eyebrow">TEAM & ACCESS</span>
@@ -109,7 +109,7 @@
                             <td><span class="account-status {{ $member->is_active ? 'is-active' : 'is-inactive' }}"><i class="ti ti-circle-filled"></i>{{ $member->is_active ? 'Active' : 'Deactivated' }}</span></td>
                             @if ($isOwner)
                                 <td>
-                                    @if (in_array($member->role, [\\App\\Models\\User::ROLE_MANAGER, \\App\\Models\\User::ROLE_STAFF], true))
+                                    @if (in_array($member->role, [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_STAFF], true))
                                         <div class="user-actions">
                                             @if ($member->is_active)
                                                 <form method="POST" action="{{ route('users.deactivate', $member->id) }}" onsubmit="return confirm('क्या आप इस account को deactivate करना चाहते हैं? इसकी सभी sessions और mobile tokens revoke हो जाएँगे।')">@csrf<button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button></form>
