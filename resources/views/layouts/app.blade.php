@@ -14,16 +14,19 @@
             <span class="brand-mark"><i class="ti ti-leaf"></i></span>
             <span><strong>Kisan Khata</strong><small>खेती और व्यापार का हिसाब</small></span>
         </a>
-
         <div class="sidebar-shop">
             <span class="sidebar-shop-icon"><i class="ti ti-building-store"></i></span>
             <span><small>आपकी दुकान</small><strong>{{ app(\App\Tenancy\CurrentShop::class)->require()->name }}</strong></span>
         </div>
-
         <nav class="app-navigation" aria-label="मुख्य नेविगेशन">
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="ti ti-layout-dashboard"></i><span>डैशबोर्ड</span>
             </a>
+            @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
+                <a href="{{ route('shop-profile.edit') }}" class="{{ request()->routeIs('shop-profile.*') ? 'active' : '' }}">
+                    <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>
+                </a>
+            @endif
             @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
                 <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index', 'users.create') ? 'active' : '' }}">
                     <i class="ti ti-users"></i><span>{{ auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन' }}</span>
@@ -35,7 +38,6 @@
                 </a>
             @endif
         </nav>
-
         <div class="sidebar-bottom">
             <div class="sidebar-user">
                 <span class="user-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
@@ -47,19 +49,13 @@
             </form>
         </div>
     </aside>
-
     <div class="app-main">
         <header class="app-topbar">
-            <button type="button" class="mobile-menu-button" aria-label="मेन्यू खोलें" @click="sidebarOpen = true">
-                <i class="ti ti-menu-2"></i>
-            </button>
+            <button type="button" class="mobile-menu-button" aria-label="मेन्यू खोलें" @click="sidebarOpen = true"><i class="ti ti-menu-2"></i></button>
             <div class="topbar-title">@yield('page-title', 'डैशबोर्ड')</div>
             <div class="topbar-shop">{{ app(\App\Tenancy\CurrentShop::class)->require()->name }}</div>
         </header>
-
-        <main class="app-content">
-            @yield('content')
-        </main>
+        <main class="app-content">@yield('content')</main>
         <footer class="app-footer">© {{ date('Y') }} Kisan Khata · सरल, सुरक्षित और भरोसेमंद</footer>
     </div>
 </body>

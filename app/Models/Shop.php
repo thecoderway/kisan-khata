@@ -17,32 +17,19 @@ class Shop extends Model
     public const STATUS_CLOSED = 'closed';
 
     protected $fillable = [
-        'name',
-        'owner_name',
-        'mobile',
-        'email',
-        'address',
-        'village',
-        'tehsil',
-        'district',
-        'state',
-        'pincode',
-        'logo_path',
-        'timezone',
-        'preferred_language',
+        'name', 'owner_name', 'mobile', 'email', 'address',
+        'village', 'tehsil', 'district', 'state',
+        'state_code', 'district_code', 'subdistrict_code', 'village_code',
+        'pincode', 'logo_path', 'timezone', 'preferred_language',
     ];
 
-    /**
-     * @return HasMany<User, $this>
-     */
+    /** @return HasMany<User, $this> */
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
-    /**
-     * @return HasMany<ShopSetting, $this>
-     */
+    /** @return HasMany<ShopSetting, $this> */
     public function settings(): HasMany
     {
         return $this->hasMany(ShopSetting::class);
