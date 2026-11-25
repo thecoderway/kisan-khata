@@ -88,3 +88,42 @@ Alpine.data('actionDrawer', () => ({
 }));
 
 Alpine.start();
+
+document.addEventListener('click', async (event) => {
+    const closeButton = event.target.closest('[data-drawer-close]');
+    if (closeButton) {
+        document.querySelector('.kk-drawer-root')?.dispatchEvent(new CustomEvent('kk-drawer:close', { bubbles: true }));
+        return;
+    }
+
+    const trigger = event.target.closest('[data-customer-drawer]');
+    if (!trigger) return;
+
+    event.preventDefault();
+    const root = document.querySelector('.kk-drawer-root');
+    const body = root?.querySelector('.kk-drawer-body');
+    if (!root || !body) return;
+
+    body.innerHTML = '<div class="py-5 text-center text-secondary" role="status">लोड हो रहा है…</div>';
+
+    try {
+        const response = await fetch(trigger.dataset.url, {
+            headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        });
+        if (!response.ok) throw new Error('फॉर्म लोड नहीं हो सका। कृपया दोबारा प्रयास करें।');
+        body.innerHTML = await response.text();
+        root.dispatchEvent(new CustomEvent('kk-drawer:open', {
+            bubbles: true,
+            detail: { title: trigger.dataset.title || 'ग्राहक', width: trigger.dataset.width || 'default' },
+        }));
+    } catch (error) {
+        body.innerHTML = '<div class="alert alert-danger" role="alert"></div>';
+        body.querySelector('[role="alert"]').textContent = error.message;
+        root.dispatchEvent(new CustomEvent('kk-drawer:open', {
+            bubbles: true,
+            detail: { title: 'त्रुटि', width: 'default' },
+        }));
+    }
+});
+
