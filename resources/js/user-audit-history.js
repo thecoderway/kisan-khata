@@ -25,7 +25,7 @@ export function registerUserAuditHistory() {
     };
 
     const buildFilterUrl = () => {
-        const url = new URL(form.action, window.location.origin);
+        const url = new URL(form.getAttribute('action') || window.location.href, window.location.origin);
 
         for (const [key, value] of new FormData(form).entries()) {
             const normalized = String(value).trim();
