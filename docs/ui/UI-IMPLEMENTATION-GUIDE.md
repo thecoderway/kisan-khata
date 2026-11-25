@@ -99,7 +99,10 @@ All forms rendered in the contextual action drawer MUST use the shared asynchron
 - Send Accept: application/json and preserve same-origin session/CSRF behavior. FormData must preserve CSRF tokens, file controls and Laravel method spoofing.
 - Define and document a predictable JSON success response for each operation. Handle Laravel validation JSON (HTTP 422) by mapping errors to the corresponding fields and retaining entered values.
 - Keep the drawer open on validation, authorization, server, session or network errors. Never treat an ambiguous response as success.
-- Show pending state, prevent duplicate browser submissions, announce feedback accessibly and close only after confirmed success.
+- Show a pending indicator as an overlay inside the existing submit control. Preserve the button's dimensions and original content; do not unmount the form or shift drawer content.
+- Prevent duplicate browser submissions and announce pending state accessibly.
+- On each retry, clear/replace prior server-generated error summaries and field feedback before displaying the latest validation response. Preserve entered values and never append duplicate messages.
+- On confirmed success, close the drawer and show the server-confirmed message through the shared floating toast region. Do not use an inline listing alert for routine drawer success.
 - Refresh/update the relevant listing after success without discarding filters, pagination, sort or scroll context.
 - Keep validation, authorization, tenant isolation, audit and domain logic in Laravel. Client-side visibility or disabled controls are not security or idempotency controls.
 - Preserve existing non-AJAX behavior for non-drawer forms and non-drawer callers.
@@ -110,4 +113,4 @@ Follow [Filter Guidelines](FILTER-GUIDELINES.md). Use server-side query services
 
 ## Production data tables
 
-Follow [Table Guidelines](TABLE-GUIDELINES.md). Every production data table must use a horizontally scrollable wrapper, sticky first/last columns, equal outer horizontal content insets, appropriate minimum height for short result sets and overlay positioning that prevents action menus from being clipped. Verify sticky stacking and focus visibility at supported viewports.
+Follow [Table Guidelines](TABLE-GUIDELINES.md). Every production data table must use a horizontally scrollable wrapper; only the first column is sticky at the left edge. The last and all other columns scroll normally. Preserve equal outer horizontal content insets, appropriate minimum height for short result sets and overlay positioning that prevents action menus from being clipped. Verify sticky stacking and focus visibility at supported viewports.
