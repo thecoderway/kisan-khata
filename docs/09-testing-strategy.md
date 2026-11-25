@@ -710,3 +710,51 @@ The status must distinguish:
 - Known gaps.
 
 Do not claim a feature is tested unless the relevant test suite has actually been executed successfully.
+
+
+---
+
+## 25. Approved Phase 5 Financial Test Requirements (2026-11-25)
+
+ADR-0012 defines expected behavior. Add deterministic unit, feature and MySQL 8.4 integration coverage for:
+
+### Sale and automatic payment
+- Unpaid Sale increases outstanding principal.
+- Paid Sale creates exactly one equal linked automatic Payment atomically.
+- Automatic payment failure rolls back the Sale.
+- Paid Sale remains visible as Already Paid but contributes zero net outstanding.
+- Sale-day automatic payment does not trigger interest settlement for older balances.
+- Duplicate Sale submission cannot duplicate Sale or automatic Payment.
+
+### Normal payment and FIFO
+- Interest is calculated and persisted through payment effective date before normal payment application.
+- Interest status Settled is independent of Payment status.
+- FIFO applies payment to oldest eligible unpaid Sale/component first, then subsequent components.
+- A single consolidated Payment can have multiple internal allocations.
+- Original Sale amounts remain unchanged.
+- Fully Paid and sale-day Paid Sales are excluded from later FIFO.
+- Principal First and Interest First are tested independently.
+- Payment cannot exceed principal plus posted unpaid interest; excess is rejected.
+- Two concurrent payments cannot overdraw the same customer payable.
+- Same-date subsequent payments do not duplicate interest.
+
+### Interest policy and settlement
+- Shop rate default 0%; customer rate override and fallback.
+- Shop grace period default 30 days; Sale Date Day 0; exact first eligible day.
+- Start-inclusive/end-exclusive adjacent intervals do not double-count.
+- Actual Days / 30 formula and HALF_UP 2-decimal posted result.
+- Shop capitalization default and customer override/inheritance.
+- Effective-dated rate/capitalization changes do not rewrite prior postings.
+- Two annual Owner-configured settlement dates; idempotent repeated execution.
+- Normal Payment precedes annual Auto Settlement on the same date.
+- Paid-sale automatic Payment is not an interest event.
+
+### Revisions, reversals and integrity
+- Sale lock after later Payment or annual Auto Settlement.
+- Sale revision stores before/after, actor, timestamp and reason.
+- Payment reversal reverses original allocations without deleting them.
+- Tenant-crossing allocation/payment/sale references are rejected.
+- Every failure rolls back financial, allocation, projection and audit writes together.
+- Ledger/projection rebuild reconciles against immutable source postings.
+
+MySQL 8.4 is mandatory for row locks, concurrent posting, foreign-key and tenant-integrity tests. SQLite-only results are not sufficient evidence for these behaviors. Run tests only against an independently isolated test database; never point destructive test setup at a development database.
