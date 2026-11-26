@@ -47,7 +47,7 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::post('/customers/{customer}/reactivate', [CustomerLifecycleController::class, 'reactivate']);
             Route::delete('/customers/{customer}', [CustomerLifecycleController::class, 'softDelete']);
             Route::post('/customers/{customer}/restore', [CustomerLifecycleController::class, 'restore']);
-            Route::post('/customers/{customer}/payments/{payment}/correction', [PaymentCorrectionController::class, 'store']);
+            Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class, 'show']);\n            Route::post('/customers/{customer}/payments/{payment}/correction', [PaymentCorrectionController::class, 'store']);
         });
     });
 });
