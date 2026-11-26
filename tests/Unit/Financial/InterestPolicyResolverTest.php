@@ -1,17 +1,17 @@
 <?php
 
-namespace Tests\\Unit\\Financial;
+namespace Tests\Unit\Financial;
 
-use App\\Models\\Customer;
-use App\\Models\\Shop;
-use App\\Modules\\Financial\\Application\\InterestPolicyResolver;
-use App\\Tenancy\\CurrentShop;
+use App\Models\Customer;
+use App\Models\Shop;
+use App\Modules\Financial\Application\InterestPolicyResolver;
+use App\Tenancy\CurrentShop;
 use DateTimeImmutable;
 use DomainException;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Schema;
-use Tests\\TestCase;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 class InterestPolicyResolverTest extends TestCase
 {
