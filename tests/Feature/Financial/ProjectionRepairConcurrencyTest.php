@@ -104,6 +104,14 @@ class ProjectionRepairConcurrencyTest extends TestCase
 
         $workerConnectionName = 'projection_repair_worker';
         $workerConnectionConfig = config('database.connections.'.DB::getDefaultConnection());
+        $observerConnectionName = 'projection_repair_observer';
+        $observerConnectionConfig = array_merge($workerConnectionConfig, [
+            'username' => env('DB_MONITOR_USERNAME', 'root'),
+            'password' => env('DB_MONITOR_PASSWORD', 'root'),
+        ]);
+        config(["database.connections.{$observerConnectionName}" => $observerConnectionConfig]);
+        DB::purge($observerConnectionName);
+        $observer = DB::connection($observerConnectionName);
 
         [$parentSocket, $childSocket] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = pcntl_fork();
@@ -154,7 +162,7 @@ class ProjectionRepairConcurrencyTest extends TestCase
             $observedLockWait = false;
 
             do {
-                $waiting = DB::selectOne(
+                $waiting = $observer->selectOne(
                     'SELECT COUNT(*) AS aggregate
                      FROM information_schema.innodb_trx
                      WHERE trx_mysql_thread_id = ?
@@ -190,10 +198,12 @@ class ProjectionRepairConcurrencyTest extends TestCase
                 $primary->rollBack();
             }
 
-            fclose($parentSocket);
-            if (pcntl_waitpid($pid, $status, WNOHANG) === 0) {
+            if (isset($pid) && $pid > 0 && pcntl_waitpid($pid, $status, WNOHANG) === 0) {
                 pcntl_waitpid($pid, $status);
             }
+            fclose($parentSocket);
+            DB::disconnect($observerConnectionName);
+            DB::purge($observerConnectionName);
             app(CurrentShop::class)->clear();
         }
     }
