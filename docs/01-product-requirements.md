@@ -443,7 +443,7 @@ Configuration includes:
 - Interest capitalization policy.
 - Annual Auto Settlement dates.
 
-The default grace period is zero days.
+The Shop default grace period is 30 calendar days. Sale Date is Day 0; the first eligible interest day follows 30 complete calendar days. No Customer-specific grace-period override is supported.
 
 ### 12.2 Calculation Formula
 
@@ -500,7 +500,7 @@ At the next interest calculation:
 
 ### 12.7 Interest Capitalization
 
-The application should support two Owner-selectable policies:
+The application supports two Owner-selectable policies. The initial Shop default is OFF; a Customer-level override is optional and inherits the Shop setting when absent:
 
 **Policy A — Capitalized Interest**
 
@@ -513,7 +513,7 @@ The application should support two Owner-selectable policies:
 - Interest remains separately identifiable.
 - Future interest is not charged on previously accrued interest.
 
-The final default policy and detailed transition behavior require explicit approval before implementation.
+The approved initial capitalization default is OFF. Capitalization changes are effective-dated and prospective only; they do not rewrite prior periods or postings.
 
 ### 12.8 Calculation History
 
