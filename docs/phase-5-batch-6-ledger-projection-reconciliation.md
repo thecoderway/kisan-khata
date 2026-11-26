@@ -27,12 +27,14 @@ Keep the customer account projection and dated balance snapshots reproducible fr
 
 1. Missing or mismatched CustomerAccount projection.
 2. Last completed interest checkpoint mismatch.
-3. Sale payment status mismatch against net ledger postings.
-4. Missing or mismatched daily account balance snapshots.
-5. Posted Sale principal source totals against the original Sale amount.
-6. Posted Payment ledger net against the Payment amount, including reversal direction.
+3. Last financial event timestamp and interest checkpoint mismatch.
+4. Sale payment status mismatch against net ledger postings.
+5. Missing, mismatched or incorrectly sourced daily account balance snapshots.
+6. Posted Sale principal source totals against the original Sale amount.
+7. Posted Payment ledger net against the Payment amount, including reversal direction.
+8. Payment allocation header and item totals, plus per-Sale/per-component allocation-to-ledger agreement for normal payments and reversals.
 
-The result contains Shop ID, Customer ID, a consistency flag and structured discrepancies with expected/actual values. It does not write, repair, post, or mutate any financial record.
+The result is calculated inside a consistent read transaction and contains Shop ID, Customer ID, a consistency flag and structured discrepancies with expected/actual values. It does not write, repair, post, or mutate any financial record.
 
 ## Explicit repair
 
