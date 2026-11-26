@@ -1,36 +1,131 @@
-# Phase 5 — Batch 8.2 Financial Integrity Fixes
+# Phase 5 — Batch 8 Financial Integrity and Release Gate
 
-**Date:** 2026-11-26  
-**Branch:** `fix/batch-8-financial-integrity`  
-**Base:** `main` after Batch 7 merge (PR #43, commit `7b8b9791e04788569dc09935cc1854982732c717`).
+**Last updated:** 2026-11-26  
+**Current `main` baseline:** `bc9afb78811ca28d2238506bcba6ec1154ad05d7`  
+**Delivery state:** Batches 8.2 and 8.3 are merged through PRs #44 and #45. Batch 8.4 synchronizes the release documentation; it does not declare Phase 5 released.
 
-## Scope
+## 1. Purpose and scope
 
-This batch addresses two code-level risks identified during the Batch 8.1 read-only audit and records the current Phase 5 delivery state. It adds no migrations, schema changes, data backfills or deployment steps.
+Batch 8 consolidates the financial integrity review after the Phase 5 financial services, annual settlement, ledger projection/reconciliation, authorization, APIs and UI were merged. The work addresses code-level risks found during read-only integration review and records what is and is not verified for the Phase 5 release gate.
 
-## Fix 1 — Serialize projection repair before establishing a read snapshot
+This document records:
+- the initial integration audit (Batch 8.1);
+- implemented corrections (Batch 8.2 and Batch 8.3);
+- regression coverage and CI evidence;
+- remaining acceptance work and explicit safety boundaries.
 
-`ReconciliationService::rebuildAndReconcile()` now starts one transaction, acquires the existing customer/account lock through `CustomerAccountLockService`, then performs its first consistent ledger read. It rebuilds with `BalanceProjectionService::rebuildLocked()` under that same lock and reruns reconciliation before commit. This follows the lock order used by financial posting and avoids retaining a pre-lock MySQL REPEATABLE READ snapshot while waiting for the lock.
+No new business rule is introduced here. ADR-0012 remains the controlling Product Owner decision for financial behavior.
 
-The ordinary `reconcileCustomer()` path remains read-only and does not acquire a lock or create a missing account projection.
+## 2. Batch 8.1 — Read-only integration audit
 
-## Fix 2 — Validate recurring settlement calendar dates
+The audit reviewed the repair API and service transaction boundaries, account locking, tenant scoping, financial policies, audit-log protections, routes and regression tests.
 
-Shop interest policy writes validate each month/day pair against a leap-year calendar. Impossible dates such as 31 April are rejected. 29 February remains valid as a recurring configuration and is due only in actual leap years, consistent with scheduler behavior.
+### P1 finding: repair API could retain a pre-lock REPEATABLE READ snapshot
 
-## Regression coverage
+The first implementation of the repair service acquired the Customer/Account lock before its own first consistent ledger read. However, the actual controller wrapped the flow in an outer transaction and performed reconciliation before calling that service. Under MySQL REPEATABLE READ, the nested Laravel transaction shared the outer transaction's snapshot. Consequently, the real API path could still hold a stale snapshot while waiting for a concurrent posting lock.
 
-- Existing Batch 6 reconciliation tests cover read-only discrepancy detection, explicit repair, projection/snapshot/Sale-status rebuilding and cross-Shop rejection.
-- Batch 7 API tests now cover rejection of an impossible calendar date and acceptance of 29 February.
-- CI and MySQL concurrency evidence will be added after the branch checks complete.
+The direct service-level concurrency test did not exercise that controller transaction boundary. This was a release-blocking gap and required a regression test against the authenticated API endpoint.
 
-## Verified delivery state
+### Other reviewed boundaries
 
-- Batch 5 annual settlement: merged via PR #40.
-- Batch 6 ledger projection/reconciliation: merged via PR #41.
-- Batch 7 financial authorization/APIs/UI: merged via PR #43.
-- Batch 7 planning document PR #42 remains open separately.
+The inspected tenant-owned models/builders and financial policies enforced current-Shop scoping and role checks for the reviewed paths. Audit-log mutation protections were also present. This was a scoped code review, not a blanket certification of every financial workflow or all possible raw SQL paths.
 
-## Boundaries
+Repository branch-protection settings could not be inspected with the current GitHub integration permissions. Their state remains unknown and must be verified by a repository administrator.
 
-No migrations, schema changes, local/production data writes, backfills, deployment or merge to `main` are included. Batch 8 final release gate remains open until end-to-end financial, authorization, tenant-isolation, MySQL concurrency and frontend/API acceptance checks pass.
+## 3. Batch 8.2 — merged integrity corrections (PR #44)
+
+**Merge commit:** `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d`
+
+### 3.1 Lock-first projection repair service
+
+- Added a transaction path that acquires the Customer/Account lock before its first consistent ledger read.
+- Rebuilds the projection under the same lock and reconciles again before commit.
+- Keeps ordinary `reconcileCustomer()` read-only; it does not create or repair a missing projection.
+
+### 3.2 Recurring settlement calendar validation
+
+- Validates configured month/day pairs against a leap-year calendar.
+- Rejects impossible dates such as 31 April.
+- Allows 29 February as a recurring configuration; it is due only in actual leap years.
+
+### 3.3 Regression coverage and documentation
+
+- Added API coverage for impossible recurring settlement dates and valid 29 February.
+- Added a deterministic MySQL two-connection projection-repair concurrency test.
+- Updated Phase 5 financial integrity documentation and project status in the implementation batch.
+
+## 4. Batch 8.3 — actual API-path concurrency correction (PR #45)
+
+**Merge commit:** `bc9afb78811ca28d2238506bcba6ec1154ad05d7`
+
+### 4.1 Root-cause correction
+
+The controller no longer opens an outer transaction and performs a reconciliation read before the lock. It calls the new `ReconciliationService::repairAndReconcile()` path directly.
+
+That service:
+1. Starts the repair transaction.
+2. Acquires Customer and Account locks before the first consistent ledger read.
+3. Reconciles the current ledger and projection.
+4. Rebuilds only when drift exists.
+5. Performs final reconciliation and aborts/rolls back if consistency is not restored.
+6. Invokes the audit callback inside the same transaction after successful repair and before commit.
+
+The legacy `rebuildAndReconcile()` service method remains as a backwards-compatible wrapper. Ordinary reconciliation remains read-only.
+
+### 4.2 Endpoint-level concurrency regression
+
+The deterministic MySQL concurrency test now calls the authenticated repair HTTP endpoint from a separate database connection/process while a financial posting holds the account lock. It verifies that the repair waits for the posting, then uses the committed ledger snapshot and returns a consistent result.
+
+This closes the specific test gap found in Batch 8.1: the test exercises the controller/API transaction boundary rather than calling only the service method.
+
+## 5. CI evidence
+
+GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) for the PR #45 head completed with conclusion **success**.
+
+All listed job steps completed successfully, including:
+- Composer configuration validation;
+- PHP formatting (Pint);
+- frontend dependency installation and Vite production build;
+- MySQL row-lock integration test;
+- remaining Laravel test suite;
+- container cleanup.
+
+This CI run verifies the tested PR #45 head. It does not establish that the entire Phase 5 acceptance matrix is complete, and it is not evidence of production deployment, production database migration or live-environment verification.
+
+## 6. Current merged delivery baseline
+
+| Delivery | Status |
+|---|---|
+| Batch 5 — Annual Interest Auto Settlement | PR #40 merged |
+| Batch 6 — Ledger Projection & Reconciliation | PR #41 merged |
+| Batch 7 — Financial Authorization, APIs & UI | PR #43 merged |
+| Batch 8.2 — Lock ordering and settlement calendar validation | PR #44 merged |
+| Batch 8.3 — API-path lock-first atomic repair | PR #45 merged |
+| Batch 8.4 — Documentation/release-gate synchronization | Documentation PR in progress |
+
+Current `main` baseline for this document: `bc9afb78811ca28d2238506bcba6ec1154ad05d7`.
+
+## 7. Remaining Phase 5 acceptance and release gate
+
+<ins>Phase 5 is implemented through the merged batches above, but its final acceptance/release gate remains OPEN.</ins>
+
+The following work still requires explicit evidence:
+
+1. **End-to-end financial workflows:** exercise Sale, Payment, FIFO allocation and per-Sale waterfall, interest calculation/posting, annual settlement, ledger projection and reconciliation as complete business flows.
+2. **Atomicity, rollback and idempotency:** verify failure injection and duplicate-request behavior across all critical posting, reversal, settlement and repair paths.
+3. **Role authorization:** verify Owner, Manager and Staff permissions for every financial API/UI action, including denied actions and cross-Shop access attempts.
+4. **MySQL 8.4 concurrency:** confirm deterministic locking/race coverage for Sale, Payment, reversal, settlement and projection repair, not only the repair path.
+5. **Frontend/API regression:** verify UI behavior, API response contracts, validation errors and consistency between displayed balances and authoritative ledger results.
+6. **Operational readiness:** complete environment, backup/restore, monitoring, security and deployment-runbook checks in the appropriate production-readiness phase.
+7. **Branch governance:** have a repository administrator verify branch protection, required CI checks and review requirements. The current integration could not inspect these administration-level settings, so no assumption is made about their state.
+
+A future release-gate report should link each criterion to its exact test, workflow run, review evidence or operational artifact and explicitly record any exclusions.
+
+## 8. Explicit safety boundaries
+
+- No new schema change or migration is part of Batch 8.2/8.3/8.4.
+- No production migration, production data mutation, backfill or deployment has been performed or authorized.
+- Do not run migrations or deployment as part of documentation synchronization.
+- Do not mark Phase 5 released solely because implementation PRs are merged or CI is green.
+- Any production migration or deployment requires separate explicit Product Owner approval.
+- Any change to approved financial business behavior requires a separate decision recorded against ADR-0012 before implementation.
