@@ -3,7 +3,7 @@
 namespace App\Modules\Financial\Application;
 
 use App\Models\Customer;
-use App\Models\InterestSettlementItem;
+use App\Models\InterestSettlementRun;
 use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\SaleRevision;
@@ -158,8 +158,11 @@ class SaleRevisionService
             return true;
         }
 
-        return InterestSettlementItem::query()
-            ->where('sale_id', $sale->getKey())
+        return InterestSettlementRun::query()
+            ->where('customer_id', $sale->customer_id)
+            ->where('settlement_date', '>=', $sale->sale_date->toDateString())
+            ->where('status', 'COMPLETED')
+            ->where('completed_at', '>', $sale->posted_at)
             ->exists();
     }
 }
