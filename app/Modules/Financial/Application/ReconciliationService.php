@@ -61,6 +61,7 @@ class ReconciliationService
                 }
             }
     
+            $this->compareLastFinancialEvent($customer, $account, $discrepancies);
             $this->compareInterestCheckpoint($customer, $account, $discrepancies);
             $this->compareSaleStatuses($customer, $discrepancies);
             $this->compareSnapshots($customer, $discrepancies);
@@ -93,6 +94,29 @@ class ReconciliationService
         $this->projections->rebuildForCustomer($customer);
 
         return $this->reconcileCustomer($customer);
+    }
+
+    /**
+     * @param  list<array<string,mixed>>  $discrepancies
+     */
+    private function compareLastFinancialEvent(Customer $customer, ?CustomerAccount $account, array &$discrepancies): void
+    {
+        $expected = DB::table('financial_transactions')
+            ->where('shop_id', $customer->shop_id)
+            ->where('customer_id', $customer->getKey())
+            ->max('occurred_at');
+        $expected = $expected === null
+            ? null
+            : CarbonImmutable::parse($expected)->format('Y-m-d H:i:s.u');
+        $actual = $account?->last_financial_event_at?->format('Y-m-d H:i:s.u');
+
+        if ($actual !== $expected) {
+            $discrepancies[] = [
+                'type' => 'last_financial_event_mismatch',
+                'expected' => $expected,
+                'actual' => $actual,
+            ];
+        }
     }
 
     /**
