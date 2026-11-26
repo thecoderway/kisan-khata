@@ -16,7 +16,7 @@ This document defines the business rules governing:
 - Payments.
 - Consolidated outstanding balances.
 - Interest calculations.
-- Customer advances.
+- Excess payments are rejected; customer advance balances are not supported.
 - Crop-season settlements.
 - Transaction corrections.
 - Financial audit history.
@@ -280,17 +280,10 @@ If new sales occur after a payment:
 4. New sales accrue interest from their own eligible dates.
 5. The payable amount combines all eligible outstanding components and applicable interest.
 
-### 6.4 Excess Payment and Customer Advance
+### 6.4 Excess Payment — Rejection
 
-If a payment exceeds the complete payable amount:
+A payment must not exceed the complete payable amount (outstanding principal plus posted unpaid interest). If the submitted amount is greater than the payable amount, reject the entire payment before creating any payment, allocation, ledger or balance-projection posting. Do not accept only the payable portion. Customer advance balances and automatic future-sale adjustment are not supported.
 
-1. Outstanding becomes zero.
-2. The excess amount becomes a customer advance.
-3. The advance must be separately identifiable in the ledger.
-4. The advance must not be treated as negative sales.
-5. The advance must remain available for future account adjustments.
-
-The exact automatic adjustment behavior against future sales requires a separately approved rule.
 
 ### 6.5 Payment Correction
 
@@ -349,7 +342,7 @@ The system must distinguish:
 
 - Previously carried-forward consolidated outstanding.
 - New sales after the previous payment or calculation.
-- Customer advances.
+- No customer advance balance (excess payments are rejected).
 - Previously calculated interest.
 - Applicable policy and grace period.
 
@@ -550,7 +543,7 @@ The following items must be finalized before implementation of the affected beha
 4. Grace-period eligibility boundary.
 5. Same-date payment and Auto Settlement execution ordering.
 6. Detailed crop-season settlement accounting.
-7. Automatic adjustment of customer advances against future sales.
+7. Customer advance handling is out of scope; excess payments are rejected under ADR-0012.
 8. Backdated transaction correction and recalculation rules.
 9. Subscription plan entitlements and pricing.
 10. Payment gateway.
