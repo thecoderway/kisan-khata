@@ -363,3 +363,11 @@ Finalized rules include:
 **Current delivery:** Batch 0 is complete on PR #29 (open; not merged). It includes ADR-0012 documentation reconciliation, CustomerDeletionEligibility updates, and focused deletion-guard tests. Next is Batch 1 financial foundation services, followed by the approved batches in sequence. No database migrations or deployment are authorized; obtain separate explicit approval before either.
 
 **Verification:** GitHub Actions Laravel CI run [45789193066](https://github.com/thecoderway/kisan-khata/actions/runs/45789193066) passed on commit `6d9830881a9a802ae855b229240f89c7e80cfffd`: Pint **164 files passed**; Composer validation passed; Vite production build passed; MySQL 8.4.13 row-lock integration test **1 passed / 2 assertions**; Laravel suite **233 passed / 802 assertions**. This verifies the PR branch only; it is not a production deployment or migration verification.
+
+## Phase 5 — Batch 5 and Batch 6 delivery update (2026-11-26)
+
+- **Batch 5 — Annual Interest Auto Settlement:** merged via PR #40, squash merge commit `b30348130141ab6a43d2a2a56e151d389e3c38f9`. The merged scope includes Shop-local configured dates, idempotent settlement runs, same-day payment ordering, and missed-settlement catch-up. CI was green on the final PR head before merge.
+- **Batch 6 — Ledger Projection & Reconciliation:** implementation is in progress on `feat/batch-6-ledger-projection-reconciliation`. The scope centralizes ledger-derived account projection rebuilds across Sale, Payment, Payment reversal and interest posting; provides read-only reconciliation and an explicit ledger-derived repair path; checks snapshots, Sale payment statuses and source posting totals.
+- Batch 6 reuses the already merged financial schema. No new migration, schema mutation, database backfill, production operation or deployment is included.
+- New feature tests cover projection consistency, read-only discrepancy detection, explicit repair and cross-Shop rejection. CI evidence is pending; do not mark Batch 6 complete until the MySQL 8.4 workflow and final code review pass.
+- The delivery remains a reviewable PR. No merge to `main` is authorized without explicit Product Owner approval.
