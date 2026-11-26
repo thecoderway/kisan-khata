@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Financial;
 
+use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\PaymentPostingService;
+use App\Modules\Financial\Application\ReconciliationService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
@@ -192,6 +194,86 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             'entity_type' => 'customer_projection', 'entity_id' => $customer->getKey(),
             'reason' => 'Repair verified projection mismatch',
         ]);
+    }
+
+    public function test_projection_repair_rolls_back_projection_and_audit_when_audit_callback_fails(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-01'),
+            '100.00', 'Repair rollback test', 'batch-8-5-repair-rollback',
+        );
+
+        DB::table('customer_accounts')->where('shop_id', $shop->getKey())
+            ->where('customer_id', $customer->getKey())
+            ->update(['principal_balance' => '90.00', 'total_payable' => '90.00']);
+
+        try {
+            app(ReconciliationService::class)->repairAndReconcile(
+                $customer,
+                function (array $before, array $after) use ($owner, $customer): void {
+                    AuditLog::query()->create([
+                        'user_id' => $owner->getKey(),
+                        'action' => 'financial.customer_projection_repaired',
+                        'entity_type' => 'customer_projection',
+                        'entity_id' => $customer->getKey(),
+                        'reason' => 'Rollback audit failure regression',
+                        'old_values' => ['consistent' => $before['consistent']],
+                        'new_values' => ['consistent' => $after['consistent']],
+                        'ip_address' => '127.0.0.1',
+                        'user_agent' => 'Batch 8.5 regression',
+                    ]);
+
+                    throw new \\RuntimeException('Simulated audit persistence failure.');
+                },
+            );
+
+            $this->fail('The simulated audit failure should abort the repair transaction.');
+        } catch (\\RuntimeException $exception) {
+            $this->assertSame('Simulated audit persistence failure.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('customer_accounts', [
+            'shop_id' => $shop->getKey(),
+            'customer_id' => $customer->getKey(),
+            'principal_balance' => '90.00',
+            'total_payable' => '90.00',
+        ]);
+        $this->assertDatabaseMissing('audit_logs', [
+            'shop_id' => $shop->getKey(),
+            'action' => 'financial.customer_projection_repaired',
+            'entity_type' => 'customer_projection',
+            'entity_id' => $customer->getKey(),
+            'reason' => 'Rollback audit failure regression',
+        ]);
+    }
+
+    public function test_only_owner_can_repair_reconciliation_and_foreign_shop_customer_is_hidden(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        [, , $foreignCustomer] = $this->context();
+        app(CurrentShop::class)->set($shop);
+
+        $manager = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_MANAGER, 'is_active' => true,
+        ]);
+        $staff = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
+        ]);
+        $url = '/api/v1/reconciliation/customers/'.$customer->getKey().'/repair';
+        $payload = ['reason' => 'Authorization regression coverage'];
+
+        Sanctum::actingAs($manager, ['app']);
+        $this->postJson($url, $payload)->assertForbidden();
+
+        Sanctum::actingAs($staff, ['app']);
+        $this->postJson($url, $payload)->assertForbidden();
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->postJson('/api/v1/reconciliation/customers/'.$foreignCustomer->getKey().'/repair', $payload)
+            ->assertNotFound();
     }
 
     public function test_shop_policy_rejects_impossible_annual_settlement_dates_but_accepts_february_29(): void
