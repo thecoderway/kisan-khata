@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 class InterestCalculationService
 {
     public const TRIGGER_CUSTOMER_PAYMENT = 'CUSTOMER_PAYMENT';
+
     public const TRIGGER_ANNUAL_AUTO_SETTLEMENT = 'ANNUAL_AUTO_SETTLEMENT';
 
     public function __construct(
