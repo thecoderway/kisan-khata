@@ -22,6 +22,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Group;
 use RuntimeException;
+use Symfony\\Component\\HttpKernel\\Exception\\ConflictHttpException;
 use Tests\TestCase;
 use Throwable;
 
