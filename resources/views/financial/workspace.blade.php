@@ -58,7 +58,7 @@
             <div><label class="form-label">Capitalization</label><select class="form-select" name="capitalization_enabled"><option value="0">बंद</option><option value="1">चालू</option></select></div>
             <div><label class="form-label">Settlement date 1 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_1" min="1" max="12" value="3" required><input class="form-control" type="number" name="annual_settlement_day_1" min="1" max="31" value="30" required></div></div>
             <div><label class="form-label">Settlement date 2 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_2" min="1" max="12" value="10" required><input class="form-control" type="number" name="annual_settlement_day_2" min="1" max="31" value="30" required></div></div>
-            <div class="financial-form-submit"><button class="btn btn-primary kk-primary" type="submit">नई policy version सेव करें</button></div>
+            <div class="financial-form-wide"><label class="form-label">बदलाव का कारण</label><input class="form-control" name="reason" minlength="10" maxlength="500" required></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary" type="submit">नई policy version सेव करें</button></div>
         </form>
     </div>
     <div class="content-card">
@@ -68,7 +68,7 @@
             <div><label class="form-label">लागू होने की तारीख</label><input class="form-control" type="date" name="effective_from" required></div>
             <div><label class="form-label">मासिक ब्याज दर (%)</label><input class="form-control" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="Shop policy से inherit"></div>
             <div><label class="form-label">Capitalization override</label><select class="form-select" name="capitalization_enabled"><option value="">Shop policy से inherit</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
-            <div class="financial-form-submit"><button class="btn btn-outline-success" type="submit">Customer override सेव करें</button></div>
+            <div class="financial-form-wide"><label class="form-label">बदलाव का कारण</label><input class="form-control" name="reason" minlength="10" maxlength="500" required></div><div class="financial-form-submit"><button class="btn btn-outline-success" type="submit">Customer override सेव करें</button></div>
         </form>
         <div id="customer-policy-history" class="p-3"></div>
     </div>
