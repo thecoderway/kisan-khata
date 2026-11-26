@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-26  
-**Status Snapshot Base:** `main` at Batch 8.3 merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7` (2026-11-26).  
-**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation has progressed through Batch 8.3: Batches 5, 6, 7, 8.2 and 8.3 are merged (PRs #40, #41, #43, #44 and #45). Batch 8 documentation synchronization is in progress; the overall Phase 5 acceptance/release gate remains open pending end-to-end workflow and role/security acceptance. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
+**Status Snapshot Base:** `main` at Batch 8.4 documentation merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` (2026-11-26).  
+**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation is merged through Batch 8.3, and Batch 8.4 documentation synchronization is merged (PR #46). Batches 5, 6, 7, 8.2, 8.3 and 8.4 are merged (PRs #40, #41, #43, #44, #45 and #46). Batch 8.5 release-gate regression coverage and evidence synchronization is in progress; the overall Phase 5 acceptance/release gate remains open pending end-to-end workflow and role/security acceptance. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -14,13 +14,13 @@ These rules are mandatory for all future work, including AI-assisted work:
 1. **Document-first:** Before planning or changing code, read the relevant approved PRD, Business Rules, Accounting Engine, Database, Multi-Tenancy, Security, UI/UX, API and Testing sections, the applicable roadmap phase, and all relevant ADRs.
 2. **Inspect before implementing:** Audit the existing code, migrations, routes, policies, tests and dependencies. Do not assume a feature is absent or complete from a status label alone.
 3. **No silent scope or policy changes:** Do not invent business rules, defaults, permissions, pricing, calculations or architecture. If a requirement is missing, ambiguous or conflicts with an ADR/document, stop the affected work, explain the conflict and obtain Product Owner approval. Update the authoritative document/ADR before implementation.
-4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Never merge to `main` without the Product Owner's explicit approval.
+4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 5. **Security and tenancy by design:** Derive tenant context from authenticated membership; never trust client-supplied `shop_id` or role. Enforce authorization server-side and test cross-tenant access for every tenant-owned feature.
 6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Customer-facing payments remain consolidated; internal FIFO allocation across Sales is required under ADR-0012.
 7. **Tests are evidence:** Add relevant automated tests and actually run them. Never claim tests, builds, migrations or acceptance criteria passed without observed output.
 8. **Review all changes:** Report changed files, migrations, security implications, test output and known limitations. Preserve existing working functionality unless explicitly approved otherwise.
 9. **Documentation stays synchronized:** Update the relevant technical document and this status file in the same delivery whenever implementation changes documented behavior or verified progress. Distinguish implemented, tested, accepted and production-configured states.
-10. **Approval gates:** Ask before significant architecture/business changes, PR creation when not already authorized, and every merge. SMS provider integration is explicitly deferred to the final integration/release-readiness stage by Product Owner instruction.
+10. **Approval gates:** Ask before significant architecture/business changes and PR creation when not already authorized. Under the standing merge authorization, merge only after green CI, mergeability and blocker review; respect any explicit hold/review-only instruction. SMS provider integration is explicitly deferred to the final integration/release-readiness stage by Product Owner instruction.
 
 If any future instruction conflicts with these rules or approved documentation, do not guess; surface the conflict and ask for a decision.
 
@@ -67,7 +67,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 2 | Multi-Tenancy Foundation | **Complete — merged into `main` via PR #7** (`8c670a1`). Tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API boundaries and job context are implemented. MySQL 8.4 CI evidence: run #17 (132 tests / 389 assertions, 0 failures, 0 skipped); PR #7 also records successful CI for its merged head. Future modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — merged into `main` via PR #7**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage. MySQL 8.4 CI run #19: 139 tests / 432 assertions, 0 failures, 0 skipped. Cross-domain Customer/Sales/Payment permission enforcement remains required in those domain modules. |
 | Phase 4 | Customer Management | **Implementation complete for merged scope — PRs #10–#14 merged into `main`.** Shop Profile/LGD selectors, customer CRUD/search, bilingual fields and location defaults, approved customer lifecycle policy, safe soft-delete builder behavior, and customer deactivate/reactivate/soft-delete/restore are merged and CI-verified. Product Owner manually smoke-tested Owner/Manager/Staff browser flows. Automatic translation provider integration remains explicitly deferred; no live provider integration is claimed. |
-| Phase 5 | Financial Foundation and Accounting Engine | Implementation merged through Batch 8.3; final end-to-end acceptance/release gate remains open |
+| Phase 5 | Financial Foundation and Accounting Engine | Implementation merged through Batch 8.3; Batch 8.4 documentation merged; Batch 8.5 regression coverage in progress; final acceptance/release gate remains open |
 | Phase 6 | Credit Sales | Not started |
 | Phase 7 | Payments | Not started |
 | Phase 8 | Customer Ledger | Not started |
@@ -343,7 +343,7 @@ No production deployment or release is claimed.
 
 ## 13. Phase 5 status — 2026-11-26
 
-**Current delivery baseline:** Phase 5 financial implementation is merged through Batch 8.3. This includes the financial core, tenant-safe posting and locking, FIFO allocation, effective-dated interest, annual auto settlement, ledger projection/reconciliation, financial APIs/UI and the Batch 8 integrity corrections. The final Phase 5 acceptance/release gate is still open; merged code and green CI do not by themselves constitute production readiness.
+**Current delivery baseline:** Phase 5 financial implementation is merged through Batch 8.3; Batch 8.4 documentation synchronization is merged via PR #46 (merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`). This includes the financial core, tenant-safe posting and locking, FIFO allocation, effective-dated interest, annual auto settlement, ledger projection/reconciliation, financial APIs/UI and the Batch 8 integrity corrections. The final Phase 5 acceptance/release gate is still open; merged code and green CI do not by themselves constitute production readiness.
 
 Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
@@ -355,8 +355,11 @@ The approved financial rules remain unchanged: consolidated customer-facing paym
 - Batch 7 — Financial Authorization, APIs & UI: PR #43, merge commit `7b8b9791e04788569dc09935cc1854982732c717`.
 - Batch 8.2 — projection repair lock ordering and recurring settlement calendar validation: PR #44, merge commit `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d`.
 - Batch 8.3 — lock-first, atomic repair through the actual authenticated API endpoint: PR #45, merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7`.
+- Batch 8.4 — release-gate documentation synchronization: PR #46, merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`.
 
 **Batch 8.3 CI evidence:** GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully. All job steps passed, including MySQL row-lock integration, the remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. This is CI evidence for the merged PR head; it is not production deployment or a full release acceptance sign-off.
+
+**Batch 8.5 in progress:** add explicit projection-repair rollback/audit atomicity regression coverage, reconciliation Owner-only and cross-Shop API denial coverage, and update the release-gate evidence matrix. CI evidence is pending.
 
 **Remaining release gate:** complete end-to-end financial workflow acceptance; verify role-by-role authorization and cross-Shop denial across the financial APIs/UI; confirm MySQL 8.4 concurrency/rollback coverage for all critical posting and repair paths; run frontend/API regression acceptance; review operational configuration, backup/restore and deployment readiness in the appropriate later phase. Branch-protection rules could not be inspected with the current GitHub integration permissions and require repository-admin verification.
 

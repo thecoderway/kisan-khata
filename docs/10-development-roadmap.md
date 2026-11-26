@@ -892,7 +892,7 @@ This section supersedes the historical Phase 5 status statements in Sections 8, 
 
 ### Merged implementation baseline
 
-Phase 5 financial implementation is merged into `main` through Batch 8.3:
+Phase 5 financial implementation is merged into `main` through Batch 8.3; Batch 8.4 documentation synchronization is merged via PR #46 (merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`):
 
 | Batch | Scope | Delivery |
 |---|---|---|
@@ -901,6 +901,8 @@ Phase 5 financial implementation is merged into `main` through Batch 8.3:
 | 7 | Financial Authorization, APIs & UI | PR #43 merged |
 | 8.2 | Projection repair lock ordering and recurring settlement calendar validation | PR #44 merged; merge commit `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d` |
 | 8.3 | Lock-first, atomic projection repair through the authenticated API endpoint | PR #45 merged; merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7` |
+| 8.4 | Documentation/release-gate synchronization | PR #46 merged; merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` |
+| 8.5 | Repair rollback/audit atomicity and reconciliation authorization regressions | Implementation PR in progress; CI evidence pending |
 
 Batch 8.3 specifically removes the controller's pre-lock reconciliation read and outer transaction, performs lock-first repair/reconciliation in one transaction, and records the repair audit callback before commit. The deterministic MySQL concurrency regression test exercises the authenticated API path while a financial posting holds the account lock.
 
@@ -910,7 +912,7 @@ GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/acti
 
 ### Remaining Phase 5 release acceptance
 
-The Phase 5 release gate remains **OPEN** until the following are completed and evidenced:
+The Phase 5 release gate remains **OPEN** until the following are completed and evidenced. Batch 8.5 is adding targeted rollback and authorization regression tests; it does not by itself close the end-to-end release gate.
 
 1. End-to-end workflows across Sale, Payment, allocation, interest, annual settlement, ledger projection and reconciliation, including rollback/idempotency behavior.
 2. Role-by-role authorization acceptance for Owner, Manager and Staff, including API/UI denial paths and cross-Shop isolation.

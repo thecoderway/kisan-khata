@@ -99,7 +99,10 @@ class FinancialAuthorizationPolicyTest extends TestCase
 
         $this->assertTrue($reconciliation->viewCustomer($this->user(User::ROLE_OWNER), $customer));
         $this->assertFalse($reconciliation->viewCustomer($this->user(User::ROLE_MANAGER), $customer));
+        $this->assertFalse($reconciliation->repair($this->user(User::ROLE_MANAGER), $customer));
         $this->assertFalse($reconciliation->repair($this->user(User::ROLE_STAFF), $customer));
+        $this->assertFalse($reconciliation->repair($this->user(User::ROLE_OWNER, 20), $customer));
+        $this->assertFalse($reconciliation->repair($this->user(User::ROLE_OWNER, 10, false), $customer));
         $this->assertFalse((new FinancialAuditPolicy)->viewAny($this->user(User::ROLE_MANAGER)));
     }
 

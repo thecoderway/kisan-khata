@@ -1,8 +1,8 @@
 # Phase 5 — Batch 8 Financial Integrity and Release Gate
 
 **Last updated:** 2026-11-26  
-**Current `main` baseline:** `bc9afb78811ca28d2238506bcba6ec1154ad05d7`  
-**Delivery state:** Batches 8.2 and 8.3 are merged through PRs #44 and #45. Batch 8.4 synchronizes the release documentation; it does not declare Phase 5 released.
+**Current `main` baseline:** `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`  
+**Delivery state:** Batches 8.2 and 8.3 are merged through PRs #44 and #45. Batch 8.4 documentation is merged via PR #46. Batch 8.5 adds rollback/audit atomicity and reconciliation authorization regression coverage; it does not declare Phase 5 released.
 
 ## 1. Purpose and scope
 
@@ -101,11 +101,22 @@ This CI run verifies the tested PR #45 head. It does not establish that the enti
 | Batch 7 — Financial Authorization, APIs & UI | PR #43 merged |
 | Batch 8.2 — Lock ordering and settlement calendar validation | PR #44 merged |
 | Batch 8.3 — API-path lock-first atomic repair | PR #45 merged |
-| Batch 8.4 — Documentation/release-gate synchronization | Documentation PR in progress |
+| Batch 8.4 — Documentation/release-gate synchronization | PR #46 merged; merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` |
+| Batch 8.5 — Repair rollback/audit atomicity and reconciliation authorization regression coverage | Implementation PR in progress; CI evidence pending |
 
-Current `main` baseline for this document: `bc9afb78811ca28d2238506bcba6ec1154ad05d7`.
+Current `main` baseline for this document: `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`.
 
-## 7. Remaining Phase 5 acceptance and release gate
+## 7. Batch 8.5 — targeted release-gate regression coverage
+
+The current implementation branch adds:
+
+- A failure-injection test that writes the repair audit event inside the repair callback, throws before transaction commit, and asserts both the projection repair and audit row are rolled back.
+- API authorization tests proving Manager and Staff cannot repair projections and an Owner cannot address a Customer belonging to another Shop.
+- Policy unit coverage for Manager, Staff, inactive Owner and cross-Shop Owner denial.
+
+CI evidence is pending. These tests cover the repair path only; they do not establish rollback/concurrency acceptance for all Sale, Payment, reversal or settlement workflows.
+
+## 8. Remaining Phase 5 acceptance and release gate
 
 <ins>Phase 5 is implemented through the merged batches above, but its final acceptance/release gate remains OPEN.</ins>
 
@@ -121,9 +132,9 @@ The following work still requires explicit evidence:
 
 A future release-gate report should link each criterion to its exact test, workflow run, review evidence or operational artifact and explicitly record any exclusions.
 
-## 8. Explicit safety boundaries
+## 9. Explicit safety boundaries
 
-- No new schema change or migration is part of Batch 8.2/8.3/8.4.
+- No new schema change or migration is part of Batch 8.2/8.3/8.4/8.5.
 - No production migration, production data mutation, backfill or deployment has been performed or authorized.
 - Do not run migrations or deployment as part of documentation synchronization.
 - Do not mark Phase 5 released solely because implementation PRs are merged or CI is green.
