@@ -1,16 +1,16 @@
 <?php
 
-namespace App\\Modules\\Financial\\Application;
+namespace App\Modules\Financial\Application;
 
-use App\\Models\\Customer;
-use App\\Models\\CustomerAccount;
-use App\\Models\\LedgerEntry;
-use App\\Models\\Payment;
-use App\\Models\\Sale;
-use App\\Tenancy\\CurrentShop;
-use Brick\\Math\\BigDecimal;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Auth\\Access\\AuthorizationException;
+use App\Models\Customer;
+use App\Models\CustomerAccount;
+use App\Models\LedgerEntry;
+use App\Models\Payment;
+use App\Models\Sale;
+use App\Tenancy\CurrentShop;
+use Brick\Math\BigDecimal;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class ReconciliationService
 {
