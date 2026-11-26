@@ -112,7 +112,14 @@ class PaymentReversalService
                 foreach ($originalEntries as $entry) {
                     $entryTotal = $entryTotal->plus($entry->credit_amount)->minus($entry->debit_amount);
                 }
-                if ($entryTotal->compareTo((string) $original->amount) !== 0 || $items->isEmpty()) {
+                $allocationTotal = BigDecimal::zero();
+                foreach ($items as $item) {
+                    $allocationTotal = $allocationTotal->plus($item->amount);
+                }
+                if ($entryTotal->compareTo((string) $original->amount) !== 0
+                    || $allocationTotal->compareTo((string) $original->amount) !== 0
+                    || BigDecimal::of((string) $allocation->total_allocated)->compareTo((string) $original->amount) !== 0
+                    || $items->isEmpty()) {
                     throw new LogicException('Original Payment ledger and allocation do not reconcile to its posted amount.');
                 }
 
