@@ -22,7 +22,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Group;
 use RuntimeException;
-use Symfony\\Component\\HttpKernel\\Exception\\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 use Throwable;
 
@@ -75,13 +75,13 @@ class FinancialPostingConcurrencyTest extends TestCase
                     );
 
                     return ['outcome' => 'posted'];
-                } catch (\DomainException $exception) {
+                } catch (ConflictHttpException $exception) {
                     return ['outcome' => 'rejected', 'exception' => $exception::class];
                 }
             });
 
             $this->assertSame('rejected', $worker['outcome']);
-            $this->assertSame(\DomainException::class, $worker['exception']);
+            $this->assertSame(ConflictHttpException::class, $worker['exception']);
         } finally {
             if ($primary->transactionLevel() > 0) {
                 $primary->rollBack();
