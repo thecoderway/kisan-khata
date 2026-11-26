@@ -73,6 +73,30 @@ class PaymentPostingService
                     throw new ConflictHttpException('Inactive customers cannot post Payments.');
                 }
 
+                if (
+                    $account->last_interest_cutoff_date !== null
+                    && $account->last_interest_cutoff_date->toDateString() > $paymentDateString
+                ) {
+                    throw new ConflictHttpException('A Payment cannot be backdated before an already completed interest checkpoint.');
+                }
+
+                $laterInterestCheckpointExists = DB::table('interest_calculation_runs')
+                    ->where('customer_id', $customer->getKey())
+                    ->where('cutoff_date_exclusive', '>', $paymentDateString)
+                    ->exists();
+                if ($laterInterestCheckpointExists) {
+                    throw new ConflictHttpException('A later interest checkpoint already exists; historical Payment correction requires a separate reversal workflow.');
+                }
+
+                $sameDaySettlementAlreadyCompleted = DB::table('interest_settlement_runs')
+                    ->where('customer_id', $customer->getKey())
+                    ->where('cutoff_date_exclusive', $paymentDateString)
+                    ->where('status', 'COMPLETED')
+                    ->exists();
+                if ($sameDaySettlementAlreadyCompleted) {
+                    throw new ConflictHttpException('A normal Payment must be posted before the annual interest settlement on the same date.');
+                }
+
                 $paymentTransaction = $this->transactions->createHeader(
                     $actor,
                     $customer,
