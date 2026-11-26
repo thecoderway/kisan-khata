@@ -69,11 +69,15 @@ class FinancialAuthorizationPolicyTest extends TestCase
             $actor = $this->user($role);
             $this->assertTrue($sales->viewAny($actor));
             $this->assertTrue($sales->view($actor, $sale));
+            $this->assertTrue($sales->create($actor));
             $this->assertTrue($payments->viewAny($actor));
             $this->assertTrue($payments->view($actor, $payment));
             $this->assertTrue($payments->create($actor));
         }
 
+        $this->assertTrue($sales->revise($this->user(User::ROLE_OWNER), $sale));
+        $this->assertFalse($sales->revise($this->user(User::ROLE_MANAGER), $sale));
+        $this->assertFalse($sales->revise($this->user(User::ROLE_STAFF), $sale));
         $this->assertTrue($payments->correct($this->user(User::ROLE_OWNER), $payment));
         $this->assertFalse($payments->correct($this->user(User::ROLE_MANAGER), $payment));
         $this->assertFalse($payments->correct($this->user(User::ROLE_STAFF), $payment));
