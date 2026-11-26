@@ -15,7 +15,6 @@ use App\Models\Sale;
 use App\Models\User;
 use Brick\Math\BigDecimal;
 use DateTimeInterface;
-use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -216,7 +215,7 @@ class PaymentPostingService
                     }
                 }
 
-$this->projections->rebuildLocked($account, $customer, $paymentDateString, (int) $paymentTransaction->getKey(), $paymentDateString);
+                $this->projections->rebuildLocked($account, $customer, $paymentDateString, (int) $paymentTransaction->getKey(), $paymentDateString);
 
                 $this->audit->recordTransaction(
                     $actor,
