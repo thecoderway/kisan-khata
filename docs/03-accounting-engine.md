@@ -121,19 +121,15 @@ Suggested service: `CustomerPaymentService`.
 
 Responsibilities:
 
-1. Validate shop and customer ownership.
-2. Validate payment amount and effective date.
-3. Lock or safely serialize the customer financial account.
-4. Identify current outstanding and eligible new sales.
-5. Calculate eligible interest through the payment date.
-6. Determine complete payable amount.
-7. Mark the interest checkpoint Settled and recompute total payable.
-8. Reject the entire Payment before any posting if it exceeds outstanding principal plus posted unpaid interest.
-9. Allocate accepted Payment FIFO across oldest eligible Sales, applying the effective Shop Principal First or Interest First waterfall within each Sale.
-10. Persist Payment, allocations and ledger postings atomically; reconcile projection and commit.
-10. Update account projections.
-11. Record transaction and audit history.
-12. Return an explainable payment result.
+1. Validate current Shop/customer ownership, amount, effective date and idempotency.
+2. Begin a database transaction and lock the customer financial account.
+3. Calculate eligible interest through the Payment effective date.
+4. Mark the interest checkpoint Settled and recompute total payable.
+5. Reject the entire Payment before any posting if it exceeds outstanding principal plus posted unpaid interest.
+6. Allocate accepted Payment FIFO across oldest eligible Sales, applying the effective Shop Principal First or Interest First waterfall within each Sale.
+7. Persist Payment, allocation and ledger postings atomically.
+8. Reconcile account projections, record audit history and commit.
+9. Return an explainable Payment result.
 
 ### 7.1 Internal FIFO Allocation
 
@@ -305,7 +301,7 @@ Posted financial transactions are immutable and are never directly edited or phy
 - Only the Shop Owner may initiate these approved correction workflows. Manager and Staff cannot correct posted financial transactions.
 - All reversal/revision postings and projection changes must be atomic, auditable and reconcilable.
 
-The exact strategy for historical backdated corrections and recalculation must be finalized before implementation.
+Locked historical Sale corrections are not supported in the approved scope. Backdated Payment/reversal recalculation beyond the approved workflow must stop for separate Product Owner approval.
 
 ## 15. Concurrency and Database Transactions
 
