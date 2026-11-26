@@ -258,7 +258,7 @@ When a Payment is received:
 8. Persist the Payment, allocation and ledger postings atomically.
 9. Reconcile the account projection and commit.
 
-The customer ledger must preserve the original sales and payment entries.
+The customer ledger must preserve original Sales and Payment entries.
 
 ### 6.2 Multiple Payments on the Same Date
 
