@@ -333,16 +333,25 @@ class PaymentPostingService
 
     private function salePrincipalBalance(Customer $customer, Sale $sale): BigDecimal
     {
-        $entries = LedgerEntry::query()
+        $originalPrincipal = (string) LedgerEntry::query()
             ->where('customer_id', $customer->getKey())
             ->where('sale_id', $sale->getKey())
             ->where('component', 'PRINCIPAL')
-            ->where('entry_kind', '<>', 'CAPITALIZATION');
+            ->where('entry_kind', 'SALE')
+            ->sum('debit_amount');
 
-        $debits = (string) ((clone $entries)->sum('debit_amount') ?: '0.00');
-        $credits = (string) ((clone $entries)->sum('credit_amount') ?: '0.00');
+        // Capitalized-interest principal is tracked by its own Interest Lot.
+        // Subtracting every PRINCIPAL ledger credit here would count a payment
+        // against a capitalized lot twice (once here and once in lot balance).
+        $allocatedOriginalPrincipal = (string) PaymentAllocationItem::query()
+            ->where('customer_id', $customer->getKey())
+            ->where('sale_id', $sale->getKey())
+            ->where('component_type', PaymentAllocationItem::COMPONENT_PRINCIPAL)
+            ->sum('amount');
 
-        return BigDecimal::of($debits)->minus($credits)->toScale(2);
+        return BigDecimal::of($originalPrincipal === '' ? '0.00' : $originalPrincipal)
+            ->minus($allocatedOriginalPrincipal === '' ? '0.00' : $allocatedOriginalPrincipal)
+            ->toScale(2);
     }
 
     private function interestLotBalance(InterestLot $lot): BigDecimal
@@ -371,9 +380,10 @@ class PaymentPostingService
             $debits = (string) ((clone $entries)->sum('debit_amount') ?: '0.00');
             $credits = (string) ((clone $entries)->sum('credit_amount') ?: '0.00');
             $balance = BigDecimal::of($debits)->minus($credits)->toScale(2);
+            $hasAnyCredit = BigDecimal::of($credits)->isPositive();
             $status = $balance->isZero()
                 ? Sale::PAYMENT_STATUS_PAID
-                : ($balance->isLessThan(BigDecimal::of((string) $sale->amount))
+                : ($hasAnyCredit
                     ? Sale::PAYMENT_STATUS_PARTIALLY_PAID
                     : Sale::PAYMENT_STATUS_UNPAID);
 
