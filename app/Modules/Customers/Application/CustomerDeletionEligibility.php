@@ -21,7 +21,7 @@ class CustomerDeletionEligibility
         'sales' => 'customer_id',
         'payments' => 'customer_id',
         'udhaar_entries' => 'customer_id',
-        'customer_ledger_entries' => 'customer_id',
+        'ledger_entries' => 'customer_id',
     ];
 
     public function check(Customer $customer): array

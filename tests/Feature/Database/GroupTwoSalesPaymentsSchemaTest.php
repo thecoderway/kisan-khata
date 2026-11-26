@@ -127,30 +127,30 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
         );
     }
 
-    public function test_posted_sale_and_payment_models_are_immutable(): void
+    public function test_posted_sale_model_is_immutable(): void
     {
         [$shop, $customer, $actor, $transaction] = $this->shopCustomerActorAndTransaction();
         $saleId = $this->insertSale($shop, $customer, $actor, $transaction);
-        $paymentId = $this->insertPayment($shop, $customer, $actor, $transaction);
         app(CurrentShop::class)->set($shop);
 
         $sale = Sale::withoutGlobalScopes()->findOrFail($saleId);
-        try {
-            $sale->setAttribute('amount', '999.00');
-            $sale->save();
-            $this->fail('Expected posted Sale update to be blocked.');
-        } catch (LogicException $exception) {
-            $this->assertStringContainsString('immutable', $exception->getMessage());
-        }
+        $sale->setAttribute('amount', '999.00');
+
+        $this->expectException(LogicException::class);
+        $sale->save();
+    }
+
+    public function test_posted_payment_model_is_immutable(): void
+    {
+        [$shop, $customer, $actor, $transaction] = $this->shopCustomerActorAndTransaction();
+        $paymentId = $this->insertPayment($shop, $customer, $actor, $transaction);
+        app(CurrentShop::class)->set($shop);
 
         $payment = Payment::withoutGlobalScopes()->findOrFail($paymentId);
-        try {
-            $payment->setAttribute('amount', '999.00');
-            $payment->save();
-            $this->fail('Expected posted Payment update to be blocked.');
-        } catch (LogicException $exception) {
-            $this->assertStringContainsString('immutable', $exception->getMessage());
-        }
+        $payment->setAttribute('amount', '999.00');
+
+        $this->expectException(LogicException::class);
+        $payment->save();
     }
 
     public function test_sale_revision_requires_reason_and_is_unique_per_revision_number(): void

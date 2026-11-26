@@ -7,6 +7,7 @@ use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 class Payment extends Model
@@ -68,6 +69,24 @@ class Payment extends Model
     public function financialTransaction(): BelongsTo
     {
         return $this->belongsTo(FinancialTransaction::class);
+    }
+
+    /** @return HasMany<InterestCalculationRun, $this> */
+    public function interestCalculationRuns(): HasMany
+    {
+        return $this->hasMany(InterestCalculationRun::class, 'trigger_payment_id');
+    }
+
+    /** @return HasMany<LedgerEntry, $this> */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LedgerEntry::class);
+    }
+
+    /** @return HasOne<PaymentAllocation, $this> */
+    public function allocation(): HasOne
+    {
+        return $this->hasOne(PaymentAllocation::class);
     }
 
     /** @return BelongsTo<Payment, $this> */

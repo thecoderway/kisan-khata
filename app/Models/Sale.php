@@ -95,6 +95,30 @@ class Sale extends Model
         return $this->hasMany(SaleRevision::class);
     }
 
+    /** @return HasMany<InterestCalculationItem, $this> */
+    public function interestCalculationItems(): HasMany
+    {
+        return $this->hasMany(InterestCalculationItem::class);
+    }
+
+    /** @return HasMany<InterestLot, $this> */
+    public function interestLots(): HasMany
+    {
+        return $this->hasMany(InterestLot::class);
+    }
+
+    /** @return HasMany<LedgerEntry, $this> */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LedgerEntry::class);
+    }
+
+    /** @return HasMany<PaymentAllocationItem, $this> */
+    public function allocationItems(): HasMany
+    {
+        return $this->hasMany(PaymentAllocationItem::class);
+    }
+
     /** @return HasOne<Payment, $this> */
     public function saleDayPayment(): HasOne
     {
