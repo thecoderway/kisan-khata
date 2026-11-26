@@ -309,7 +309,7 @@ class PaymentReversalService
         $laterPaymentExists = Payment::query()
             ->where('customer_id', $customer->getKey())
             ->where('payment_type', Payment::TYPE_NORMAL)
-            ->whereKeyNot($payment->getKey())
+            ->where('id', '<>', $payment->getKey())
             ->where('payment_date', '>=', $paymentDate)
             ->exists();
         if ($laterPaymentExists) {
