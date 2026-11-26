@@ -29,6 +29,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ]);
         [, , $foreign] = $this->context();
 
+        app(CurrentShop::class)->set($shop);
         $this->createPolicy($shop, $owner);
         $sale = app(SalePostingService::class)->post(
             $owner, $first, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
