@@ -79,7 +79,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
             $allocationItems->pluck('sale_id')->unique()->map(fn ($id) => (int) $id)->values()->all(),
             'FIFO allocation must exclude the already-paid sale.',
         );
-        $this->assertSame('100.00', \\Brick\\Math\\BigDecimal::of((string) $allocationItems->sum('amount'))->toScale(2)->__toString());
+        $this->assertSame('100.00', \Brick\Math\BigDecimal::of((string) $allocationItems->sum('amount'))->toScale(2)->__toString());
 
         $settlement = app(AnnualInterestSettlementService::class)
             ->settleShopDate($shop, '2026-10-30');
@@ -115,6 +115,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
         [, $owner, $customer] = $this->context();
 
         $calls = 0;
+        $realAudit = app(FinancialAuditService::class);
         $audit = \Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')
             ->twice()
