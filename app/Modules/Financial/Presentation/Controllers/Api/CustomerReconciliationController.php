@@ -19,19 +19,4 @@ class CustomerReconciliationController extends Controller
             'data' => $reconciliation->reconcileCustomer($customer),
         ]);
     }
-
-    public function repair(int $customer, ReconciliationService $reconciliation): JsonResponse
-    {
-        $customer = Customer::query()->findOrFail($customer);
-        Gate::authorize('repairCustomerProjection', $customer);
-
-        request()->validate([
-            'reason' => ['required', 'string', 'min:10', 'max:1000'],
-        ]);
-
-        return response()->json([
-            'message' => 'Projection repair completed.',
-            'data' => $reconciliation->rebuildAndReconcile($customer),
-        ]);
-    }
 }
