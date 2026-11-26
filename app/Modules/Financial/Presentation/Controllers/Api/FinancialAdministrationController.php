@@ -46,6 +46,18 @@ class FinancialAdministrationController extends Controller
             'annual_settlement_day_2' => ['required', 'integer', 'between:1,31'],
         ]);
 
+        foreach ([1, 2] as $slot) {
+            $month = (int) $data['annual_settlement_month_'.$slot];
+            $day = (int) $data['annual_settlement_day_'.$slot];
+
+            // Leap year keeps 29 February valid as a recurring calendar date.
+            if (! checkdate($month, $day, 2000)) {
+                throw ValidationException::withMessages([
+                    'annual_settlement_day_'.$slot => 'Settlement day must be a valid calendar date for the selected month.',
+                ]);
+            }
+        }
+
         $version = DB::transaction(function () use ($request, $data) {
             $policy = InterestPolicy::query()->where('policy_code', 'DEFAULT')->lockForUpdate()->firstOrFail();
             $open = InterestPolicyVersion::query()->where('interest_policy_id', $policy->getKey())

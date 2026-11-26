@@ -194,6 +194,37 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ]);
     }
 
+    public function test_shop_policy_rejects_impossible_annual_settlement_dates_but_accepts_february_29(): void
+    {
+        [$shop, $owner] = $this->context();
+        $this->createPolicy($shop, $owner);
+        Sanctum::actingAs($owner, ['app']);
+
+        $payload = [
+            'effective_from' => now()->addDays(5)->toDateString(),
+            'reason' => 'Owner approved calendar validation',
+            'monthly_rate_percent' => '1.25000000',
+            'grace_days' => 30,
+            'capitalization_enabled' => false,
+            'payment_waterfall' => 'PRINCIPAL_FIRST',
+            'annual_settlement_month_1' => 4,
+            'annual_settlement_day_1' => 31,
+            'annual_settlement_month_2' => 10,
+            'annual_settlement_day_2' => 30,
+        ];
+
+        $this->postJson('/api/v1/interest-policy', $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('annual_settlement_day_1');
+
+        $payload['annual_settlement_month_1'] = 2;
+        $payload['annual_settlement_day_1'] = 29;
+
+        $this->postJson('/api/v1/interest-policy', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.annual_settlement_month_1', 2)
+            ->assertJsonPath('data.annual_settlement_day_1', 29);
+    }
+
     private function context(): array
     {
         $shop = Shop::factory()->create(['timezone' => 'Asia/Kolkata']);
