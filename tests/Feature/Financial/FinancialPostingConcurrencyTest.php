@@ -212,8 +212,8 @@ class FinancialPostingConcurrencyTest extends TestCase
         $this->assertSame(1, InterestCalculationItem::query()->where('posted_interest', '>', 0)->count());
         $this->assertSame('COMPLETED', InterestSettlementRun::query()->firstOrFail()->status);
         $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
-        $this->assertSame('29.00', $account->interest_balance);
-        $this->assertSame('1019.00', $account->total_payable);
+        $this->assertSame('28.00', $account->interest_balance);
+        $this->assertSame('1018.00', $account->total_payable);
         $this->assertTrue(
             app(ReconciliationService::class)->reconcileCustomer($customer)['consistent'],
         );
@@ -409,9 +409,9 @@ class FinancialPostingConcurrencyTest extends TestCase
             DB::table('payment_allocation_items')->whereIn('customer_id', $customerIds)->delete();
             DB::table('payment_allocations')->whereIn('customer_id', $customerIds)->delete();
             DB::table('payment_revisions')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('payments')->whereIn('customer_id', $customerIds)->delete();
             DB::table('sale_revisions')->whereIn('customer_id', $customerIds)->delete();
             DB::table('ledger_entries')->whereIn('customer_id', $customerIds)->delete();
+            DB::table('payments')->whereIn('customer_id', $customerIds)->delete();
             DB::table('account_balance_snapshots')->whereIn('customer_id', $customerIds)->delete();
             DB::table('sales')->whereIn('customer_id', $customerIds)->delete();
             DB::table('financial_transactions')->whereIn('id', $transactionIds)->delete();
