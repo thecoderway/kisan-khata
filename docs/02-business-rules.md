@@ -309,7 +309,7 @@ Managers and Staff cannot edit posted payments.
 2. The Owner may configure a customer-specific interest rate.
 3. The applicable rate must be identifiable for every calculation.
 4. The grace period is configurable.
-5. Default grace period is zero days.
+5. The Shop default grace period is 30 calendar days. Sale Date is Day 0; the first eligible interest day follows 30 complete calendar days. No Customer-specific grace-period override is supported.
 6. Interest calculation must use the approved policy version.
 7. Historical calculations must retain the policy used at that time.
 
@@ -332,7 +332,7 @@ The system must not post interest through an automatic daily or monthly periodic
 
 ### 8.3 Annual Auto Settlement
 
-1. The Owner configures two annual dates.
+1. The initial Shop dates are 30 March and 30 October each year; the Owner may configure the two dates.
 2. The system calculates eligible interest on those dates.
 3. Every calculation must be recorded.
 4. Repeated execution must not duplicate the same interest.
@@ -365,7 +365,7 @@ Two policies are supported in the product design.
 - Interest remains separately identifiable.
 - Future interest is not charged on previously accrued interest.
 
-The default policy and exact transition behavior remain pending final approval.
+The initial Shop capitalization default is OFF. A Customer may explicitly override it; when no override exists, the Shop's OFF setting applies. Changes are effective-dated and prospective only.
 
 ### 8.6 Interest Calculation History
 
