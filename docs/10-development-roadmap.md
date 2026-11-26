@@ -281,7 +281,7 @@ Use the following development cycle:
 - Implement consolidated customer outstanding.
 - Implement ledger entries.
 - Implement financial posting.
-- Implement advance balance handling.
+- Reject excess payments; do not implement customer advance balances.
 - Implement audit history.
 - Implement idempotency.
 - Implement concurrency protection.
@@ -294,19 +294,19 @@ The accounting engine must support:
 - Payments.
 - Consolidated outstanding.
 - Interest.
-- Advances.
+- Excess-payment rejection (no advance balance).
 - Settlements.
 - Corrections.
 - Running customer ledger.
 
 ### Consolidated balance rules
 
-- Payments are not allocated to individual sale IDs.
+- Customer-facing payments remain consolidated and are internally allocated FIFO across eligible Sales.
 - A payment first triggers eligible interest calculation through the payment date.
 - The received payment is deducted from total payable.
 - Remaining balance is carried forward from the payment date.
 - New sales preserve their own sale dates.
-- Excess payment becomes customer advance.
+- Excess payment is rejected in full before posting.
 - Multiple payments on the same date must not duplicate interest.
 
 ### Deliverables
@@ -314,7 +314,7 @@ The accounting engine must support:
 - Financial transaction services.
 - Ledger posting services.
 - Consolidated balance calculation.
-- Advance handling.
+- Excess-payment rejection.
 - Database migrations.
 - Audit services.
 - Idempotency mechanism.
@@ -327,7 +327,7 @@ The accounting engine must support:
 - Duplicate posting is prevented.
 - Monetary calculations use safe decimal arithmetic.
 - Consolidated outstanding is correct.
-- Advance balances are correct.
+- Excess payments are rejected without creating financial postings.
 - Ledger entries reconcile with financial transactions.
 - Same-day multiple payments are handled correctly.
 - Audit history is preserved.
@@ -398,7 +398,7 @@ A product category or sale type is not mandatory.
 3. Calculate eligible interest through the payment date.
 4. Determine total payable.
 5. Deduct payment amount.
-6. Record excess as advance, if applicable.
+6. Reject the entire payment if its amount exceeds total payable; never create an advance.
 7. Carry forward the remaining outstanding.
 8. Preserve audit and ledger history.
 9. Return the resulting balance.
@@ -419,7 +419,7 @@ A product category or sale type is not mandatory.
 - Payments are posted exactly once.
 - Payments are not allocated to individual sale IDs.
 - Same-day multiple payments do not duplicate interest.
-- Excess payment is recorded as advance.
+- Excess payment is rejected; no advance balance is created.
 - Concurrent payment requests preserve balance consistency.
 - Only Owner can edit posted payments.
 - Corrections preserve immutable audit history.
@@ -435,7 +435,7 @@ A product category or sale type is not mandatory.
 - Payment display.
 - Interest entries.
 - Settlement entries.
-- Advance balance.
+- No advance balance (excess payments are rejected).
 - Adjustments and corrections.
 - Running balance.
 - Date filters.
