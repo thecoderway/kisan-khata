@@ -221,15 +221,25 @@ class ProjectionRepairConcurrencyTest extends TestCase
             DB::disconnect($observerConnectionName);
             DB::purge($observerConnectionName);
 
-            // DatabaseMigrations rolls the schema back after this test. These
-            // policy tables deliberately refuse to be dropped while populated,
-            // so remove only the fixture rows created by this test.
+            // DatabaseMigrations rolls the schema back after this test.
+            // Financial migrations intentionally refuse to drop populated
+            // history/projection tables. Remove only this test's fixture rows,
+            // respecting their foreign-key dependency order.
+            $shopId = (int) $shop->getKey();
+
+            DB::table('account_balance_snapshots')->where('shop_id', $shopId)->delete();
+            DB::table('ledger_entries')->where('shop_id', $shopId)->delete();
+            DB::table('sales')->where('shop_id', $shopId)->delete();
+            DB::table('financial_transactions')->where('shop_id', $shopId)->delete();
+            DB::table('idempotency_keys')->where('shop_id', $shopId)->delete();
+            DB::table('customer_accounts')->where('shop_id', $shopId)->delete();
+
             DB::table('interest_policy_versions')
-                ->where('shop_id', $shop->getKey())
+                ->where('shop_id', $shopId)
                 ->where('interest_policy_id', $policyId)
                 ->delete();
             DB::table('interest_policies')
-                ->where('shop_id', $shop->getKey())
+                ->where('shop_id', $shopId)
                 ->where('id', $policyId)
                 ->delete();
 
