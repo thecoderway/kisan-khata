@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\PaymentPostingService;
+use App\Modules\Financial\Application\PaymentReversalService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
@@ -203,6 +204,97 @@ class PaymentPostingServiceTest extends TestCase
                 $this->assertDatabaseCount('financial_transactions', 0);
             }
         }
+    }
+
+    public function test_owner_can_reverse_a_payment_without_mutating_original_financial_records(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $this->createPolicy($shop, $owner, '0.00000000', 'PRINCIPAL_FIRST', 30);
+        $sale = $this->postSale($owner, $customer, '2026-11-01', '100.00', 'reversal-sale-001');
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '40.00', CarbonImmutable::parse('2026-11-10'),
+            'CASH', 'ORIGINAL-40', 'Original receipt', 'reversal-payment-001',
+        );
+
+        $service = app(PaymentReversalService::class);
+        $result = $service->correct($owner, $customer, $payment, 'Wrong amount recorded', 'payment-correction-001');
+        $replayed = $service->correct($owner, $customer, $payment, 'Wrong amount recorded', 'payment-correction-001');
+
+        $this->assertSame($result['reversal']->getKey(), $replayed['reversal']->getKey());
+        $this->assertNull($result['replacement']);
+        $this->assertSame(Payment::TYPE_NORMAL, $payment->fresh()->payment_type);
+        $this->assertSame(Payment::TYPE_REVERSAL, $result['reversal']->payment_type);
+        $this->assertSame((int) $payment->getKey(), (int) $result['reversal']->reversal_of_payment_id);
+        $this->assertDatabaseCount('payment_allocations', 2);
+        $this->assertDatabaseCount('payment_allocation_items', 2);
+        $this->assertDatabaseHas('payment_revisions', [
+            'payment_id' => $payment->getKey(),
+            'revision_type' => 'REVERSAL',
+            'reversal_payment_id' => $result['reversal']->getKey(),
+        ]);
+        $this->assertDatabaseHas('ledger_entries', [
+            'payment_id' => $result['reversal']->getKey(),
+            'entry_kind' => 'REVERSAL',
+            'reverses_entry_id' => DB::table('ledger_entries')->where('payment_id', $payment->getKey())->value('id'),
+        ]);
+        $this->assertSame(Sale::PAYMENT_STATUS_UNPAID, $sale->fresh()->payment_status);
+        $this->assertSame('100.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->total_payable);
+    }
+
+    public function test_payment_reversal_can_atomically_post_a_replacement_payment(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $this->createPolicy($shop, $owner, '0.00000000', 'PRINCIPAL_FIRST', 30);
+        $sale = $this->postSale($owner, $customer, '2026-11-01', '100.00', 'replacement-sale-001');
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '40.00', CarbonImmutable::parse('2026-11-10'),
+            'CASH', null, 'Original receipt', 'replacement-original-001',
+        );
+
+        $result = app(PaymentReversalService::class)->correct(
+            $owner,
+            $customer,
+            $payment,
+            'Correct receipt amount',
+            'replacement-correction-001',
+            [
+                'amount' => '70.00',
+                'payment_method' => 'BANK',
+                'reference_number' => 'CORRECTED-70',
+                'description' => 'Replacement receipt',
+            ],
+        );
+
+        $this->assertNotNull($result['replacement']);
+        $this->assertSame('70.00', $result['replacement']->amount);
+        $this->assertSame((int) $payment->getKey(), (int) $result['replacement']->replacement_for_payment_id);
+        $this->assertSame('30.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->total_payable);
+        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $sale->fresh()->payment_status);
+        $this->assertDatabaseHas('payment_revisions', [
+            'payment_id' => $payment->getKey(),
+            'revision_type' => 'REPLACEMENT',
+            'replacement_payment_id' => $result['replacement']->getKey(),
+        ]);
+    }
+
+    public function test_payment_reversal_is_blocked_after_a_later_normal_payment(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $this->createPolicy($shop, $owner, '0.00000000', 'PRINCIPAL_FIRST', 30);
+        $this->postSale($owner, $customer, '2026-11-01', '100.00', 'blocked-reversal-sale');
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-10'),
+            null, null, null, 'blocked-reversal-original',
+        );
+        app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-11'),
+            null, null, null, 'blocked-reversal-later',
+        );
+
+        $this->expectException(ConflictHttpException::class);
+        app(PaymentReversalService::class)->correct(
+            $owner, $customer, $payment, 'Historical correction', 'blocked-reversal-request',
+        );
     }
 
     private function postSale(User $owner, Customer $customer, string $date, string $amount, string $key): Sale
