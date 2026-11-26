@@ -5,6 +5,7 @@ import { registerCustomerLocation } from './customer-location';
 import { registerCustomerDirectory } from './customer-directory';
 import { registerUserDirectory } from './user-directory';
 import { registerUserAuditHistory } from './user-audit-history';
+import './financial-workspace';
 
 window.Alpine = Alpine;
 
