@@ -388,7 +388,7 @@ A product category or sale type is not mandatory.
 - Payment history.
 - Payment receipt upload.
 - Consolidated balance update.
-- Advance handling.
+- Excess-payment rejection; no advance balance.
 - Owner-authorized correction.
 
 ### Payment processing flow
@@ -417,7 +417,7 @@ A product category or sale type is not mandatory.
 ### Acceptance criteria
 
 - Payments are posted exactly once.
-- Payments are not allocated to individual sale IDs.
+- Customer-facing payments remain consolidated and are internally allocated FIFO across eligible Sales.
 - Same-day multiple payments do not duplicate interest.
 - Excess payment is rejected; no advance balance is created.
 - Concurrent payment requests preserve balance consistency.
