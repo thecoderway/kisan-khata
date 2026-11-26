@@ -224,13 +224,10 @@ class FinancialAdministrationController extends Controller
         Gate::authorize('repairCustomerProjection', $customer);
         $data = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:500']]);
 
-        $result = DB::transaction(function () use ($request, $customer, $reconciliation, $data) {
-            $before = $reconciliation->reconcileCustomer($customer);
-            if ($before['consistent']) {
-
-                return ['report' => $before, 'repaired' => false];
-            }
-            $after = $reconciliation->rebuildAndReconcile($customer);
+        // Do not wrap this call in an outer transaction: repairAndReconcile
+        // must acquire the customer/account locks before its first ledger read.
+        // Its callback writes the audit event before that same transaction commits.
+        $result = $reconciliation->repairAndReconcile($customer, function (array $before, array $after) use ($request, $customer, $data): void {
             AuditLog::query()->create([
                 'user_id' => $request->user()->getKey(),
                 'action' => 'financial.customer_projection_repaired',
@@ -242,9 +239,7 @@ class FinancialAdministrationController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
             ]);
-
-            return ['report' => $after, 'repaired' => true];
-        }, 3);
+        });
 
         return response()->json([
             'message' => $result['repaired'] ? 'Projection repaired and audit event recorded.' : 'Projection is already consistent; no repair was needed.',
