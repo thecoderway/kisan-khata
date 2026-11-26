@@ -65,20 +65,22 @@ const loadCustomers = async () => {
 };
 const loadSales = async () => {
     const payload = await request('/sales' + queryString());
-    renderTable(['बिक्री नंबर', 'ग्राहक', 'तारीख', 'राशि', 'स्थिति'], (payload.data || []).map(s => [
+    renderTable(['बिक्री नंबर', 'ग्राहक', 'तारीख', 'राशि', 'स्थिति', 'कार्रवाई'], (payload.data || []).map(s => [
         '<strong>' + esc(s.sale_number) + '</strong>',
         esc(s.customer?.name_original || s.customer?.name_hi || '—'),
         date(s.sale_date), money(s.amount),
         '<span class="role-pill">' + esc(s.payment_status) + '</span>',
+        config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" data-revise-sale="' + esc(s.id) + '" data-current-description="' + esc(s.description || '') + '">विवरण संशोधन</button>' : '—',
     ]));
 };
 const loadPayments = async () => {
     const payload = await request('/payments' + queryString());
-    renderTable(['भुगतान नंबर', 'ग्राहक', 'तारीख', 'राशि', 'प्रकार'], (payload.data || []).map(p => [
+    renderTable(['भुगतान नंबर', 'ग्राहक', 'तारीख', 'राशि', 'प्रकार', 'कार्रवाई'], (payload.data || []).map(p => [
         '<strong>' + esc(p.payment_number) + '</strong>',
         esc(p.customer?.name_original || p.customer?.name_hi || '—'),
         date(p.payment_date), money(p.amount),
         '<span class="role-pill">' + esc(p.payment_type) + '</span>',
+        config.role === 'owner' && p.payment_type === 'NORMAL' ? '<button class="btn btn-sm btn-outline-danger" data-correct-payment="' + esc(p.id) + '" data-customer-id="' + esc(p.customer_id) + '">रिवर्स / बदलें</button>' : '—',
     ]));
 };
 const loadLedger = async () => {
@@ -132,6 +134,50 @@ const formMarkup = () => {
     return '<form id="financial-entry-form" class="financial-form-grid p-3"><div><label class="form-label">ग्राहक</label><select class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select></div><div><label class="form-label">भुगतान तारीख</label><input class="form-control" type="date" name="payment_date" required></div><div><label class="form-label">राशि (₹)</label><input class="form-control" type="number" min="0.01" step="0.01" name="amount" required></div><div><label class="form-label">माध्यम</label><select class="form-select" name="payment_method"><option value="">चुनें</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><label class="form-label">Reference number</label><input class="form-control" name="reference_number" maxlength="128"></div><div class="financial-form-wide"><label class="form-label">विवरण</label><input class="form-control" name="description" maxlength="5000"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">भुगतान पोस्ट करें</button></div></form>';
 };
 const customerOptions = () => customers.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name_original || c.name_hi || c.name_en || ('Customer #' + c.id)) + '</option>').join('');
+
+root.addEventListener('click', (event) => {
+    const revise = event.target.closest('[data-revise-sale]');
+    const correct = event.target.closest('[data-correct-payment]');
+    if (!revise && !correct) return;
+    document.getElementById('financial-correction-card')?.remove();
+    const card = document.createElement('div');
+    card.id = 'financial-correction-card';
+    card.className = 'content-card mb-3';
+    if (revise) {
+        card.innerHTML = '<div class="content-card-header"><div><h2>बिक्री विवरण संशोधन</h2><p>केवल विवरण बदलेगा; तारीख और राशि immutable हैं।</p></div></div><form class="financial-form-grid p-3" id="sale-revision-form"><div class="financial-form-wide"><label class="form-label">नया विवरण</label><textarea class="form-control" name="description" rows="2" maxlength="5000">' + esc(revise.dataset.currentDescription) + '</textarea></div><div class="financial-form-wide"><label class="form-label">संशोधन का कारण</label><input class="form-control" name="reason" required maxlength="500"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">संशोधन दर्ज करें</button></div></form>';
+        document.querySelector('.page-heading').after(card);
+        card.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+            try {
+                await request('/sales/' + revise.dataset.reviseSale + '/revision', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(data),
+                });
+                showMessage('Sale revision audit के साथ दर्ज हुई।');
+                card.remove(); await refresh();
+            } catch (error) { showMessage(error.message, 'error'); }
+        });
+    } else {
+        card.innerHTML = '<div class="content-card-header"><div><h2>भुगतान सुधार</h2><p>मूल Payment reverse होगा। Replacement वैकल्पिक है।</p></div></div><form class="financial-form-grid p-3" id="payment-correction-form"><div class="financial-form-wide"><label class="form-label">कारण</label><input class="form-control" name="reason" required maxlength="500"></div><div><label class="form-label">Replacement राशि (₹) — वैकल्पिक</label><input class="form-control" type="number" min="0.01" step="0.01" name="replacement_amount"></div><div><label class="form-label">Replacement माध्यम</label><select class="form-select" name="replacement_method"><option value="">चुनें</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div class="financial-form-submit"><button class="btn btn-outline-danger">Payment reverse करें</button></div></form>';
+        document.querySelector('.page-heading').after(card);
+        card.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.currentTarget).entries());
+            const data = { reason: formData.reason };
+            if (formData.replacement_amount) {
+                data.replacement = { amount: formData.replacement_amount, payment_method: formData.replacement_method || null };
+            }
+            try {
+                await request('/customers/' + correct.dataset.customerId + '/payments/' + correct.dataset.correctPayment + '/correction', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(data),
+                });
+                showMessage('Payment correction audit के साथ दर्ज हुआ।');
+                card.remove(); await refresh();
+            } catch (error) { showMessage(error.message, 'error'); }
+        });
+    }
+});
+
 document.getElementById('financial-create')?.addEventListener('click', () => {
     const existing = document.getElementById('financial-entry-card');
     if (existing) { existing.remove(); return; }
@@ -186,6 +232,23 @@ document.getElementById('customer-policy-form')?.addEventListener('submit', asyn
         event.currentTarget.reset();
     } catch (error) { showMessage(error.message, 'error'); }
 });
+
+document.getElementById('interest-customer')?.addEventListener('change', async (event) => {
+    const id = event.target.value;
+    const target = document.getElementById('customer-policy-history');
+    if (!id || !target) { if (target) target.innerHTML = ''; return; }
+    target.innerHTML = '<div class="text-secondary small">Overrides लोड हो रहे हैं…</div>';
+    try {
+        const payload = await request('/customers/' + id + '/interest-policy');
+        const versions = payload.data || [];
+        target.innerHTML = versions.length
+            ? '<h3 class="h4 mb-3">Customer override history</h3><div class="table-responsive"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>Capitalization</th></tr></thead><tbody>' +
+                versions.map(v => '<tr><td>' + esc(v.version_number) + '</td><td>' + date(v.effective_from) + '</td><td>' + date(v.effective_to) + '</td><td>' + esc(v.monthly_rate_percent ?? 'Shop default') + '</td><td>' + (v.capitalization_enabled === null ? 'Shop default' : (v.capitalization_enabled ? 'चालू' : 'बंद')) + '</td></tr>').join('') +
+                '</tbody></table></div>'
+            : '<p class="text-secondary small mb-0">इस Customer पर कोई override नहीं है।</p>';
+    } catch (error) { target.textContent = error.message; }
+});
+
 document.getElementById('projection-repair-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = document.getElementById('financial-customer')?.value;
