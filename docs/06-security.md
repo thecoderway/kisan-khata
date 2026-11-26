@@ -245,7 +245,7 @@ A payment operation must:
 
 - Calculate eligible outstanding and interest through the payment date.
 - Subtract the received payment from total payable.
-- Preserve any excess amount as customer advance.
+- Reject the entire payment if its amount exceeds total payable; do not post a payment or advance.
 - Record the resulting balance and calculation reference.
 - Prevent duplicate processing of the same payment request.
 
