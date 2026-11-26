@@ -886,13 +886,13 @@ Historical Batch 6 delivery note (superseded by Section 25): Batch 5 Annual Inte
 
 ---
 
-## 25. Phase 5 — Current merged delivery and release gate (2026-11-26)
+## 25. Phase 5 — Current merged delivery and acceptance gate (2026-11-27)
 
-This section supersedes the historical Phase 5 status statements in Sections 8, 19, 21, 22 and 24 wherever they describe Phase 5 implementation as not started, or describe Batches 6/7 as still open. The approved financial business rules in ADR-0012 and the scope boundaries in Section 24 remain unchanged.
+This section supersedes historical Phase 5 implementation-status statements in earlier sections wherever they describe Phase 5 as not started or Batches 6/7 as still open. The approved financial business rules in ADR-0012 and the scope boundaries in Section 24 remain unchanged.
 
 ### Merged implementation baseline
 
-Phase 5 financial implementation through Batch 8.3, Batch 8.4 documentation synchronization and Batch 8.5 targeted regression coverage are merged into `main`; Batch 8.5 merge commit is `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` (PR #47):
+Phase 5 implementation and automated acceptance through Batch 8.8 are merged into `main`. Batch 8.7 merged in PR #49 at `a67edfaacfc660ce0ecc9bae88ffa3e01307e5f4`; Batch 8.8 merged in PR #50 at `c740e44434071062c4cb8eac546f375a7e234126`.
 
 | Batch | Scope | Delivery |
 |---|---|---|
@@ -903,23 +903,27 @@ Phase 5 financial implementation through Batch 8.3, Batch 8.4 documentation sync
 | 8.3 | Lock-first, atomic projection repair through the authenticated API endpoint | PR #45 merged; merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7` |
 | 8.4 | Documentation/release-gate synchronization | PR #46 merged; merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` |
 | 8.5 | Repair rollback/audit atomicity and reconciliation authorization regressions | PR #47 merged; merge commit `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` |
+| 8.7 | End-to-end Sale/Payment/interest/ledger workflow, rollback and correction-authorization acceptance | PR #49 merged; merge commit `a67edfaacfc660ce0ecc9bae88ffa3e01307e5f4` |
+| 8.8 | MySQL 8.4 concurrent Payment, Sale-versus-Payment FIFO and same-day Payment/annual settlement acceptance | PR #50 merged; merge commit `c740e44434071062c4cb8eac546f375a7e234126` |
 
-Batch 8.3 specifically removes the controller's pre-lock reconciliation read and outer transaction, performs lock-first repair/reconciliation in one transaction, and records the repair audit callback before commit. The deterministic MySQL concurrency regression test exercises the authenticated API path while a financial posting holds the account lock.
+Batch 8.3 specifically removes the controller's pre-lock reconciliation read and outer transaction, performs lock-first repair/reconciliation in one transaction, and records the repair audit callback before commit. Its deterministic MySQL concurrency regression test exercises the authenticated API path while a financial posting holds the account lock.
+
+Batch 8.7 adds the consolidated workflow test for Sale, sale-day automatic Payment, normal Payment/FIFO, annual interest settlement and ledger reconciliation; failure-injection rollback checks; and Owner/Manager/Staff/cross-Shop Payment correction authorization checks.
+
+Batch 8.8 adds three real MySQL 8.4 concurrency scenarios. The tests observe database lock waits using independent connections: competing Payments cannot overdraw payable; a Payment waiting on a concurrent Sale allocates FIFO against the committed Sale set; and a Payment racing same-day annual settlement does not cause duplicate interest. See [Batch 8.8 acceptance evidence](phase-5-batch-8-8-financial-posting-concurrency-acceptance.md).
 
 ### CI evidence
 
-GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully on the PR #45 head. All job steps passed, including the MySQL row-lock integration test, remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. Batch 8.5 PR #47 also passed [CI run 45872271027](https://github.com/thecoderway/kisan-khata/actions/runs/45872271027), including MySQL row-lock integration, remaining Laravel tests, Pint, Composer validation and Vite production build. Batch 8.5 adds repair/audit rollback atomicity and reconciliation authorization regressions. These runs are evidence for their tested PR heads; they are not substitutes for full Phase 5 acceptance or production verification.
+- Batch 8.3: [CI run 45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) passed MySQL row-lock integration, remaining Laravel tests, formatting, Composer validation and Vite production build.
+- Batch 8.5: [CI run 45872271027](https://github.com/thecoderway/kisan-khata/actions/runs/45872271027) passed MySQL row-lock integration, remaining Laravel tests, Pint, Composer validation and Vite production build.
+- Batch 8.7: feature-head CI runs [45876775514](https://github.com/thecoderway/kisan-khata/actions/runs/45876775514) and [45876767753](https://github.com/thecoderway/kisan-khata/actions/runs/45876767753) passed; post-merge `main` CI runs [45877841024](https://github.com/thecoderway/kisan-khata/actions/runs/45877841024) and [45877068509](https://github.com/thecoderway/kisan-khata/actions/runs/45877068509) also passed.
+- Batch 8.8: [CI run 45879804264](https://github.com/thecoderway/kisan-khata/actions/runs/45879804264) passed Composer validation, Pint, Vite production build, MySQL 8.4 concurrency integration and the remaining Laravel suite. Post-merge `main` CI [45880048532](https://github.com/thecoderway/kisan-khata/actions/runs/45880048532) completed successfully on merge commit `c740e44434071062c4cb8eac546f375a7e234126`.
 
-### Remaining Phase 5 release acceptance
+### Remaining Phase 5 acceptance
 
-The Phase 5 release gate remains **OPEN** until the following are completed and evidenced. Batch 8.5's targeted rollback and authorization regression tests are merged, but they do not by themselves close the end-to-end release gate.
+Automated functional, authorization, rollback, tenant-isolation and MySQL concurrency acceptance for the implemented Phase 5 scope is merged and CI-verified. The remaining Phase 5 sign-off item is Product Owner browser/UI smoke acceptance for the financial Sales, Payments, Customer Ledger, Interest Settings and Reconciliation workflows, including Owner/Manager/Staff visibility and denial paths. Browser automation is not configured; CI does not claim browser-level acceptance.
 
-1. End-to-end workflows across Sale, Payment, allocation, interest, annual settlement, ledger projection and reconciliation, including rollback/idempotency behavior.
-2. Role-by-role authorization acceptance for Owner, Manager and Staff, including API/UI denial paths and cross-Shop isolation.
-3. MySQL 8.4 concurrency and rollback coverage for every critical posting, reversal, settlement and repair path.
-4. Frontend/API regression and user-facing financial consistency acceptance.
-5. Operational readiness review in the appropriate production-readiness phase, including environment configuration, backups and restore evidence.
-6. Repository branch-protection and required-check settings verified by a repository administrator. The current GitHub integration could not inspect branch protection due to insufficient administration permission; its state is therefore **unknown**, not assumed disabled or enabled.
+Operational environment configuration, backup/restore evidence, monitoring and deployment/recovery procedures belong to **Phase 14 — Production Readiness**, not Phase 5 functional completion. Repository branch-protection and required-check settings remain unknown because the current GitHub integration cannot inspect repository administration settings; a repository administrator must verify them before release.
 
 ### Explicit safety boundary
 
