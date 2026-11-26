@@ -59,7 +59,7 @@ class InterestCalculationServiceTest extends TestCase
             'created_at' => now(),
         ]);
 
-        DB::table('interest_policy_versions')->insert([
+        $secondPolicyVersion = DB::table('interest_policy_versions')->insertGetId([
             'shop_id' => $shop->getKey(),
             'interest_policy_id' => $policyId,
             'version_number' => 2,
@@ -94,7 +94,7 @@ class InterestCalculationServiceTest extends TestCase
             'customer_id' => $customer->getKey(),
             'settlement_date' => '2026-11-01',
             'cutoff_date_exclusive' => '2026-11-01',
-            'shop_policy_version_id' => $firstPolicyVersion,
+            'shop_policy_version_id' => $secondPolicyVersion,
             'status' => 'PENDING',
             'idempotency_key_id' => $settlementKeyId,
             'started_at' => now(),
