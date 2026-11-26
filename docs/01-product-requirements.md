@@ -808,20 +808,16 @@ The initial product must allow a Shop Owner to:
 
 ## 23. Decisions Requiring Final Approval
 
-The following items must be finalized before their respective implementation:
+The following items remain subject to separate Product Owner approval before implementation:
 
-1. Interest capitalization default: Policy A or Policy B.
-2. Exact interest rounding precision and rounding mode.
-3. Interest effective-date and day-boundary conventions.
-4. Grace-period eligibility boundary.
-5. Detailed Auto Settlement behavior when a customer has already had a payment calculation on that date.
-6. Detailed crop-season settlement accounting.
-7. Translation provider and correction workflow.
-8. Subscription plan prices and entitlements.
-9. Payment gateway.
-10. Financial data retention period.
-11. Hosting region.
+1. Detailed crop-season settlement accounting.
+2. Backdated transaction correction/recalculation beyond the approved Sale revision and Payment reversal/replacement rules.
+3. Translation provider and correction workflow.
+4. Subscription plan prices and entitlements.
+5. Payment gateway.
+6. Financial data retention period.
+7. Hosting region.
 
-No developer or AI coding agent may silently decide these financial or business rules.
+ADR-0012 finalizes interest capitalization defaults, rounding/date conventions, grace-period boundary, annual settlement dates, same-date Payment/settlement ordering, FIFO/waterfall behavior and rejection of excess Payments. These are not pending decisions.
 
 Any change to an approved requirement must be documented and approved by the Product Owner before implementation.
