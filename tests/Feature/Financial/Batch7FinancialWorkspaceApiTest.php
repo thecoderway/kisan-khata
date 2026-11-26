@@ -10,7 +10,6 @@ use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
