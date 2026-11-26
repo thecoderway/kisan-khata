@@ -55,7 +55,7 @@ Developers and AI coding agents must not invent missing financial rules.
 **Owner**
 - Full shop-level control.
 - Can configure financial policies.
-- Can edit posted sales and payments.
+- Can request eligible controlled Sale revisions and correct posted Payments only through reversal/replacement; direct edits are prohibited.
 - Can manage employees and subscriptions.
 
 **Manager**
@@ -215,7 +215,7 @@ The applicable grace period and interest policy must be applied according to the
 
 ### 5.2 Sale Correction
 
-The Shop Owner can directly edit a posted sale.
+A posted Sale may be revised only through a controlled revision workflow while it is not locked by a later posted normal Payment or annual Interest Auto Settlement. Preserve before/after values, actor, timestamp and mandatory reason. Never mutate the posted Sale directly. A locked Sale cannot be corrected in the current approved scope.
 
 When a sale is edited:
 
@@ -252,9 +252,11 @@ When a payment is received:
 2. Calculate all eligible interest through the payment date.
 3. Include the existing outstanding and applicable new sales.
 4. Determine the complete payable amount.
-5. Subtract the received payment.
-6. Carry forward the remaining amount as consolidated outstanding.
-7. Set the new calculation cycle start date for that carried-forward balance to the payment date.
+5. Lock the customer account and calculate eligible interest through the Payment effective date.
+6. Mark the interest checkpoint Settled and recompute total payable.
+7. Reject the entire Payment before posting if it exceeds outstanding principal plus posted unpaid interest.
+8. Allocate accepted Payment internally FIFO across oldest eligible Sales, applying the effective Shop Principal First or Interest First waterfall within each Sale.
+9. Persist allocations and ledger postings atomically, reconcile the projection and commit.
 
 The customer ledger must preserve the original sales and payment entries.
 
@@ -287,7 +289,7 @@ A payment must not exceed the complete payable amount (outstanding principal plu
 
 ### 6.5 Payment Correction
 
-The Shop Owner can directly edit a posted payment.
+Posted Payment correction must use a reversal and optional replacement. The original Payment is immutable and must never be edited or physically deleted.
 
 The system must:
 
@@ -535,19 +537,15 @@ Detailed plan entitlements and pricing are maintained separately.
 
 ## 19. Unresolved Product Decisions
 
-The following items must be finalized before implementation of the affected behavior:
+The following items remain unresolved and require Product Owner approval before the affected behavior is implemented:
 
-1. Interest capitalization default: Policy A or Policy B.
-2. Exact interest rounding precision and rounding mode.
-3. Interest effective-date and day-boundary conventions.
-4. Grace-period eligibility boundary.
-5. Same-date payment and Auto Settlement execution ordering.
-6. Detailed crop-season settlement accounting.
-7. Customer advance handling is out of scope; excess payments are rejected under ADR-0012.
-8. Backdated transaction correction and recalculation rules.
-9. Subscription plan entitlements and pricing.
-10. Payment gateway.
-11. Financial data retention period.
+1. Detailed crop-season settlement accounting.
+2. Backdated transaction correction/recalculation beyond the approved Sale revision and Payment reversal/replacement rules.
+3. Subscription plan entitlements and pricing.
+4. Payment gateway.
+5. Financial data retention period.
+
+Interest defaults, rounding/date conventions, annual settlement dates, same-date ordering, FIFO waterfall and the no-advance rule are finalized by ADR-0012 and are not unresolved.
 
 No developer or AI coding agent may silently resolve these decisions.
 
