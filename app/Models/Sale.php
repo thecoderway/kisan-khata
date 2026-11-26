@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCurrentShop;
+use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +12,7 @@ use LogicException;
 
 class Sale extends Model
 {
-    use BelongsToCurrentShop;
+    use BelongsToCurrentShop, SetsCreatedAt;
 
     public const PAYMENT_STATUS_UNPAID = 'UNPAID';
 
