@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Financial\Application\AnnualInterestSettlementService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,7 @@ Artisan::command('financial:annual-interest-settlement', function (AnnualInteres
         $stats['skipped'],
     ));
 
-    return $stats['failed'] > 0 ? self::FAILURE : self::SUCCESS;
+    return $stats['failed'] > 0 ? 1 : 0;
 })->purpose('Post annual interest settlements after the Shop-local settlement day has closed');
 
 Schedule::command('financial:annual-interest-settlement')->everyMinute()->withoutOverlapping();
