@@ -327,7 +327,7 @@ Rules:
 6. Each normal payment has immutable internal FIFO allocation records across eligible Sales, with principal/posted-interest components applied by the effective per-Sale waterfall.
 7. Multiple payments on the same date must not duplicate interest.
 8. Excess payment must be rejected before posting; no advance balance is supported.
-9. Only the Shop Owner may edit posted payments.
+9. Only the Shop Owner may initiate a Payment reversal and optional replacement; posted Payments themselves are immutable and never directly edited.
 
 ## 11. payment_revisions
 
