@@ -106,6 +106,7 @@ class AnnualInterestSettlementService
 
                 if ($customer === null) {
                     $stats['skipped']++;
+
                     continue;
                 }
 
