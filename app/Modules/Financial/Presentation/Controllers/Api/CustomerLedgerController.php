@@ -48,9 +48,7 @@ class CustomerLedgerController extends Controller
             ->where('shop_id', $customer->shop_id)
             ->where('customer_id', $customer->getKey());
 
-        if (isset($filters['from'])) {
-            $openingQuery->where('effective_date', '<', $filters['from']);
-        } elseif ($entries->isNotEmpty()) {
+        if ($entries->isNotEmpty()) {
             $first = $entries->first();
             $openingQuery->where(function ($query) use ($first): void {
                 $query->where('effective_date', '<', $first->effective_date)
@@ -65,6 +63,8 @@ class CustomerLedgerController extends Controller
                             });
                     });
             });
+        } elseif (isset($filters['from'])) {
+            $openingQuery->where('effective_date', '<', $filters['from']);
         }
 
         $principalQuery = (clone $openingQuery)->where('component', 'PRINCIPAL');
