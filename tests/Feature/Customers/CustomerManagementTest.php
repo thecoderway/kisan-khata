@@ -335,19 +335,63 @@ class CustomerManagementTest extends TestCase
             ->assertSessionHasErrors('status');
     }
 
-    public function test_customer_soft_delete_fails_closed_when_financial_dependencies_are_not_verifiable(): void
+    public function test_customer_can_be_soft_deleted_when_all_financial_dependencies_are_present_and_empty(): void
     {
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
         $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
 
         $this->delete(route('customers.soft-delete', $customer->id), ['reason' => 'Requested cleanup'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => fn ($value) => $value !== null]);
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $owner->shop_id,
+            'entity_id' => $customer->id,
+            'action' => 'customer.soft_deleted',
+        ]);
+    }
+
+    public function test_customer_soft_delete_is_blocked_when_financial_history_exists(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+
+        DB::table('customer_accounts')->insert([
+            'shop_id' => $owner->shop_id,
+            'customer_id' => $customer->id,
+            'principal_balance' => '0.00',
+            'interest_balance' => '0.00',
+            'total_payable' => '0.00',
+            'projection_version' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->delete(route('customers.soft-delete', $customer->id), ['reason' => 'Requested cleanup'])
             ->assertSessionHasErrors('customer');
 
         $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => null]);
         $this->assertDatabaseMissing('audit_logs', [
-            'entity_id' => $customer->id, 'action' => 'customer.soft_deleted',
+            'entity_id' => $customer->id,
+            'action' => 'customer.soft_deleted',
         ]);
+    }
+
+    public function test_customer_soft_delete_fails_closed_when_a_financial_dependency_table_is_missing(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = Customer::query()->where('shop_id', $owner->shop_id)->firstOrFail();
+
+        Schema::shouldReceive('hasTable')->once()->with('customer_accounts')->andReturn(false);
+
+        $eligibility = app(\\App\\Modules\\Customers\\Application\\CustomerDeletionEligibility::class)
+            ->check($customer);
+
+        $this->assertFalse($eligibility['eligible']);
+        $this->assertStringContainsString('cannot be verified', $eligibility['reason']);
     }
 
     public function test_restore_preserves_inactive_status_and_creates_audit_event(): void
