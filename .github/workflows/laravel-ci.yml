@@ -62,8 +62,11 @@ jobs:
       - name: Validate Composer configuration
         run: composer validate --strict
 
-      - name: Check PHP formatting
-        run: composer lint
+      - name: Diagnose and check PHP formatting
+        run: |
+          vendor/bin/pint app/Modules/Financial/Application/PaymentReversalService.php
+          git --no-pager diff -- app/Modules/Financial/Application/PaymentReversalService.php
+          composer lint
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
