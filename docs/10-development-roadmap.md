@@ -790,7 +790,7 @@ AI-generated code must be reviewed before merging.
 - Credit sales.
 - Consolidated payments.
 - Customer ledger.
-- Advance handling.
+- Excess-payment rejection; no advance balance.
 
 ### Milestone C — Financial Automation
 
