@@ -39,6 +39,7 @@ class PaymentPostingService
         ?string $referenceNumber,
         ?string $description,
         string $idempotencyKey,
+        ?int $replacementForPaymentId = null,
     ): Payment {
         $normalizedAmount = $this->normalizeAmount($amount);
         $paymentDateString = $paymentDate->format('Y-m-d');
@@ -57,6 +58,7 @@ class PaymentPostingService
                 'payment_method' => $paymentMethod,
                 'reference_number' => $referenceNumber,
                 'description' => $description,
+                ...($replacementForPaymentId === null ? [] : ['replacement_for_payment_id' => $replacementForPaymentId]),
             ],
             function (CustomerAccount $account, $key) use (
                 $actor,
@@ -67,10 +69,23 @@ class PaymentPostingService
                 $paymentMethod,
                 $referenceNumber,
                 $description,
+                $replacementForPaymentId,
             ): FinancialTransaction {
                 $lockedCustomer = Customer::query()->whereKey($customer->getKey())->firstOrFail();
                 if ($lockedCustomer->status !== Customer::STATUS_ACTIVE) {
                     throw new ConflictHttpException('Inactive customers cannot post Payments.');
+                }
+
+                if ($replacementForPaymentId !== null) {
+                    $reversedOriginal = Payment::query()
+                        ->whereKey($replacementForPaymentId)
+                        ->where('customer_id', $customer->getKey())
+                        ->firstOrFail();
+                    if ($reversedOriginal->payment_type !== Payment::TYPE_NORMAL
+                        || ! Payment::query()->where('reversal_of_payment_id', $reversedOriginal->getKey())->exists()
+                        || Payment::query()->where('replacement_for_payment_id', $reversedOriginal->getKey())->exists()) {
+                        throw new ConflictHttpException('A replacement must reference one reversed normal Payment and may be posted only once.');
+                    }
                 }
 
                 if (
@@ -122,6 +137,7 @@ class PaymentPostingService
                     'reference_number' => $referenceNumber,
                     'description' => $description,
                     'financial_transaction_id' => $paymentTransaction->getKey(),
+                    'replacement_for_payment_id' => $replacementForPaymentId,
                     'created_by' => $actor->getKey(),
                     'posted_by' => $actor->getKey(),
                     'posted_at' => now(),
@@ -366,15 +382,20 @@ class PaymentPostingService
         // Capitalized-interest principal is tracked by its own Interest Lot.
         // Subtracting every PRINCIPAL ledger credit here would count a payment
         // against a capitalized lot twice (once here and once in lot balance).
-        $allocatedOriginalPrincipal = (string) PaymentAllocationItem::query()
+        $principalItems = PaymentAllocationItem::query()
             ->where('customer_id', $customer->getKey())
             ->where('sale_id', $sale->getKey())
             ->where('component_type', PaymentAllocationItem::COMPONENT_PRINCIPAL)
-            ->whereHas('payment', fn ($query) => $query->where('payment_date', '<=', $effectiveDate))
-            ->sum('amount');
+            ->whereHas('payment', fn ($query) => $query->where('payment_date', '<=', $effectiveDate));
+        $allocatedOriginalPrincipal = (string) (clone $principalItems)
+            ->whereNull('reverses_allocation_item_id')->sum('amount');
+        $reversedPrincipal = (string) (clone $principalItems)
+            ->whereNotNull('reverses_allocation_item_id')->sum('amount');
+        $netAllocatedPrincipal = BigDecimal::of($allocatedOriginalPrincipal ?: '0.00')
+            ->minus($reversedPrincipal ?: '0.00');
 
         return BigDecimal::of($originalPrincipal === '' ? '0.00' : $originalPrincipal)
-            ->minus($allocatedOriginalPrincipal === '' ? '0.00' : $allocatedOriginalPrincipal)
+            ->minus($netAllocatedPrincipal)
             ->toScale(2);
     }
 
@@ -415,7 +436,13 @@ class PaymentPostingService
                 ->where('sale_id', $sale->getKey())
                 ->where('entry_kind', 'PAYMENT')
                 ->sum('credit_amount');
-            $hasAnyCredit = BigDecimal::of($paymentCredits === '' ? '0.00' : $paymentCredits)->isPositive();
+            $reversalDebits = (string) LedgerEntry::query()
+                ->where('customer_id', $customer->getKey())
+                ->where('sale_id', $sale->getKey())
+                ->where('entry_kind', 'REVERSAL')
+                ->sum('debit_amount');
+            $hasAnyCredit = BigDecimal::of($paymentCredits ?: '0.00')
+                ->minus($reversalDebits ?: '0.00')->isPositive();
             $status = $balance->isZero()
                 ? Sale::PAYMENT_STATUS_PAID
                 : ($hasAnyCredit

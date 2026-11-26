@@ -262,3 +262,20 @@ The logical data model in Section 4 describes the full Phase 5 target and is not
 5. Only then authorize implementation PR 5.1.
 
 **No application code, migration or database change is authorized by this blueprint.**
+
+
+## Payment reversal and optional replacement — implementation contract
+
+The first implementation is intentionally bounded to corrections that can be replayed without rewriting a later accounting period:
+
+- Only an active Shop Owner may initiate a correction; the API requires a mandatory reason and an idempotency key.
+- The original Payment, allocation header/items, ledger entries and interest allocation events remain unchanged.
+- The reversal creates a linked REVERSAL Payment, a reversal allocation and component-level reversal items. Each compensating ledger entry references the original entry and reverses its debit/credit direction.
+- Interest Lot allocations are restored with append-only REVERSED events linked to the original ALLOCATED event.
+- Customer balance projections and Sale payment statuses are recalculated from net immutable ledger postings.
+- An optional replacement is posted in the same outer database transaction, on the original Payment effective date, with a link to the reversed Payment and a separate immutable revision record.
+- A replacement is independently validated against the restored outstanding balance; excess remains rejected.
+- A correction is rejected when another normal Payment exists on the same or a later date, a later interest checkpoint exists, or an annual settlement has completed on/after the original effective date. Historical interest restatement is not implemented by this workflow.
+- Reversal and replacement are atomic: failure of either operation rolls back the complete correction. Replays with the same idempotency key return the original correction result.
+
+This bounded workflow does not claim support for historical restatement after dependent activity. Such cases require a separately approved recalculation design.
