@@ -275,57 +275,7 @@ class InterestCalculationService
             ]));
 
             $amount = BigDecimal::of($result['posted_interest']);
-            $interestEntry = null;
-
-            if (!$amount->isZero()) {
-                $sequence++;
-                $interestEntry = LedgerEntry::query()->create([
-                    'customer_id' => $customer->getKey(),
-                    'financial_transaction_id' => $transaction->getKey(),
-                    'sale_id' => $sale->getKey(),
-                    'payment_id' => null,
-                    'component' => 'INTEREST',
-                    'entry_kind' => 'INTEREST',
-                    'debit_amount' => (string) $amount->toScale(2),
-                    'credit_amount' => '0.00',
-                    'effective_date' => $intervalEnd,
-                    'sequence_number' => $sequence,
-                ]);
-
-                if ($policy['capitalization_enabled']) {
-                    $sequence++;
-                    LedgerEntry::query()->create([
-                        'customer_id' => $customer->getKey(),
-                        'financial_transaction_id' => $transaction->getKey(),
-                        'sale_id' => $sale->getKey(),
-                        'payment_id' => null,
-                        'component' => 'INTEREST',
-                        'entry_kind' => 'CAPITALIZATION',
-                        'debit_amount' => '0.00',
-                        'credit_amount' => (string) $amount->toScale(2),
-                        'effective_date' => $intervalEnd,
-                        'sequence_number' => $sequence,
-                    ]);
-                    $sequence++;
-                    LedgerEntry::query()->create([
-                        'customer_id' => $customer->getKey(),
-                        'financial_transaction_id' => $transaction->getKey(),
-                        'sale_id' => $sale->getKey(),
-                        'payment_id' => null,
-                        'component' => 'PRINCIPAL',
-                        'entry_kind' => 'CAPITALIZATION',
-                        'debit_amount' => (string) $amount->toScale(2),
-                        'credit_amount' => '0.00',
-                        'effective_date' => $intervalEnd,
-                        'sequence_number' => $sequence,
-                    ]);
-                    $principalIncrease = $principalIncrease->plus($amount);
-                } else {
-                    $interestIncrease = $interestIncrease->plus($amount);
-                }
-            }
-
-            $item = InterestCalculationItem::query()->create([
+            $itemAttributes = [
                 'customer_id' => $customer->getKey(),
                 'calculation_run_id' => $run->getKey(),
                 'sale_id' => $sale->getKey(),
@@ -342,12 +292,63 @@ class InterestCalculationService
                 'posted_interest' => $result['posted_interest'],
                 'capitalization_enabled' => $policy['capitalization_enabled'],
                 'item_key_hash' => $itemHash,
-                'ledger_entry_id' => $interestEntry?->getKey(),
-            ]);
+            ];
 
             if ($amount->isZero()) {
+                $itemAttributes['ledger_entry_id'] = null;
+                InterestCalculationItem::query()->create($itemAttributes);
+
                 continue;
             }
+
+            $sequence++;
+            $interestEntry = LedgerEntry::query()->create([
+                'customer_id' => $customer->getKey(),
+                'financial_transaction_id' => $transaction->getKey(),
+                'sale_id' => $sale->getKey(),
+                'payment_id' => null,
+                'component' => 'INTEREST',
+                'entry_kind' => 'INTEREST',
+                'debit_amount' => (string) $amount->toScale(2),
+                'credit_amount' => '0.00',
+                'effective_date' => $intervalEnd,
+                'sequence_number' => $sequence,
+            ]);
+
+            if ($policy['capitalization_enabled']) {
+                $sequence++;
+                LedgerEntry::query()->create([
+                    'customer_id' => $customer->getKey(),
+                    'financial_transaction_id' => $transaction->getKey(),
+                    'sale_id' => $sale->getKey(),
+                    'payment_id' => null,
+                    'component' => 'INTEREST',
+                    'entry_kind' => 'CAPITALIZATION',
+                    'debit_amount' => '0.00',
+                    'credit_amount' => (string) $amount->toScale(2),
+                    'effective_date' => $intervalEnd,
+                    'sequence_number' => $sequence,
+                ]);
+                $sequence++;
+                LedgerEntry::query()->create([
+                    'customer_id' => $customer->getKey(),
+                    'financial_transaction_id' => $transaction->getKey(),
+                    'sale_id' => $sale->getKey(),
+                    'payment_id' => null,
+                    'component' => 'PRINCIPAL',
+                    'entry_kind' => 'CAPITALIZATION',
+                    'debit_amount' => (string) $amount->toScale(2),
+                    'credit_amount' => '0.00',
+                    'effective_date' => $intervalEnd,
+                    'sequence_number' => $sequence,
+                ]);
+                $principalIncrease = $principalIncrease->plus($amount);
+            } else {
+                $interestIncrease = $interestIncrease->plus($amount);
+            }
+
+            $itemAttributes['ledger_entry_id'] = $interestEntry->getKey();
+            $item = InterestCalculationItem::query()->create($itemAttributes);
 
             $lotType = $policy['capitalization_enabled'] ? 'CAPITALIZED_INTEREST' : 'NON_CAPITALIZED_INTEREST';
             $lot = InterestLot::query()->create([
