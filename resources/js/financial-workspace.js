@@ -53,8 +53,11 @@ const renderTable = (headers, rows) => {
         rows.map(row => '<tr>' + row.map(cell => '<td>' + cell + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
 };
 const loadCustomers = async () => {
-    const payload = await request('/customers?per_page=100');
-    customers = payload.data || [];
+    const [activePayload, inactivePayload] = await Promise.all([
+        request('/customers?pageSize=100'),
+        request('/customers?status=inactive&pageSize=100'),
+    ]);
+    customers = [...(activePayload.data || []), ...(inactivePayload.data || [])];
     ['financial-customer', 'interest-customer'].forEach(id => {
         const select = document.getElementById(id);
         if (!select) return;
