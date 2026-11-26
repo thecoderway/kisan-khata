@@ -122,6 +122,16 @@ class InterestCalculationService
                 $cutoffDate,
                 $eventHash,
             ): FinancialTransaction {
+                $checkpoint = $account->last_interest_cutoff_date;
+
+                if (
+                    $settlement !== null
+                    && $checkpoint !== null
+                    && $checkpoint->format('Y-m-d') > $cutoffDate
+                ) {
+                    throw new DomainException('An annual settlement cannot move a customer interest checkpoint backwards.');
+                }
+
                 $sourceType = $payment !== null ? 'payment' : 'interest_settlement_run';
                 $sourceId = $payment?->getKey() ?? $settlement?->getKey();
                 $transaction = $this->transactions->createHeader(
