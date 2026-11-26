@@ -413,9 +413,9 @@ class FinancialPostingConcurrencyTest extends TestCase
             DB::table('sale_revisions')
                 ->whereIn('sale_id', DB::table('sales')->whereIn('customer_id', $customerIds)->pluck('id'))
                 ->delete();
+            DB::table('account_balance_snapshots')->whereIn('customer_id', $customerIds)->delete();
             DB::table('ledger_entries')->whereIn('customer_id', $customerIds)->delete();
             DB::table('payments')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('account_balance_snapshots')->whereIn('customer_id', $customerIds)->delete();
             DB::table('sales')->whereIn('customer_id', $customerIds)->delete();
             DB::table('financial_transactions')->whereIn('id', $transactionIds)->delete();
             DB::table('idempotency_keys')->where('shop_id', $shopId)->delete();
