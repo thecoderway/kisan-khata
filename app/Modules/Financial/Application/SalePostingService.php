@@ -10,7 +10,6 @@ use App\Models\LedgerEntry;
 use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\User;
-use Brick\Math\BigDecimal;
 use DateTimeInterface;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -22,6 +21,7 @@ class SalePostingService
         private readonly FinancialTransactionService $financialTransactions,
         private readonly IdempotencyService $idempotency,
         private readonly FinancialAuditService $audit,
+        private readonly BalanceProjectionService $projections,
     ) {}
 
     public function post(
@@ -117,7 +117,7 @@ class SalePostingService
                     '0.00',
                     $effectiveDate,
                 );
-                $this->adjustPrincipalProjection($account, $normalizedAmount);
+                $this->projections->rebuildLocked($account, $customer, $effectiveDate, (int) $saleTransaction->getKey());
 
                 $this->audit->recordTransaction(
                     $actor,
@@ -201,7 +201,7 @@ class SalePostingService
                                 ->where('customer_id', $customer->getKey())
                                 ->lockForUpdate()
                                 ->firstOrFail();
-                            $this->adjustPrincipalProjection($lockedAccount, '-'.$normalizedAmount);
+                            $this->projections->rebuildLocked($lockedAccount, $customer, $effectiveDate, (int) $paymentTransaction->getKey());
 
                             $this->audit->recordTransaction(
                                 $actor,
@@ -253,22 +253,6 @@ class SalePostingService
             'effective_date' => $effectiveDate,
             'sequence_number' => 1,
         ]);
-    }
-
-    private function adjustPrincipalProjection(CustomerAccount $account, string $delta): void
-    {
-        $principal = BigDecimal::of((string) $account->principal_balance)->plus($delta);
-
-        if ($principal->isNegative()) {
-            throw new ConflictHttpException('A Sale-day payment cannot exceed its own posted principal.');
-        }
-
-        $account->forceFill([
-            'principal_balance' => (string) $principal->toScale(2),
-            'total_payable' => (string) $principal->plus((string) $account->interest_balance)->toScale(2),
-            'last_financial_event_at' => now(),
-            'projection_version' => (int) $account->projection_version + 1,
-        ])->save();
     }
 
     private function normalizeAmount(string|int $amount): string

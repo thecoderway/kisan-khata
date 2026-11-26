@@ -32,6 +32,7 @@ class InterestCalculationService
         private readonly InterestCalculationKernel $kernel,
         private readonly InterestPolicyResolver $policies,
         private readonly FinancialAuditService $audit,
+        private readonly BalanceProjectionService $projections,
     ) {}
 
     public function calculateForPayment(
@@ -181,17 +182,13 @@ class InterestCalculationService
                     );
                 }
 
-                $account->refresh();
-                $newPrincipal = BigDecimal::of((string) $account->principal_balance)->plus($principalIncrease);
-                $newInterest = BigDecimal::of((string) $account->interest_balance)->plus($interestIncrease);
-                $account->forceFill([
-                    'principal_balance' => (string) $newPrincipal->toScale(2),
-                    'interest_balance' => (string) $newInterest->toScale(2),
-                    'total_payable' => (string) $newPrincipal->plus($newInterest)->toScale(2),
-                    'last_interest_cutoff_date' => $cutoffDate,
-                    'last_financial_event_at' => now(),
-                    'projection_version' => (int) $account->projection_version + 1,
-                ])->save();
+                $this->projections->rebuildLocked(
+                    $account,
+                    $customer,
+                    $cutoffDate,
+                    (int) $transaction->getKey(),
+                    $cutoffDate,
+                );
 
                 $run->forceFill(['status' => 'COMPLETED', 'completed_at' => now()])->save();
 

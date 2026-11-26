@@ -15,7 +15,6 @@ use App\Models\Sale;
 use App\Models\User;
 use Brick\Math\BigDecimal;
 use DateTimeInterface;
-use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -28,6 +27,7 @@ class PaymentPostingService
         private readonly InterestCalculationService $interest,
         private readonly InterestPolicyResolver $policies,
         private readonly FinancialAuditService $audit,
+        private readonly BalanceProjectionService $projections,
     ) {}
 
     public function post(
@@ -215,8 +215,7 @@ class PaymentPostingService
                     }
                 }
 
-                $this->refreshSaleStatuses($customer, $paymentDateString);
-                $this->refreshAccountProjection($account, $customer, $paymentDateString);
+                $this->projections->rebuildLocked($account, $customer, $paymentDateString, (int) $paymentTransaction->getKey(), $paymentDateString);
 
                 $this->audit->recordTransaction(
                     $actor,
@@ -414,83 +413,6 @@ class PaymentPostingService
             ->minus($allocated === '' ? '0.00' : $allocated)
             ->plus($reversed === '' ? '0.00' : $reversed)
             ->toScale(2);
-    }
-
-    private function refreshSaleStatuses(Customer $customer, string $paymentDate): void
-    {
-        $sales = Sale::query()
-            ->where('customer_id', $customer->getKey())
-            ->whereNotNull('posted_at')
-            ->where('sale_date', '<=', $paymentDate)
-            ->get();
-
-        foreach ($sales as $sale) {
-            $entries = LedgerEntry::query()
-                ->where('customer_id', $customer->getKey())
-                ->where('sale_id', $sale->getKey());
-            $debits = (string) ((clone $entries)->sum('debit_amount') ?: '0.00');
-            $credits = (string) ((clone $entries)->sum('credit_amount') ?: '0.00');
-            $balance = BigDecimal::of($debits)->minus($credits)->toScale(2);
-            $paymentCredits = (string) LedgerEntry::query()
-                ->where('customer_id', $customer->getKey())
-                ->where('sale_id', $sale->getKey())
-                ->where('entry_kind', 'PAYMENT')
-                ->sum('credit_amount');
-            $reversalDebits = (string) LedgerEntry::query()
-                ->where('customer_id', $customer->getKey())
-                ->where('sale_id', $sale->getKey())
-                ->where('entry_kind', 'REVERSAL')
-                ->sum('debit_amount');
-            $hasAnyCredit = BigDecimal::of($paymentCredits ?: '0.00')
-                ->minus($reversalDebits ?: '0.00')->isPositive();
-            $status = $balance->isZero()
-                ? Sale::PAYMENT_STATUS_PAID
-                : ($hasAnyCredit
-                    ? Sale::PAYMENT_STATUS_PARTIALLY_PAID
-                    : Sale::PAYMENT_STATUS_UNPAID);
-
-            DB::table('sales')
-                ->where('shop_id', $customer->shop_id)
-                ->where('customer_id', $customer->getKey())
-                ->where('id', $sale->getKey())
-                ->update([
-                    'payment_status' => $status,
-                    'interest_settlement_status' => Sale::INTEREST_STATUS_SETTLED,
-                ]);
-        }
-    }
-
-    private function refreshAccountProjection(
-        CustomerAccount $account,
-        Customer $customer,
-        string $paymentDate,
-    ): void {
-        $principalEntries = LedgerEntry::query()
-            ->where('customer_id', $customer->getKey())
-            ->where('component', 'PRINCIPAL');
-        $interestEntries = LedgerEntry::query()
-            ->where('customer_id', $customer->getKey())
-            ->where('component', 'INTEREST');
-
-        $principal = BigDecimal::of((string) ((clone $principalEntries)->sum('debit_amount') ?: '0.00'))
-            ->minus((string) ((clone $principalEntries)->sum('credit_amount') ?: '0.00'))
-            ->toScale(2);
-        $interest = BigDecimal::of((string) ((clone $interestEntries)->sum('debit_amount') ?: '0.00'))
-            ->minus((string) ((clone $interestEntries)->sum('credit_amount') ?: '0.00'))
-            ->toScale(2);
-
-        if ($principal->isNegative() || $interest->isNegative()) {
-            throw new DomainException('Ledger reconciliation produced a negative customer balance.');
-        }
-
-        $account->forceFill([
-            'principal_balance' => (string) $principal,
-            'interest_balance' => (string) $interest,
-            'total_payable' => (string) $principal->plus($interest)->toScale(2),
-            'last_interest_cutoff_date' => $paymentDate,
-            'last_financial_event_at' => now(),
-            'projection_version' => (int) $account->projection_version + 1,
-        ])->save();
     }
 
     private function normalizeAmount(string|int $amount): string
