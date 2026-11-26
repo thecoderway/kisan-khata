@@ -506,9 +506,9 @@ Same-day subsequent normal payments must not recalculate the same elapsed interv
 - Annual Interest Auto Settlement dates: **30 March** and **30 October** each year. These are the initial Shop defaults; retain Owner configuration as already approved.
 
 
-### 21.9 Convention approval boundary (2026-11-25)
+### 21.9 Approved calculation conventions (2026-11-25)
 
-Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries, and Sale Date as grace-period Day 0 were proposed in drafting but are not explicitly confirmed by the Product Owner. Treat them as recommendations pending confirmation before implementation.
+The following conventions are finalized and binding under ADR-0012: Actual Days / 30; HALF_UP rounding to two decimal places; [start inclusive, end exclusive) intervals; and Sale Date as Grace Period Day 0, with the first eligible day after 30 complete calendar days.
 
 
 ### 21.10 Product Owner-approved calculation and allocation conventions (2026-11-25)
