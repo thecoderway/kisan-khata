@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\\Unit\\Financial;
+namespace Tests\Unit\Financial;
 
-use App\\Modules\\Financial\\Application\\InterestCalculationKernel;
+use App\Modules\Financial\Application\InterestCalculationKernel;
 use DateTimeImmutable;
 use InvalidArgumentException;
-use PHPUnit\\Framework\\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class InterestCalculationKernelTest extends TestCase
 {
