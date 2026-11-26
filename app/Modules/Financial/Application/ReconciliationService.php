@@ -55,7 +55,7 @@ class ReconciliationService
             $after = $this->reconcileCustomerWithinTransaction($customer);
 
             if (! $after['consistent']) {
-                throw new \\RuntimeException('Projection repair did not produce a consistent customer account.');
+                throw new \RuntimeException('Projection repair did not produce a consistent customer account.');
             }
 
             if ($afterRepair !== null) {
