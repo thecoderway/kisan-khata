@@ -385,7 +385,8 @@ class CustomerManagementTest extends TestCase
     {
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
-        $customer = Customer::query()->where('shop_id', $owner->shop_id)->firstOrFail();
+        $customerRow = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
+        $customer = (new Customer)->newFromBuilder((array) $customerRow);
 
         Schema::shouldReceive('hasTable')->once()->with('customer_accounts')->andReturn(false);
 
@@ -748,6 +749,17 @@ class CustomerManagementTest extends TestCase
         $url = route('customers.index', [
             'drawer_action' => 'soft-delete',
             'drawer_customer_id' => $customer->id,
+        ]);
+
+        DB::table('customer_accounts')->insert([
+            'shop_id' => $owner->shop_id,
+            'customer_id' => $customer->id,
+            'principal_balance' => '0.00',
+            'interest_balance' => '0.00',
+            'total_payable' => '0.00',
+            'projection_version' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->delete(route('customers.soft-delete', $customer->id), [
