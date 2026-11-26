@@ -240,8 +240,8 @@ Managers and Staff cannot edit posted sales.
 6. Payment method may be recorded.
 7. Every payment must appear in the customer's ledger.
 8. A payment must never be processed twice.
-9. Payments are not allocated to individual sale IDs.
-10. Payments are not divided into interest and principal components for payment allocation.
+9. Customer-facing payments remain consolidated at customer-account level.
+10. The backend internally allocates each normal payment FIFO across eligible Sales, then applies the effective Shop Principal First or Interest First waterfall within each Sale. These allocations are immutable accounting records, not separate customer-facing payments.
 11. Payment processing must use the customer's consolidated payable amount.
 
 ### 6.1 Consolidated Payment Calculation
@@ -420,7 +420,7 @@ The system must maintain distinguishable information for:
 - Payments received.
 - Carried-forward outstanding.
 - Interest.
-- Customer advances.
+- No customer advance balance; excess payments are rejected.
 - Settlements.
 - Approved adjustments.
 
