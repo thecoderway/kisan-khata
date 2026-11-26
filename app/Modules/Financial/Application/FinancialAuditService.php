@@ -5,6 +5,8 @@ namespace App\Modules\Financial\Application;
 use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\FinancialTransaction;
+use App\Models\Sale;
+use App\Models\SaleRevision;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -74,6 +76,40 @@ class FinancialAuditService
             'new_values' => $newValues,
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
+        ]);
+    }
+
+    public function recordSaleRevision(
+        User $actor,
+        Customer $customer,
+        Sale $sale,
+        SaleRevision $revision,
+    ): AuditLog {
+        if (DB::transactionLevel() < 1) {
+            throw new LogicException('Sale revision audit records must be written inside the financial database transaction.');
+        }
+
+        $shopId = (int) $this->currentShop->require()->getKey();
+
+        if (
+            (int) $actor->shop_id !== $shopId
+            || (int) $customer->shop_id !== $shopId
+            || (int) $sale->shop_id !== $shopId
+            || (int) $sale->customer_id !== (int) $customer->getKey()
+            || (int) $revision->shop_id !== $shopId
+            || (int) $revision->sale_id !== (int) $sale->getKey()
+        ) {
+            throw new AuthorizationException('The Sale revision audit context does not belong to the current shop and customer.');
+        }
+
+        return AuditLog::query()->create([
+            'user_id' => $actor->getKey(),
+            'action' => 'financial.sale_revised',
+            'entity_type' => 'sale_revision',
+            'entity_id' => $revision->getKey(),
+            'reason' => $revision->correction_reason,
+            'old_values' => $revision->old_values,
+            'new_values' => $revision->new_values,
         ]);
     }
 }
