@@ -81,6 +81,7 @@ class PaymentPostingService
                 }
 
                 $laterInterestCheckpointExists = DB::table('interest_calculation_runs')
+                    ->where('shop_id', $customer->shop_id)
                     ->where('customer_id', $customer->getKey())
                     ->where('cutoff_date_exclusive', '>', $paymentDateString)
                     ->exists();
@@ -89,6 +90,7 @@ class PaymentPostingService
                 }
 
                 $sameDaySettlementAlreadyCompleted = DB::table('interest_settlement_runs')
+                    ->where('shop_id', $customer->shop_id)
                     ->where('customer_id', $customer->getKey())
                     ->where('cutoff_date_exclusive', $paymentDateString)
                     ->where('status', 'COMPLETED')
@@ -420,7 +422,11 @@ class PaymentPostingService
                     ? Sale::PAYMENT_STATUS_PARTIALLY_PAID
                     : Sale::PAYMENT_STATUS_UNPAID);
 
-            DB::table('sales')->where('id', $sale->getKey())->update([
+            DB::table('sales')
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('id', $sale->getKey())
+                ->update([
                 'payment_status' => $status,
                 'interest_settlement_status' => Sale::INTEREST_STATUS_SETTLED,
             ]);
