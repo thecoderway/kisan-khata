@@ -16,6 +16,7 @@ use App\Modules\Financial\Application\PaymentPostingService;
 use App\Modules\Financial\Application\ReconciliationService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
+use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
