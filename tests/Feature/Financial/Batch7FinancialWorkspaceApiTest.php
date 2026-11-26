@@ -53,6 +53,62 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/payments')->assertOk()->assertJsonFragment(['payment_number' => $payment->payment_number]);
     }
 
+    public function test_staff_can_post_sales_and_payments_through_versioned_api(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $staff = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
+        ]);
+        Sanctum::actingAs($staff, ['app']);
+
+        $this->postJson('/api/v1/sales', [
+            'customer_id' => $customer->getKey(),
+            'payment_choice' => 'UNPAID',
+            'sale_date' => '2026-11-20',
+            'amount' => '100.00',
+            'description' => 'Staff API sale',
+        ], ['Idempotency-Key' => 'batch-7-staff-api-sale'])
+            ->assertCreated()->assertJsonPath('data.amount', '100.00');
+
+        $this->postJson('/api/v1/payments', [
+            'customer_id' => $customer->getKey(),
+            'payment_date' => '2026-11-21',
+            'amount' => '25.00',
+            'payment_method' => 'CASH',
+        ], ['Idempotency-Key' => 'batch-7-staff-api-payment'])
+            ->assertCreated()->assertJsonPath('data.amount', '25.00');
+    }
+
+    public function test_only_owner_can_revise_a_posted_sale_through_api(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Original description', 'batch-7-owner-revision-sale',
+        );
+        $staff = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($staff, ['app']);
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Unauthorized revision', 'reason' => 'Attempt by Staff',
+        ], ['Idempotency-Key' => 'batch-7-staff-sale-revision'])->assertForbidden();
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Owner revised description', 'reason' => 'Correcting the sale note',
+        ], ['Idempotency-Key' => 'batch-7-owner-sale-revision'])
+            ->assertCreated()->assertJsonPath('data.new_values.description', 'Owner revised description');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $shop->getKey(), 'action' => 'financial.sale_revised',
+            'entity_type' => 'sale_revision',
+        ]);
+    }
+
     public function test_owner_can_create_effective_dated_shop_policy_and_audit_event(): void
     {
         [$shop, $owner] = $this->context();
