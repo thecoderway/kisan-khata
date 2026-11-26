@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-26  
-**Status Snapshot Base:** `main` at Batch 8.4 documentation merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` (2026-11-26).  
-**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation is merged through Batch 8.3, and Batch 8.4 documentation synchronization is merged (PR #46). Batches 5, 6, 7, 8.2, 8.3 and 8.4 are merged (PRs #40, #41, #43, #44, #45 and #46). Batch 8.5 release-gate regression coverage and evidence synchronization is in progress; the overall Phase 5 acceptance/release gate remains open pending end-to-end workflow and role/security acceptance. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
+**Status Snapshot Base:** `main` at Batch 8.5 regression merge commit `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` (2026-11-26).  
+**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation and targeted Batch 8.5 regression coverage are merged (PR #47). Batches 5, 6, 7, 8.2, 8.3, 8.4 and 8.5 are merged (PRs #40, #41, #43, #44, #45, #46 and #47). The overall Phase 5 acceptance/release gate remains open pending end-to-end workflow and role/security acceptance. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -67,7 +67,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 2 | Multi-Tenancy Foundation | **Complete — merged into `main` via PR #7** (`8c670a1`). Tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API boundaries and job context are implemented. MySQL 8.4 CI evidence: run #17 (132 tests / 389 assertions, 0 failures, 0 skipped); PR #7 also records successful CI for its merged head. Future modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — merged into `main` via PR #7**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage. MySQL 8.4 CI run #19: 139 tests / 432 assertions, 0 failures, 0 skipped. Cross-domain Customer/Sales/Payment permission enforcement remains required in those domain modules. |
 | Phase 4 | Customer Management | **Implementation complete for merged scope — PRs #10–#14 merged into `main`.** Shop Profile/LGD selectors, customer CRUD/search, bilingual fields and location defaults, approved customer lifecycle policy, safe soft-delete builder behavior, and customer deactivate/reactivate/soft-delete/restore are merged and CI-verified. Product Owner manually smoke-tested Owner/Manager/Staff browser flows. Automatic translation provider integration remains explicitly deferred; no live provider integration is claimed. |
-| Phase 5 | Financial Foundation and Accounting Engine | Implementation merged through Batch 8.3; Batch 8.4 documentation merged; Batch 8.5 regression coverage in progress; final acceptance/release gate remains open |
+| Phase 5 | Financial Foundation and Accounting Engine | Implementation and Batch 8.5 targeted regression coverage merged; final acceptance/release gate remains open |
 | Phase 6 | Credit Sales | Not started |
 | Phase 7 | Payments | Not started |
 | Phase 8 | Customer Ledger | Not started |
@@ -343,7 +343,7 @@ No production deployment or release is claimed.
 
 ## 13. Phase 5 status — 2026-11-26
 
-**Current delivery baseline:** Phase 5 financial implementation is merged through Batch 8.3; Batch 8.4 documentation synchronization is merged via PR #46 (merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`). This includes the financial core, tenant-safe posting and locking, FIFO allocation, effective-dated interest, annual auto settlement, ledger projection/reconciliation, financial APIs/UI and the Batch 8 integrity corrections. The final Phase 5 acceptance/release gate is still open; merged code and green CI do not by themselves constitute production readiness.
+**Current delivery baseline:** Phase 5 financial implementation through Batch 8.3, Batch 8.4 documentation synchronization and Batch 8.5 targeted regression coverage are merged; Batch 8.5 merge commit is `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` (PR #47). This includes the financial core, tenant-safe posting and locking, FIFO allocation, effective-dated interest, annual auto settlement, ledger projection/reconciliation, financial APIs/UI and targeted repair rollback/audit atomicity and reconciliation authorization regressions. The final Phase 5 acceptance/release gate is still open; merged code and green CI do not by themselves constitute production readiness.
 
 Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
@@ -356,10 +356,11 @@ The approved financial rules remain unchanged: consolidated customer-facing paym
 - Batch 8.2 — projection repair lock ordering and recurring settlement calendar validation: PR #44, merge commit `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d`.
 - Batch 8.3 — lock-first, atomic repair through the actual authenticated API endpoint: PR #45, merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7`.
 - Batch 8.4 — release-gate documentation synchronization: PR #46, merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`.
+- Batch 8.5 — repair rollback/audit atomicity and reconciliation authorization regressions: PR #47, merge commit `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c`.
 
 **Batch 8.3 CI evidence:** GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully. All job steps passed, including MySQL row-lock integration, the remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. This is CI evidence for the merged PR head; it is not production deployment or a full release acceptance sign-off.
 
-**Batch 8.5 in progress:** add explicit projection-repair rollback/audit atomicity regression coverage, reconciliation Owner-only and cross-Shop API denial coverage, and update the release-gate evidence matrix. CI evidence is pending.
+**Batch 8.5 CI evidence:** GitHub Actions run [45872271027](https://github.com/thecoderway/kisan-khata/actions/runs/45872271027) completed successfully. All steps passed, including MySQL row-lock integration, remaining Laravel tests, Pint formatting, Composer validation and Vite production build. PR #47 adds failure-injection rollback coverage proving projection repair and its audit event roll back together, Manager/Staff repair denial and Owner cross-Shop customer denial, plus policy denial-matrix coverage. This is targeted regression evidence, not complete Phase 5 acceptance.
 
 **Remaining release gate:** complete end-to-end financial workflow acceptance; verify role-by-role authorization and cross-Shop denial across the financial APIs/UI; confirm MySQL 8.4 concurrency/rollback coverage for all critical posting and repair paths; run frontend/API regression acceptance; review operational configuration, backup/restore and deployment readiness in the appropriate later phase. Branch-protection rules could not be inspected with the current GitHub integration permissions and require repository-admin verification.
 
@@ -378,4 +379,5 @@ This delivery history is superseded by the current Phase 5 status in Section 13 
 - Batch 8.2: merged via PR #44.
 - Batch 8.3: merged via PR #45.
 - Batch 8.4 is documentation synchronization only; it does not close the overall Phase 5 acceptance/release gate.
+- Batch 8.5 is targeted rollback/audit atomicity and reconciliation authorization regression coverage; it does not close the overall Phase 5 acceptance/release gate.
 - No production migration, production data change, deployment or release is included or authorized.

@@ -892,7 +892,7 @@ This section supersedes the historical Phase 5 status statements in Sections 8, 
 
 ### Merged implementation baseline
 
-Phase 5 financial implementation is merged into `main` through Batch 8.3; Batch 8.4 documentation synchronization is merged via PR #46 (merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`):
+Phase 5 financial implementation through Batch 8.3, Batch 8.4 documentation synchronization and Batch 8.5 targeted regression coverage are merged into `main`; Batch 8.5 merge commit is `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` (PR #47):
 
 | Batch | Scope | Delivery |
 |---|---|---|
@@ -902,17 +902,17 @@ Phase 5 financial implementation is merged into `main` through Batch 8.3; Batch 
 | 8.2 | Projection repair lock ordering and recurring settlement calendar validation | PR #44 merged; merge commit `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d` |
 | 8.3 | Lock-first, atomic projection repair through the authenticated API endpoint | PR #45 merged; merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7` |
 | 8.4 | Documentation/release-gate synchronization | PR #46 merged; merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` |
-| 8.5 | Repair rollback/audit atomicity and reconciliation authorization regressions | Implementation PR in progress; CI evidence pending |
+| 8.5 | Repair rollback/audit atomicity and reconciliation authorization regressions | PR #47 merged; merge commit `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` |
 
 Batch 8.3 specifically removes the controller's pre-lock reconciliation read and outer transaction, performs lock-first repair/reconciliation in one transaction, and records the repair audit callback before commit. The deterministic MySQL concurrency regression test exercises the authenticated API path while a financial posting holds the account lock.
 
 ### CI evidence
 
-GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully on the PR #45 head. All job steps passed, including the MySQL row-lock integration test, remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. This confirms the tested PR head; it is not a substitute for full Phase 5 acceptance or production verification.
+GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully on the PR #45 head. All job steps passed, including the MySQL row-lock integration test, remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. Batch 8.5 PR #47 also passed [CI run 45872271027](https://github.com/thecoderway/kisan-khata/actions/runs/45872271027), including MySQL row-lock integration, remaining Laravel tests, Pint, Composer validation and Vite production build. Batch 8.5 adds repair/audit rollback atomicity and reconciliation authorization regressions. These runs are evidence for their tested PR heads; they are not substitutes for full Phase 5 acceptance or production verification.
 
 ### Remaining Phase 5 release acceptance
 
-The Phase 5 release gate remains **OPEN** until the following are completed and evidenced. Batch 8.5 is adding targeted rollback and authorization regression tests; it does not by itself close the end-to-end release gate.
+The Phase 5 release gate remains **OPEN** until the following are completed and evidenced. Batch 8.5's targeted rollback and authorization regression tests are merged, but they do not by themselves close the end-to-end release gate.
 
 1. End-to-end workflows across Sale, Payment, allocation, interest, annual settlement, ledger projection and reconciliation, including rollback/idempotency behavior.
 2. Role-by-role authorization acceptance for Owner, Manager and Staff, including API/UI denial paths and cross-Shop isolation.
