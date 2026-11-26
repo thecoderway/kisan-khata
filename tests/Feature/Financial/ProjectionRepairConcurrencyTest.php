@@ -88,10 +88,25 @@ class ProjectionRepairConcurrencyTest extends TestCase
             'total_payable' => '70.00',
         ])->save();
 
+        // Commit the second posting only after the repair worker is confirmed
+        // waiting. Fork after this transaction owns the customer/account lock.
+        $primary = DB::connection();
+        $primary->beginTransaction();
+        $sales->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-02'),
+            '50.00',
+            'Concurrent posting held open for repair',
+            'projection-concurrency-second',
+        );
+
         [$parentSocket, $childSocket] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = pcntl_fork();
 
         if ($pid === -1) {
+            $primary->rollBack();
             fclose($parentSocket);
             fclose($childSocket);
             $this->fail('Unable to fork the MySQL concurrency worker.');
@@ -123,23 +138,9 @@ class ProjectionRepairConcurrencyTest extends TestCase
         }
 
         fclose($childSocket);
-        $primary = DB::connection();
         $repairResult = null;
 
         try {
-            // Keep a posting transaction open after it has written the new ledger
-            // rows and projection. The repair worker must wait for this account lock.
-            $primary->beginTransaction();
-            $sales->post(
-                $owner,
-                $customer,
-                Sale::PAYMENT_CHOICE_UNPAID,
-                CarbonImmutable::parse('2026-11-02'),
-                '50.00',
-                'Concurrent posting held open for repair',
-                'projection-concurrency-second',
-            );
-
             $repairConnectionId = (int) trim((string) fgets($parentSocket));
             $deadline = microtime(true) + 10;
             $observedLockWait = false;
