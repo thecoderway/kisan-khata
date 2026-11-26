@@ -217,16 +217,12 @@ The applicable grace period and interest policy must be applied according to the
 
 A posted Sale may be revised only through a controlled revision workflow while it is not locked by a later posted normal Payment or annual Interest Auto Settlement. Preserve before/after values, actor, timestamp and mandatory reason. Never mutate the posted Sale directly. A locked Sale cannot be corrected in the current approved scope.
 
-When a sale is edited:
+When an eligible Sale revision is requested:
 
-1. Preserve its previous values.
-2. Store the updated values.
-3. Record the editing user.
-4. Record correction timestamp.
-5. Record correction reason.
-6. Preserve immutable audit history.
-7. Recalculate affected customer financial results.
-8. Preserve the original correction history.
+1. Preserve the original Sale and create a separate revision.
+2. Record before/after values, actor, timestamp and mandatory correction reason.
+3. Preserve immutable revision and audit history.
+4. Recalculate affected customer financial results transactionally.
 
 Managers and Staff cannot edit posted sales.
 
