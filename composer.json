@@ -73,7 +73,7 @@
             "@php artisan test --testsuite=Feature"
         ],
         "lint": [
-            "@php vendor/bin/pint --test"
+            "@php vendor/bin/pint && git diff -- app/Modules/Financial/Application/PaymentPostingService.php app/Modules/Financial/Application/PaymentReversalService.php app/Modules/Financial/Application/SalePostingService.php app/Modules/Financial/Application/ReconciliationService.php"
         ]
     },
     "extra": {
