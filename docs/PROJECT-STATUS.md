@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-26  
-**Status Snapshot Base:** `main` at `5bbdd3bf7198f7892e5e94610fe3c79c277c3396` (2026-11-26).  
-**Project Status:** Phase 2 Multi-Tenancy Foundation and Phase 3 Roles/User Management are merged and accepted. Phase 4 Customer Management (Shop Profile/LGD, customer CRUD and customer lifecycle) is merged through PRs #10–#14 and CI-verified; Product Owner manually smoke-tested Owner/Manager/Staff flows. Automatic translation provider integration remains deferred. Phase 5 Financial Foundation and Accounting Engine is in progress: Groups 1–8 physical schema/model foundation are merged and CI-verified; core financial services and acceptance workflows remain incomplete. No production deployment is claimed.  
+**Status Snapshot Base:** `main` at Batch 7 merge commit `7b8b9791e04788569dc09935cc1854982732c717` (2026-11-26).  
+**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial foundation is implemented through Batch 7 (Batches 5, 6 and 7 merged via PRs #40, #41 and #43). Batch 8 final integration/release gate is in progress; see [Batch 8.2 financial integrity fixes](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -371,3 +371,16 @@ Finalized rules include:
 - Batch 6 reuses the already merged financial schema. No new migration, schema mutation, database backfill, production operation or deployment is included.
 - Feature tests cover projection consistency, read-only discrepancy detection, explicit repair, allocation integrity, sale-day auto payments, reversal reconciliation and cross-Shop rejection. PR #41 CI is green on the current head (MySQL 8.4 locking tests, 279 Laravel tests / 1,075 assertions, PHP formatting and frontend build). Keep Batch 6 unmerged until the Product Owner approves.
 - The delivery remains a reviewable PR. No merge to `main` is authorized without explicit Product Owner approval.
+
+
+## Phase 5 — Batch 7 and Batch 8 status correction (2026-11-26)
+
+This current delivery state supersedes older Phase 5 status statements and delivery tables elsewhere in this historical status document:
+
+- Batch 5 — Annual Interest Auto Settlement: merged via PR #40.
+- Batch 6 — Ledger Projection & Reconciliation: merged via PR #41.
+- Batch 7 — Financial Authorization, APIs & UI: merged via PR #43 (merge commit `7b8b9791e04788569dc09935cc1854982732c717`).
+- Batch 7 planning document PR #42 remains open separately; Batch 7 implementation is merged.
+- Batch 8.1 read-only integration audit completed on 2026-11-26. Batch 8.2 addresses projection repair lock/snapshot ordering and recurring settlement calendar validation. See [Batch 8.2 Financial Integrity Fixes](phase-5-batch-8-financial-integrity-fixes.md).
+- Batch 8 final release gate is not yet passed. End-to-end financial workflow, complete role/security acceptance, MySQL concurrency, frontend/API regression and release documentation remain to be verified.
+- No schema changes, migrations, production data changes, deployment or release are included or authorized by this batch.
