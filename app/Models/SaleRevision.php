@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCurrentShop;
+use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 class SaleRevision extends Model
 {
-    use BelongsToCurrentShop;
+    use BelongsToCurrentShop, SetsCreatedAt;
 
     public $timestamps = false;
 
