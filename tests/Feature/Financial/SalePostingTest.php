@@ -53,6 +53,15 @@ class SalePostingTest extends TestCase
             'id' => $sale->financial_transaction_id,
             'transaction_type' => FinancialTransaction::TYPE_SALE_POSTING,
         ]);
+        $this->assertDatabaseHas('ledger_entries', [
+            'financial_transaction_id' => $sale->financial_transaction_id,
+            'sale_id' => $sale->getKey(),
+            'component' => 'PRINCIPAL',
+            'entry_kind' => 'SALE',
+            'debit_amount' => '1250.00',
+            'credit_amount' => '0.00',
+        ]);
+        $this->assertSame('1250.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->principal_balance);
     }
 
     public function test_paid_sale_creates_its_own_automatic_payment_atomically(): void
@@ -81,6 +90,27 @@ class SalePostingTest extends TestCase
         $this->assertDatabaseCount('payments', 1);
         $this->assertDatabaseCount('financial_transactions', 2);
         $this->assertDatabaseCount('idempotency_keys', 2);
+        $this->assertDatabaseCount('ledger_entries', 2);
+        $this->assertDatabaseHas('ledger_entries', [
+            'financial_transaction_id' => $sale->financial_transaction_id,
+            'sale_id' => $sale->getKey(),
+            'component' => 'PRINCIPAL',
+            'entry_kind' => 'SALE',
+            'debit_amount' => '2500.50',
+            'credit_amount' => '0.00',
+        ]);
+        $this->assertDatabaseHas('ledger_entries', [
+            'financial_transaction_id' => $payment->financial_transaction_id,
+            'sale_id' => $sale->getKey(),
+            'payment_id' => $payment->getKey(),
+            'component' => 'PRINCIPAL',
+            'entry_kind' => 'PAYMENT',
+            'debit_amount' => '0.00',
+            'credit_amount' => '2500.50',
+        ]);
+        $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
+        $this->assertSame('0.00', $account->principal_balance);
+        $this->assertSame('0.00', $account->total_payable);
         $this->assertDatabaseCount('audit_logs', 2);
         $this->assertDatabaseCount('interest_calculation_runs', 0);
         $this->assertDatabaseHas('financial_transactions', [
