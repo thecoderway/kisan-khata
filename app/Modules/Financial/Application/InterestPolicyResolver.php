@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Modules\\Financial\\Application;
+namespace App\Modules\Financial\Application;
 
-use App\\Models\\Customer;
-use App\\Tenancy\\CurrentShop;
+use App\Models\Customer;
+use App\Tenancy\CurrentShop;
 use DateTimeInterface;
 use DomainException;
-use Illuminate\\Auth\\Access\\AuthorizationException;
-use Illuminate\\Support\\Facades\\DB;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Resolves effective-dated shop and customer interest settings.
