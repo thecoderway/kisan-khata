@@ -27,51 +27,53 @@ class ReconciliationService
      */
     public function reconcileCustomer(Customer $customer): array
     {
-        $shopId = (int) $this->currentShop->require()->getKey();
-
-        if ((int) $customer->shop_id !== $shopId) {
-            throw new AuthorizationException('The Customer does not belong to the current Shop.');
-        }
-
-        $discrepancies = [];
-        $expected = $this->projections->ledgerBalances($customer);
-        $account = CustomerAccount::query()
-            ->where('shop_id', $shopId)
-            ->where('customer_id', $customer->getKey())
-            ->first();
-
-        if ($account === null) {
-            $discrepancies[] = [
-                'type' => 'missing_account_projection',
-                'expected' => $expected,
-            ];
-        } else {
-            foreach ($expected as $field => $value) {
-                $actual = (string) $account->{$field};
-
-                if (BigDecimal::of($actual)->compareTo($value) !== 0) {
-                    $discrepancies[] = [
-                        'type' => 'account_projection_mismatch',
-                        'field' => $field,
-                        'expected' => $value,
-                        'actual' => $actual,
-                    ];
+        return DB::transaction(function () use ($customer): array {
+            $shopId = (int) $this->currentShop->require()->getKey();
+    
+            if ((int) $customer->shop_id !== $shopId) {
+                throw new AuthorizationException('The Customer does not belong to the current Shop.');
+            }
+    
+            $discrepancies = [];
+            $expected = $this->projections->ledgerBalances($customer);
+            $account = CustomerAccount::query()
+                ->where('shop_id', $shopId)
+                ->where('customer_id', $customer->getKey())
+                ->first();
+    
+            if ($account === null) {
+                $discrepancies[] = [
+                    'type' => 'missing_account_projection',
+                    'expected' => $expected,
+                ];
+            } else {
+                foreach ($expected as $field => $value) {
+                    $actual = (string) $account->{$field};
+    
+                    if (BigDecimal::of($actual)->compareTo($value) !== 0) {
+                        $discrepancies[] = [
+                            'type' => 'account_projection_mismatch',
+                            'field' => $field,
+                            'expected' => $value,
+                            'actual' => $actual,
+                        ];
+                    }
                 }
             }
-        }
-
-        $this->compareInterestCheckpoint($customer, $account, $discrepancies);
-        $this->compareSaleStatuses($customer, $discrepancies);
-        $this->compareSnapshots($customer, $discrepancies);
-        $this->compareSourcePostings($customer, $discrepancies);
-        $this->comparePaymentAllocations($customer, $discrepancies);
-
-        return [
-            'shop_id' => $shopId,
-            'customer_id' => (int) $customer->getKey(),
-            'consistent' => $discrepancies === [],
-            'discrepancies' => $discrepancies,
-        ];
+    
+            $this->compareInterestCheckpoint($customer, $account, $discrepancies);
+            $this->compareSaleStatuses($customer, $discrepancies);
+            $this->compareSnapshots($customer, $discrepancies);
+            $this->compareSourcePostings($customer, $discrepancies);
+            $this->comparePaymentAllocations($customer, $discrepancies);
+    
+            return [
+                'shop_id' => $shopId,
+                'customer_id' => (int) $customer->getKey(),
+                'consistent' => $discrepancies === [],
+                'discrepancies' => $discrepancies,
+            ];
+        });
     }
 
     /**
@@ -82,6 +84,12 @@ class ReconciliationService
      */
     public function rebuildAndReconcile(Customer $customer): array
     {
+        $before = $this->reconcileCustomer($customer);
+
+        if ($before['consistent']) {
+            return $before;
+        }
+
         $this->projections->rebuildForCustomer($customer);
 
         return $this->reconcileCustomer($customer);
