@@ -56,6 +56,19 @@ class FinancialAdministrationController extends Controller
                 throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
             }
 
+            $overlap = InterestPolicyVersion::query()
+                ->where('interest_policy_id', $policy->getKey())
+                ->where('effective_from', '<=', $effectiveFrom->toDateString())
+                ->where(function ($query) use ($effectiveFrom): void {
+                    $query->whereNull('effective_to')->orWhere('effective_to', '>', $effectiveFrom->toDateString());
+                })
+                ->when($open !== null, fn ($query) => $query->where('id', '!=', $open->getKey()))
+                ->exists();
+
+            if ($overlap) {
+                throw ValidationException::withMessages(['effective_from' => 'यह तारीख किसी मौजूदा Shop policy version की अवधि से overlap करती है।']);
+            }
+
             if ($open !== null) {
                 $open->effective_to = $effectiveFrom->toDateString();
                 $open->save();
@@ -121,6 +134,19 @@ class FinancialAdministrationController extends Controller
 
                 throw ValidationException::withMessages(['effective_from' => 'नई override तारीख मौजूदा override के effective start से आगे होनी चाहिए।']);
             }
+            $overlap = CustomerInterestPolicyVersion::query()
+                ->where('customer_id', $locked->getKey())
+                ->where('effective_from', '<=', $effectiveFrom->toDateString())
+                ->where(function ($query) use ($effectiveFrom): void {
+                    $query->whereNull('effective_to')->orWhere('effective_to', '>', $effectiveFrom->toDateString());
+                })
+                ->when($open !== null, fn ($query) => $query->where('id', '!=', $open->getKey()))
+                ->exists();
+
+            if ($overlap) {
+                throw ValidationException::withMessages(['effective_from' => 'यह तारीख किसी मौजूदा Customer override की अवधि से overlap करती है।']);
+            }
+
             if ($open !== null) {
                 $open->effective_to = $effectiveFrom->toDateString();
                 $open->save();
