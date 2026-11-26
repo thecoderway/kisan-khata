@@ -1,13 +1,13 @@
 # Kisan Khata — Project Status
 
-**Last Updated:** 2026-11-25  
-**Status Snapshot Base:** `main` at `bc783ae23d33e6583dc7d1347a2d0408ba1835b3` (2026-11-25).  
-**Project Status:** Phase 2 Multi-Tenancy Foundation and Phase 3 Roles/User Management are merged and accepted. Phase 4 Customer Management (Shop Profile/LGD, customer CRUD and customer lifecycle) is merged through PRs #10–#14 and CI-verified; Product Owner manually smoke-tested Owner/Manager/Staff flows. Automatic translation provider integration remains deferred. Phase 5 Financial Foundation and Accounting Engine is the next development phase. No production deployment is claimed.  
+**Last Updated:** 2026-11-26  
+**Status Snapshot Base:** `main` at `5bbdd3bf7198f7892e5e94610fe3c79c277c3396` (2026-11-26).  
+**Project Status:** Phase 2 Multi-Tenancy Foundation and Phase 3 Roles/User Management are merged and accepted. Phase 4 Customer Management (Shop Profile/LGD, customer CRUD and customer lifecycle) is merged through PRs #10–#14 and CI-verified; Product Owner manually smoke-tested Owner/Manager/Staff flows. Automatic translation provider integration remains deferred. Phase 5 Financial Foundation and Accounting Engine is in progress: Groups 1–8 physical schema/model foundation are merged and CI-verified; core financial services and acceptance workflows remain incomplete. No production deployment is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
 
-The authoritative baseline is the approved **Docs 01–10** at their recorded document versions, together with **ADR-0001 through ADR-0010** in `docs/decisions/`. The roadmap in `docs/10-development-roadmap.md` defines the official phase numbering and sequence. This status file records evidence-based progress; it does not replace or silently amend approved requirements.
+The authoritative baseline is the approved **Docs 01–10** together with accepted ADRs in `docs/decisions/`; ADR-0012 is the controlling Product Owner decision for Phase 5 financial rules and supersedes conflicting earlier statements. The roadmap in `docs/10-development-roadmap.md` defines the official phase numbering and sequence. This status file records evidence-based progress; it does not replace or silently amend approved requirements.
 
 These rules are mandatory for all future work, including AI-assisted work:
 
@@ -16,7 +16,7 @@ These rules are mandatory for all future work, including AI-assisted work:
 3. **No silent scope or policy changes:** Do not invent business rules, defaults, permissions, pricing, calculations or architecture. If a requirement is missing, ambiguous or conflicts with an ADR/document, stop the affected work, explain the conflict and obtain Product Owner approval. Update the authoritative document/ADR before implementation.
 4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Never merge to `main` without the Product Owner's explicit approval.
 5. **Security and tenancy by design:** Derive tenant context from authenticated membership; never trust client-supplied `shop_id` or role. Enforce authorization server-side and test cross-tenant access for every tenant-owned feature.
-6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Do not introduce sale-level payment allocation.
+6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Customer-facing payments remain consolidated; internal FIFO allocation across Sales is required under ADR-0012.
 7. **Tests are evidence:** Add relevant automated tests and actually run them. Never claim tests, builds, migrations or acceptance criteria passed without observed output.
 8. **Review all changes:** Report changed files, migrations, security implications, test output and known limitations. Preserve existing working functionality unless explicitly approved otherwise.
 9. **Documentation stays synchronized:** Update the relevant technical document and this status file in the same delivery whenever implementation changes documented behavior or verified progress. Distinguish implemented, tested, accepted and production-configured states.
@@ -234,10 +234,10 @@ Phase 4 implementation and merged-scope verification are recorded as complete. T
 
 ## 6. Remaining official phases — scope summary
 
-1. **Phase 5 — Financial Foundation:** decimal-safe money, consolidated outstanding, ledger posting, advances, immutable audit history, idempotency, transaction atomicity and concurrency protection. This is a prerequisite for production sales/payments.
+1. **Phase 5 — Financial Foundation:** decimal-safe money, consolidated outstanding, ledger posting, excess-payment rejection, immutable audit history, idempotency, transaction atomicity and concurrency protection. This is a prerequisite for production sales/payments.
 3. **Phase 6 — Credit Sales:** sale creation/posting/list/details, optional crop/season tag and private bill attachment, Owner-only corrections with before/after audit.
-4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, excess as advance, idempotency and concurrency protection; no sale-level allocation.
-5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/advance/corrections, filters and printable Hindi/English ledger.
+4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, internal FIFO allocation, excess-payment rejection, idempotency and concurrency protection.
+5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/corrections, filters and printable Hindi/English ledger.
 6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
 7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention.
 8. **Phase 11 — Reports, Printing and Exports:** tenant-scoped reports, PDF and Excel/CSV, totals reconciled to ledger.
@@ -255,29 +255,26 @@ The existing provider-independent sender contract and fail-closed null sender re
 ## 8. Unresolved product/business decisions
 
 Do not invent defaults. Obtain Product Owner approval before implementing affected behavior:
-- Interest capitalization policy.
-- Interest rounding precision and rounding mode.
-- Interest effective-date/day-boundary conventions and grace-period boundary.
-- Exact two annual Auto Settlement dates and same-date payment/settlement behavior.
-- Detailed backdated correction recalculation.
-- Advance application rules.
-- Crop-season settlement edge cases.
-- Translation provider and correction workflow.
+- Detailed crop-season settlement accounting.
+- Backdated transaction correction/recalculation beyond approved Sale revision and Payment reversal/replacement.
 - Subscription plan pricing and entitlements.
 - Payment gateway.
 - Hosting region and operational data-retention parameters.
+- Translation provider and correction workflow.
+
+Interest defaults, rounding/date conventions, grace-period boundary, annual settlement dates, same-date ordering, FIFO waterfall and the no-advance rule are finalized by ADR-0012 and are not unresolved.
 
 If a relevant document or ADR conflicts or is ambiguous, stop and report the conflict before coding.
 
 ## 9. Key financial and security invariants
 
-- No sale-level payment allocation.
+- Customer-facing payments are consolidated; internal FIFO allocation is required.
 - Payments reduce consolidated customer payable after eligible interest is calculated through the payment date.
 - Same-day subsequent payments must not duplicate interest.
 - New sales retain their own sale dates; carried-forward balance has its own calculation-cycle start date.
-- Excess payment is customer advance.
+- Excess payment is rejected; no customer advance balance exists.
 - Interest events are customer payment and two Owner-configured annual Auto Settlement dates; no ordinary daily/monthly posting job.
-- Owner may edit posted Sales/Payments with immutable before/after audit history; Manager/Staff may not.
+- Posted Sales/Payments are immutable: eligible unlocked Sale corrections use revisions; Payment corrections use reversal and optional replacement. Manager/Staff cannot initiate corrections.
 - Use decimal-safe arithmetic and MySQL DECIMAL for authoritative money values; never PHP floats for financial calculations.
 - Resolve tenant context from authenticated membership; never trust client-supplied `shop_id`.
 - Every tenant-owned query, relation, file, cache entry, export and background job must enforce tenant ownership.
@@ -326,7 +323,7 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current recorded `main` HEAD: `bc783ae23d33e6583dc7d1347a2d0408ba1835b3` (merge of PR #14, 2026-11-25).
+- Current verified `main` HEAD: `5bbdd3bf7198f7892e5e94610fe3c79c277c3396` (Phase 5 Groups 1–8 schema/model foundation; 2026-11-26).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
 - All feature and documentation changes use reviewable PRs. No future merge to `main` without explicit Product Owner approval.
 - Update status only from verified repository, CI, test or Product Owner evidence.
@@ -336,16 +333,17 @@ No production deployment or release is claimed.
 
 - Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and accepted for its recorded scope.
 - **Current phase: Phase 5 — Financial Foundation and Accounting Engine.**
-- Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
+- Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/01, docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
 - The detailed Phase 5 implementation blueprint is `docs/phase-5-implementation-blueprint.md`.
-- Next action: complete a read-only audit of existing financial-related code, models, migrations, services, tenant constraints, authorization, audit logging, routes and tests. Do not modify files or database during this audit.
-- After the audit, reconcile the proposed logical model with existing migrations and present a physical schema/implementation plan for separate Product Owner approval.
+- Read-only existing-code/schema audit is complete. Batch 0 documentation and CustomerDeletionEligibility implementation are complete on PR #29; MySQL 8.4 CI has passed. PR #29 remains open for Product Owner merge approval.
+- Continue with Batch 1 financial foundation services, then Sale posting/revisions, interest calculation, Payment/FIFO allocation, annual interest settlement, ledger projection/reconciliation, authorization/APIs/UI, and final MySQL 8.4 integration/release gate.
+- No database migrations, local/production data changes or deployment without separate explicit Product Owner approval.
 - Do not begin production Sales/Payment workflows until Phase 5 foundation passes its critical acceptance tests.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
-## 13. Phase 5 status — 2026-11-25
+## 13. Phase 5 status — 2026-11-26
 
-**Business rules and blueprint: documented. Implementation: NOT STARTED.**
+**Business rules and blueprint: documented. Physical schema/model foundation: Groups 1–8 merged and CI-verified. Batch 0 implementation: complete on PR #29; awaiting merge approval. Financial services and end-to-end acceptance: not complete.**
 
 Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
@@ -362,6 +360,6 @@ Finalized rules include:
 - Locked historical Sale correction has no exception in the current approved scope; stop and require separate approval and workflow design.
 - Financial history is append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable.
 
-**Next approved work:** read-only existing-code/schema audit. No implementation, migrations or database changes are authorized by the blueprint alone.
+**Current delivery:** Batch 0 is complete on PR #29 (open; not merged). It includes ADR-0012 documentation reconciliation, CustomerDeletionEligibility updates, and focused deletion-guard tests. Next is Batch 1 financial foundation services, followed by the approved batches in sequence. No database migrations or deployment are authorized; obtain separate explicit approval before either.
 
-**Verification:** this documentation-only update did not run tests or CI. Do not infer test or runtime verification from the documentation changes.
+**Verification:** GitHub Actions Laravel CI run [45789193066](https://github.com/thecoderway/kisan-khata/actions/runs/45789193066) passed on commit `6d9830881a9a802ae855b229240f89c7e80cfffd`: Pint **164 files passed**; Composer validation passed; Vite production build passed; MySQL 8.4.13 row-lock integration test **1 passed / 2 assertions**; Laravel suite **233 passed / 802 assertions**. This verifies the PR branch only; it is not a production deployment or migration verification.

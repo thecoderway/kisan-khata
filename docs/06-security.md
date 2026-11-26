@@ -115,7 +115,7 @@ There are no custom per-user permissions in the initial release.
 - Manage shop settings.
 - Manage subscription and billing.
 - Create and manage Managers and Staff.
-- Edit posted sales and payments under approved correction rules.
+- Initiate approved controlled Sale revisions and Payment reversal/replacement workflows; direct edits to posted financial records are prohibited.
 - Access all shop reports and financial records.
 - Configure shop-level interest policies.
 
@@ -239,21 +239,22 @@ Requirements:
 
 Payments are applied against the customer's consolidated payable balance.
 
-The application must not permit arbitrary sale-level payment allocation.
+The customer-facing Payment remains consolidated. The backend must enforce immutable internal FIFO allocation across eligible Sales and the effective per-Sale Principal First or Interest First waterfall.
 
 A payment operation must:
 
 - Calculate eligible outstanding and interest through the payment date.
-- Subtract the received payment from total payable.
-- Preserve any excess amount as customer advance.
-- Record the resulting balance and calculation reference.
+- Mark the interest checkpoint Settled and recompute total payable.
+- Reject the entire Payment before creating any Payment, allocation, ledger or projection posting if it exceeds total payable.
+- Apply accepted Payment internally FIFO across eligible Sales and the effective per-Sale waterfall.
+- Persist allocations and ledger postings atomically; reconcile the projection before commit.
 - Prevent duplicate processing of the same payment request.
 
 Multiple payments on the same date must not cause interest to be calculated repeatedly for the same elapsed period.
 
 ### Transaction Corrections
 
-Only the Shop Owner may edit posted financial transactions under the approved business rules.
+Only the Shop Owner may initiate approved controlled Sale revisions or Payment reversal/replacement. Posted financial records themselves are immutable; direct edits and physical deletion are prohibited.
 
 Requirements:
 

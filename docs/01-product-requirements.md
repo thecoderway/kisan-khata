@@ -128,7 +128,7 @@ Capabilities:
 - View complete customer ledgers.
 - Configure interest policies.
 - Configure annual Auto Settlement dates.
-- Edit posted sales and payments.
+- Correct posted transactions only through the approved Sale revision workflow or Payment reversal/replacement workflow; direct edits are prohibited.
 - View audit history.
 - Manage Manager and Staff accounts: create, deactivate, reactivate, and change Manager/Staff roles.
 - View and manage shop users' active status and role history.
@@ -271,11 +271,11 @@ The account must maintain:
 - Payments received.
 - Outstanding balance.
 - Interest calculations.
-- Advances.
+- Rejected excess payments; no customer advance balance.
 - Settlements.
 - Crop-season history.
 
-Payments are not allocated to individual sale IDs.
+Customer-facing payments remain consolidated; internal FIFO allocation across eligible Sales is required under ADR-0012.
 
 ### 8.4 Crop Season
 
@@ -302,7 +302,7 @@ A sale represents goods or services provided to a customer on credit.
 
 - Create sale.
 - View sale.
-- Edit sale.
+- Request a controlled revision for an eligible unlocked Sale.
 - View sale history.
 - Search sales.
 - Filter by customer.
@@ -313,17 +313,16 @@ Every sale must preserve its original transaction date because interest eligibil
 
 ### 9.3 Posted Sale Correction
 
-The Shop Owner can directly edit a posted sale.
+The Shop Owner may request a controlled revision only while the Sale is not locked by a later posted normal Payment or annual Interest Auto Settlement. A revision must preserve immutable before/after values, actor, timestamp and mandatory reason. Direct mutation of a posted Sale is prohibited. Locked Sales cannot be corrected in the current approved scope.
 
-When editing:
+For an eligible revision:
 
-- Preserve the original values.
-- Store the new values.
-- Record the user who performed the edit.
+- Preserve the original values and store a separate revision.
+- Record the user who performed the revision.
 - Record the date and time.
-- Record the correction reason.
-- Maintain immutable audit history.
-- Recalculate affected customer balances and interest.
+- Require a correction reason.
+- Maintain immutable revision and audit history.
+- Recalculate affected customer balances and interest transactionally.
 
 Managers and Staff cannot edit posted sales.
 
@@ -346,22 +345,23 @@ Payment method may be recorded as additional information.
 
 - Record payment.
 - View payment.
-- Edit payment.
+- Correct a posted Payment through reversal and optional replacement.
 - View payment history.
 - Print payment receipt.
 
 ### 10.3 Consolidated Payment Calculation
 
-Payments are not allocated to individual sales, invoices, interest entries or principal components.
+Customer-facing payments remain consolidated at customer-account level. The backend must record immutable internal FIFO allocations across eligible Sales; within each Sale, apply the effective Shop Principal First or Interest First waterfall. These internal allocations are not separate customer-facing payment transactions.
 
 The payment process follows this sequence:
 
-1. Calculate the customer's complete payable amount through the payment date.
-2. Include all eligible interest through that date.
-3. Add the applicable outstanding balance and new interest.
-4. Subtract the received payment from the total payable.
-5. Carry forward the remaining amount as the new consolidated outstanding.
-6. Start the new consolidated balance's interest calculation cycle from the payment date.
+1. Lock the customer account within the posting transaction.
+2. Calculate eligible interest through the Payment effective date for all earlier eligible unpaid Sales/components.
+3. Mark the corresponding interest checkpoint Settled.
+4. Recompute the complete payable amount (outstanding principal plus posted unpaid interest).
+5. Reject the entire Payment before creating any Payment, allocation, ledger or projection posting if its amount exceeds total payable.
+6. Apply the accepted amount internally FIFO across oldest eligible Sales; within each Sale apply the effective Shop Principal First or Interest First waterfall.
+7. Persist Payment, allocation and ledger postings atomically, reconcile the account projection, and commit.
 
 ### 10.4 Multiple Payments on the Same Date
 
@@ -376,16 +376,12 @@ Example:
 
 ### 10.5 Excess Payment
 
-If a payment exceeds the total payable:
+A payment must not exceed the customer's total payable balance (outstanding principal plus posted unpaid interest). If the submitted amount exceeds the payable balance, reject the entire payment before posting it. Do not accept a partial amount, create a customer advance, or carry an excess balance forward.
 
-- The outstanding balance becomes zero.
-- The excess amount is retained as a customer advance.
-- The advance is maintained separately in the customer ledger.
-- Future sales can be adjusted against the available advance according to the approved business rules.
 
 ### 10.6 Posted Payment Correction
 
-The Shop Owner can directly edit a posted payment.
+Posted Payment corrections must use a reversal and optional replacement Payment. The original Payment is never edited or deleted; each correction is immutable, auditable and transactionally reconciled.
 
 The system must preserve:
 
@@ -409,7 +405,7 @@ Every customer must have one consolidated financial ledger.
 - Credit sales.
 - Payments.
 - Interest calculations.
-- Customer advances.
+- Rejected excess payments (no advance balance).
 - Settlements.
 - Adjustments.
 - Closing balance.
@@ -447,7 +443,7 @@ Configuration includes:
 - Interest capitalization policy.
 - Annual Auto Settlement dates.
 
-The default grace period is zero days.
+The Shop default grace period is 30 calendar days. Sale Date is Day 0; the first eligible interest day follows 30 complete calendar days. No Customer-specific grace-period override is supported.
 
 ### 12.2 Calculation Formula
 
@@ -504,7 +500,7 @@ At the next interest calculation:
 
 ### 12.7 Interest Capitalization
 
-The application should support two Owner-selectable policies:
+The application supports two Owner-selectable policies. The initial Shop default is OFF; a Customer-level override is optional and inherits the Shop setting when absent:
 
 **Policy A — Capitalized Interest**
 
@@ -517,7 +513,7 @@ The application should support two Owner-selectable policies:
 - Interest remains separately identifiable.
 - Future interest is not charged on previously accrued interest.
 
-The final default policy and detailed transition behavior require explicit approval before implementation.
+The approved initial capitalization default is OFF. Capitalization changes are effective-dated and prospective only; they do not rewrite prior periods or postings.
 
 ### 12.8 Calculation History
 
@@ -582,7 +578,7 @@ The printable ledger should include:
 - Sales.
 - Payments.
 - Interest.
-- Advances.
+- Rejected excess payments (no advance balance).
 - Running balance.
 - Closing balance.
 - Print date.
@@ -760,7 +756,7 @@ The initial web release includes:
 - Interest configuration.
 - Interest calculation engine.
 - Annual Auto Settlement configuration.
-- Customer advances.
+- Excess-payment rejection; no customer advance balance.
 - Crop-season settlements.
 - Basic reports.
 - Ledger printing.
@@ -798,7 +794,7 @@ The initial product must allow a Shop Owner to:
 7. Understand interest calculations.
 8. Handle multiple payments on the same date without duplicate interest.
 9. View new sales and carried-forward balances correctly.
-10. Record customer advances.
+10. Reject payments that exceed total payable.
 11. Perform full and partial settlements.
 12. View complete customer financial history.
 13. Correct posted transactions with audit history.
@@ -811,20 +807,16 @@ The initial product must allow a Shop Owner to:
 
 ## 23. Decisions Requiring Final Approval
 
-The following items must be finalized before their respective implementation:
+The following items remain subject to separate Product Owner approval before implementation:
 
-1. Interest capitalization default: Policy A or Policy B.
-2. Exact interest rounding precision and rounding mode.
-3. Interest effective-date and day-boundary conventions.
-4. Grace-period eligibility boundary.
-5. Detailed Auto Settlement behavior when a customer has already had a payment calculation on that date.
-6. Detailed crop-season settlement accounting.
-7. Translation provider and correction workflow.
-8. Subscription plan prices and entitlements.
-9. Payment gateway.
-10. Financial data retention period.
-11. Hosting region.
+1. Detailed crop-season settlement accounting.
+2. Backdated transaction correction/recalculation beyond the approved Sale revision and Payment reversal/replacement rules.
+3. Translation provider and correction workflow.
+4. Subscription plan prices and entitlements.
+5. Payment gateway.
+6. Financial data retention period.
+7. Hosting region.
 
-No developer or AI coding agent may silently decide these financial or business rules.
+ADR-0012 finalizes interest capitalization defaults, rounding/date conventions, grace-period boundary, annual settlement dates, same-date Payment/settlement ordering, FIFO/waterfall behavior and rejection of excess Payments. These are not pending decisions.
 
 Any change to an approved requirement must be documented and approved by the Product Owner before implementation.

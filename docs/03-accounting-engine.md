@@ -10,7 +10,7 @@
 
 This document defines the technical architecture of the Kisan Khata financial calculation engine.
 
-The engine is responsible for recording financial transactions, maintaining consolidated customer balances, processing payments, calculating interest, maintaining customer advances, processing crop-season settlements, producing customer ledgers, preserving correction history and reproducing historical calculations.
+The engine is responsible for recording financial transactions, maintaining consolidated customer balances, processing payments, calculating interest, processing crop-season settlements, producing customer ledgers, preserving correction history and reproducing historical calculations.
 
 The engine must be independent of the web interface. All authoritative financial calculations must run in backend services. The frontend and future Android application must never independently calculate authoritative balances or interest.
 
@@ -20,7 +20,7 @@ The engine must be independent of the web interface. All authoritative financial
 2. Every balance must be explainable and reproducible.
 3. Financial transaction history and correction audit history must remain traceable.
 4. Owner corrections preserve previous values and immutable audit history.
-5. Payments reduce consolidated customer payable; they are not allocated to individual sale IDs.
+5. Customer-facing payments reduce consolidated payable and are internally allocated FIFO across eligible Sales, then by the effective per-Sale Principal First or Interest First waterfall.
 6. Interest follows approved calculation triggers.
 7. Duplicate requests must not create duplicate financial effects.
 8. Financial operations must be database-transactional.
@@ -40,7 +40,7 @@ Proposed initial types, subject to validation against expected business limits:
 
 Never use PHP floating-point arithmetic for authoritative financial calculations. Use a suitable decimal arithmetic library or carefully designed integer minor-unit arithmetic.
 
-Rounding must be centralized in the financial calculation layer. Exact rounding precision and mode remain pending Product Owner approval.
+Rounding must be centralized in the financial calculation layer. Posted INR interest is rounded to two decimal places using HALF_UP; intermediate calculations must retain adequate decimal precision.
 
 ## 4. Financial Concepts
 
@@ -50,7 +50,7 @@ A credit sale increases customer payable. Every sale retains its own effective d
 
 ### 4.2 Payment
 
-A payment represents money received from a customer. It reduces the customer's complete payable amount rather than being allocated to individual sales or interest components.
+A normal Payment is one consolidated customer-account transaction. Its backend accounting effect is internally allocated FIFO across eligible Sales; within each Sale apply the effective Shop Principal First or Interest First waterfall. These allocations do not create separate customer-facing payments.
 
 ### 4.3 Consolidated Outstanding
 
@@ -60,9 +60,10 @@ The consolidated outstanding is the amount carried forward after processing elig
 
 New sales after the previous payment retain their individual sale dates. They must not inherit the calculation-cycle start date of an older consolidated outstanding balance.
 
-### 4.5 Customer Advance
+### 4.5 Excess Payment Rejection
 
-An advance represents money received beyond the customer's complete payable amount. It must be separately identifiable and must not be represented as a negative sale.
+Payments exceeding the complete payable amount are rejected before posting. Customer advance balances and future-sale advance adjustments are not supported.
+
 
 ### 4.6 Interest and Settlement
 
@@ -79,7 +80,6 @@ Conceptual transaction types:
 - PAYMENT
 - INTEREST_CALCULATION
 - INTEREST_POSTING
-- CUSTOMER_ADVANCE
 - SETTLEMENT
 - ADJUSTMENT
 
@@ -99,14 +99,13 @@ Every transaction must belong to the correct tenant and customer.
 
 ## 6. Consolidated Customer Account Model
 
-Maintain one consolidated account per customer per shop. It must represent existing carried-forward outstanding, new credit sales, calculated interest, payments, customer advances, settlements and approved adjustments.
+Maintain one consolidated account per customer per shop. It must represent existing carried-forward outstanding, new credit sales, calculated interest, payments, settlements and approved adjustments.
 
 Preserve the distinction between:
 
 1. Consolidated carried-forward balance.
 2. Individual new sales not yet incorporated into a payment calculation.
 3. Separately maintained interest, where the selected policy requires it.
-4. Customer advance balance.
 
 Prevent the same sale or interest amount from being counted twice.
 
@@ -122,22 +121,19 @@ Suggested service: `CustomerPaymentService`.
 
 Responsibilities:
 
-1. Validate shop and customer ownership.
-2. Validate payment amount and effective date.
-3. Lock or safely serialize the customer financial account.
-4. Identify current outstanding and eligible new sales.
-5. Calculate eligible interest through the payment date.
-6. Determine complete payable amount.
-7. Subtract the received payment.
-8. Carry forward the remaining outstanding.
-9. Record excess as customer advance, if applicable.
-10. Update account projections.
-11. Record transaction and audit history.
-12. Return an explainable payment result.
+1. Validate current Shop/customer ownership, amount, effective date and idempotency.
+2. Begin a database transaction and lock the customer financial account.
+3. Calculate eligible interest through the Payment effective date.
+4. Mark the interest checkpoint Settled and recompute total payable.
+5. Reject the entire Payment before any posting if it exceeds outstanding principal plus posted unpaid interest.
+6. Allocate accepted Payment FIFO across oldest eligible Sales, applying the effective Shop Principal First or Interest First waterfall within each Sale.
+7. Persist Payment, allocation and ledger postings atomically.
+8. Reconcile account projections, record audit history and commit.
+9. Return an explainable Payment result.
 
-### 7.1 No Sale-Level Allocation
+### 7.1 Internal FIFO Allocation
 
-The payment engine must not allocate payment to oldest or newest sale, allocate interest-first or principal-first, or require payment allocation records against sale IDs. Payment is applied to consolidated payable.
+The customer-facing payment remains consolidated at customer-account level. The backend must create immutable internal allocation records in deterministic oldest-eligible-Sale-first order. Within each Sale, apply the effective Shop Principal First or Interest First waterfall to that Sale's eligible principal and posted-interest components before moving to the next Sale. These records support accounting, audit and reconciliation; they do not create sale-specific customer-facing payments.
 
 ### 7.2 Multiple Payments on the Same Date
 
@@ -145,7 +141,8 @@ The engine must ensure the same elapsed period is not charged interest twice. Fo
 
 ### 7.3 Excess Payment
 
-If payment exceeds complete payable, outstanding becomes zero and excess becomes a separately stored customer advance, traceable in the ledger. Automatic use of advances against future sales requires a separately approved business rule.
+Reject the entire payment when its amount exceeds outstanding principal plus posted unpaid interest. Do not post a partial payment, customer advance, ledger entry or balance update for the rejected request.
+
 
 ## 8. Interest Calculation Engine
 
@@ -289,7 +286,7 @@ Responsibilities:
 - Fetch chronological customer financial activity.
 - Apply date filters.
 - Calculate opening, running and closing balances.
-- Display credit sales, payments, interest, advances and settlements.
+- Display credit sales, payments, interest and settlements.
 - Explain calculation history.
 - Return printable ledger data.
 
@@ -297,21 +294,14 @@ Use stable transaction ordering. When two transactions share an effective date, 
 
 ## 14. Transaction Corrections and Audit History
 
-The Shop Owner can directly edit posted sales and payments.
+Posted financial transactions are immutable and are never directly edited or physically deleted.
 
-When a posted transaction is edited:
+- An unlocked Sale may be corrected only through a controlled Sale revision that preserves before/after values, actor, timestamp and mandatory reason. A Sale is locked after a later posted normal Payment or annual Interest Auto Settlement. Locked Sales cannot be corrected in the current approved scope.
+- A posted Payment is corrected through a separate reversal and optional replacement Payment. The original Payment and its allocation history remain immutable.
+- Only the Shop Owner may initiate these approved correction workflows. Manager and Staff cannot correct posted financial transactions.
+- All reversal/revision postings and projection changes must be atomic, auditable and reconcilable.
 
-1. Preserve previous transaction values.
-2. Store updated transaction values.
-3. Create an immutable audit record.
-4. Record acting user, correction timestamp and reason.
-5. Recalculate affected financial results.
-6. Update account projections transactionally.
-7. Preserve a traceable link between original version and correction.
-
-Managers and Staff cannot edit posted financial transactions. Physical deletion of posted financial history is prohibited. The current transaction state may be updated by an authorized Owner, but audit history must not be silently modified.
-
-The exact strategy for historical backdated corrections and recalculation must be finalized before implementation.
+Locked historical Sale corrections are not supported in the approved scope. Backdated Payment/reversal recalculation beyond the approved workflow must stop for separate Product Owner approval.
 
 ## 15. Concurrency and Database Transactions
 
@@ -373,11 +363,11 @@ These are architectural boundaries, not mandatory class names. Implementation ma
 ### 18.2 Payments
 
 - Valid payment reduces consolidated payable.
-- Payment is not allocated to individual sale IDs.
+- Customer-facing payments remain consolidated and are internally allocated FIFO across eligible Sales.
 - Payment cannot be processed twice.
 - Same-date payments do not duplicate interest.
 - Payment after new sales calculates eligible interest correctly.
-- Excess payment creates customer advance.
+- Excess payment is rejected; no advance balance is created.
 - Concurrent payments do not corrupt balances.
 - Owner correction preserves previous values and recalculates affected results.
 - Manager and Staff cannot edit posted payments.
@@ -423,21 +413,15 @@ Tests depending on unresolved policies remain pending until those policies are a
 
 ## 19. Accounting Engine Acceptance Criteria
 
-The engine is acceptable only when every customer balance is explainable; consolidated payments follow approved rules; no sale-level allocation is required; same-date payments do not duplicate interest; new sales retain their own interest dates; advances are separately identifiable; interest uses Actual Days / 30 and approved triggers; historical calculations are reproducible; Owner corrections preserve immutable audit history; concurrent operations remain consistent; projections are rebuildable; tenant isolation is enforced; and automated financial tests pass.
+The engine is acceptable only when every customer balance is explainable; consolidated payments follow approved rules; internal FIFO allocation is required while customer-facing payments remain consolidated; same-date payments do not duplicate interest; new sales retain their own interest dates; excess payments are rejected and no advance balance exists; interest uses Actual Days / 30 and approved triggers; historical calculations are reproducible; Owner corrections preserve immutable audit history; concurrent operations remain consistent; projections are rebuildable; tenant isolation is enforced; and automated financial tests pass.
 
 ## 20. Implementation Dependencies
 
 The following decisions must be finalized before implementing the corresponding behavior:
 
-1. Interest capitalization default and transition behavior.
-2. Rounding precision and rounding mode.
-3. Interest effective-date and day-boundary conventions.
-4. Grace-period eligibility boundary.
-5. Same-date payment and Auto Settlement execution ordering.
-6. Crop-season settlement accounting.
-7. Customer advance adjustment against future sales.
-8. Backdated correction and recalculation behavior.
-9. Final financial database schema and ledger representation.
+1. Crop-season settlement accounting.
+2. Backdated correction and recalculation beyond the approved Sale revision and Payment reversal/replacement rules.
+3. Final financial database schema and ledger representation, where implementation reveals a need to change the already merged schema.
 
 No implementation may silently assume these unresolved rules.
 
@@ -522,9 +506,9 @@ Same-day subsequent normal payments must not recalculate the same elapsed interv
 - Annual Interest Auto Settlement dates: **30 March** and **30 October** each year. These are the initial Shop defaults; retain Owner configuration as already approved.
 
 
-### 21.9 Convention approval boundary (2026-11-25)
+### 21.9 Approved calculation conventions (2026-11-25)
 
-Actual Days / 30 and two-decimal posted interest are approved. HALF_UP rounding, [start inclusive, end exclusive) boundaries, and Sale Date as grace-period Day 0 were proposed in drafting but are not explicitly confirmed by the Product Owner. Treat them as recommendations pending confirmation before implementation.
+The following conventions are finalized and binding under ADR-0012: Actual Days / 30; HALF_UP rounding to two decimal places; [start inclusive, end exclusive) intervals; and Sale Date as Grace Period Day 0, with the first eligible day after 30 complete calendar days.
 
 
 ### 21.10 Product Owner-approved calculation and allocation conventions (2026-11-25)

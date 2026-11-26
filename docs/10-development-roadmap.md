@@ -191,7 +191,7 @@ Use the following development cycle:
 - Manager can view the Staff list and active/deactivated status only; Manager cannot create, deactivate, reactivate, or change user roles.
 - Staff can view, add and edit customer profile information, but cannot delete customers or edit/delete posted financial transactions.
 - Manager and Staff cannot edit posted financial transactions.
-- Only Owner can edit posted sales and payments.
+- Only Owner may initiate an eligible controlled Sale revision or Payment reversal/replacement; direct edits to posted transactions are prohibited.
 - Active capacity is limited to one Owner, two Managers, five Staff and eight shop users total.
 - Deactivated Manager/Staff accounts release role and total active-user capacity while retaining their accounts and audit history.
 - Reactivation is rejected when the target role or total active-user capacity is full.
@@ -272,6 +272,8 @@ Use the following development cycle:
 
 ## 8. Phase 5 — Financial Foundation and Accounting Engine
 
+> **Superseded baseline:** This legacy section is retained for historical roadmap context only. ADR-0012 and Section 24 control Phase 5 scope and behavior. No advances are supported; internal FIFO allocation is required; posted transaction corrections follow controlled revision/reversal workflows.
+
 **This is one of the most critical development phases.**
 
 ### Objectives
@@ -281,7 +283,7 @@ Use the following development cycle:
 - Implement consolidated customer outstanding.
 - Implement ledger entries.
 - Implement financial posting.
-- Implement advance balance handling.
+- Reject excess payments; do not implement customer advance balances.
 - Implement audit history.
 - Implement idempotency.
 - Implement concurrency protection.
@@ -294,19 +296,19 @@ The accounting engine must support:
 - Payments.
 - Consolidated outstanding.
 - Interest.
-- Advances.
+- Excess-payment rejection (no advance balance).
 - Settlements.
 - Corrections.
 - Running customer ledger.
 
 ### Consolidated balance rules
 
-- Payments are not allocated to individual sale IDs.
+- Customer-facing payments remain consolidated and are internally allocated FIFO across eligible Sales.
 - A payment first triggers eligible interest calculation through the payment date.
 - The received payment is deducted from total payable.
 - Remaining balance is carried forward from the payment date.
 - New sales preserve their own sale dates.
-- Excess payment becomes customer advance.
+- Excess payment is rejected in full before posting.
 - Multiple payments on the same date must not duplicate interest.
 
 ### Deliverables
@@ -314,7 +316,7 @@ The accounting engine must support:
 - Financial transaction services.
 - Ledger posting services.
 - Consolidated balance calculation.
-- Advance handling.
+- Excess-payment rejection.
 - Database migrations.
 - Audit services.
 - Idempotency mechanism.
@@ -327,7 +329,7 @@ The accounting engine must support:
 - Duplicate posting is prevented.
 - Monetary calculations use safe decimal arithmetic.
 - Consolidated outstanding is correct.
-- Advance balances are correct.
+- Excess payments are rejected without creating financial postings.
 - Ledger entries reconcile with financial transactions.
 - Same-day multiple payments are handled correctly.
 - Audit history is preserved.
@@ -373,7 +375,7 @@ A product category or sale type is not mandatory.
 - Authorized users can record sales.
 - Posted sales update consolidated customer outstanding.
 - Original sale date is retained.
-- Owner can edit posted sales.
+- Owner can request a controlled revision for an unlocked Sale; direct edits are prohibited and locked Sales cannot be corrected in the approved scope.
 - Manager and Staff cannot edit or delete posted sales.
 - Owner corrections retain old and new values in audit history.
 - Corrections trigger required recalculation.
@@ -388,7 +390,7 @@ A product category or sale type is not mandatory.
 - Payment history.
 - Payment receipt upload.
 - Consolidated balance update.
-- Advance handling.
+- Excess-payment rejection; no advance balance.
 - Owner-authorized correction.
 
 ### Payment processing flow
@@ -397,10 +399,10 @@ A product category or sale type is not mandatory.
 2. Lock or otherwise safely protect the customer's financial account during processing.
 3. Calculate eligible interest through the payment date.
 4. Determine total payable.
-5. Deduct payment amount.
-6. Record excess as advance, if applicable.
-7. Carry forward the remaining outstanding.
-8. Preserve audit and ledger history.
+5. Mark the interest checkpoint Settled and recompute total payable.
+6. Reject the entire Payment before posting if it exceeds outstanding principal plus posted unpaid interest.
+7. Allocate accepted Payment FIFO across oldest eligible Sales, applying the effective per-Sale waterfall.
+8. Persist Payment, allocations and ledger postings atomically; reconcile projection and commit.
 9. Return the resulting balance.
 
 ### Deliverables
@@ -417,11 +419,11 @@ A product category or sale type is not mandatory.
 ### Acceptance criteria
 
 - Payments are posted exactly once.
-- Payments are not allocated to individual sale IDs.
+- Customer-facing payments remain consolidated and are internally allocated FIFO across eligible Sales.
 - Same-day multiple payments do not duplicate interest.
-- Excess payment is recorded as advance.
+- Excess payment is rejected; no advance balance is created.
 - Concurrent payment requests preserve balance consistency.
-- Only Owner can edit posted payments.
+- Only Owner may initiate Payment reversal and optional replacement; direct edits to posted Payments are prohibited.
 - Corrections preserve immutable audit history.
 - Financial balances reconcile.
 
@@ -435,7 +437,7 @@ A product category or sale type is not mandatory.
 - Payment display.
 - Interest entries.
 - Settlement entries.
-- Advance balance.
+- No advance balance (excess payments are rejected).
 - Adjustments and corrections.
 - Running balance.
 - Date filters.
@@ -790,7 +792,7 @@ AI-generated code must be reviewed before merging.
 - Credit sales.
 - Consolidated payments.
 - Customer ledger.
-- Advance handling.
+- Excess-payment rejection; no advance balance.
 
 ### Milestone C — Financial Automation
 
@@ -875,5 +877,5 @@ ADR-0012 is the controlling Product Owner decision for Phase 5 financial behavio
 - No advances, daily/monthly interest posting jobs or Customer-specific grace-period override.
 - Locked historical Sales cannot be exceptionally corrected in the current approved scope; stop and seek separate approval and workflow design.
 - Crop-season settlement accounting remains a separate design decision.
-- Phase 5 implementation remains NOT STARTED until the read-only code/schema audit, physical schema review and separate implementation authorization are complete.
+- Phase 5 read-only technical audit is complete. Groups 1–8 schema/model foundation are merged; financial services and acceptance workflows remain incomplete. Implementation proceeds in approved focused batches. Database migrations and deployment require separate explicit Product Owner approval.
 
