@@ -271,7 +271,7 @@ The account must maintain:
 - Payments received.
 - Outstanding balance.
 - Interest calculations.
-- Advances.
+- Rejected excess payments; no customer advance balance.
 - Settlements.
 - Crop-season history.
 
@@ -376,12 +376,8 @@ Example:
 
 ### 10.5 Excess Payment
 
-If a payment exceeds the total payable:
+A payment must not exceed the customer's total payable balance (outstanding principal plus posted unpaid interest). If the submitted amount exceeds the payable balance, reject the entire payment before posting it. Do not accept a partial amount, create a customer advance, or carry an excess balance forward.
 
-- The outstanding balance becomes zero.
-- The excess amount is retained as a customer advance.
-- The advance is maintained separately in the customer ledger.
-- Future sales can be adjusted against the available advance according to the approved business rules.
 
 ### 10.6 Posted Payment Correction
 
@@ -409,7 +405,7 @@ Every customer must have one consolidated financial ledger.
 - Credit sales.
 - Payments.
 - Interest calculations.
-- Customer advances.
+- Rejected excess payments (no advance balance).
 - Settlements.
 - Adjustments.
 - Closing balance.
@@ -582,7 +578,7 @@ The printable ledger should include:
 - Sales.
 - Payments.
 - Interest.
-- Advances.
+- Rejected excess payments (no advance balance).
 - Running balance.
 - Closing balance.
 - Print date.
@@ -798,7 +794,7 @@ The initial product must allow a Shop Owner to:
 7. Understand interest calculations.
 8. Handle multiple payments on the same date without duplicate interest.
 9. View new sales and carried-forward balances correctly.
-10. Record customer advances.
+10. Reject payments that exceed total payable.
 11. Perform full and partial settlements.
 12. View complete customer financial history.
 13. Correct posted transactions with audit history.
