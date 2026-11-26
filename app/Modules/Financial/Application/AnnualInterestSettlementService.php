@@ -47,8 +47,6 @@ class AnnualInterestSettlementService
             } catch (Throwable $exception) {
                 report($exception);
                 $stats['failed']++;
-            } finally {
-                $this->currentShop->clear();
             }
         }
 
@@ -68,6 +66,7 @@ class AnnualInterestSettlementService
             throw new RuntimeException('The annual settlement date must be a valid YYYY-MM-DD date.');
         }
 
+        $previousShop = $this->currentShop->get();
         $this->currentShop->set($shop);
 
         try {
@@ -142,7 +141,11 @@ class AnnualInterestSettlementService
 
             return $stats;
         } finally {
-            $this->currentShop->clear();
+            if ($previousShop !== null) {
+                $this->currentShop->set($previousShop);
+            } else {
+                $this->currentShop->clear();
+            }
         }
     }
 
