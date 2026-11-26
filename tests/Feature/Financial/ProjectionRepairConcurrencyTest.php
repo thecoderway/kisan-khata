@@ -220,6 +220,19 @@ class ProjectionRepairConcurrencyTest extends TestCase
             fclose($parentSocket);
             DB::disconnect($observerConnectionName);
             DB::purge($observerConnectionName);
+
+            // DatabaseMigrations rolls the schema back after this test. These
+            // policy tables deliberately refuse to be dropped while populated,
+            // so remove only the fixture rows created by this test.
+            DB::table('interest_policy_versions')
+                ->where('shop_id', $shop->getKey())
+                ->where('interest_policy_id', $policyId)
+                ->delete();
+            DB::table('interest_policies')
+                ->where('shop_id', $shop->getKey())
+                ->where('id', $policyId)
+                ->delete();
+
             app(CurrentShop::class)->clear();
         }
     }
