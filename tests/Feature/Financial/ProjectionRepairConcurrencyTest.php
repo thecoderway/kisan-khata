@@ -164,10 +164,11 @@ class ProjectionRepairConcurrencyTest extends TestCase
             do {
                 $waiting = $observer->selectOne(
                     'SELECT COUNT(*) AS aggregate
-                     FROM information_schema.innodb_trx
-                     WHERE trx_mysql_thread_id = ?
-                       AND trx_state = ?',
-                    [$repairConnectionId, 'LOCK WAIT'],
+                     FROM performance_schema.data_lock_waits AS waits
+                     INNER JOIN performance_schema.threads AS requesting_thread
+                       ON requesting_thread.THREAD_ID = waits.REQUESTING_THREAD_ID
+                     WHERE requesting_thread.PROCESSLIST_ID = ?',
+                    [$repairConnectionId],
                 );
                 if ((int) $waiting->aggregate > 0) {
                     $observedLockWait = true;
@@ -190,7 +191,7 @@ class ProjectionRepairConcurrencyTest extends TestCase
                 stream_set_blocking($parentSocket, true);
 
                 $this->fail(sprintf(
-                    'The repair connection was not observed in LOCK WAIT. Worker connection ID: %d; process: %s; worker message: %s',
+                    'The repair connection was not observed in performance_schema.data_lock_waits. Worker connection ID: %d; process: %s; worker message: %s',
                     $repairConnectionId,
                     json_encode($process, JSON_THROW_ON_ERROR),
                     $workerMessage === false ? '[no worker response]' : trim($workerMessage),
