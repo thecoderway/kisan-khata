@@ -9,7 +9,6 @@ use Brick\Math\BigDecimal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 
 class CustomerLedgerController extends Controller
 {
@@ -68,10 +67,12 @@ class CustomerLedgerController extends Controller
             });
         }
 
-        $principal = BigDecimal::of((string) $openingQuery->sum('debit_amount'))
-            ->minus((string) $openingQuery->sum('credit_amount'));
-        $interest = BigDecimal::of((string) $openingQuery->where('component', 'INTEREST')->sum('debit_amount'))
-            ->minus((string) $openingQuery->where('component', 'INTEREST')->sum('credit_amount'));
+        $principalQuery = (clone $openingQuery)->where('component', 'PRINCIPAL');
+        $interestQuery = (clone $openingQuery)->where('component', 'INTEREST');
+        $principal = BigDecimal::of((string) $principalQuery->sum('debit_amount'))
+            ->minus((string) $principalQuery->sum('credit_amount'));
+        $interest = BigDecimal::of((string) $interestQuery->sum('debit_amount'))
+            ->minus((string) $interestQuery->sum('credit_amount'));
 
         $runningPrincipal = $principal;
         $runningInterest = $interest;
