@@ -5,16 +5,16 @@ namespace App\Modules\Financial\Presentation\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Customer;
+use App\Models\CustomerInterestPolicyVersion;
 use App\Models\InterestPolicy;
 use App\Models\InterestPolicyVersion;
-use App\Models\CustomerInterestPolicyVersion;
 use App\Modules\Financial\Application\ReconciliationService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
-use Carbon\CarbonImmutable;
 
 class FinancialAdministrationController extends Controller
 {
@@ -180,7 +180,8 @@ class FinancialAdministrationController extends Controller
         $result = DB::transaction(function () use ($request, $customer, $reconciliation, $data) {
             $before = $reconciliation->reconcileCustomer($customer);
             if ($before['consistent']) {
-\n                return ['report' => $before, 'repaired' => false];
+
+                return ['report' => $before, 'repaired' => false];
             }
             $after = $reconciliation->rebuildAndReconcile($customer);
             AuditLog::query()->create([
@@ -196,7 +197,8 @@ class FinancialAdministrationController extends Controller
             ]);
             return ['report' => $after, 'repaired' => true];
         }, 3);
-\n        return response()->json([
+
+        return response()->json([
             'message' => $result['repaired'] ? 'Projection repaired and audit event recorded.' : 'Projection is already consistent; no repair was needed.',
             'data' => $result['report'],
             'repaired' => $result['repaired'],
