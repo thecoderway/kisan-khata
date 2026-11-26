@@ -97,7 +97,7 @@ class IdempotencyService
 
         $transaction = $operation($record);
 
-        if (! $transaction instanceof FinancialTransaction) {
+        if (! ($transaction instanceof FinancialTransaction)) {
             throw new LogicException('An idempotent financial operation must return a FinancialTransaction.');
         }
 
