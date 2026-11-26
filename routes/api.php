@@ -8,7 +8,9 @@ use App\Modules\Customers\Presentation\Controllers\Api\CustomerController;
 use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerLedgerController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerReconciliationController;
+use App\Modules\Financial\Presentation\Controllers\Api\PaymentController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentCorrectionController;
+use App\Modules\Financial\Presentation\Controllers\Api\SaleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +43,12 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
         });
 
         Route::prefix('v1')->group(function (): void {
+            Route::get('/sales', [SaleController::class, 'index']);
+            Route::post('/sales', [SaleController::class, 'store']);
+            Route::get('/sales/{sale}', [SaleController::class, 'show']);
+            Route::get('/payments', [PaymentController::class, 'index']);
+            Route::post('/payments', [PaymentController::class, 'store']);
+            Route::get('/payments/{payment}', [PaymentController::class, 'show']);
             Route::get('/customers', [CustomerController::class, 'index']);
             Route::post('/customers', [CustomerController::class, 'store']);
             Route::get('/customers/{customer}', [CustomerController::class, 'show']);
