@@ -18,6 +18,7 @@ class ReconciliationService
     public function __construct(
         private readonly CurrentShop $currentShop,
         private readonly BalanceProjectionService $projections,
+        private readonly CustomerAccountLockService $accountLock,
     ) {}
 
     /**
@@ -28,73 +29,77 @@ class ReconciliationService
      */
     public function reconcileCustomer(Customer $customer): array
     {
-        return DB::transaction(function () use ($customer): array {
-            $shopId = (int) $this->currentShop->require()->getKey();
-
-            if ((int) $customer->shop_id !== $shopId) {
-                throw new AuthorizationException('The Customer does not belong to the current Shop.');
-            }
-
-            $discrepancies = [];
-            $expected = $this->projections->ledgerBalances($customer);
-            $account = CustomerAccount::query()
-                ->where('shop_id', $shopId)
-                ->where('customer_id', $customer->getKey())
-                ->first();
-
-            if ($account === null) {
-                $discrepancies[] = [
-                    'type' => 'missing_account_projection',
-                    'expected' => $expected,
-                ];
-            } else {
-                foreach ($expected as $field => $value) {
-                    $actual = (string) $account->{$field};
-
-                    if (BigDecimal::of($actual)->compareTo($value) !== 0) {
-                        $discrepancies[] = [
-                            'type' => 'account_projection_mismatch',
-                            'field' => $field,
-                            'expected' => $value,
-                            'actual' => $actual,
-                        ];
-                    }
-                }
-            }
-
-            $this->compareLastFinancialEvent($customer, $account, $discrepancies);
-            $this->compareInterestCheckpoint($customer, $account, $discrepancies);
-            $this->compareSaleStatuses($customer, $discrepancies);
-            $this->compareSnapshots($customer, $discrepancies);
-            $this->compareSourcePostings($customer, $discrepancies);
-            $this->comparePaymentAllocations($customer, $discrepancies);
-
-            return [
-                'shop_id' => $shopId,
-                'customer_id' => (int) $customer->getKey(),
-                'consistent' => $discrepancies === [],
-                'discrepancies' => $discrepancies,
-            ];
-        });
+        return DB::transaction(fn (): array => $this->reconcileCustomerWithinTransaction($customer));
     }
 
     /**
-     * Explicit repair path. The projection is rebuilt from the ledger under the
-     * normal customer/account lock, then the read-only reconciliation is rerun.
+     * Explicit repair path. Acquire customer/account locks before the first
+     * consistent read so a REPEATABLE READ snapshot cannot predate a posting
+     * that commits while this repair waits for its lock.
      *
      * @return array{shop_id:int,customer_id:int,consistent:bool,discrepancies:list<array<string,mixed>>}
      */
     public function rebuildAndReconcile(Customer $customer): array
     {
-        $before = $this->reconcileCustomer($customer);
+        return DB::transaction(function () use ($customer): array {
+            $account = $this->accountLock->lockForCustomer($customer);
+            $before = $this->reconcileCustomerWithinTransaction($customer);
 
-        if ($before['consistent']) {
-            return $before;
+            if ($before['consistent']) {
+                return $before;
+            }
+
+            $this->projections->rebuildLocked($account, $customer);
+
+            return $this->reconcileCustomerWithinTransaction($customer);
+        }, 3);
+    }
+
+    /**
+     * Reconcile using the caller's current transaction and snapshot.
+     * Repair callers must acquire the customer/account lock before invoking it.
+     *
+     * @return array{shop_id:int,customer_id:int,consistent:bool,discrepancies:list<array<string,mixed>>}
+     */
+    private function reconcileCustomerWithinTransaction(Customer $customer): array
+    {
+        $shopId = (int) $this->currentShop->require()->getKey();
+
+        if ((int) $customer->shop_id !== $shopId) {
+            throw new AuthorizationException('The Customer does not belong to the current Shop.');
         }
 
-        $this->projections->rebuildForCustomer($customer);
+        $discrepancies = [];
+        $expected = $this->projections->ledgerBalances($customer);
+        $account = CustomerAccount::query()
+            ->where('shop_id', $shopId)
+            ->where('customer_id', $customer->getKey())
+            ->first();
 
-        return $this->reconcileCustomer($customer);
+        if ($account === null) {
+            $discrepancies[] = ['type' => 'missing_account_projection', 'expected' => $expected];
+        } else {
+            foreach ($expected as $field => $value) {
+                $actual = (string) $account->{$field};
+                if (BigDecimal::of($actual)->compareTo($value) !== 0) {
+                    $discrepancies[] = ['type' => 'account_projection_mismatch', 'field' => $field, 'expected' => $value, 'actual' => $actual];
+                }
+            }
+        }
+
+        $this->compareLastFinancialEvent($customer, $account, $discrepancies);
+        $this->compareInterestCheckpoint($customer, $account, $discrepancies);
+        $this->compareSaleStatuses($customer, $discrepancies);
+        $this->compareSnapshots($customer, $discrepancies);
+        $this->compareSourcePostings($customer, $discrepancies);
+        $this->comparePaymentAllocations($customer, $discrepancies);
+
+        return [
+            'shop_id' => $shopId,
+            'customer_id' => (int) $customer->getKey(),
+            'consistent' => $discrepancies === [],
+            'discrepancies' => $discrepancies,
+        ];
     }
 
     /**
