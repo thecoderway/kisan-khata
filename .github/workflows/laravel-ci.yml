@@ -63,9 +63,7 @@ jobs:
         run: composer validate --strict
 
       - name: Check PHP formatting
-        run: |
-          vendor/bin/pint
-          git diff -- app/Modules/Financial tests/Feature/Financial
+        run: composer lint
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
