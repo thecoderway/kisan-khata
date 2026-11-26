@@ -1,20 +1,20 @@
 <?php
 
-namespace Tests\\Feature\\Financial;
+namespace Tests\Feature\Financial;
 
-use App\\Models\\Customer;
-use App\\Models\\CustomerAccount;
-use App\\Models\\Sale;
-use App\\Models\\Shop;
-use App\\Models\\User;
-use App\\Modules\\Financial\\Application\\ReconciliationService;
-use App\\Modules\\Financial\\Application\\SalePostingService;
-use App\\Tenancy\\CurrentShop;
-use Carbon\\CarbonImmutable;
-use Illuminate\\Foundation\\Testing\\DatabaseMigrations;
-use Illuminate\\Support\\Facades\\DB;
-use PHPUnit\\Framework\\Attributes\\Group;
-use Tests\\TestCase;
+use App\Models\Customer;
+use App\Models\CustomerAccount;
+use App\Models\Sale;
+use App\Models\Shop;
+use App\Models\User;
+use App\Modules\Financial\Application\ReconciliationService;
+use App\Modules\Financial\Application\SalePostingService;
+use App\Tenancy\CurrentShop;
+use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Group;
+use Tests\TestCase;
 
 #[Group('mysql-locking')]
 class ProjectionRepairConcurrencyTest extends TestCase
@@ -106,17 +106,17 @@ class ProjectionRepairConcurrencyTest extends TestCase
                 DB::purge();
                 DB::reconnect();
                 $connectionId = (int) DB::selectOne('SELECT CONNECTION_ID() AS id')->id;
-                fwrite($childSocket, $connectionId."\\n");
+                fwrite($childSocket, $connectionId."\n");
 
                 app(CurrentShop::class)->set(Shop::query()->findOrFail($shop->getKey()));
                 $childCustomer = Customer::query()->findOrFail($customerId);
                 $result = app(ReconciliationService::class)->rebuildAndReconcile($childCustomer);
 
-                fwrite($childSocket, json_encode($result, JSON_THROW_ON_ERROR)."\\n");
+                fwrite($childSocket, json_encode($result, JSON_THROW_ON_ERROR)."\n");
                 fclose($childSocket);
                 exit(0);
-            } catch (\\Throwable $exception) {
-                fwrite($childSocket, json_encode(['error' => $exception->getMessage()])."\\n");
+            } catch (\Throwable $exception) {
+                fwrite($childSocket, json_encode(['error' => $exception->getMessage()])."\n");
                 fclose($childSocket);
                 exit(1);
             }
