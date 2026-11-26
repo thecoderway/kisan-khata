@@ -113,7 +113,7 @@ class SalePostingService
                     $sale,
                     null,
                     'SALE',
-                    '1250.00' === $normalizedAmount ? $normalizedAmount : $normalizedAmount,
+                    $normalizedAmount,
                     '0.00',
                     $effectiveDate,
                 );
