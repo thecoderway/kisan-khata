@@ -40,7 +40,7 @@ Proposed initial types, subject to validation against expected business limits:
 
 Never use PHP floating-point arithmetic for authoritative financial calculations. Use a suitable decimal arithmetic library or carefully designed integer minor-unit arithmetic.
 
-Rounding must be centralized in the financial calculation layer. Exact rounding precision and mode remain pending Product Owner approval.
+Rounding must be centralized in the financial calculation layer. Posted INR interest is rounded to two decimal places using HALF_UP; intermediate calculations must retain adequate decimal precision.
 
 ## 4. Financial Concepts
 
@@ -50,7 +50,7 @@ A credit sale increases customer payable. Every sale retains its own effective d
 
 ### 4.2 Payment
 
-A payment represents money received from a customer. It reduces the customer's complete payable amount rather than being allocated to individual sales or interest components.
+A normal Payment is one consolidated customer-account transaction. Its backend accounting effect is internally allocated FIFO across eligible Sales; within each Sale apply the effective Shop Principal First or Interest First waterfall. These allocations do not create separate customer-facing payments.
 
 ### 4.3 Consolidated Outstanding
 
