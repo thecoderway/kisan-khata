@@ -191,7 +191,7 @@ Use the following development cycle:
 - Manager can view the Staff list and active/deactivated status only; Manager cannot create, deactivate, reactivate, or change user roles.
 - Staff can view, add and edit customer profile information, but cannot delete customers or edit/delete posted financial transactions.
 - Manager and Staff cannot edit posted financial transactions.
-- Only Owner can edit posted sales and payments.
+- Only Owner may initiate an eligible controlled Sale revision or Payment reversal/replacement; direct edits to posted transactions are prohibited.
 - Active capacity is limited to one Owner, two Managers, five Staff and eight shop users total.
 - Deactivated Manager/Staff accounts release role and total active-user capacity while retaining their accounts and audit history.
 - Reactivation is rejected when the target role or total active-user capacity is full.
