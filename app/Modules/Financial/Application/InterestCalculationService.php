@@ -65,9 +65,18 @@ class InterestCalculationService
         if (
             (int) $settlement->shop_id !== (int) $customer->shop_id
             || (int) $settlement->customer_id !== (int) $customer->getKey()
-            || $settlement->status !== 'PENDING'
         ) {
-            throw new DomainException('Annual interest calculation requires a pending settlement for this customer.');
+            throw new DomainException('Annual interest calculation requires a settlement belonging to this customer.');
+        }
+
+        if ($settlement->status === 'COMPLETED') {
+            return InterestCalculationRun::query()
+                ->where('settlement_run_id', $settlement->getKey())
+                ->firstOrFail();
+        }
+
+        if ($settlement->status !== 'PENDING') {
+            throw new DomainException('Only a pending annual settlement can be calculated.');
         }
 
         return $this->calculate(
