@@ -35,6 +35,7 @@ class FinancialAdministrationController extends Controller
 
         $data = $request->validate([
             'effective_from' => ['required', 'date_format:Y-m-d', 'after:today'],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
             'monthly_rate_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'grace_days' => ['required', 'integer', 'min:0', 'max:365'],
             'capitalization_enabled' => ['required', 'boolean'],
@@ -86,7 +87,7 @@ class FinancialAdministrationController extends Controller
                 'action' => 'financial.shop_interest_policy_updated',
                 'entity_type' => 'interest_policy_version',
                 'entity_id' => $version->getKey(),
-                'reason' => 'Effective-dated Shop interest policy update',
+                'reason' => trim($data['reason']),
                 'new_values' => $version->toArray(),
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
@@ -116,6 +117,7 @@ class FinancialAdministrationController extends Controller
 
         $data = $request->validate([
             'effective_from' => ['required', 'date_format:Y-m-d', 'after:today'],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
             'monthly_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'capitalization_enabled' => ['nullable', 'boolean'],
         ]);
@@ -166,7 +168,7 @@ class FinancialAdministrationController extends Controller
                 'action' => 'financial.customer_interest_policy_updated',
                 'entity_type' => 'customer_interest_policy_version',
                 'entity_id' => $version->getKey(),
-                'reason' => 'Effective-dated Customer interest override',
+                'reason' => trim($data['reason']),
                 'new_values' => $version->toArray(),
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
