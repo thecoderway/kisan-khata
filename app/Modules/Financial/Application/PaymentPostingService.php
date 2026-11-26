@@ -325,6 +325,10 @@ class PaymentPostingService
 
     private function salePrincipalBalance(Customer $customer, Sale $sale, string $effectiveDate): BigDecimal
     {
+        if ($sale->sale_payment_choice === Sale::PAYMENT_CHOICE_PAID) {
+            return BigDecimal::zero();
+        }
+
         $originalPrincipal = (string) LedgerEntry::query()
             ->where('customer_id', $customer->getKey())
             ->where('sale_id', $sale->getKey())
