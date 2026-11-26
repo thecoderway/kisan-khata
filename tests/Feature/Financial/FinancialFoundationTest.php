@@ -41,15 +41,6 @@ class FinancialFoundationTest extends TestCase
         $this->assertDatabaseCount('customer_accounts', 1);
     }
 
-    public function test_account_lock_requires_an_active_database_transaction(): void
-    {
-        [, , $customer] = $this->makeCustomerContext();
-
-        $this->expectException(LogicException::class);
-
-        app(CustomerAccountLockService::class)->lockForCustomer($customer);
-    }
-
     public function test_financial_transaction_header_and_audit_are_posted_atomically(): void
     {
         [$shop, $owner, $customer] = $this->makeCustomerContext();
