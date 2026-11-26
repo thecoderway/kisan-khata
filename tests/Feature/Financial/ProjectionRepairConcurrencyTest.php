@@ -102,6 +102,9 @@ class ProjectionRepairConcurrencyTest extends TestCase
             'projection-concurrency-second',
         );
 
+        $workerConnectionName = 'projection_repair_worker';
+        $workerConnectionConfig = config('database.connections.'.DB::getDefaultConnection());
+
         [$parentSocket, $childSocket] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = pcntl_fork();
 
@@ -116,10 +119,15 @@ class ProjectionRepairConcurrencyTest extends TestCase
             fclose($parentSocket);
 
             try {
-                // A fork inherits the parent's PDO socket; discard it and establish
-                // an independent MySQL session before invoking the repair service.
-                DB::purge();
-                DB::reconnect();
+                // Keep the inherited parent PDO untouched: create a named,
+                // independent MySQL session for all worker-side service queries.
+                config([
+                    'database.default' => $workerConnectionName,
+                    "database.connections.{$workerConnectionName}" => $workerConnectionConfig,
+                ]);
+                DB::setDefaultConnection($workerConnectionName);
+                DB::purge($workerConnectionName);
+                DB::connection($workerConnectionName);
                 $connectionId = (int) DB::selectOne('SELECT CONNECTION_ID() AS id')->id;
                 fwrite($childSocket, $connectionId."\n");
 
