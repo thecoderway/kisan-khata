@@ -352,7 +352,7 @@ Payment method may be recorded as additional information.
 
 ### 10.3 Consolidated Payment Calculation
 
-Payments are not allocated to individual sales, invoices, interest entries or principal components.
+Customer-facing payments remain consolidated at customer-account level. The backend must record immutable internal FIFO allocations across eligible Sales; within each Sale, apply the effective Shop Principal First or Interest First waterfall. These internal allocations are not separate customer-facing payment transactions.
 
 The payment process follows this sequence:
 
@@ -756,7 +756,7 @@ The initial web release includes:
 - Interest configuration.
 - Interest calculation engine.
 - Annual Auto Settlement configuration.
-- Customer advances.
+- Excess-payment rejection; no customer advance balance.
 - Crop-season settlements.
 - Basic reports.
 - Ledger printing.
