@@ -11,6 +11,7 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\PaymentPostingService;
 use App\Modules\Financial\Application\PaymentReversalService;
+use App\Modules\Financial\Application\ReconciliationService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
@@ -185,6 +186,9 @@ class PaymentPostingServiceTest extends TestCase
                 'key_hash' => hash('sha256', 'excess-payment-001'),
             ]);
             $this->assertSame('100.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->total_payable);
+
+        $reconciliation = app(ReconciliationService::class)->reconcileCustomer($customer);
+        $this->assertTrue($reconciliation['consistent'], json_encode($reconciliation['discrepancies']));
         }
     }
 
