@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\User;
 use App\Models\UserAuditLog;
+use App\Policies\CustomerLedgerPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\FinancialAuditPolicy;
 use App\Policies\InterestPolicyPolicy;
@@ -47,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Sale::class, SalePolicy::class);
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(InterestPolicy::class, InterestPolicyPolicy::class);
+
+        Gate::define('viewCustomerLedger', [CustomerLedgerPolicy::class, 'view']);
 
         Gate::define('viewFinancialAudit', [FinancialAuditPolicy::class, 'viewAny']);
         Gate::define('viewReconciliation', [ReconciliationPolicy::class, 'viewAny']);
