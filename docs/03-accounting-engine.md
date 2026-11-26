@@ -20,7 +20,7 @@ The engine must be independent of the web interface. All authoritative financial
 2. Every balance must be explainable and reproducible.
 3. Financial transaction history and correction audit history must remain traceable.
 4. Owner corrections preserve previous values and immutable audit history.
-5. Payments reduce consolidated customer payable; they are not allocated to individual sale IDs.
+5. Customer-facing payments reduce consolidated payable and are internally allocated FIFO across eligible Sales, then by the effective per-Sale Principal First or Interest First waterfall.
 6. Interest follows approved calculation triggers.
 7. Duplicate requests must not create duplicate financial effects.
 8. Financial operations must be database-transactional.
@@ -134,9 +134,9 @@ Responsibilities:
 11. Record transaction and audit history.
 12. Return an explainable payment result.
 
-### 7.1 No Sale-Level Allocation
+### 7.1 Internal FIFO Allocation
 
-The payment engine must not allocate payment to oldest or newest sale, allocate interest-first or principal-first, or require payment allocation records against sale IDs. Payment is applied to consolidated payable.
+The customer-facing payment remains consolidated at customer-account level. The backend must create immutable internal allocation records in deterministic oldest-eligible-Sale-first order. Within each Sale, apply the effective Shop Principal First or Interest First waterfall to that Sale's eligible principal and posted-interest components before moving to the next Sale. These records support accounting, audit and reconciliation; they do not create sale-specific customer-facing payments.
 
 ### 7.2 Multiple Payments on the Same Date
 
@@ -373,7 +373,7 @@ These are architectural boundaries, not mandatory class names. Implementation ma
 ### 18.2 Payments
 
 - Valid payment reduces consolidated payable.
-- Payment is not allocated to individual sale IDs.
+- Customer-facing payments remain consolidated and are internally allocated FIFO across eligible Sales.
 - Payment cannot be processed twice.
 - Same-date payments do not duplicate interest.
 - Payment after new sales calculates eligible interest correctly.
