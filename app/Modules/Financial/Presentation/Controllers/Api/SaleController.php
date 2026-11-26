@@ -71,6 +71,29 @@ class SaleController extends Controller
         return response()->json(['data' => $sale->fresh()], 201);
     }
 
+    public function revise(Request $request, int $sale, SaleRevisionService $revisions): JsonResponse
+    {
+        $sale = Sale::query()->findOrFail($sale);
+        Gate::authorize('revise', $sale);
+
+        $data = $request->validate([
+            'description' => ['nullable', 'string', 'max:5000'],
+            'reason' => ['required', 'string', 'min:1', 'max:500'],
+        ]);
+        $key = trim((string) $request->header('Idempotency-Key'));
+        abort_if($key === '' || mb_strlen($key) > 255, 422, 'A valid Idempotency-Key header is required.');
+
+        $revision = $revisions->reviseDescription(
+            $request->user(),
+            $sale,
+            $data['description'] ?? null,
+            $data['reason'],
+            $key,
+        );
+
+        return response()->json(['data' => $revision->fresh()], 201);
+    }
+
     public function show(int $sale): JsonResponse
     {
         $sale = Sale::query()->with(['customer:id,name_original,name_hi,name_en', 'saleDayPayment'])
