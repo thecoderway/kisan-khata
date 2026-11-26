@@ -44,6 +44,7 @@ class AnnualInterestSettlementServiceTest extends TestCase
         $this->assertSame(1, $first['completed']);
         $this->assertSame(1, $second['due']);
         $this->assertSame(1, $second['completed']);
+        $this->assertSame($shop->getKey(), app(CurrentShop::class)->id());
         $this->assertDatabaseCount('interest_settlement_runs', 1);
         $this->assertDatabaseCount('interest_calculation_runs', 1);
         $this->assertDatabaseCount('interest_settlement_items', 1);
