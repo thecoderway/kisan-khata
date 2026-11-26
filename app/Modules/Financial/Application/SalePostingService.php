@@ -33,7 +33,7 @@ class SalePostingService
     ): Sale {
         $paymentChoice = strtoupper(trim($paymentChoice));
 
-        if (! in_array($paymentChoice, [Sale::PAYMENT_CHOICE_PAID, Sale::PAYMENT_CHOICE_UNPAID], true)) {
+        if (in_array($paymentChoice, [Sale::PAYMENT_CHOICE_PAID, Sale::PAYMENT_CHOICE_UNPAID], true) === false) {
             throw new InvalidArgumentException('A Sale must be marked Paid or Unpaid.');
         }
 
