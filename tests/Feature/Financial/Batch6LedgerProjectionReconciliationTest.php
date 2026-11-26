@@ -81,6 +81,32 @@ class Batch6LedgerProjectionReconciliationTest extends TestCase
         $this->assertSame('2026-11-10', $account->fresh()->last_interest_cutoff_date->toDateString());
     }
 
+    public function test_sale_day_auto_payment_remains_reconciled_without_fifo_allocation_records(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        $sale = app(SalePostingService::class)->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_PAID,
+            CarbonImmutable::parse('2026-11-01'),
+            '100.00',
+            'Sale-day auto payment projection',
+            'batch-6-sale-day-auto',
+        );
+
+        $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
+
+        $this->assertSame('0.00', $account->principal_balance);
+        $this->assertSame('0.00', $account->total_payable);
+        $this->assertSame(Sale::PAYMENT_STATUS_PAID, $sale->fresh()->payment_status);
+        $this->assertDatabaseCount('payment_allocations', 0);
+
+        $report = app(ReconciliationService::class)->reconcileCustomer($customer);
+        $this->assertTrue($report['consistent'], json_encode($report['discrepancies']));
+    }
+
     public function test_reconciliation_is_read_only_and_explicit_rebuild_repairs_projection_snapshot_and_sale_status(): void
     {
         [$shop, $owner, $customer] = $this->context();
