@@ -239,7 +239,7 @@ class PaymentReversalService
                     'reversal_payment_id' => $reversal->getKey(),
                 ]);
 
-$this->projections->rebuildLocked($account, $customer, $paymentDate, (int) $reversalTransaction->getKey());
+                $this->projections->rebuildLocked($account, $customer, $paymentDate, (int) $reversalTransaction->getKey());
 
                 $this->audit->recordTransaction(
                     $actor,
