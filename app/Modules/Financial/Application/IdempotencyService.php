@@ -41,7 +41,7 @@ class IdempotencyService
         $operationType = trim($operationType);
         $idempotencyKey = trim($idempotencyKey);
 
-        if (! preg_match('/^[A-Z][A-Z0-9_.:-]{0,39}$/D', $operationType)) {
+        if (preg_match('/^[A-Z][A-Z0-9_.:-]{0,39}$/D', $operationType) !== 1) {
             throw new InvalidArgumentException('The idempotency operation type is invalid.');
         }
 
@@ -60,7 +60,7 @@ class IdempotencyService
                 'status' => IdempotencyKey::STATUS_IN_PROGRESS,
             ]);
         } catch (QueryException $exception) {
-            if (! $this->isUniqueConstraintViolation($exception)) {
+            if ($this->isUniqueConstraintViolation($exception) === false) {
                 throw $exception;
             }
 
@@ -74,7 +74,7 @@ class IdempotencyService
                 throw $exception;
             }
 
-            if (! hash_equals($existing->request_hash, $requestHash)) {
+            if (hash_equals($existing->request_hash, $requestHash) === false) {
                 throw new ConflictHttpException('This idempotency key was already used for a different request.');
             }
 
@@ -97,7 +97,7 @@ class IdempotencyService
 
         $transaction = $operation($record);
 
-        if (! ($transaction instanceof FinancialTransaction)) {
+        if ($transaction instanceof FinancialTransaction === false) {
             throw new LogicException('An idempotent financial operation must return a FinancialTransaction.');
         }
 
@@ -136,7 +136,7 @@ class IdempotencyService
 
     private function canonicalize(mixed $value): mixed
     {
-        if (! is_array($value)) {
+        if (is_array($value) === false) {
             return $value;
         }
 
