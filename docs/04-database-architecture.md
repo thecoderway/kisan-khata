@@ -44,7 +44,6 @@ All table and column names are proposed. Final implementation must validate rela
 - `payments`
 - `payment_revisions`
 - `payment_attachments`
-- `customer_advances`
 
 ### Accounting
 - `financial_transactions`
@@ -327,7 +326,7 @@ Rules:
 5. Payments are not allocated to individual sale IDs.
 6. Payments are not split into interest and principal allocations.
 7. Multiple payments on the same date must not duplicate interest.
-8. Excess payment must be recorded as customer advance.
+8. Excess payment must be rejected before posting; no advance balance is supported.
 9. Only the Shop Owner may edit posted payments.
 
 ## 11. payment_revisions
@@ -369,32 +368,9 @@ Suggested columns:
 - `uploaded_by`
 - `created_at`
 
-## 13. customer_advances
+## 13. Customer Advance Schema — Not Supported
 
-Purpose: Maintain money received beyond the customer's payable amount.
-
-Suggested columns:
-
-- `id`
-- `shop_id`
-- `customer_id`
-- `source_payment_id`
-- `advance_amount DECIMAL(15,2)`
-- `remaining_amount DECIMAL(15,2)`
-- `effective_date`
-- `status`
-- `created_at`
-- `updated_at`
-
-Rules:
-
-1. Advances must be separately identifiable.
-2. An advance must not be represented as a negative sale.
-3. Advance source payment must be traceable.
-4. Remaining advance must be auditable.
-5. Automatic adjustment against future sales requires a separately approved rule.
-
-If advance utilization is implemented later, its usage history must be recorded separately rather than overwriting the original advance.
+No `customer_advances` table, `advance_balance` column, customer-advance transaction type, or future-sale advance adjustment is part of the approved schema. A payment exceeding total payable is rejected before any financial posting.
 
 ## 14. financial_transactions
 
@@ -425,7 +401,6 @@ Conceptual transaction types:
 - PAYMENT
 - INTEREST_CALCULATION
 - INTEREST_POSTING
-- CUSTOMER_ADVANCE
 - SETTLEMENT
 - ADJUSTMENT
 
@@ -481,7 +456,6 @@ Suggested columns:
 - `shop_id`
 - `customer_id`
 - `outstanding_balance DECIMAL(15,2)`
-- `advance_balance DECIMAL(15,2)`
 - `last_interest_calculation_date` — nullable
 - `last_payment_date` — nullable
 - `version`
@@ -498,7 +472,7 @@ Rules:
 2. The account must be rebuildable from financial transactions and approved calculation rules.
 3. Updates must occur transactionally.
 4. Concurrent financial operations must not corrupt the account.
-5. The account must distinguish outstanding from customer advances.
+5. The account must represent only approved receivables and posted financial components; no advance balance exists.
 6. The account must not be manually edited as an alternative to financial transactions.
 
 ## 17. account_balance_snapshots
@@ -853,8 +827,8 @@ Requirements:
 - Customer original and translated text are stored separately.
 - Sales preserve their effective dates.
 - Payments use consolidated payable.
-- No payment allocation table or sale-level allocation is required.
-- Customer advances are separately identifiable.
+- Customer-facing payments remain consolidated; immutable internal FIFO allocation records are required.
+- Customer advances are not supported; excess payments are rejected.
 - Interest policy versions are preserved.
 - Interest calculation components are traceable.
 - Owner corrections preserve revision and audit history.
