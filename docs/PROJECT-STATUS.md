@@ -16,7 +16,7 @@ These rules are mandatory for all future work, including AI-assisted work:
 3. **No silent scope or policy changes:** Do not invent business rules, defaults, permissions, pricing, calculations or architecture. If a requirement is missing, ambiguous or conflicts with an ADR/document, stop the affected work, explain the conflict and obtain Product Owner approval. Update the authoritative document/ADR before implementation.
 4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Never merge to `main` without the Product Owner's explicit approval.
 5. **Security and tenancy by design:** Derive tenant context from authenticated membership; never trust client-supplied `shop_id` or role. Enforce authorization server-side and test cross-tenant access for every tenant-owned feature.
-6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Do not introduce sale-level payment allocation.
+6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Customer-facing payments remain consolidated; internal FIFO allocation across Sales is required under ADR-0012.
 7. **Tests are evidence:** Add relevant automated tests and actually run them. Never claim tests, builds, migrations or acceptance criteria passed without observed output.
 8. **Review all changes:** Report changed files, migrations, security implications, test output and known limitations. Preserve existing working functionality unless explicitly approved otherwise.
 9. **Documentation stays synchronized:** Update the relevant technical document and this status file in the same delivery whenever implementation changes documented behavior or verified progress. Distinguish implemented, tested, accepted and production-configured states.
@@ -234,10 +234,10 @@ Phase 4 implementation and merged-scope verification are recorded as complete. T
 
 ## 6. Remaining official phases — scope summary
 
-1. **Phase 5 — Financial Foundation:** decimal-safe money, consolidated outstanding, ledger posting, advances, immutable audit history, idempotency, transaction atomicity and concurrency protection. This is a prerequisite for production sales/payments.
+1. **Phase 5 — Financial Foundation:** decimal-safe money, consolidated outstanding, ledger posting, excess-payment rejection, immutable audit history, idempotency, transaction atomicity and concurrency protection. This is a prerequisite for production sales/payments.
 3. **Phase 6 — Credit Sales:** sale creation/posting/list/details, optional crop/season tag and private bill attachment, Owner-only corrections with before/after audit.
-4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, excess as advance, idempotency and concurrency protection; no sale-level allocation.
-5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/advance/corrections, filters and printable Hindi/English ledger.
+4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, internal FIFO allocation, excess-payment rejection, idempotency and concurrency protection.
+5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/corrections, filters and printable Hindi/English ledger.
 6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
 7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention.
 8. **Phase 11 — Reports, Printing and Exports:** tenant-scoped reports, PDF and Excel/CSV, totals reconciled to ledger.
@@ -260,7 +260,7 @@ Do not invent defaults. Obtain Product Owner approval before implementing affect
 - Interest effective-date/day-boundary conventions and grace-period boundary.
 - Exact two annual Auto Settlement dates and same-date payment/settlement behavior.
 - Detailed backdated correction recalculation.
-- Advance application rules.
+- Excess-payment rejection; no advance application rule exists.
 - Crop-season settlement edge cases.
 - Translation provider and correction workflow.
 - Subscription plan pricing and entitlements.
@@ -271,11 +271,11 @@ If a relevant document or ADR conflicts or is ambiguous, stop and report the con
 
 ## 9. Key financial and security invariants
 
-- No sale-level payment allocation.
+- Customer-facing payments are consolidated; internal FIFO allocation is required.
 - Payments reduce consolidated customer payable after eligible interest is calculated through the payment date.
 - Same-day subsequent payments must not duplicate interest.
 - New sales retain their own sale dates; carried-forward balance has its own calculation-cycle start date.
-- Excess payment is customer advance.
+- Excess payment is rejected; no customer advance balance exists.
 - Interest events are customer payment and two Owner-configured annual Auto Settlement dates; no ordinary daily/monthly posting job.
 - Owner may edit posted Sales/Payments with immutable before/after audit history; Manager/Staff may not.
 - Use decimal-safe arithmetic and MySQL DECIMAL for authoritative money values; never PHP floats for financial calculations.
