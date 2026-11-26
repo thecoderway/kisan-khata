@@ -272,20 +272,20 @@ class PaymentPostingService
                 'balance' => $principal,
                 'lot_sequence' => 0,
             ];
-            $capitalizedComponents = array_map(fn (array $lot): array => [
+            $capitalizedComponents = array_map(fn (array $lot, int $index): array => [
                 'component_type' => PaymentAllocationItem::COMPONENT_CAPITALIZED_INTEREST_PRINCIPAL,
                 'ledger_component' => 'PRINCIPAL',
                 'interest_lot_id' => $lot['id'],
                 'balance' => $lot['balance'],
-                'lot_sequence' => $lot['id'],
-            ], $capitalizedLots);
-            $interestComponents = array_map(fn (array $lot): array => [
+                'lot_sequence' => $index + 1,
+            ], $capitalizedLots, array_keys($capitalizedLots));
+            $interestComponents = array_map(fn (array $lot, int $index): array => [
                 'component_type' => PaymentAllocationItem::COMPONENT_NON_CAPITALIZED_INTEREST,
                 'ledger_component' => 'INTEREST',
                 'interest_lot_id' => $lot['id'],
                 'balance' => $lot['balance'],
-                'lot_sequence' => $lot['id'],
-            ], $nonCapitalizedLots);
+                'lot_sequence' => $index + 1,
+            ], $nonCapitalizedLots, array_keys($nonCapitalizedLots));
 
             if ($waterfall === 'INTEREST_FIRST') {
                 $components = array_merge($interestComponents, [$principalComponent], $capitalizedComponents);
@@ -380,7 +380,12 @@ class PaymentPostingService
             $debits = (string) ((clone $entries)->sum('debit_amount') ?: '0.00');
             $credits = (string) ((clone $entries)->sum('credit_amount') ?: '0.00');
             $balance = BigDecimal::of($debits)->minus($credits)->toScale(2);
-            $hasAnyCredit = BigDecimal::of($credits)->isPositive();
+            $paymentCredits = (string) LedgerEntry::query()
+                ->where('customer_id', $customer->getKey())
+                ->where('sale_id', $sale->getKey())
+                ->where('entry_kind', 'PAYMENT')
+                ->sum('credit_amount');
+            $hasAnyCredit = BigDecimal::of($paymentCredits === '' ? '0.00' : $paymentCredits)->isPositive();
             $status = $balance->isZero()
                 ? Sale::PAYMENT_STATUS_PAID
                 : ($hasAnyCredit
