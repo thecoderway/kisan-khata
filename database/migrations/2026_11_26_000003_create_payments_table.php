@@ -31,6 +31,7 @@ return new class extends Migration
             $table->dateTime('created_at', 6);
 
             $table->unique(['shop_id', 'payment_number'], 'payments_shop_number_unique');
+            $table->unique(['shop_id', 'financial_transaction_id'], 'payments_shop_transaction_unique');
             $table->unique(['shop_id', 'id'], 'payments_shop_id_unique');
             $table->unique(['shop_id', 'customer_id', 'id'], 'payments_shop_customer_id_unique');
             $table->unique(['shop_id', 'source_sale_id'], 'payments_shop_source_sale_unique');
