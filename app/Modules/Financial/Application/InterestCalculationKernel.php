@@ -1,9 +1,9 @@
 <?php
 
-namespace App\\Modules\\Financial\\Application;
+namespace App\Modules\Financial\Application;
 
-use Brick\\Math\\BigDecimal;
-use Brick\\Math\\RoundingMode;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
@@ -48,8 +48,8 @@ class InterestCalculationKernel
             throw new InvalidArgumentException('Grace days must be between 0 and 65,535.');
         }
 
-        $principal = $this->decimal($eligiblePrincipal, '/^\\d{1,12}(?:\\.\\d{1,8})?$/D', 'Eligible principal');
-        $rate = $this->decimal($monthlyRatePercent, '/^\\d{1,4}(?:\\.\\d{1,8})?$/D', 'Monthly interest rate');
+        $principal = $this->decimal($eligiblePrincipal, '/^\d{1,12}(?:\.\d{1,8})?$/D', 'Eligible principal');
+        $rate = $this->decimal($monthlyRatePercent, '/^\d{1,4}(?:\.\d{1,8})?$/D', 'Monthly interest rate');
 
         $graceEndExclusive = $sale->modify('+'.($graceDays + 1).' days');
         $interestStart = $requestedStart > $graceEndExclusive ? $requestedStart : $graceEndExclusive;
