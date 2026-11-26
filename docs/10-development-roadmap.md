@@ -272,6 +272,8 @@ Use the following development cycle:
 
 ## 8. Phase 5 — Financial Foundation and Accounting Engine
 
+> **Superseded baseline:** This legacy section is retained for historical roadmap context only. ADR-0012 and Section 24 control Phase 5 scope and behavior. No advances are supported; internal FIFO allocation is required; posted transaction corrections follow controlled revision/reversal workflows.
+
 **This is one of the most critical development phases.**
 
 ### Objectives
@@ -373,7 +375,7 @@ A product category or sale type is not mandatory.
 - Authorized users can record sales.
 - Posted sales update consolidated customer outstanding.
 - Original sale date is retained.
-- Owner can edit posted sales.
+- Owner can request a controlled revision for an unlocked Sale; direct edits are prohibited and locked Sales cannot be corrected in the approved scope.
 - Manager and Staff cannot edit or delete posted sales.
 - Owner corrections retain old and new values in audit history.
 - Corrections trigger required recalculation.
@@ -397,10 +399,10 @@ A product category or sale type is not mandatory.
 2. Lock or otherwise safely protect the customer's financial account during processing.
 3. Calculate eligible interest through the payment date.
 4. Determine total payable.
-5. Deduct payment amount.
-6. Reject the entire payment if its amount exceeds total payable; never create an advance.
-7. Carry forward the remaining outstanding.
-8. Preserve audit and ledger history.
+5. Mark the interest checkpoint Settled and recompute total payable.
+6. Reject the entire Payment before posting if it exceeds outstanding principal plus posted unpaid interest.
+7. Allocate accepted Payment FIFO across oldest eligible Sales, applying the effective per-Sale waterfall.
+8. Persist Payment, allocations and ledger postings atomically; reconcile projection and commit.
 9. Return the resulting balance.
 
 ### Deliverables
@@ -421,7 +423,7 @@ A product category or sale type is not mandatory.
 - Same-day multiple payments do not duplicate interest.
 - Excess payment is rejected; no advance balance is created.
 - Concurrent payment requests preserve balance consistency.
-- Only Owner can edit posted payments.
+- Only Owner may initiate Payment reversal and optional replacement; direct edits to posted Payments are prohibited.
 - Corrections preserve immutable audit history.
 - Financial balances reconcile.
 
@@ -875,5 +877,5 @@ ADR-0012 is the controlling Product Owner decision for Phase 5 financial behavio
 - No advances, daily/monthly interest posting jobs or Customer-specific grace-period override.
 - Locked historical Sales cannot be exceptionally corrected in the current approved scope; stop and seek separate approval and workflow design.
 - Crop-season settlement accounting remains a separate design decision.
-- Phase 5 implementation remains NOT STARTED until the read-only code/schema audit, physical schema review and separate implementation authorization are complete.
+- Phase 5 read-only technical audit is complete. Groups 1–8 schema/model foundation are merged; financial services and acceptance workflows remain incomplete. Implementation proceeds in approved focused batches. Database migrations and deployment require separate explicit Product Owner approval.
 
