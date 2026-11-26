@@ -47,6 +47,7 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::get('/sales', [SaleController::class, 'index']);
             Route::post('/sales', [SaleController::class, 'store']);
             Route::get('/sales/{sale}', [SaleController::class, 'show']);
+            Route::post('/sales/{sale}/revision', [SaleController::class, 'revise']);
             Route::get('/payments', [PaymentController::class, 'index']);
             Route::post('/payments', [PaymentController::class, 'store']);
             Route::get('/payments/{payment}', [PaymentController::class, 'show']);
