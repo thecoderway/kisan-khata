@@ -68,9 +68,8 @@ class InterestCalculationKernel
             ? BigDecimal::zero()
             : $principal
                 ->multipliedBy($rate)
-                ->dividedBy('100', 8, RoundingMode::HALF_UP)
                 ->multipliedBy((string) $actualDays)
-                ->dividedBy('30', 8, RoundingMode::HALF_UP);
+                ->dividedBy('3000', 8, RoundingMode::HALF_UP);
 
         return [
             'interval_start_date' => $interestStart->format('Y-m-d'),
