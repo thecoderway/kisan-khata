@@ -5,6 +5,7 @@ const section = config?.section;
 const api = config?.api;
 const csrf = config?.csrf;
 let customers = [];
+let currentPage = 1;
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -34,6 +35,8 @@ const request = async (path, options = {}) => {
 };
 const queryString = () => {
     const params = new URLSearchParams();
+    params.set('page', String(currentPage));
+    params.set('per_page', '100');
     const from = document.getElementById('financial-from')?.value;
     const to = document.getElementById('financial-to')?.value;
     if (from) params.set('from', from);
@@ -66,6 +69,21 @@ const loadCustomers = async () => {
         ).join('');
     });
 };
+
+const renderPagination = (meta = {}) => {
+    const page = Number(meta.current_page || meta.page || 1);
+    const perPage = Number(meta.per_page || 100);
+    const total = Number(meta.total || 0);
+    const lastPage = Number(meta.last_page || Math.max(1, Math.ceil(total / perPage)));
+    if (lastPage <= 1) return;
+    root.insertAdjacentHTML('beforeend',
+        '<div class="financial-pagination"><span>कुल ' + total + ' रिकॉर्ड · पेज ' + page + ' / ' + lastPage + '</span><div class="d-flex gap-2">' +
+        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>पिछला</button>' +
+        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' disabled' : '') + '>अगला</button>' +
+        '</div></div>'
+    );
+};
+
 const loadSales = async () => {
     const payload = await request('/sales' + queryString());
     renderTable(['बिक्री नंबर', 'ग्राहक', 'तारीख', 'राशि', 'स्थिति', 'कार्रवाई'], (payload.data || []).map(s => [
@@ -75,6 +93,7 @@ const loadSales = async () => {
         '<span class="role-pill">' + esc(s.payment_status) + '</span>',
         config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" data-revise-sale="' + esc(s.id) + '" data-current-description="' + esc(s.description || '') + '">विवरण संशोधन</button>' : '—',
     ]));
+    renderPagination(payload.meta);
 };
 const loadPayments = async () => {
     const payload = await request('/payments' + queryString());
@@ -85,6 +104,7 @@ const loadPayments = async () => {
         '<span class="role-pill">' + esc(p.payment_type) + '</span>',
         config.role === 'owner' && p.payment_type === 'NORMAL' ? '<button class="btn btn-sm btn-outline-danger" data-correct-payment="' + esc(p.id) + '" data-customer-id="' + esc(p.customer_id) + '">रिवर्स / बदलें</button>' : '—',
     ]));
+    renderPagination(payload.meta);
 };
 const loadLedger = async () => {
     const id = document.getElementById('financial-customer')?.value;
@@ -97,6 +117,7 @@ const loadLedger = async () => {
     renderTable(['तारीख', 'लेन-देन', 'खाता', 'Debit', 'Credit', 'बाकी'], rows);
     const opening = payload.meta?.opening_balance;
     if (opening) showMessage('Opening balance — Principal: ' + money(opening.principal) + ' · Interest: ' + money(opening.interest) + ' · Total: ' + money(opening.total));
+    renderPagination(payload.meta);
 };
 const loadInterest = async () => {
     const payload = await request('/interest-policy');
@@ -126,6 +147,7 @@ const loadAudit = async () => {
         date(a.created_at), esc(a.user?.name || 'System'), esc(a.action),
         esc(a.entity_type + ' #' + a.entity_id), esc(a.reason || '—'),
     ]));
+    renderPagination(payload.meta);
 };
 const loaders = { sales: loadSales, payments: loadPayments, ledger: loadLedger, interest: loadInterest, reconciliation: loadReconciliation, audit: loadAudit };
 const refresh = async () => {
@@ -229,8 +251,16 @@ document.getElementById('financial-create')?.addEventListener('click', () => {
         finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
     });
 });
-document.getElementById('financial-refresh')?.addEventListener('click', refresh);
-document.getElementById('financial-customer')?.addEventListener('change', refresh);
+document.getElementById('financial-refresh')?.addEventListener('click', () => { currentPage = 1; refresh(); });
+document.getElementById('financial-customer')?.addEventListener('change', () => { currentPage = 1; refresh(); });
+document.getElementById('financial-from')?.addEventListener('change', () => { currentPage = 1; });
+document.getElementById('financial-to')?.addEventListener('change', () => { currentPage = 1; });
+root.addEventListener('click', (event) => {
+    const pageButton = event.target.closest('[data-financial-page]');
+    if (!pageButton || pageButton.disabled) return;
+    currentPage = Number(pageButton.dataset.financialPage);
+    refresh();
+});
 
 document.getElementById('shop-policy-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
