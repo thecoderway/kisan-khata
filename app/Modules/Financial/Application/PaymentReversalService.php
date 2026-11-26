@@ -41,8 +41,7 @@ class PaymentReversalService
         string $reason,
         string $idempotencyKey,
         ?array $replacement = null,
-    ): array
-    {
+    ): array {
         $reason = trim($reason);
         if ($reason === '' || mb_strlen($reason) > 500) {
             throw new InvalidArgumentException('A correction reason between 1 and 500 characters is required.');
