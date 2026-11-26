@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Users\UserAuditHistoryController;
 use App\Modules\Customers\Presentation\Controllers\Api\CustomerController;
 use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerLedgerController;
+use App\Modules\Financial\Presentation\Controllers\Api\CustomerReconciliationController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentCorrectionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,7 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::delete('/customers/{customer}', [CustomerLifecycleController::class, 'softDelete']);
             Route::post('/customers/{customer}/restore', [CustomerLifecycleController::class, 'restore']);
             Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class, 'show']);
+            Route::get('/reconciliation/customers/{customer}', [CustomerReconciliationController::class, 'show']);
             Route::post('/customers/{customer}/payments/{payment}/correction', [PaymentCorrectionController::class, 'store']);
         });
     });
