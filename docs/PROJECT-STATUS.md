@@ -255,17 +255,14 @@ The existing provider-independent sender contract and fail-closed null sender re
 ## 8. Unresolved product/business decisions
 
 Do not invent defaults. Obtain Product Owner approval before implementing affected behavior:
-- Interest capitalization policy.
-- Interest rounding precision and rounding mode.
-- Interest effective-date/day-boundary conventions and grace-period boundary.
-- Exact two annual Auto Settlement dates and same-date payment/settlement behavior.
-- Detailed backdated correction recalculation.
-- Excess-payment rejection; no advance application rule exists.
-- Crop-season settlement edge cases.
-- Translation provider and correction workflow.
+- Detailed crop-season settlement accounting.
+- Backdated transaction correction/recalculation beyond approved Sale revision and Payment reversal/replacement.
 - Subscription plan pricing and entitlements.
 - Payment gateway.
 - Hosting region and operational data-retention parameters.
+- Translation provider and correction workflow.
+
+Interest defaults, rounding/date conventions, grace-period boundary, annual settlement dates, same-date ordering, FIFO waterfall and the no-advance rule are finalized by ADR-0012 and are not unresolved.
 
 If a relevant document or ADR conflicts or is ambiguous, stop and report the conflict before coding.
 
@@ -277,7 +274,7 @@ If a relevant document or ADR conflicts or is ambiguous, stop and report the con
 - New sales retain their own sale dates; carried-forward balance has its own calculation-cycle start date.
 - Excess payment is rejected; no customer advance balance exists.
 - Interest events are customer payment and two Owner-configured annual Auto Settlement dates; no ordinary daily/monthly posting job.
-- Owner may edit posted Sales/Payments with immutable before/after audit history; Manager/Staff may not.
+- Posted Sales/Payments are immutable: eligible unlocked Sale corrections use revisions; Payment corrections use reversal and optional replacement. Manager/Staff cannot initiate corrections.
 - Use decimal-safe arithmetic and MySQL DECIMAL for authoritative money values; never PHP floats for financial calculations.
 - Resolve tenant context from authenticated membership; never trust client-supplied `shop_id`.
 - Every tenant-owned query, relation, file, cache entry, export and background job must enforce tenant ownership.
@@ -338,14 +335,15 @@ No production deployment or release is claimed.
 - **Current phase: Phase 5 — Financial Foundation and Accounting Engine.**
 - Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
 - The detailed Phase 5 implementation blueprint is `docs/phase-5-implementation-blueprint.md`.
-- Next action: complete a read-only audit of existing financial-related code, models, migrations, services, tenant constraints, authorization, audit logging, routes and tests. Do not modify files or database during this audit.
-- After the audit, reconcile the proposed logical model with existing migrations and present a physical schema/implementation plan for separate Product Owner approval.
+- Read-only existing-code/schema audit is complete. Batch 0 is reconciling documentation with ADR-0012 and updating CustomerDeletionEligibility against all merged financial-history tables.
+- Next, proceed through focused Phase 5 implementation batches in order: financial foundation; Sale posting/revisions; interest calculation; Payment/FIFO allocation; annual interest settlement; ledger projection/reconciliation; authorization/APIs/UI; final MySQL 8.4 integration and release gate.
+- No database migrations, local/production data changes or deployment without separate explicit Product Owner approval.
 - Do not begin production Sales/Payment workflows until Phase 5 foundation passes its critical acceptance tests.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
 ## 13. Phase 5 status — 2026-11-25
 
-**Business rules and blueprint: documented. Physical schema/model foundation: merged for Groups 1–8. Financial services and end-to-end acceptance: not complete.**
+**Business rules and blueprint: documented. Physical schema/model foundation: Groups 1–8 merged and CI-verified. Batch 0 corrections: in progress. Financial services and end-to-end acceptance: not complete.**
 
 Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
@@ -362,6 +360,6 @@ Finalized rules include:
 - Locked historical Sale correction has no exception in the current approved scope; stop and require separate approval and workflow design.
 - Financial history is append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable.
 
-**Next approved work:** complete the read-only existing-code/schema audit and review its gap report. No additional implementation, migrations or database changes are authorized until the audit is reviewed and separately approved.
+**Current delivery:** Batch 0 documentation and CustomerDeletionEligibility corrections are in progress under Product Owner approval. Next is Batch 1 financial foundation services, followed by the approved batches in sequence. No database migrations or deployment are authorized by this approval; request separate approval before either.
 
 **Verification:** this documentation-only update did not run tests or CI. Do not infer test or runtime verification from the documentation changes.
