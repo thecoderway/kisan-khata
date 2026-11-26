@@ -29,6 +29,10 @@ class FinancialWorkspaceController extends Controller
             Gate::authorize('viewAny', Customer::class);
         } elseif ($section === 'interest') {
             Gate::authorize('viewAny', InterestPolicy::class);
+        } elseif ($section === 'reconciliation') {
+            Gate::authorize('viewReconciliation');
+        } elseif ($section === 'audit') {
+            Gate::authorize('viewFinancialAudit');
         }
 
         return view('financial.workspace', ['section' => $section]);
