@@ -1,70 +1,65 @@
 <?php
 
-namespace Tests\Unit\Financial;
+namespace Tests\\Unit\\Financial;
 
-use App\Models\Customer;
-use App\Models\Shop;
-use App\Modules\Financial\Application\InterestPolicyResolver;
-use App\Tenancy\CurrentShop;
+use App\\Models\\Customer;
+use App\\Models\\Shop;
+use App\\Models\\User;
+use App\\Modules\\Financial\\Application\\InterestPolicyResolver;
+use App\\Tenancy\\CurrentShop;
 use DateTimeImmutable;
 use DomainException;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Illuminate\\Support\\Facades\\DB;
+use Tests\\TestCase;
 
 class InterestPolicyResolverTest extends TestCase
 {
+    use RefreshDatabase;
+
+    private Shop $shop;
+
+    private User $owner;
+
+    private Customer $customer;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        Schema::create('interest_policies', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('shop_id');
-            $table->string('policy_code', 40);
-        });
+        $this->shop = Shop::factory()->create();
+        $this->owner = User::factory()->create([
+            'shop_id' => $this->shop->getKey(),
+            'role' => User::ROLE_OWNER,
+        ]);
 
-        Schema::create('interest_policy_versions', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('shop_id');
-            $table->unsignedBigInteger('interest_policy_id');
-            $table->date('effective_from');
-            $table->date('effective_to')->nullable();
-            $table->decimal('monthly_rate_percent', 12, 8);
-            $table->unsignedSmallInteger('grace_days');
-            $table->boolean('capitalization_enabled');
-            $table->string('payment_waterfall', 20);
-            $table->unsignedTinyInteger('annual_settlement_month_1');
-            $table->unsignedTinyInteger('annual_settlement_day_1');
-            $table->unsignedTinyInteger('annual_settlement_month_2');
-            $table->unsignedTinyInteger('annual_settlement_day_2');
-        });
+        app(CurrentShop::class)->set($this->shop);
 
-        Schema::create('customer_interest_policy_versions', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('shop_id');
-            $table->unsignedBigInteger('customer_id');
-            $table->date('effective_from');
-            $table->date('effective_to')->nullable();
-            $table->decimal('monthly_rate_percent', 12, 8)->nullable();
-            $table->boolean('capitalization_enabled')->nullable();
-        });
+        $customerId = DB::table('customers')->insertGetId([
+            'shop_id' => $this->shop->getKey(),
+            'created_by' => $this->owner->getKey(),
+            'name_original' => 'Interest Resolver Test Customer',
+            'name_original_language' => 'en',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        $shop = new Shop;
-        $shop->setRawAttributes(['id' => 7], true);
-        app(CurrentShop::class)->set($shop);
+        $this->customer = Customer::withoutGlobalScopes()->findOrFail($customerId);
 
         DB::table('interest_policies')->insert([
             'id' => 11,
-            'shop_id' => 7,
+            'shop_id' => $this->shop->getKey(),
             'policy_code' => InterestPolicyResolver::DEFAULT_POLICY_CODE,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         DB::table('interest_policy_versions')->insert([
             'id' => 21,
-            'shop_id' => 7,
+            'shop_id' => $this->shop->getKey(),
             'interest_policy_id' => 11,
+            'version_number' => 1,
             'effective_from' => '2026-01-01',
             'effective_to' => null,
             'monthly_rate_percent' => '1.25000000',
@@ -75,12 +70,15 @@ class InterestPolicyResolverTest extends TestCase
             'annual_settlement_day_1' => 30,
             'annual_settlement_month_2' => 10,
             'annual_settlement_day_2' => 30,
+            'created_by' => $this->owner->getKey(),
+            'created_at' => now(),
         ]);
     }
 
     protected function tearDown(): void
     {
         app(CurrentShop::class)->clear();
+
         parent::tearDown();
     }
 
@@ -88,16 +86,19 @@ class InterestPolicyResolverTest extends TestCase
     {
         DB::table('customer_interest_policy_versions')->insert([
             'id' => 31,
-            'shop_id' => 7,
-            'customer_id' => 41,
+            'shop_id' => $this->shop->getKey(),
+            'customer_id' => $this->customer->getKey(),
+            'version_number' => 1,
             'effective_from' => '2026-02-01',
             'effective_to' => null,
             'monthly_rate_percent' => null,
             'capitalization_enabled' => 1,
+            'created_by' => $this->owner->getKey(),
+            'created_at' => now(),
         ]);
 
         $result = app(InterestPolicyResolver::class)->resolve(
-            $this->customer(),
+            $this->customer,
             new DateTimeImmutable('2026-02-01'),
         );
 
@@ -112,7 +113,7 @@ class InterestPolicyResolverTest extends TestCase
     public function test_it_inherits_both_settings_when_no_customer_override_is_effective(): void
     {
         $result = app(InterestPolicyResolver::class)->resolve(
-            $this->customer(),
+            $this->customer,
             new DateTimeImmutable('2026-01-01'),
         );
 
@@ -125,8 +126,9 @@ class InterestPolicyResolverTest extends TestCase
     {
         DB::table('interest_policy_versions')->insert([
             'id' => 22,
-            'shop_id' => 7,
+            'shop_id' => $this->shop->getKey(),
             'interest_policy_id' => 11,
+            'version_number' => 2,
             'effective_from' => '2026-02-01',
             'effective_to' => null,
             'monthly_rate_percent' => '2.00000000',
@@ -137,22 +139,16 @@ class InterestPolicyResolverTest extends TestCase
             'annual_settlement_day_1' => 30,
             'annual_settlement_month_2' => 10,
             'annual_settlement_day_2' => 30,
+            'created_by' => $this->owner->getKey(),
+            'created_at' => now(),
         ]);
 
         $this->expectException(DomainException::class);
         $this->expectExceptionMessage('Multiple shop interest policy versions overlap');
 
         app(InterestPolicyResolver::class)->resolve(
-            $this->customer(),
+            $this->customer,
             new DateTimeImmutable('2026-02-01'),
         );
-    }
-
-    private function customer(): Customer
-    {
-        $customer = new Customer;
-        $customer->setRawAttributes(['id' => 41, 'shop_id' => 7], true);
-
-        return $customer;
     }
 }
