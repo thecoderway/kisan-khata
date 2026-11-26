@@ -11,10 +11,10 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\PaymentPostingService;
 use App\Modules\Financial\Application\SalePostingService;
+use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use App\Tenancy\CurrentShop;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
