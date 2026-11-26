@@ -92,5 +92,5 @@ window.KKFinancialWorkspace = {
     csrf: @json(csrf_token()),
 };
 </script>
-@vite('resources/js/financial-workspace.js')
+
 @endpush
