@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use LogicException;
 use Tests\TestCase;
@@ -344,7 +345,7 @@ class CustomerManagementTest extends TestCase
         $this->delete(route('customers.soft-delete', $customer->id), ['reason' => 'Requested cleanup'])
             ->assertRedirect();
 
-        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'deleted_at' => fn ($value) => $value !== null]);
+        $this->assertSoftDeleted('customers', ['id' => $customer->id]);
         $this->assertDatabaseHas('audit_logs', [
             'shop_id' => $owner->shop_id,
             'entity_id' => $customer->id,
