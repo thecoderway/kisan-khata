@@ -24,3 +24,19 @@ Artisan::command('mobile-otp:prune', function () {
 })->purpose('Delete expired and consumed mobile OTP challenges after seven days');
 
 Schedule::command('mobile-otp:prune')->daily();
+
+Artisan::command('financial:annual-interest-settlement', function (AnnualInterestSettlementService $settlements) {
+    $stats = $settlements->runDueSettlements();
+
+    $this->info(sprintf(
+        'Annual interest settlement: %d shops checked, %d customer runs completed, %d failed, %d skipped.',
+        $stats['shops'],
+        $stats['completed'],
+        $stats['failed'],
+        $stats['skipped'],
+    ));
+
+    return $stats['failed'] > 0 ? self::FAILURE : self::SUCCESS;
+})->purpose('Post annual interest settlements after the Shop-local settlement day has closed');
+
+Schedule::command('financial:annual-interest-settlement')->everyMinute()->withoutOverlapping();
