@@ -73,7 +73,7 @@
             "@php artisan test --testsuite=Feature"
         ],
         "lint": [
-            "@php vendor/bin/pint --test"
+            "@php vendor/bin/pint --test --diff=udiff"
         ]
     },
     "extra": {
