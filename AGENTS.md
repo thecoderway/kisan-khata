@@ -11,7 +11,7 @@ Target stack: PHP 8.3, Laravel 13, MySQL 8.4. Inspect composer.json, composer.lo
 Mandatory product invariants:
 - Shared database tenancy; derive shop_id from authenticated user context, never client input.
 - One User = One Shop = One Role; Owner, Manager, Staff.
-- No sale-level payment allocation and no payment_allocations table.
+- Follow accepted ADR-0012 for Phase 5 payment accounting: customer-facing Payments remain consolidated, with immutable internal FIFO allocation records across eligible Sales/components and the configured per-Sale waterfall. ADR-0012 supersedes ADR-0004's earlier prohibition on internal Sale-wise allocation.
 - Payment reduces consolidated customer payable after interest is calculated through payment date; same-day subsequent payments do not duplicate interest.
 - New sales retain their own dates; carried-forward outstanding starts a new calculation cycle on payment date.
 - Excess payment is customer advance.
