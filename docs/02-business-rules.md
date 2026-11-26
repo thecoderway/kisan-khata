@@ -246,17 +246,17 @@ Managers and Staff cannot edit posted sales.
 
 ### 6.1 Consolidated Payment Calculation
 
-When a payment is received:
+When a Payment is received:
 
-1. Identify the customer's current financial state.
-2. Calculate all eligible interest through the payment date.
-3. Include the existing outstanding and applicable new sales.
-4. Determine the complete payable amount.
-5. Lock the customer account and calculate eligible interest through the Payment effective date.
-6. Mark the interest checkpoint Settled and recompute total payable.
-7. Reject the entire Payment before posting if it exceeds outstanding principal plus posted unpaid interest.
-8. Allocate accepted Payment internally FIFO across oldest eligible Sales, applying the effective Shop Principal First or Interest First waterfall within each Sale.
-9. Persist allocations and ledger postings atomically, reconcile the projection and commit.
+1. Begin a database transaction and lock the customer account.
+2. Validate current Shop/customer ownership and idempotency.
+3. Calculate eligible interest through the Payment effective date for all earlier eligible unpaid Sales/components.
+4. Mark the corresponding interest checkpoint Settled.
+5. Recompute total payable (outstanding principal plus posted unpaid interest).
+6. Reject the entire Payment before creating any Payment, allocation, ledger or projection posting if its amount exceeds total payable.
+7. Apply the accepted amount internally FIFO across oldest eligible Sales; within each Sale apply the effective Shop Principal First or Interest First waterfall.
+8. Persist the Payment, allocation and ledger postings atomically.
+9. Reconcile the account projection and commit.
 
 The customer ledger must preserve the original sales and payment entries.
 
