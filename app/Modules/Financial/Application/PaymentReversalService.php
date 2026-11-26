@@ -11,7 +11,6 @@ use App\Models\Payment;
 use App\Models\PaymentAllocation;
 use App\Models\PaymentAllocationItem;
 use App\Models\PaymentRevision;
-use App\Models\Sale;
 use App\Models\User;
 use Brick\Math\BigDecimal;
 use DateTimeImmutable;
