@@ -5,7 +5,6 @@ namespace App\Modules\Financial\Application;
 use App\Models\Customer;
 use App\Models\CustomerAccount;
 use App\Models\FinancialTransaction;
-use App\Models\FinancialTransaction as Transaction;
 use App\Models\InterestLot;
 use App\Models\InterestLotEvent;
 use App\Models\LedgerEntry;
@@ -14,7 +13,6 @@ use App\Models\PaymentAllocation;
 use App\Models\PaymentAllocationItem;
 use App\Models\Sale;
 use App\Models\User;
-use App\Tenancy\CurrentShop;
 use Brick\Math\BigDecimal;
 use DateTimeInterface;
 use DomainException;
@@ -30,7 +28,6 @@ class PaymentPostingService
         private readonly InterestCalculationService $interest,
         private readonly InterestPolicyResolver $policies,
         private readonly FinancialAuditService $audit,
-        private readonly CurrentShop $currentShop,
     ) {}
 
     public function post(
