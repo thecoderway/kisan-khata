@@ -388,7 +388,7 @@ class CustomerManagementTest extends TestCase
 
         Schema::shouldReceive('hasTable')->once()->with('customer_accounts')->andReturn(false);
 
-        $eligibility = app(\\App\\Modules\\Customers\\Application\\CustomerDeletionEligibility::class)
+        $eligibility = app(\App\Modules\Customers\Application\CustomerDeletionEligibility::class)
             ->check($customer);
 
         $this->assertFalse($eligibility['eligible']);
