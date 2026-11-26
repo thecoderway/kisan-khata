@@ -35,24 +35,46 @@ class ReconciliationService
     /**
      * Explicit repair path. Acquire customer/account locks before the first
      * consistent read so a REPEATABLE READ snapshot cannot predate a posting
-     * that commits while this repair waits for its lock.
+     * that commits while this repair waits for its lock. The callback runs
+     * inside the same transaction, after a successful rebuild and before commit.
+     *
+     * @param  null|callable(array<string,mixed>, array<string,mixed>):void  $afterRepair
+     * @return array{report:array{shop_id:int,customer_id:int,consistent:bool,discrepancies:list<array<string,mixed>>},repaired:bool}
+     */
+    public function repairAndReconcile(Customer $customer, ?callable $afterRepair = null): array
+    {
+        return DB::transaction(function () use ($customer, $afterRepair): array {
+            $account = $this->accountLock->lockForCustomer($customer);
+            $before = $this->reconcileCustomerWithinTransaction($customer);
+
+            if ($before['consistent']) {
+                return ['report' => $before, 'repaired' => false];
+            }
+
+            $this->projections->rebuildLocked($account, $customer);
+            $after = $this->reconcileCustomerWithinTransaction($customer);
+
+            if (! $after['consistent']) {
+                throw new \\RuntimeException('Projection repair did not produce a consistent customer account.');
+            }
+
+            if ($afterRepair !== null) {
+                $afterRepair($before, $after);
+            }
+
+            return ['report' => $after, 'repaired' => true];
+        }, 3);
+    }
+
+    /**
+     * Backwards-compatible repair API for internal callers that do not need
+     * to record an audit event in the repair transaction.
      *
      * @return array{shop_id:int,customer_id:int,consistent:bool,discrepancies:list<array<string,mixed>>}
      */
     public function rebuildAndReconcile(Customer $customer): array
     {
-        return DB::transaction(function () use ($customer): array {
-            $account = $this->accountLock->lockForCustomer($customer);
-            $before = $this->reconcileCustomerWithinTransaction($customer);
-
-            if ($before['consistent']) {
-                return $before;
-            }
-
-            $this->projections->rebuildLocked($account, $customer);
-
-            return $this->reconcileCustomerWithinTransaction($customer);
-        }, 3);
+        return $this->repairAndReconcile($customer)['report'];
     }
 
     /**
