@@ -49,11 +49,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(InterestPolicy::class, InterestPolicyPolicy::class);
 
-        Gate::define('viewCustomerLedger', [CustomerLedgerPolicy::class, 'view']);
+        Gate::define('viewCustomerLedger', fn (User $actor, Customer $customer): bool => app(CustomerLedgerPolicy::class)->view($actor, $customer));
 
-        Gate::define('viewFinancialAudit', [FinancialAuditPolicy::class, 'viewAny']);
-        Gate::define('viewReconciliation', [ReconciliationPolicy::class, 'viewAny']);
-        Gate::define('viewCustomerReconciliation', [ReconciliationPolicy::class, 'viewCustomer']);
-        Gate::define('repairCustomerProjection', [ReconciliationPolicy::class, 'repair']);
+        Gate::define('viewFinancialAudit', fn (User $actor): bool => app(FinancialAuditPolicy::class)->viewAny($actor));
+        Gate::define('viewReconciliation', fn (User $actor): bool => app(ReconciliationPolicy::class)->viewAny($actor));
+        Gate::define('viewCustomerReconciliation', fn (User $actor, Customer $customer): bool => app(ReconciliationPolicy::class)->viewCustomer($actor, $customer));
+        Gate::define('repairCustomerProjection', fn (User $actor, Customer $customer): bool => app(ReconciliationPolicy::class)->repair($actor, $customer));
     }
 }
