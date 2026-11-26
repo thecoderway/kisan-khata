@@ -31,7 +31,7 @@ class PaymentReversalService
     ) {}
 
     /**
-     * @param array{amount:string|int,payment_method?:?string,reference_number?:?string,description?:?string}|null $replacement
+     * @param  array{amount:string|int,payment_method?:?string,reference_number?:?string,description?:?string}|null  $replacement
      * @return array{reversal:Payment,replacement:?Payment}
      */
     public function correct(
@@ -47,7 +47,7 @@ class PaymentReversalService
             throw new InvalidArgumentException('A correction reason between 1 and 500 characters is required.');
         }
 
-        if ($actor->role !== User::ROLE_OWNER || !$actor->is_active) {
+        if ($actor->role !== User::ROLE_OWNER || ! $actor->is_active) {
             throw new AuthorizationException('Only an active Shop Owner may correct a posted Payment.');
         }
 
@@ -56,7 +56,7 @@ class PaymentReversalService
             throw new AuthorizationException('The Payment does not belong to this Customer.');
         }
 
-        if ($replacement !== null && !array_key_exists('amount', $replacement)) {
+        if ($replacement !== null && ! array_key_exists('amount', $replacement)) {
             throw new InvalidArgumentException('A replacement Payment amount is required.');
         }
 
