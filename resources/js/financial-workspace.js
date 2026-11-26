@@ -55,12 +55,25 @@ const renderTable = (headers, rows) => {
     root.innerHTML = '<table class="table table-vcenter financial-table"><thead><tr>' + headers.map(x => '<th>' + esc(x) + '</th>').join('') + '</tr></thead><tbody>' +
         rows.map(row => '<tr>' + row.map(cell => '<td>' + cell + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
 };
+const fetchCustomerSet = async (status = 'active') => {
+    const params = new URLSearchParams({ pageSize: '100', page: '1' });
+    if (status !== 'active') params.set('status', status);
+    const first = await request('/customers?' + params.toString());
+    const records = [...(first.data || [])];
+    const lastPage = Number(first.meta?.last_page || 1);
+    for (let page = 2; page <= lastPage; page++) {
+        params.set('page', String(page));
+        const next = await request('/customers?' + params.toString());
+        records.push(...(next.data || []));
+    }
+    return records;
+};
 const loadCustomers = async () => {
-    const [activePayload, inactivePayload] = await Promise.all([
-        request('/customers?pageSize=100'),
-        request('/customers?status=inactive&pageSize=100'),
+    const [activeCustomers, inactiveCustomers] = await Promise.all([
+        fetchCustomerSet('active'),
+        fetchCustomerSet('inactive'),
     ]);
-    customers = [...(activePayload.data || []), ...(inactivePayload.data || [])];
+    customers = [...activeCustomers, ...inactiveCustomers];
     ['financial-customer', 'interest-customer'].forEach(id => {
         const select = document.getElementById(id);
         if (!select) return;
