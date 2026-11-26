@@ -350,7 +350,7 @@ class FinancialPostingConcurrencyTest extends TestCase
                 usleep(20_000);
             } while (microtime(true) < $deadline);
 
-            if (! $observedLockWait) {
+            if ($observedLockWait === false) {
                 $process = $observer->selectOne(
                     'SELECT ID, USER, DB, COMMAND, TIME, STATE, INFO
                      FROM information_schema.processlist
