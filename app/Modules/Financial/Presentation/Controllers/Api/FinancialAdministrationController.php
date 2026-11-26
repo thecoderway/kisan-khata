@@ -53,8 +53,8 @@ class FinancialAdministrationController extends Controller
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
 
-    
-            throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
+
+                throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
             }
 
             if ($open !== null) {
@@ -108,6 +108,7 @@ class FinancialAdministrationController extends Controller
             'capitalization_enabled' => ['nullable', 'boolean'],
         ]);
         if (($data['monthly_rate_percent'] ?? null) === null && ($data['capitalization_enabled'] ?? null) === null) {
+
             throw ValidationException::withMessages(['monthly_rate_percent' => 'कम से कम एक Customer override आवश्यक है।']);
         }
 
@@ -118,6 +119,7 @@ class FinancialAdministrationController extends Controller
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
 
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
+
                 throw ValidationException::withMessages(['effective_from' => 'नई override तारीख मौजूदा override के effective start से आगे होनी चाहिए।']);
             }
             if ($open !== null) {
@@ -195,6 +197,7 @@ class FinancialAdministrationController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
             ]);
+
             return ['report' => $after, 'repaired' => true];
         }, 3);
 
