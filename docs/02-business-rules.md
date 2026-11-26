@@ -68,8 +68,9 @@ Developers and AI coding agents must not invent missing financial rules.
 **Staff**
 - Can view, add and edit customer profile information.
 - Can record credit sales and payments.
-- Can view permitted customer and transaction information.
-- Cannot delete customers or edit/delete posted financial transactions.
+- Can view all Customers and all posted Sales, Payments and Customer Ledger records within the assigned Shop, regardless of which Staff member created them.
+- Can record new credit Sales and Payments.
+- Cannot revise posted Sales, reverse/replace Payments, edit/delete ledger entries, configure interest policies or access Owner-only financial audit/reconciliation workflows.
 - Cannot configure interest policies or subscriptions.
 
 **Owner-only user administration**
