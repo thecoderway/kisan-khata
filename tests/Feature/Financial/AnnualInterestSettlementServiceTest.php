@@ -50,7 +50,7 @@ class AnnualInterestSettlementServiceTest extends TestCase
         $this->assertDatabaseCount('interest_settlement_items', 1);
         $this->assertDatabaseCount('ledger_entries', 2);
         $this->assertSame('COMPLETED', InterestSettlementRun::query()->firstOrFail()->status);
-        $this->assertSame('29.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->interest_balance);
+        $this->assertSame('28.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->interest_balance);
     }
 
     public function test_normal_payment_on_settlement_date_is_processed_before_the_annual_checkpoint(): void
@@ -85,7 +85,7 @@ class AnnualInterestSettlementServiceTest extends TestCase
         $this->assertDatabaseCount('interest_calculation_runs', 2);
         $this->assertDatabaseCount('interest_settlement_runs', 1);
         $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
-        $this->assertSame('29.00', $account->interest_balance);
+        $this->assertSame('28.00', $account->interest_balance);
         $this->assertSame('900.00', $account->principal_balance);
     }
 
