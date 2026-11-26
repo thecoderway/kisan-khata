@@ -160,7 +160,7 @@ class FinancialAdministrationController extends Controller
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
         ]);
 
-        $query = AuditLog::query()->where('entity_type', 'like', 'financial%')
+        $query = AuditLog::query()->where('action', 'like', 'financial.%')
             ->when(isset($filters['from']), fn ($q) => $q->whereDate('created_at', '>=', $filters['from']))
             ->when(isset($filters['to']), fn ($q) => $q->whereDate('created_at', '<=', $filters['to']))
             ->when(isset($filters['action']), fn ($q) => $q->where('action', $filters['action']))
