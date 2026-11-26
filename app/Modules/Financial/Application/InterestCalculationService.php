@@ -277,7 +277,7 @@ class InterestCalculationService
             $amount = BigDecimal::of($result['posted_interest']);
             $interestEntry = null;
 
-            if ($amount->isGreaterThanZero()) {
+            if (!$amount->isZero()) {
                 $sequence++;
                 $interestEntry = LedgerEntry::query()->create([
                     'customer_id' => $customer->getKey(),
