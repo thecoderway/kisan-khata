@@ -128,7 +128,7 @@ Capabilities:
 - View complete customer ledgers.
 - Configure interest policies.
 - Configure annual Auto Settlement dates.
-- Edit posted sales and payments.
+- Correct posted transactions only through the approved Sale revision workflow or Payment reversal/replacement workflow; direct edits are prohibited.
 - View audit history.
 - Manage Manager and Staff accounts: create, deactivate, reactivate, and change Manager/Staff roles.
 - View and manage shop users' active status and role history.
@@ -313,7 +313,7 @@ Every sale must preserve its original transaction date because interest eligibil
 
 ### 9.3 Posted Sale Correction
 
-The Shop Owner can directly edit a posted sale.
+The Shop Owner may request a controlled revision only while the Sale is not locked by a later posted normal Payment or annual Interest Auto Settlement. A revision must preserve immutable before/after values, actor, timestamp and mandatory reason. Direct mutation of a posted Sale is prohibited. Locked Sales cannot be corrected in the current approved scope.
 
 When editing:
 
@@ -356,12 +356,13 @@ Customer-facing payments remain consolidated at customer-account level. The back
 
 The payment process follows this sequence:
 
-1. Calculate the customer's complete payable amount through the payment date.
-2. Include all eligible interest through that date.
-3. Add the applicable outstanding balance and new interest.
-4. Subtract the received payment from the total payable.
-5. Carry forward the remaining amount as the new consolidated outstanding.
-6. Start the new consolidated balance's interest calculation cycle from the payment date.
+1. Lock the customer account within the posting transaction.
+2. Calculate eligible interest through the Payment effective date for all earlier eligible unpaid Sales/components.
+3. Mark the corresponding interest checkpoint Settled.
+4. Recompute the complete payable amount (outstanding principal plus posted unpaid interest).
+5. Reject the entire Payment before creating any Payment, allocation, ledger or projection posting if its amount exceeds total payable.
+6. Apply the accepted amount internally FIFO across oldest eligible Sales; within each Sale apply the effective Shop Principal First or Interest First waterfall.
+7. Persist Payment, allocation and ledger postings atomically, reconcile the account projection, and commit.
 
 ### 10.4 Multiple Payments on the Same Date
 
@@ -381,7 +382,7 @@ A payment must not exceed the customer's total payable balance (outstanding prin
 
 ### 10.6 Posted Payment Correction
 
-The Shop Owner can directly edit a posted payment.
+Posted Payment corrections must use a reversal and optional replacement Payment. The original Payment is never edited or deleted; each correction is immutable, auditable and transactionally reconciled.
 
 The system must preserve:
 
