@@ -44,8 +44,9 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->createPolicy($shop, $owner);
         Sanctum::actingAs($owner, ['app']);
 
+        $effectiveFrom = now()->addDays(5)->toDateString();
         $this->postJson('/api/v1/interest-policy', [
-            'effective_from' => '2026-12-01',
+            'effective_from' => $effectiveFrom,
             'monthly_rate_percent' => '1.25000000',
             'grace_days' => 30,
             'capitalization_enabled' => false,
@@ -57,7 +58,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.version_number', 2);
 
         $this->assertDatabaseHas('interest_policy_versions', [
-            'shop_id' => $shop->getKey(), 'version_number' => 1, 'effective_to' => '2026-12-01',
+            'shop_id' => $shop->getKey(), 'version_number' => 1, 'effective_to' => $effectiveFrom,
         ]);
         $this->assertDatabaseHas('audit_logs', [
             'shop_id' => $shop->getKey(), 'user_id' => $owner->getKey(),
