@@ -53,6 +53,15 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/payments')->assertOk()->assertJsonFragment(['payment_number' => $payment->payment_number]);
     }
 
+    public function test_first_party_web_session_can_use_stateful_financial_api(): void
+    {
+        [$shop, $owner] = $this->context();
+        $this->actingAs($owner)
+            ->withHeader('Origin', 'http://localhost')
+            ->getJson('/api/v1/sales')
+            ->assertOk();
+    }
+
     public function test_staff_can_post_sales_and_payments_through_versioned_api(): void
     {
         [$shop, $owner, $customer] = $this->context();
