@@ -362,14 +362,9 @@ The approved financial rules remain unchanged: consolidated customer-facing paym
 
 No production deployment, production data change, migration execution or release is claimed. Database migrations and deployment require separate explicit Product Owner approval.
 
-## Phase 5 — Batch 5 and Batch 6 delivery update (2026-11-26)
+## Phase 5 — Historical Batch 5 and Batch 6 delivery note (superseded)
 
-- **Batch 5 — Annual Interest Auto Settlement:** merged via PR #40, squash merge commit `b30348130141ab6a43d2a2a56e151d389e3c38f9`. The merged scope includes Shop-local configured dates, idempotent settlement runs, same-day payment ordering, and missed-settlement catch-up. CI was green on the final PR head before merge.
-- **Batch 6 — Ledger Projection & Reconciliation:** implementation is complete on `feat/batch-6-ledger-projection-reconciliation`; PR #41 is open for review. The scope centralizes ledger-derived account projection rebuilds across Sale, Payment, Payment reversal and interest posting; provides read-only reconciliation and an explicit ledger-derived repair path; checks snapshots, Sale payment statuses and source posting totals.
-- Batch 6 reuses the already merged financial schema. No new migration, schema mutation, database backfill, production operation or deployment is included.
-- Feature tests cover projection consistency, read-only discrepancy detection, explicit repair, allocation integrity, sale-day auto payments, reversal reconciliation and cross-Shop rejection. PR #41 CI is green on the current head (MySQL 8.4 locking tests, 279 Laravel tests / 1,075 assertions, PHP formatting and frontend build). Keep Batch 6 unmerged until the Product Owner approves.
-- The delivery remains a reviewable PR. No merge to `main` is authorized without explicit Product Owner approval.
-
+The original in-progress delivery notes below were superseded by the merged delivery baseline in Section 13. Batch 5 (PR #40) and Batch 6 (PR #41) are both merged into `main`; neither remains open. The current Phase 5 state and release gate are recorded in Section 13 and the current roadmap release-gate section.
 
 ## Phase 5 — Batch 7 and Batch 8 delivery correction (2026-11-26)
 
