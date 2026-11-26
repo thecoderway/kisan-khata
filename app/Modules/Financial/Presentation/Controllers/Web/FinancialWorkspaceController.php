@@ -3,7 +3,6 @@
 namespace App\Modules\Financial\Presentation\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\InterestPolicy;
 use App\Models\Payment;
 use App\Models\Sale;
