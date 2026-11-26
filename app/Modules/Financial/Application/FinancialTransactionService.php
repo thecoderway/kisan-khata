@@ -62,7 +62,7 @@ class FinancialTransactionService
                 function (IdempotencyKey $reservation) use ($operation, $account, $actor, $customer): FinancialTransaction {
                     $transaction = $operation($account, $reservation);
 
-                    if (! $transaction instanceof FinancialTransaction) {
+                    if (! ($transaction instanceof FinancialTransaction)) {
                         throw new LogicException('A financial operation must return a FinancialTransaction.');
                     }
 
