@@ -445,14 +445,13 @@ Backdated transaction permissions and their exact recalculation behavior require
 
 ## 12. Transaction Correction Rules
 
-1. Only the Shop Owner can edit posted sales and payments.
-2. Managers and Staff cannot edit posted financial transactions.
-3. Physical deletion of posted financial history is prohibited.
-4. Every correction must preserve previous and updated values.
-5. Every correction must include the acting user and timestamp.
-6. A correction reason must be recorded.
-7. Affected balances and interest must be recalculated.
-8. The audit history must remain immutable.
+1. Only the Shop Owner may initiate an eligible controlled Sale revision or Payment reversal/replacement.
+2. Posted financial records are never directly edited or physically deleted.
+3. A Sale revision is allowed only before a later posted normal Payment or annual Interest Auto Settlement locks that Sale; locked Sales cannot be corrected in the current approved scope.
+4. A posted Payment correction uses a separate reversal and optional replacement Payment.
+5. Every Sale revision preserves before/after values, actor, timestamp and mandatory reason.
+6. Reversal/replacement and affected ledger/projection changes are atomic and auditable.
+7. Managers and Staff cannot initiate posted financial transaction corrections.
 9. A correction must not silently change unrelated customer accounts.
 
 The exact recalculation behavior for historical backdated corrections must be documented before implementation.
