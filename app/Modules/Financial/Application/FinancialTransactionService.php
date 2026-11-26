@@ -62,7 +62,7 @@ class FinancialTransactionService
                 function (IdempotencyKey $reservation) use ($operation, $account, $actor, $customer): FinancialTransaction {
                     $transaction = $operation($account, $reservation);
 
-                    if (! ($transaction instanceof FinancialTransaction)) {
+                    if ($transaction instanceof FinancialTransaction === false) {
                         throw new LogicException('A financial operation must return a FinancialTransaction.');
                     }
 
@@ -108,7 +108,7 @@ class FinancialTransactionService
             FinancialTransaction::TYPE_REVERSAL,
         ];
 
-        if (! in_array($transactionType, $allowedTypes, true)) {
+        if (in_array($transactionType, $allowedTypes, true) === false) {
             throw new InvalidArgumentException('The financial transaction type is invalid.');
         }
 
