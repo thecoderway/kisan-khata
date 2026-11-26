@@ -55,7 +55,7 @@ Examples:
 - Date-range calculations.
 - Grace-period calculations.
 - Consolidated outstanding calculations.
-- Advance balance calculations.
+- Excess-payment rejection and no-advance invariant.
 - Ledger balance calculations.
 - Policy version selection.
 - Translation data handling.
@@ -272,7 +272,7 @@ Verify:
 - Successful payment calculates eligible interest through the payment date.
 - Payment is subtracted from the consolidated payable balance.
 - Remaining balance is carried forward from the payment date.
-- Excess payment is recorded as customer advance.
+- Excess payment is rejected before posting; no advance balance is created.
 - Duplicate payment posting is prevented.
 - Failed payment processing rolls back all related changes.
 - Concurrent payments do not corrupt customer balances.
@@ -289,20 +289,19 @@ Test the following scenarios:
 2. The first payment is deducted from the consolidated payable balance.
 3. A second payment on the same date does not calculate interest again for the same elapsed period.
 4. The second payment is deducted from the resulting outstanding balance.
-5. Multiple same-day payments produce the same final balance as the equivalent combined payment, subject to transaction ordering and applicable advance handling.
+5. Multiple same-day payments do not duplicate interest; each payment is independently checked against remaining payable and any excess request is rejected.
 6. No duplicate interest entries are created.
 
-### 8.2 Excess Payment and Advance
+### 8.2 Excess Payment Rejection
 
 Test:
 
-- Payment exactly equal to total payable.
-- Payment greater than total payable.
-- Partial payment.
-- Multiple payments creating an advance.
-- Future transactions when an advance exists.
-- Advance balance display in customer ledger.
-- No accidental loss or duplication of advance.
+- Payment exactly equal to total payable is accepted.
+- Payment greater than total payable is rejected in full.
+- Rejected payment creates no Payment, allocation, ledger, advance or balance-projection records.
+- A partial payment within total payable is accepted.
+- Concurrent requests recheck payable under the customer-account lock; an overpaying request is rejected.
+
 
 ## 9. Consolidated Interest Calculation Tests
 
@@ -419,7 +418,7 @@ Verify:
 - Settlement amount and date.
 - Interest calculation through the settlement date.
 - Remaining outstanding after partial settlement.
-- Advance treatment where applicable.
+- Excess-payment rejection; no advance treatment.
 - Carry-forward balance.
 - No duplicate settlement.
 - No silent deletion of previous financial history.
@@ -436,7 +435,7 @@ Verify:
 - Sales increase outstanding.
 - Payments reduce consolidated outstanding.
 - Interest entries are included.
-- Advances are represented correctly.
+- No advance balance or advance ledger entries can be created.
 - Settlements are included.
 - Corrections are reflected correctly.
 - Running balance is deterministic.
@@ -447,7 +446,7 @@ Verify:
 - New sales retain their own dates for interest calculations.
 - Ledger values match backend accounting calculations.
 
-The ledger must not depend on sale-level payment allocations.
+The customer-facing ledger shows one consolidated payment; internal FIFO allocation records support accounting and reconciliation.
 
 ## 12. Multi-Tenancy Tests
 
@@ -637,7 +636,7 @@ Use factories for:
 
 Factories must create valid tenant relationships and must not bypass business invariants.
 
-Financial test fixtures should include realistic amounts, dates, partial payments, advance balances and multiple sales.
+Financial test fixtures should include realistic amounts, dates, partial payments, multiple sales and excess-payment rejection cases.
 
 ## 21. Continuous Integration
 
