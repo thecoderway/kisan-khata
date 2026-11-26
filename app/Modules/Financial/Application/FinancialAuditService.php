@@ -32,8 +32,7 @@ class FinancialAuditService
         ?string $reason = null,
         ?string $ipAddress = null,
         ?string $userAgent = null,
-    ): AuditLog
-    {
+    ): AuditLog {
         if (DB::transactionLevel() < 1) {
             throw new LogicException('Financial audit records must be written inside the financial database transaction.');
         }
