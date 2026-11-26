@@ -250,8 +250,8 @@ class InterestCalculationService
             }
 
             $principal = $this->principalBalanceAt($customer, $sale, $intervalStart);
-            if ($principal->isZero() || $principal->isNegative()) {
-                continue;
+            if ($principal->isNegative()) {
+                throw new DomainException('A Sale has a negative principal ledger balance.');
             }
 
             $policy = $this->policies->resolve($customer, new DateTimeImmutable($intervalStart));
