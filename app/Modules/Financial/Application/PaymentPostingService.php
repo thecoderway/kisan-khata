@@ -111,12 +111,7 @@ class PaymentPostingService
                 $this->interest->calculateForPayment($actor, $customer, $payment);
 
                 $account->refresh();
-                $payable = BigDecimal::of((string) $account->total_payable);
                 $requested = BigDecimal::of($normalizedAmount);
-                if ($requested->isGreaterThan($payable)) {
-                    throw new ConflictHttpException('Payment exceeds the outstanding principal and posted interest. Customer advances are not supported.');
-                }
-
                 $policy = $this->policies->resolve($customer, $paymentDate);
                 $allocationItems = $this->buildAllocationPlan($customer, $paymentDateString, $requested, $policy['payment_waterfall']);
 
@@ -236,7 +231,7 @@ class PaymentPostingService
         $plan = [];
 
         foreach ($sales as $saleIndex => $sale) {
-            $principal = $this->salePrincipalBalance($customer, $sale);
+            $principal = $this->salePrincipalBalance($customer, $sale, $paymentDate);
             $lots = InterestLot::query()
                 ->where('customer_id', $customer->getKey())
                 ->where('sale_id', $sale->getKey())
@@ -249,7 +244,7 @@ class PaymentPostingService
             $capitalizedLots = [];
             $nonCapitalizedLots = [];
             foreach ($lots as $lot) {
-                $balance = $this->interestLotBalance($lot);
+                $balance = $this->interestLotBalance($lot, $paymentDate);
                 if ($balance->isZero()) {
                     continue;
                 }
@@ -331,13 +326,14 @@ class PaymentPostingService
         return $plan;
     }
 
-    private function salePrincipalBalance(Customer $customer, Sale $sale): BigDecimal
+    private function salePrincipalBalance(Customer $customer, Sale $sale, string $effectiveDate): BigDecimal
     {
         $originalPrincipal = (string) LedgerEntry::query()
             ->where('customer_id', $customer->getKey())
             ->where('sale_id', $sale->getKey())
             ->where('component', 'PRINCIPAL')
             ->where('entry_kind', 'SALE')
+            ->where('effective_date', '<=', $effectiveDate)
             ->sum('debit_amount');
 
         // Capitalized-interest principal is tracked by its own Interest Lot.
@@ -347,6 +343,7 @@ class PaymentPostingService
             ->where('customer_id', $customer->getKey())
             ->where('sale_id', $sale->getKey())
             ->where('component_type', PaymentAllocationItem::COMPONENT_PRINCIPAL)
+            ->whereHas('payment', fn ($query) => $query->where('payment_date', '<=', $effectiveDate))
             ->sum('amount');
 
         return BigDecimal::of($originalPrincipal === '' ? '0.00' : $originalPrincipal)
@@ -354,10 +351,16 @@ class PaymentPostingService
             ->toScale(2);
     }
 
-    private function interestLotBalance(InterestLot $lot): BigDecimal
+    private function interestLotBalance(InterestLot $lot, string $effectiveDate): BigDecimal
     {
-        $allocated = (string) $lot->events()->where('event_type', 'ALLOCATED')->sum('amount');
-        $reversed = (string) $lot->events()->where('event_type', 'REVERSED')->sum('amount');
+        $allocated = (string) $lot->events()
+            ->where('event_type', 'ALLOCATED')
+            ->where('event_date', '<=', $effectiveDate)
+            ->sum('amount');
+        $reversed = (string) $lot->events()
+            ->where('event_type', 'REVERSED')
+            ->where('event_date', '<=', $effectiveDate)
+            ->sum('amount');
 
         return BigDecimal::of((string) $lot->original_amount)
             ->minus($allocated === '' ? '0.00' : $allocated)
