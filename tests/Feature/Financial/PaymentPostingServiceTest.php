@@ -187,8 +187,6 @@ class PaymentPostingServiceTest extends TestCase
             ]);
             $this->assertSame('100.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->total_payable);
 
-        $reconciliation = app(ReconciliationService::class)->reconcileCustomer($customer);
-        $this->assertTrue($reconciliation['consistent'], json_encode($reconciliation['discrepancies']));
         }
     }
 
@@ -243,6 +241,8 @@ class PaymentPostingServiceTest extends TestCase
         ]);
         $this->assertSame(Sale::PAYMENT_STATUS_UNPAID, $sale->fresh()->payment_status);
         $this->assertSame('100.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->total_payable);
+        $reconciliation = app(ReconciliationService::class)->reconcileCustomer($customer);
+        $this->assertTrue($reconciliation['consistent'], json_encode($reconciliation['discrepancies']));
     }
 
     public function test_payment_reversal_can_atomically_post_a_replacement_payment(): void
