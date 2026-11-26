@@ -69,17 +69,17 @@ class InterestCalculationKernel
             : $principal
                 ->multipliedBy($rate)
                 ->multipliedBy((string) $actualDays)
-                ->dividedBy('3000', 8, RoundingMode::HALF_UP);
+                ->dividedBy('3000', 8, RoundingMode::HalfUp);
 
         return [
             'interval_start_date' => $interestStart->format('Y-m-d'),
             'interval_end_date_exclusive' => $endExclusive->format('Y-m-d'),
             'actual_days' => $actualDays,
             'grace_days_applied' => $graceDaysApplied,
-            'eligible_principal_basis' => (string) $principal->toScale(8, RoundingMode::HALF_UP),
-            'monthly_rate_percent' => (string) $rate->toScale(8, RoundingMode::HALF_UP),
-            'unrounded_interest' => (string) $unrounded->toScale(8, RoundingMode::HALF_UP),
-            'posted_interest' => (string) $unrounded->toScale(2, RoundingMode::HALF_UP),
+            'eligible_principal_basis' => (string) $principal->toScale(8, RoundingMode::HalfUp),
+            'monthly_rate_percent' => (string) $rate->toScale(8, RoundingMode::HalfUp),
+            'unrounded_interest' => (string) $unrounded->toScale(8, RoundingMode::HalfUp),
+            'posted_interest' => (string) $unrounded->toScale(2, RoundingMode::HalfUp),
         ];
     }
 
