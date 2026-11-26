@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToCurrentShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 class FinancialTransaction extends Model
@@ -50,6 +51,18 @@ class FinancialTransaction extends Model
 
         static::updating(fn () => throw new LogicException('Posted financial transaction headers are immutable.'));
         static::deleting(fn () => throw new LogicException('Posted financial transaction headers cannot be deleted.'));
+    }
+
+    /** @return HasOne<Sale, $this> */
+    public function sale(): HasOne
+    {
+        return $this->hasOne(Sale::class);
+    }
+
+    /** @return HasOne<Payment, $this> */
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class);
     }
 
     /** @return BelongsTo<Shop, $this> */
