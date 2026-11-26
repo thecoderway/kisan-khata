@@ -105,7 +105,7 @@ class FinancialAdministrationController extends Controller
             'monthly_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'capitalization_enabled' => ['nullable', 'boolean'],
         ]);
-        if (!array_key_exists('monthly_rate_percent', $data) && !array_key_exists('capitalization_enabled', $data)) {
+        if (($data['monthly_rate_percent'] ?? null) === null && ($data['capitalization_enabled'] ?? null) === null) {
             throw ValidationException::withMessages(['monthly_rate_percent' => 'कम से कम एक Customer override आवश्यक है।']);
         }
 
@@ -177,8 +177,10 @@ class FinancialAdministrationController extends Controller
 
         $result = DB::transaction(function () use ($request, $customer, $reconciliation, $data) {
             $before = $reconciliation->reconcileCustomer($customer);
+            if ($before['consistent']) {
+                return ['report' => $before, 'repaired' => false];
+            }
             $after = $reconciliation->rebuildAndReconcile($customer);
-
             AuditLog::query()->create([
                 'user_id' => $request->user()->getKey(),
                 'action' => 'financial.customer_projection_repaired',
@@ -190,10 +192,12 @@ class FinancialAdministrationController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
             ]);
-
-            return $after;
+            return ['report' => $after, 'repaired' => true];
         }, 3);
-
-        return response()->json(['data' => $result]);
+        return response()->json([
+            'message' => $result['repaired'] ? 'Projection repaired and audit event recorded.' : 'Projection is already consistent; no repair was needed.',
+            'data' => $result['report'],
+            'repaired' => $result['repaired'],
+        ]);
     }
 }
