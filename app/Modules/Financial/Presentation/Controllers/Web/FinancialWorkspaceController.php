@@ -3,6 +3,7 @@
 namespace App\Modules\Financial\Presentation\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\InterestPolicy;
 use App\Models\Payment;
 use App\Models\Sale;
@@ -24,6 +25,8 @@ class FinancialWorkspaceController extends Controller
             Gate::authorize('viewAny', Sale::class);
         } elseif ($section === 'payments') {
             Gate::authorize('viewAny', Payment::class);
+        } elseif ($section === 'ledger') {
+            Gate::authorize('viewAny', Customer::class);
         } elseif ($section === 'interest') {
             Gate::authorize('viewAny', InterestPolicy::class);
         }
