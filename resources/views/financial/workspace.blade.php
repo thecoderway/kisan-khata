@@ -70,6 +70,7 @@
             <div><label class="form-label">Capitalization override</label><select class="form-select" name="capitalization_enabled"><option value="">Shop policy से inherit</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
             <div class="financial-form-submit"><button class="btn btn-outline-success" type="submit">Customer override सेव करें</button></div>
         </form>
+        <div id="customer-policy-history" class="p-3"></div>
     </div>
 @endif
 
@@ -88,6 +89,7 @@
 <script>
 window.KKFinancialWorkspace = {
     section: @json($section),
+    role: @json(auth()->user()->role),
     api: @json(url('/api/v1')),
     csrf: @json(csrf_token()),
 };
