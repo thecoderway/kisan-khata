@@ -427,9 +427,9 @@ class PaymentPostingService
                 ->where('customer_id', $customer->getKey())
                 ->where('id', $sale->getKey())
                 ->update([
-                'payment_status' => $status,
-                'interest_settlement_status' => Sale::INTEREST_STATUS_SETTLED,
-            ]);
+                    'payment_status' => $status,
+                    'interest_settlement_status' => Sale::INTEREST_STATUS_SETTLED,
+                ]);
         }
     }
 
