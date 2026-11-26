@@ -7,6 +7,7 @@ use App\Modules\Auth\Presentation\Controllers\NewPasswordController;
 use App\Modules\Auth\Presentation\Controllers\PasswordResetLinkController;
 use App\Modules\Auth\Presentation\Controllers\RegisteredShopController;
 use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
+use App\Modules\Financial\Presentation\Controllers\Web\FinancialWorkspaceController;
 use App\Modules\Customers\Presentation\Controllers\Web\CustomerController;
 use App\Modules\Shops\Presentation\Controllers\Web\GeographicLookupController;
 use App\Modules\Shops\Presentation\Controllers\Web\ShopProfileController;
@@ -34,6 +35,7 @@ Route::middleware(['auth', 'password.changed'])->group(function (): void {
 
 Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/financial/{section}', FinancialWorkspaceController::class)->whereIn('section', ['sales', 'payments', 'ledger', 'interest', 'reconciliation', 'audit'])->name('financial.workspace');
 
     Route::resource('customers', CustomerController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::post('/customers/{customer}/deactivate', [CustomerLifecycleController::class, 'deactivate'])->name('customers.deactivate');
