@@ -45,8 +45,16 @@ class Sale extends Model
 
     protected static function booted(): void
     {
-        static::updating(fn () => throw new LogicException('Posted Sales are immutable; use an approved Sale revision workflow.'));
-        static::deleting(fn () => throw new LogicException('Posted Sales cannot be deleted.'));
+        static::updating(function (Sale $sale): void {
+            if ($sale->posted_at !== null) {
+                throw new LogicException('Posted Sales are immutable; use an approved Sale revision workflow.');
+            }
+        });
+        static::deleting(function (Sale $sale): void {
+            if ($sale->posted_at !== null) {
+                throw new LogicException('Posted Sales cannot be deleted.');
+            }
+        });
     }
 
     /** @return BelongsTo<Shop, $this> */
