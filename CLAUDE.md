@@ -17,7 +17,7 @@ The approved baseline is docs/01-product-requirements.md through docs/10-develop
 - Enforce tenant ownership in queries, relationships, jobs, files, cache, exports and APIs.
 
 ## Financial invariants
-- There is NO sale-level payment allocation. Never create a payment_allocations table, allocation records, invoice allocation workflow or payment split between interest/principal.
+- Follow accepted ADR-0012 for Phase 5 payment accounting: customer-facing Payments remain consolidated, with immutable internal FIFO allocation records across eligible Sales/components and the configured per-Sale waterfall. ADR-0012 supersedes ADR-0004's earlier prohibition on internal Sale-wise allocation. Do not expose invoice-level allocation as a customer-facing workflow.
 - At payment: calculate eligible interest through payment date, determine consolidated payable, subtract received payment, and carry remainder forward from that date.
 - Same-day subsequent payments must not duplicate interest.
 - New sales retain their individual sale dates; carried-forward consolidated balance has its own calculation-cycle start date.

@@ -381,3 +381,16 @@ This delivery history is superseded by the current Phase 5 status in Section 13 
 - Batch 8.4 is documentation synchronization only; it does not close the overall Phase 5 acceptance/release gate.
 - Batch 8.5 is targeted rollback/audit atomicity and reconciliation authorization regression coverage; it does not close the overall Phase 5 acceptance/release gate.
 - No production migration, production data change, deployment or release is included or authorized.
+
+
+---
+
+## 26. Phase 5 — Batch 8.7 financial workflow acceptance (2026-11-26)
+
+Batch 8.7 is prepared on branch `test/phase-5-batch-8-7-financial-acceptance`, based on `338eec64c43b06be65282092a36be1587405df02`. It adds a consolidated acceptance test for Sale, sale-day automatic Payment, normal Payment/FIFO, annual interest settlement and ledger reconciliation; failure-injection rollback checks for Paid Sale/automatic Payment and normal Payment; and authenticated Payment correction API checks for Owner, Manager, Staff and cross-Shop isolation.
+
+The branch also aligns `AGENTS.md`, `CLAUDE.md` and `.claude/rules/financial-integrity.md` with ADR-0012: customer-facing Payments remain consolidated while immutable internal FIFO allocation records are required. ADR-0012 supersedes the older ADR-0004 prohibition on internal Sale-wise allocation.
+
+**Verification status:** implementation and test additions are committed to the feature branch; CI has not yet been run for this branch at the time of this status update. Do not treat Batch 8.7 as accepted until the MySQL 8.4 locking group, remaining Laravel suite, formatting, Composer validation and Vite build complete successfully. Dedicated browser automation is not currently configured, so browser-level UI acceptance remains unverified.
+
+**Scope and safety:** no production database, production migration, backfill, deployment or release was performed or authorized. Phase 5 acceptance/release gate remains **OPEN**. See [Batch 8.7 financial workflow acceptance](phase-5-batch-8-7-financial-workflow-acceptance.md).
