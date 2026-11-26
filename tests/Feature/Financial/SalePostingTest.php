@@ -8,7 +8,6 @@ use App\Models\FinancialTransaction;
 use App\Models\IdempotencyKey;
 use App\Models\Payment;
 use App\Models\Sale;
-use App\Models\SaleRevision;
 use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\FinancialTransactionService;
