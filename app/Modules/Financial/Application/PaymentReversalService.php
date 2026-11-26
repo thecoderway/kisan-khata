@@ -206,7 +206,7 @@ class PaymentReversalService
                 }
 
                 foreach ($originalEntries as $entry) {
-                    $sequence++;
+                    ++$sequence;
                     LedgerEntry::query()->create([
                         'customer_id' => $customer->getKey(),
                         'financial_transaction_id' => $reversalTransaction->getKey(),
