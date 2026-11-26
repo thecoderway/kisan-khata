@@ -41,7 +41,7 @@ class InterestCalculationServiceTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $firstPolicyVersion = DB::table('interest_policy_versions')->insertGetId([
+        DB::table('interest_policy_versions')->insert([
             'shop_id' => $shop->getKey(),
             'interest_policy_id' => $policyId,
             'version_number' => 1,
