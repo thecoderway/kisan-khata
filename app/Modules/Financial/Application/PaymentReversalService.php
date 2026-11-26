@@ -28,6 +28,7 @@ class PaymentReversalService
         private readonly FinancialTransactionService $transactions,
         private readonly FinancialAuditService $audit,
         private readonly PaymentPostingService $payments,
+        private readonly BalanceProjectionService $projections,
     ) {}
 
     /**
@@ -238,9 +239,7 @@ class PaymentReversalService
                     'reversal_payment_id' => $reversal->getKey(),
                 ]);
 
-                $account->refresh();
-                $this->refreshSaleStatuses($customer);
-                $this->refreshAccountProjection($account, $customer);
+$this->projections->rebuildLocked($account, $customer, $paymentDate, (int) $reversalTransaction->getKey());
 
                 $this->audit->recordTransaction(
                     $actor,
@@ -341,56 +340,6 @@ class PaymentReversalService
         if ($settlementExists) {
             throw new ConflictHttpException('This Payment cannot be reversed after an annual interest settlement at or after its effective date.');
         }
-    }
-
-    private function refreshSaleStatuses(Customer $customer): void
-    {
-        $sales = Sale::query()->where('customer_id', $customer->getKey())->whereNotNull('posted_at')->get();
-        foreach ($sales as $sale) {
-            $entries = LedgerEntry::query()->where('customer_id', $customer->getKey())->where('sale_id', $sale->getKey());
-            $debits = (string) ((clone $entries)->sum('debit_amount') ?: '0.00');
-            $credits = (string) ((clone $entries)->sum('credit_amount') ?: '0.00');
-            $balance = BigDecimal::of($debits)->minus($credits)->toScale(2);
-            $paymentCredits = (string) LedgerEntry::query()
-                ->where('customer_id', $customer->getKey())
-                ->where('sale_id', $sale->getKey())
-                ->where('entry_kind', 'PAYMENT')
-                ->sum('credit_amount');
-            $reversalDebits = (string) LedgerEntry::query()
-                ->where('customer_id', $customer->getKey())
-                ->where('sale_id', $sale->getKey())
-                ->where('entry_kind', 'REVERSAL')
-                ->sum('debit_amount');
-            $hasAnyNetPayment = BigDecimal::of($paymentCredits ?: '0.00')->minus($reversalDebits ?: '0.00')->isPositive();
-            $status = $balance->isZero()
-                ? Sale::PAYMENT_STATUS_PAID
-                : ($hasAnyNetPayment ? Sale::PAYMENT_STATUS_PARTIALLY_PAID : Sale::PAYMENT_STATUS_UNPAID);
-
-            DB::table('sales')->where('shop_id', $customer->shop_id)->where('customer_id', $customer->getKey())
-                ->where('id', $sale->getKey())->update(['payment_status' => $status]);
-        }
-    }
-
-    private function refreshAccountProjection(CustomerAccount $account, Customer $customer): void
-    {
-        $principal = LedgerEntry::query()->where('customer_id', $customer->getKey())->where('component', 'PRINCIPAL');
-        $interest = LedgerEntry::query()->where('customer_id', $customer->getKey())->where('component', 'INTEREST');
-        $principalBalance = BigDecimal::of((string) ((clone $principal)->sum('debit_amount') ?: '0.00'))
-            ->minus((string) ((clone $principal)->sum('credit_amount') ?: '0.00'))->toScale(2);
-        $interestBalance = BigDecimal::of((string) ((clone $interest)->sum('debit_amount') ?: '0.00'))
-            ->minus((string) ((clone $interest)->sum('credit_amount') ?: '0.00'))->toScale(2);
-
-        if ($principalBalance->isNegative() || $interestBalance->isNegative()) {
-            throw new LogicException('Payment reversal produced a negative account balance.');
-        }
-
-        $account->forceFill([
-            'principal_balance' => (string) $principalBalance,
-            'interest_balance' => (string) $interestBalance,
-            'total_payable' => (string) $principalBalance->plus($interestBalance)->toScale(2),
-            'last_financial_event_at' => now(),
-            'projection_version' => (int) $account->projection_version + 1,
-        ])->save();
     }
 
     private function paymentSnapshot(Payment $payment): array
