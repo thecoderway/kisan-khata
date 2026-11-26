@@ -323,7 +323,7 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current recorded `main` HEAD: `bc783ae23d33e6583dc7d1347a2d0408ba1835b3` (merge of PR #14, 2026-11-25).
+- Current verified `main` HEAD: `5bbdd3bf7198f7892e5e94610fe3c79c277c3396` (Phase 5 Groups 1–8 schema/model foundation; 2026-11-26).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
 - All feature and documentation changes use reviewable PRs. No future merge to `main` without explicit Product Owner approval.
 - Update status only from verified repository, CI, test or Product Owner evidence.
@@ -333,17 +333,17 @@ No production deployment or release is claimed.
 
 - Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and accepted for its recorded scope.
 - **Current phase: Phase 5 — Financial Foundation and Accounting Engine.**
-- Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
+- Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/01, docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
 - The detailed Phase 5 implementation blueprint is `docs/phase-5-implementation-blueprint.md`.
-- Read-only existing-code/schema audit is complete. Batch 0 is reconciling documentation with ADR-0012 and updating CustomerDeletionEligibility against all merged financial-history tables.
-- Next, proceed through focused Phase 5 implementation batches in order: financial foundation; Sale posting/revisions; interest calculation; Payment/FIFO allocation; annual interest settlement; ledger projection/reconciliation; authorization/APIs/UI; final MySQL 8.4 integration and release gate.
+- Read-only existing-code/schema audit is complete. Batch 0 documentation and CustomerDeletionEligibility implementation are complete on PR #29; MySQL 8.4 CI has passed. PR #29 remains open for Product Owner merge approval.
+- Continue with Batch 1 financial foundation services, then Sale posting/revisions, interest calculation, Payment/FIFO allocation, annual interest settlement, ledger projection/reconciliation, authorization/APIs/UI, and final MySQL 8.4 integration/release gate.
 - No database migrations, local/production data changes or deployment without separate explicit Product Owner approval.
 - Do not begin production Sales/Payment workflows until Phase 5 foundation passes its critical acceptance tests.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
-## 13. Phase 5 status — 2026-11-25
+## 13. Phase 5 status — 2026-11-26
 
-**Business rules and blueprint: documented. Physical schema/model foundation: Groups 1–8 merged and CI-verified. Batch 0 corrections: in progress. Financial services and end-to-end acceptance: not complete.**
+**Business rules and blueprint: documented. Physical schema/model foundation: Groups 1–8 merged and CI-verified. Batch 0 implementation: complete on PR #29; awaiting merge approval. Financial services and end-to-end acceptance: not complete.**
 
 Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
@@ -360,6 +360,6 @@ Finalized rules include:
 - Locked historical Sale correction has no exception in the current approved scope; stop and require separate approval and workflow design.
 - Financial history is append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable.
 
-**Current delivery:** Batch 0 documentation and CustomerDeletionEligibility corrections are in progress under Product Owner approval. Next is Batch 1 financial foundation services, followed by the approved batches in sequence. No database migrations or deployment are authorized by this approval; request separate approval before either.
+**Current delivery:** Batch 0 is complete on PR #29 (open; not merged). It includes ADR-0012 documentation reconciliation, CustomerDeletionEligibility updates, and focused deletion-guard tests. Next is Batch 1 financial foundation services, followed by the approved batches in sequence. No database migrations or deployment are authorized; obtain separate explicit approval before either.
 
-**Verification:** this documentation-only update did not run tests or CI. Do not infer test or runtime verification from the documentation changes.
+**Verification:** GitHub Actions Laravel CI run [45789193066](https://github.com/thecoderway/kisan-khata/actions/runs/45789193066) passed on commit `6d9830881a9a802ae855b229240f89c7e80cfffd`: Pint **164 files passed**; Composer validation passed; Vite production build passed; MySQL 8.4.13 row-lock integration test **1 passed / 2 assertions**; Laravel suite **233 passed / 802 assertions**. This verifies the PR branch only; it is not a production deployment or migration verification.
