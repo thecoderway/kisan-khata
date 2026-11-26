@@ -5,10 +5,10 @@ namespace App\Modules\Financial\Application;
 use App\Models\FinancialTransaction;
 use App\Models\IdempotencyKey;
 use App\Tenancy\CurrentShop;
+use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use Closure;
 use InvalidArgumentException;
 use JsonException;
 use LogicException;
@@ -32,8 +32,7 @@ class IdempotencyService
         string $idempotencyKey,
         array $requestPayload,
         Closure $operation,
-    ): FinancialTransaction
-    {
+    ): FinancialTransaction {
         if (DB::transactionLevel() < 1) {
             throw new LogicException('Idempotency must execute inside the financial database transaction.');
         }
