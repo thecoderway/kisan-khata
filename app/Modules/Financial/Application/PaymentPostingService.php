@@ -58,7 +58,7 @@ class PaymentPostingService
                 'payment_method' => $paymentMethod,
                 'reference_number' => $referenceNumber,
                 'description' => $description,
-                'replacement_for_payment_id' => $replacementForPaymentId,
+                ...($replacementForPaymentId === null ? [] : ['replacement_for_payment_id' => $replacementForPaymentId]),
             ],
             function (CustomerAccount $account, $key) use (
                 $actor,
