@@ -53,7 +53,6 @@ class FinancialAdministrationController extends Controller
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
 
-
                 throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
             }
 
