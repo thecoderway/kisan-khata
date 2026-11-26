@@ -21,7 +21,7 @@ class ProjectionRepairConcurrencyTest extends TestCase
 {
     use DatabaseMigrations;
 
-    public function test_projection_repair_waits_for_posting_then_uses_the_committed_ledger_snapshot(): void
+    public function test_projection_repair_api_waits_for_posting_then_uses_the_committed_ledger_snapshot(): void
     {
         if (DB::connection()->getDriverName() !== 'mysql' || ! function_exists('pcntl_fork')) {
             $this->markTestSkipped('This concurrency regression requires MySQL and pcntl.');
@@ -140,10 +140,22 @@ class ProjectionRepairConcurrencyTest extends TestCase
                 fwrite($childSocket, $connectionId."\n");
 
                 app(CurrentShop::class)->set(Shop::query()->findOrFail($shop->getKey()));
-                $childCustomer = Customer::query()->findOrFail($customerId);
-                $result = app(ReconciliationService::class)->rebuildAndReconcile($childCustomer);
+                Sanctum::actingAs(User::query()->findOrFail($owner->getKey()), ['app']);
+                $request = Request::create(
+                    '/api/v1/reconciliation/customers/'.$customerId.'/repair',
+                    'POST',
+                    ['reason' => 'Deterministic API concurrency regression'],
+                    [],
+                    [],
+                    ['HTTP_ACCEPT' => 'application/json'],
+                );
+                $response = app(Kernel::class)->handle($request);
+                $result = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+                if ($response->getStatusCode() !== 200) {
+                    throw new \\RuntimeException('Repair API returned HTTP '.$response->getStatusCode().': '.json_encode($result));
+                }
 
-                fwrite($childSocket, json_encode($result, JSON_THROW_ON_ERROR)."\n");
+                fwrite($childSocket, json_encode($result['data'], JSON_THROW_ON_ERROR)."\n");
                 fclose($childSocket);
                 exit(0);
             } catch (\Throwable $exception) {
