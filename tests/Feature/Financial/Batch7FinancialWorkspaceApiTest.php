@@ -118,6 +118,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $effectiveFrom = now()->addDays(5)->toDateString();
         $this->postJson('/api/v1/interest-policy', [
             'effective_from' => $effectiveFrom,
+            'reason' => 'Owner approved updated shop policy',
             'monthly_rate_percent' => '1.25000000',
             'grace_days' => 30,
             'capitalization_enabled' => false,
