@@ -81,7 +81,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
             $allocationItems->pluck('sale_id')->unique()->map(fn ($id) => (int) $id)->values()->all(),
             'FIFO allocation must exclude the already-paid sale.',
         );
-        $this->assertSame('100.00', \Brick\Math\BigDecimal::of((string) $allocationItems->sum('amount'))->toScale(2)->__toString());
+        $this->assertSame('100.00', BigDecimal::of((string) $allocationItems->sum('amount'))->toScale(2)->__toString());
 
         $settlement = app(AnnualInterestSettlementService::class)
             ->settleShopDate($shop, '2026-10-30');
@@ -170,7 +170,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
             'batch-8-7-payment-rollback-sale',
         );
 
-        $audit = \Mockery::mock(FinancialAuditService::class);
+        $audit = Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')
             ->once()
             ->andThrow(new RuntimeException('Simulated payment audit failure.'));
