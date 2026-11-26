@@ -60,6 +60,7 @@ class ReconciliationService
             }
         }
 
+        $this->compareInterestCheckpoint($customer, $account, $discrepancies);
         $this->compareSaleStatuses($customer, $discrepancies);
         $this->compareSnapshots($customer, $discrepancies);
         $this->compareSourcePostings($customer, $discrepancies);
@@ -83,6 +84,27 @@ class ReconciliationService
         $this->projections->rebuildForCustomer($customer);
 
         return $this->reconcileCustomer($customer);
+    }
+
+    /**
+     * @param  list<array<string,mixed>>  $discrepancies
+     */
+    private function compareInterestCheckpoint(Customer $customer, ?CustomerAccount $account, array &$discrepancies): void
+    {
+        $expected = DB::table('interest_calculation_runs')
+            ->where('shop_id', $customer->shop_id)
+            ->where('customer_id', $customer->getKey())
+            ->where('status', 'COMPLETED')
+            ->max('cutoff_date_exclusive');
+        $actual = $account?->last_interest_cutoff_date?->format('Y-m-d');
+
+        if ($actual !== $expected) {
+            $discrepancies[] = [
+                'type' => 'interest_checkpoint_mismatch',
+                'expected' => $expected,
+                'actual' => $actual,
+            ];
+        }
     }
 
     /**
