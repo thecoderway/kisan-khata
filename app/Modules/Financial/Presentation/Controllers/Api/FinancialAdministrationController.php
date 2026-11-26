@@ -52,7 +52,9 @@ class FinancialAdministrationController extends Controller
 
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
-                throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
+
+    
+            throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
             }
 
             if ($open !== null) {
@@ -178,7 +180,7 @@ class FinancialAdministrationController extends Controller
         $result = DB::transaction(function () use ($request, $customer, $reconciliation, $data) {
             $before = $reconciliation->reconcileCustomer($customer);
             if ($before['consistent']) {
-                return ['report' => $before, 'repaired' => false];
+\n                return ['report' => $before, 'repaired' => false];
             }
             $after = $reconciliation->rebuildAndReconcile($customer);
             AuditLog::query()->create([
@@ -194,7 +196,7 @@ class FinancialAdministrationController extends Controller
             ]);
             return ['report' => $after, 'repaired' => true];
         }, 3);
-        return response()->json([
+\n        return response()->json([
             'message' => $result['repaired'] ? 'Projection repaired and audit event recorded.' : 'Projection is already consistent; no repair was needed.',
             'data' => $result['report'],
             'repaired' => $result['repaired'],
