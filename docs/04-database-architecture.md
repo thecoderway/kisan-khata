@@ -323,8 +323,8 @@ Rules:
 2. Payment date and amount are mandatory.
 3. Amount must be greater than zero.
 4. Payments reduce the customer's consolidated payable.
-5. Payments are not allocated to individual sale IDs.
-6. Payments are not split into interest and principal allocations.
+5. Customer-facing payments remain consolidated at customer-account level.
+6. Each normal payment has immutable internal FIFO allocation records across eligible Sales, with principal/posted-interest components applied by the effective per-Sale waterfall.
 7. Multiple payments on the same date must not duplicate interest.
 8. Excess payment must be rejected before posting; no advance balance is supported.
 9. Only the Shop Owner may edit posted payments.
@@ -430,7 +430,6 @@ Possible components:
 
 - OUTSTANDING
 - INTEREST
-- CUSTOMER_ADVANCE
 - SETTLEMENT
 - ADJUSTMENT
 
@@ -485,7 +484,6 @@ Suggested columns:
 - `shop_id`
 - `customer_id`
 - `outstanding_balance DECIMAL(15,2)`
-- `advance_balance DECIMAL(15,2)`
 - `as_of_date`
 - `last_transaction_id`
 - `created_at`
