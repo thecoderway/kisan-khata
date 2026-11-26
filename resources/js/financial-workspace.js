@@ -151,32 +151,48 @@ root.addEventListener('click', (event) => {
         document.querySelector('.page-heading').after(card);
         card.querySelector('form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+            const form = e.currentTarget;
+            if (form.dataset.submitting === 'true') return;
+            form.dataset.submitting = 'true';
+            const submit = form.querySelector('button[type="submit"]');
+            if (submit) submit.disabled = true;
+            const data = Object.fromEntries(new FormData(form).entries());
+            const key = form.dataset.idempotencyKey || (form.dataset.idempotencyKey = crypto.randomUUID());
             try {
                 await request('/sales/' + revise.dataset.reviseSale + '/revision', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(data),
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(data),
                 });
+                delete form.dataset.idempotencyKey;
                 showMessage('Sale revision audit के साथ दर्ज हुई।');
                 card.remove(); await refresh();
             } catch (error) { showMessage(error.message, 'error'); }
+            finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
         });
     } else {
         card.innerHTML = '<div class="content-card-header"><div><h2>भुगतान सुधार</h2><p>मूल Payment reverse होगा। Replacement वैकल्पिक है।</p></div></div><form class="financial-form-grid p-3" id="payment-correction-form"><div class="financial-form-wide"><label class="form-label">कारण</label><input class="form-control" name="reason" required maxlength="500"></div><div><label class="form-label">Replacement राशि (₹) — वैकल्पिक</label><input class="form-control" type="number" min="0.01" step="0.01" name="replacement_amount"></div><div><label class="form-label">Replacement माध्यम</label><select class="form-select" name="replacement_method"><option value="">चुनें</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div class="financial-form-submit"><button class="btn btn-outline-danger">Payment reverse करें</button></div></form>';
         document.querySelector('.page-heading').after(card);
         card.querySelector('form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.currentTarget).entries());
+            const form = e.currentTarget;
+            if (form.dataset.submitting === 'true') return;
+            form.dataset.submitting = 'true';
+            const submit = form.querySelector('button[type="submit"]');
+            if (submit) submit.disabled = true;
+            const formData = Object.fromEntries(new FormData(form).entries());
             const data = { reason: formData.reason };
+            const key = form.dataset.idempotencyKey || (form.dataset.idempotencyKey = crypto.randomUUID());
             if (formData.replacement_amount) {
                 data.replacement = { amount: formData.replacement_amount, payment_method: formData.replacement_method || null };
             }
             try {
                 await request('/customers/' + correct.dataset.customerId + '/payments/' + correct.dataset.correctPayment + '/correction', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(data),
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(data),
                 });
+                delete form.dataset.idempotencyKey;
                 showMessage('Payment correction audit के साथ दर्ज हुआ।');
                 card.remove(); await refresh();
             } catch (error) { showMessage(error.message, 'error'); }
+            finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
         });
     }
 });
@@ -193,18 +209,24 @@ document.getElementById('financial-create')?.addEventListener('click', () => {
     card.querySelector('form').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.currentTarget;
+        if (form.dataset.submitting === 'true') return;
+        form.dataset.submitting = 'true';
+        const submit = form.querySelector('button[type="submit"]');
+        if (submit) submit.disabled = true;
         const data = Object.fromEntries(new FormData(form).entries());
-        const key = crypto.randomUUID();
+        const key = form.dataset.idempotencyKey || (form.dataset.idempotencyKey = crypto.randomUUID());
         try {
             await request(section === 'sales' ? '/sales' : '/payments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
                 body: JSON.stringify(data),
             });
+            delete form.dataset.idempotencyKey;
             showMessage(section === 'sales' ? 'बिक्री सफलतापूर्वक पोस्ट हुई।' : 'भुगतान सफलतापूर्वक पोस्ट हुआ।');
             card.remove();
             await refresh();
         } catch (error) { showMessage(error.message, 'error'); }
+        finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
     });
 });
 document.getElementById('financial-refresh')?.addEventListener('click', refresh);
