@@ -239,7 +239,7 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
                 $shop,
                 $customer,
                 $actor,
-                $transaction,
+                $this->createFinancialTransaction($shop, $customer, $actor),
                 type: 'REVERSAL',
                 reversalOfPaymentId: $paymentId
             ),
