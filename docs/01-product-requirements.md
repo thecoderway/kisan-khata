@@ -302,7 +302,7 @@ A sale represents goods or services provided to a customer on credit.
 
 - Create sale.
 - View sale.
-- Edit sale.
+- Request a controlled revision for an eligible unlocked Sale.
 - View sale history.
 - Search sales.
 - Filter by customer.
@@ -315,15 +315,14 @@ Every sale must preserve its original transaction date because interest eligibil
 
 The Shop Owner may request a controlled revision only while the Sale is not locked by a later posted normal Payment or annual Interest Auto Settlement. A revision must preserve immutable before/after values, actor, timestamp and mandatory reason. Direct mutation of a posted Sale is prohibited. Locked Sales cannot be corrected in the current approved scope.
 
-When editing:
+For an eligible revision:
 
-- Preserve the original values.
-- Store the new values.
-- Record the user who performed the edit.
+- Preserve the original values and store a separate revision.
+- Record the user who performed the revision.
 - Record the date and time.
-- Record the correction reason.
-- Maintain immutable audit history.
-- Recalculate affected customer balances and interest.
+- Require a correction reason.
+- Maintain immutable revision and audit history.
+- Recalculate affected customer balances and interest transactionally.
 
 Managers and Staff cannot edit posted sales.
 
@@ -346,7 +345,7 @@ Payment method may be recorded as additional information.
 
 - Record payment.
 - View payment.
-- Edit payment.
+- Correct a posted Payment through reversal and optional replacement.
 - View payment history.
 - Print payment receipt.
 
