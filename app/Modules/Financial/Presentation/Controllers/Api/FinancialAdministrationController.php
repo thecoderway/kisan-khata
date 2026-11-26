@@ -50,6 +50,7 @@ class FinancialAdministrationController extends Controller
             $policy = InterestPolicy::query()->where('policy_code', 'DEFAULT')->lockForUpdate()->firstOrFail();
             $open = InterestPolicyVersion::query()->where('interest_policy_id', $policy->getKey())
                 ->whereNull('effective_to')->lockForUpdate()->first();
+            $previousVersion = $open?->toArray();
 
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
@@ -89,6 +90,7 @@ class FinancialAdministrationController extends Controller
                 'entity_type' => 'interest_policy_version',
                 'entity_id' => $version->getKey(),
                 'reason' => trim($data['reason']),
+                'old_values' => $previousVersion === null ? null : ['previous_version' => $previousVersion],
                 'new_values' => $version->toArray(),
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
@@ -131,6 +133,7 @@ class FinancialAdministrationController extends Controller
             $locked = Customer::query()->whereKey($customer->getKey())->lockForUpdate()->firstOrFail();
             $open = CustomerInterestPolicyVersion::query()->where('customer_id', $locked->getKey())
                 ->whereNull('effective_to')->lockForUpdate()->first();
+            $previousVersion = $open?->toArray();
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
 
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
@@ -171,6 +174,7 @@ class FinancialAdministrationController extends Controller
                 'entity_type' => 'customer_interest_policy_version',
                 'entity_id' => $version->getKey(),
                 'reason' => trim($data['reason']),
+                'old_values' => $previousVersion === null ? null : ['previous_version' => $previousVersion],
                 'new_values' => $version->toArray(),
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
