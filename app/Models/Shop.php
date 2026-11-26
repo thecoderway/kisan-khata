@@ -47,6 +47,48 @@ class Shop extends Model
         return $this->hasMany(Sale::class);
     }
 
+    /** @return HasMany<PaymentAllocation, $this> */
+    public function paymentAllocations(): HasMany
+    {
+        return $this->hasMany(PaymentAllocation::class);
+    }
+
+    /** @return HasMany<InterestPolicy, $this> */
+    public function interestPolicies(): HasMany
+    {
+        return $this->hasMany(InterestPolicy::class);
+    }
+
+    /** @return HasMany<InterestCalculationRun, $this> */
+    public function interestCalculationRuns(): HasMany
+    {
+        return $this->hasMany(InterestCalculationRun::class);
+    }
+
+    /** @return HasMany<InterestLot, $this> */
+    public function interestLots(): HasMany
+    {
+        return $this->hasMany(InterestLot::class);
+    }
+
+    /** @return HasMany<InterestSettlementRun, $this> */
+    public function interestSettlementRuns(): HasMany
+    {
+        return $this->hasMany(InterestSettlementRun::class);
+    }
+
+    /** @return HasMany<LedgerEntry, $this> */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LedgerEntry::class);
+    }
+
+    /** @return HasMany<AccountBalanceSnapshot, $this> */
+    public function balanceSnapshots(): HasMany
+    {
+        return $this->hasMany(AccountBalanceSnapshot::class);
+    }
+
     /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
