@@ -36,7 +36,8 @@ class FinancialTransactionService
         string $idempotencyKey,
         array $requestPayload,
         Closure $operation,
-    ): FinancialTransaction {
+    ): FinancialTransaction
+    {
         $this->assertCurrentOwnership($actor, $customer);
 
         return DB::transaction(function () use (
@@ -89,7 +90,8 @@ class FinancialTransactionService
         DateTimeInterface $effectiveDate,
         ?string $sourceType = null,
         ?int $sourceId = null,
-    ): FinancialTransaction {
+    ): FinancialTransaction
+    {
         if (DB::transactionLevel() < 1) {
             throw new LogicException('A financial transaction header must be created inside the posting transaction.');
         }
