@@ -64,6 +64,7 @@ class ReconciliationService
         $this->compareSaleStatuses($customer, $discrepancies);
         $this->compareSnapshots($customer, $discrepancies);
         $this->compareSourcePostings($customer, $discrepancies);
+        $this->comparePaymentAllocations($customer, $discrepancies);
 
         return [
             'shop_id' => $shopId,
@@ -181,6 +182,76 @@ class ReconciliationService
                         'field' => $field,
                         'expected' => $value,
                         'actual' => (string) $snapshot->{$field},
+                    ];
+                }
+            }
+
+            $expectedSourceId = LedgerEntry::query()
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('effective_date', '<=', $date)
+                ->orderByDesc('effective_date')
+                ->orderByDesc('id')
+                ->value('id');
+
+            if ((int) ($snapshot->source_ledger_entry_id ?? 0) !== (int) ($expectedSourceId ?? 0)) {
+                $discrepancies[] = [
+                    'type' => 'balance_snapshot_source_mismatch',
+                    'as_of_date' => $date,
+                    'expected' => $expectedSourceId,
+                    'actual' => $snapshot->source_ledger_entry_id,
+                ];
+            }
+        }
+    }
+
+    /**
+     * Verify normal and reversal allocation headers/items against their
+     * consolidated Payment amount. Sale-day automatic Payments are intentionally
+     * sale-restricted and do not use normal FIFO allocation records.
+     *
+     * @param  list<array<string,mixed>>  $discrepancies
+     */
+    private function comparePaymentAllocations(Customer $customer, array &$discrepancies): void
+    {
+        foreach (Payment::query()
+            ->where('shop_id', $customer->shop_id)
+            ->where('customer_id', $customer->getKey())
+            ->whereIn('payment_type', [Payment::TYPE_NORMAL, Payment::TYPE_REVERSAL])
+            ->whereNotNull('posted_at')
+            ->get(['id', 'amount', 'payment_type']) as $payment) {
+            $allocation = DB::table('payment_allocations')
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('payment_id', $payment->getKey())
+                ->first();
+
+            if ($allocation === null) {
+                $discrepancies[] = [
+                    'type' => 'payment_allocation_missing',
+                    'payment_id' => (int) $payment->getKey(),
+                ];
+
+                continue;
+            }
+
+            $itemsTotal = (string) DB::table('payment_allocation_items')
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('allocation_id', $allocation->id)
+                ->sum('amount');
+            $expected = BigDecimal::of((string) $payment->amount);
+
+            foreach ([
+                'allocation_header_mismatch' => (string) $allocation->total_allocated,
+                'allocation_items_mismatch' => $itemsTotal ?: '0.00',
+            ] as $type => $actual) {
+                if (BigDecimal::of($actual)->compareTo($expected) !== 0) {
+                    $discrepancies[] = [
+                        'type' => $type,
+                        'payment_id' => (int) $payment->getKey(),
+                        'expected' => (string) $expected,
+                        'actual' => $actual,
                     ];
                 }
             }
