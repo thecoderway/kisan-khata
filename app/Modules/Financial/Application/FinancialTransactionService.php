@@ -99,6 +99,10 @@ class FinancialTransactionService
             throw new AuthorizationException('The idempotency reservation does not belong to the current shop.');
         }
 
+        if ($idempotencyKey->operation_type !== $transactionType) {
+            throw new InvalidArgumentException('The idempotency operation type must match the financial transaction type.');
+        }
+
         $allowedTypes = [
             FinancialTransaction::TYPE_SALE_POSTING,
             FinancialTransaction::TYPE_PAYMENT_POSTING,
