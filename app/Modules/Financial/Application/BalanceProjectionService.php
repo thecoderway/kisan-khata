@@ -67,12 +67,18 @@ class BalanceProjectionService
             ->where('customer_id', $customer->getKey())
             ->max('occurred_at');
 
+        $lastInterestCutoffDate = $interestCutoffDate ?? DB::table('interest_calculation_runs')
+            ->where('shop_id', $shopId)
+            ->where('customer_id', $customer->getKey())
+            ->where('status', 'COMPLETED')
+            ->max('cutoff_date_exclusive');
+
         $account->forceFill([
             'principal_balance' => $balances['principal_balance'],
             'interest_balance' => $balances['interest_balance'],
             'total_payable' => $balances['total_payable'],
             'last_financial_event_at' => $lastFinancialEventAt,
-            'last_interest_cutoff_date' => $interestCutoffDate ?? $account->last_interest_cutoff_date?->format('Y-m-d'),
+            'last_interest_cutoff_date' => $lastInterestCutoffDate,
             'projection_version' => (int) $account->projection_version + 1,
         ])->save();
 
