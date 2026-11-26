@@ -882,3 +882,43 @@ ADR-0012 is the controlling Product Owner decision for Phase 5 financial behavio
 ## Phase 5 — Batch 6 implementation status (2026-11-26)
 
 Batch 5 Annual Interest Auto Settlement is merged through PR #40 (merge commit `b30348130141ab6a43d2a2a56e151d389e3c38f9`). Batch 6 Ledger Projection & Reconciliation implementation is complete on `feat/batch-6-ledger-projection-reconciliation`; PR #41 is open and its CI is green. See [Batch 6 design and implementation contract](phase-5-batch-6-ledger-projection-reconciliation.md). Batch 6 must centralize ledger-derived balance projections, provide a read-only reconciliation report and a separately invoked repair path, and pass MySQL 8.4 integration tests. No new migration, database backfill, production migration or deployment is authorized or included.
+
+
+---
+
+## 25. Phase 5 — Current merged delivery and release gate (2026-11-26)
+
+This section supersedes the historical Phase 5 status statements in Sections 8, 19, 21, 22 and 24 wherever they describe Phase 5 implementation as not started, or describe Batches 6/7 as still open. The approved financial business rules in ADR-0012 and the scope boundaries in Section 24 remain unchanged.
+
+### Merged implementation baseline
+
+Phase 5 financial implementation is merged into `main` through Batch 8.3:
+
+| Batch | Scope | Delivery |
+|---|---|---|
+| 5 | Annual Interest Auto Settlement | PR #40 merged |
+| 6 | Ledger Projection & Reconciliation | PR #41 merged |
+| 7 | Financial Authorization, APIs & UI | PR #43 merged |
+| 8.2 | Projection repair lock ordering and recurring settlement calendar validation | PR #44 merged; merge commit `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d` |
+| 8.3 | Lock-first, atomic projection repair through the authenticated API endpoint | PR #45 merged; merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7` |
+
+Batch 8.3 specifically removes the controller's pre-lock reconciliation read and outer transaction, performs lock-first repair/reconciliation in one transaction, and records the repair audit callback before commit. The deterministic MySQL concurrency regression test exercises the authenticated API path while a financial posting holds the account lock.
+
+### CI evidence
+
+GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully on the PR #45 head. All job steps passed, including the MySQL row-lock integration test, remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. This confirms the tested PR head; it is not a substitute for full Phase 5 acceptance or production verification.
+
+### Remaining Phase 5 release acceptance
+
+The Phase 5 release gate remains **OPEN** until the following are completed and evidenced:
+
+1. End-to-end workflows across Sale, Payment, allocation, interest, annual settlement, ledger projection and reconciliation, including rollback/idempotency behavior.
+2. Role-by-role authorization acceptance for Owner, Manager and Staff, including API/UI denial paths and cross-Shop isolation.
+3. MySQL 8.4 concurrency and rollback coverage for every critical posting, reversal, settlement and repair path.
+4. Frontend/API regression and user-facing financial consistency acceptance.
+5. Operational readiness review in the appropriate production-readiness phase, including environment configuration, backups and restore evidence.
+6. Repository branch-protection and required-check settings verified by a repository administrator. The current GitHub integration could not inspect branch protection due to insufficient administration permission; its state is therefore **unknown**, not assumed disabled or enabled.
+
+### Explicit safety boundary
+
+No production database migration, production data mutation, backfill, deployment or release is claimed. Any migration execution or deployment requires separate explicit Product Owner approval. Green CI and merged PRs do not imply production release approval.
