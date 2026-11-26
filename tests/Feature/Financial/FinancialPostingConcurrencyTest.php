@@ -156,7 +156,8 @@ class FinancialPostingConcurrencyTest extends TestCase
             [$firstSale->getKey(), $secondSale->getKey()],
             $items->pluck('sale_id')->unique()->map(fn ($id) => (int) $id)->values()->all(),
         );
-        $this->assertSame('120.00', (string) $items->sum('amount'));
+        $allocated = $items->reduce(fn (BigDecimal $sum, PaymentAllocationItem $item): BigDecimal => $sum->plus((string) $item->amount), BigDecimal::zero());
+        $this->assertSame('120.00', (string) $allocated->toScale(2));
         $this->assertSame('30.00', CustomerAccount::query()
             ->where('customer_id', $customer->getKey())
             ->firstOrFail()
