@@ -61,7 +61,7 @@ class SalePostingTest extends TestCase
             'debit_amount' => '1250.00',
             'credit_amount' => '0.00',
         ]);
-        $this->assertSame('1250.00', $customer->account()->firstOrFail()->principal_balance);
+        $this->assertSame('1250.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail()->principal_balance);
     }
 
     public function test_paid_sale_creates_its_own_automatic_payment_atomically(): void
