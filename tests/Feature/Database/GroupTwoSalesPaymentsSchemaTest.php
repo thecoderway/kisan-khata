@@ -33,7 +33,9 @@ class GroupTwoSalesPaymentsSchemaTest extends TestCase
         }
 
         $this->assertContains('sales_shop_number_unique', collect(Schema::getIndexes('sales'))->pluck('name'));
+        $this->assertContains('sales_shop_transaction_unique', collect(Schema::getIndexes('sales'))->pluck('name'));
         $this->assertContains('payments_shop_number_unique', collect(Schema::getIndexes('payments'))->pluck('name'));
+        $this->assertContains('payments_shop_transaction_unique', collect(Schema::getIndexes('payments'))->pluck('name'));
         $this->assertContains('payments_shop_source_sale_unique', collect(Schema::getIndexes('payments'))->pluck('name'));
         $this->assertContains('sale_rev_shop_sale_number_unique', collect(Schema::getIndexes('sale_revisions'))->pluck('name'));
         $this->assertContains('payment_rev_shop_payment_number_unique', collect(Schema::getIndexes('payment_revisions'))->pluck('name'));
