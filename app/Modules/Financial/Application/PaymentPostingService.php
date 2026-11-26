@@ -76,6 +76,18 @@ class PaymentPostingService
                     throw new ConflictHttpException('Inactive customers cannot post Payments.');
                 }
 
+                if ($replacementForPaymentId !== null) {
+                    $reversedOriginal = Payment::query()
+                        ->whereKey($replacementForPaymentId)
+                        ->where('customer_id', $customer->getKey())
+                        ->firstOrFail();
+                    if ($reversedOriginal->payment_type !== Payment::TYPE_NORMAL
+                        || ! Payment::query()->where('reversal_of_payment_id', $reversedOriginal->getKey())->exists()
+                        || Payment::query()->where('replacement_for_payment_id', $reversedOriginal->getKey())->exists()) {
+                        throw new ConflictHttpException('A replacement must reference one reversed normal Payment and may be posted only once.');
+                    }
+                }
+
                 if (
                     $account->last_interest_cutoff_date !== null
                     && $account->last_interest_cutoff_date->toDateString() > $paymentDateString
