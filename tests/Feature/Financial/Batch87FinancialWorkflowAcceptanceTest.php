@@ -20,6 +20,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -117,7 +118,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
 
         $calls = 0;
         $realAudit = app(FinancialAuditService::class);
-        $audit = \Mockery::mock(FinancialAuditService::class);
+        $audit = Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')
             ->twice()
             ->andReturnUsing(function (...$arguments) use (&$calls, $realAudit) {
