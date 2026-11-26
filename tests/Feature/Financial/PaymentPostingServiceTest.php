@@ -59,6 +59,29 @@ class PaymentPostingServiceTest extends TestCase
         $this->assertSame('150.00', $account->total_payable);
     }
 
+    public function test_sale_day_auto_paid_sales_are_excluded_from_normal_fifo(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $this->createPolicy($shop, $owner, '0.00000000', 'PRINCIPAL_FIRST', 30);
+        $paidSale = app(SalePostingService::class)->post(
+            $owner, $customer, Sale::PAYMENT_CHOICE_PAID,
+            CarbonImmutable::parse('2026-11-01'), '100.00', 'Already paid', 'sale-day-auto-paid',
+        );
+        $unpaidSale = $this->postSale($owner, $customer, '2026-11-02', '200.00', 'fifo-after-auto-sale');
+
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '150.00', CarbonImmutable::parse('2026-11-10'),
+            null, null, null, 'fifo-excludes-auto-paid',
+        );
+
+        $items = PaymentAllocationItem::query()->where('payment_id', $payment->getKey())->get();
+        $this->assertCount(1, $items);
+        $this->assertSame((int) $unpaidSale->getKey(), (int) $items[0]->sale_id);
+        $this->assertNotSame((int) $paidSale->getKey(), (int) $items[0]->sale_id);
+        $this->assertSame(Sale::PAYMENT_STATUS_PAID, $paidSale->fresh()->payment_status);
+        $this->assertSame('150.00', $items[0]->amount);
+    }
+
     public function test_principal_first_applies_payment_to_sale_principal_before_interest(): void
     {
         [$shop, $owner, $customer] = $this->makeCustomerContext();
