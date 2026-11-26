@@ -178,7 +178,7 @@ Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subje
 - Remaining Laravel suite: **138 passed / 430 assertions**.
 - Combined Laravel result: **139 tests passed / 432 assertions / 0 failures / 0 skipped**.
 
-Phase 3 is accepted as the complete Roles and User Management phase. This is feature-branch acceptance, not production deployment/release approval. No merge to `main` is claimed.
+Phase 3 is accepted as the complete Roles and User Management phase and was merged into `main` through PR #7. This is feature acceptance, not production deployment/release approval.
 
 ### Phase 4 — Customer Management
 
@@ -325,7 +325,7 @@ No production deployment or release is claimed.
 - Stable branch: `main`.
 - Current verified `main` HEAD: `c740e44434071062c4cb8eac546f375a7e234126` (Batch 8.8 MySQL concurrency acceptance; 2026-11-27).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
-- All feature and documentation changes use reviewable PRs. No future merge to `main` without explicit Product Owner approval.
+- All feature and documentation changes use reviewable PRs. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 - Update status only from verified repository, CI, test or Product Owner evidence.
 - Keep this document and relevant technical documentation synchronized with accepted implementation.
 
