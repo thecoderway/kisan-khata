@@ -4,16 +4,13 @@ namespace Tests\Feature\Financial;
 
 use App\Models\Customer;
 use App\Models\CustomerAccount;
-use App\Models\InterestPolicyVersion;
 use App\Models\Payment;
-use App\Models\PaymentAllocation;
 use App\Models\PaymentAllocationItem;
 use App\Models\Sale;
 use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\PaymentPostingService;
 use App\Modules\Financial\Application\SalePostingService;
-use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +105,37 @@ class PaymentPostingServiceTest extends TestCase
         $this->assertSame('1000.00', $account->principal_balance);
         $this->assertSame('0.00', $account->interest_balance);
         $this->assertSame('1000.00', $account->total_payable);
+    }
+
+    public function test_capitalized_interest_is_allocated_as_principal_without_double_counting(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $this->createPolicy($shop, $owner, '3.00000000', 'PRINCIPAL_FIRST', 0);
+        DB::table('interest_policy_versions')
+            ->where('shop_id', $shop->getKey())
+            ->update(['capitalization_enabled' => true]);
+        $sale = $this->postSale($owner, $customer, '2026-11-01', '1000.00', 'capitalized-interest-sale');
+
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '1005.00', CarbonImmutable::parse('2026-11-11'),
+            null, null, null, 'capitalized-interest-payment',
+        );
+
+        $items = PaymentAllocationItem::query()
+            ->where('payment_id', $payment->getKey())
+            ->orderBy('component_sequence')
+            ->get();
+        $this->assertCount(2, $items);
+        $this->assertSame(PaymentAllocationItem::COMPONENT_PRINCIPAL, $items[0]->component_type);
+        $this->assertSame('1000.00', $items[0]->amount);
+        $this->assertSame(PaymentAllocationItem::COMPONENT_CAPITALIZED_INTEREST_PRINCIPAL, $items[1]->component_type);
+        $this->assertSame('5.00', $items[1]->amount);
+        $this->assertSame((int) $sale->getKey(), (int) $items[1]->sale_id);
+
+        $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
+        $this->assertSame('5.00', $account->principal_balance);
+        $this->assertSame('0.00', $account->interest_balance);
+        $this->assertSame('5.00', $account->total_payable);
     }
 
     public function test_excess_payment_is_rejected_and_entire_operation_rolls_back(): void
