@@ -127,9 +127,10 @@ Responsibilities:
 4. Identify current outstanding and eligible new sales.
 5. Calculate eligible interest through the payment date.
 6. Determine complete payable amount.
-7. Subtract the received payment.
-8. Carry forward the remaining outstanding.
-9. Reject the entire payment if its amount exceeds total payable; do not create a payment or advance posting.
+7. Mark the interest checkpoint Settled and recompute total payable.
+8. Reject the entire Payment before any posting if it exceeds outstanding principal plus posted unpaid interest.
+9. Allocate accepted Payment FIFO across oldest eligible Sales, applying the effective Shop Principal First or Interest First waterfall within each Sale.
+10. Persist Payment, allocations and ledger postings atomically; reconcile projection and commit.
 10. Update account projections.
 11. Record transaction and audit history.
 12. Return an explainable payment result.
@@ -297,19 +298,12 @@ Use stable transaction ordering. When two transactions share an effective date, 
 
 ## 14. Transaction Corrections and Audit History
 
-The Shop Owner can directly edit posted sales and payments.
+Posted financial transactions are immutable and are never directly edited or physically deleted.
 
-When a posted transaction is edited:
-
-1. Preserve previous transaction values.
-2. Store updated transaction values.
-3. Create an immutable audit record.
-4. Record acting user, correction timestamp and reason.
-5. Recalculate affected financial results.
-6. Update account projections transactionally.
-7. Preserve a traceable link between original version and correction.
-
-Managers and Staff cannot edit posted financial transactions. Physical deletion of posted financial history is prohibited. The current transaction state may be updated by an authorized Owner, but audit history must not be silently modified.
+- An unlocked Sale may be corrected only through a controlled Sale revision that preserves before/after values, actor, timestamp and mandatory reason. A Sale is locked after a later posted normal Payment or annual Interest Auto Settlement. Locked Sales cannot be corrected in the current approved scope.
+- A posted Payment is corrected through a separate reversal and optional replacement Payment. The original Payment and its allocation history remain immutable.
+- Only the Shop Owner may initiate these approved correction workflows. Manager and Staff cannot correct posted financial transactions.
+- All reversal/revision postings and projection changes must be atomic, auditable and reconcilable.
 
 The exact strategy for historical backdated corrections and recalculation must be finalized before implementation.
 
@@ -429,15 +423,9 @@ The engine is acceptable only when every customer balance is explainable; consol
 
 The following decisions must be finalized before implementing the corresponding behavior:
 
-1. Interest capitalization default and transition behavior.
-2. Rounding precision and rounding mode.
-3. Interest effective-date and day-boundary conventions.
-4. Grace-period eligibility boundary.
-5. Same-date payment and Auto Settlement execution ordering.
-6. Crop-season settlement accounting.
-7. Customer advances are not supported; excess payments are rejected under ADR-0012.
-8. Backdated correction and recalculation behavior.
-9. Final financial database schema and ledger representation.
+1. Crop-season settlement accounting.
+2. Backdated correction and recalculation beyond the approved Sale revision and Payment reversal/replacement rules.
+3. Final financial database schema and ledger representation, where implementation reveals a need to change the already merged schema.
 
 No implementation may silently assume these unresolved rules.
 
