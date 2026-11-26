@@ -879,9 +879,13 @@ Exact physical indexes, uniqueness constraints and whether sale components requi
 - Initial annual Interest Auto Settlement dates must be initialized to **30 March** and **30 October**. Keep both dates Owner-configurable at Shop level and version/configuration-auditable.
 
 
-### 32.3 Interest convention approval boundary (2026-11-25)
+### 32.3 Approved interest conventions (2026-11-25)
 
-Actual Days / 30 and two-decimal posted interest are approved. The specific rounding mode (including HALF_UP), interval boundary convention, and grace-period Day 0 convention remain pending Product Owner confirmation. Store enough precision and event-boundary metadata to support the final approved convention without migration redesign.
+- Actual Days / 30 formula.
+- Posted INR interest rounded to two decimal places using HALF_UP.
+- Interest interval is [start date inclusive, end date exclusive).
+- Sale Date is grace-period Day 0; with a 30-calendar-day grace period, the first eligible interest day follows 30 complete calendar days.
+- Preserve adequate intermediate decimal precision and event-boundary metadata.
 
 
 ### 32.4 Approved allocation and interest conventions (2026-11-25)
