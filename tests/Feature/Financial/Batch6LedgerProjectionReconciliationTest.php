@@ -64,9 +64,21 @@ class Batch6LedgerProjectionReconciliationTest extends TestCase
         $this->assertSame('60.00', $account->fresh()->total_payable);
         $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $sale->fresh()->payment_status);
 
+        $this->assertSame('2026-11-10', $account->fresh()->last_interest_cutoff_date->toDateString());
+
         $result = app(ReconciliationService::class)->reconcileCustomer($customer);
         $this->assertTrue($result['consistent'], json_encode($result['discrepancies']));
         $this->assertSame([], $result['discrepancies']);
+
+        DB::table('customer_accounts')->where('id', $account->getKey())->update([
+            'last_interest_cutoff_date' => '2026-11-09',
+        ]);
+        $checkpointReport = app(ReconciliationService::class)->reconcileCustomer($customer);
+        $this->assertContains('interest_checkpoint_mismatch', array_column($checkpointReport['discrepancies'], 'type'));
+
+        $checkpointRepair = app(ReconciliationService::class)->rebuildAndReconcile($customer);
+        $this->assertTrue($checkpointRepair['consistent'], json_encode($checkpointRepair['discrepancies']));
+        $this->assertSame('2026-11-10', $account->fresh()->last_interest_cutoff_date->toDateString());
     }
 
     public function test_reconciliation_is_read_only_and_explicit_rebuild_repairs_projection_snapshot_and_sale_status(): void
@@ -125,6 +137,46 @@ class Batch6LedgerProjectionReconciliationTest extends TestCase
         $this->assertSame('100.00', $account->fresh()->principal_balance);
         $this->assertSame(Sale::PAYMENT_STATUS_UNPAID, $sale->fresh()->payment_status);
         $this->assertSame('100.00', DB::table('account_balance_snapshots')->where('id', $snapshot->id)->value('principal_balance'));
+    }
+
+    public function test_reconciliation_detects_mismatched_payment_allocation_without_repairing_it(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        app(SalePostingService::class)->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-01'),
+            '100.00',
+            'Allocation integrity sale',
+            'batch-6-allocation-sale',
+        );
+
+        $payment = app(PaymentPostingService::class)->post(
+            $owner,
+            $customer,
+            '40.00',
+            CarbonImmutable::parse('2026-11-10'),
+            'CASH',
+            null,
+            'Allocation integrity payment',
+            'batch-6-allocation-payment',
+        );
+
+        DB::table('payment_allocations')
+            ->where('shop_id', $shop->getKey())
+            ->where('payment_id', $payment->getKey())
+            ->update(['total_allocated' => '39.00']);
+
+        $report = app(ReconciliationService::class)->reconcileCustomer($customer);
+
+        $this->assertFalse($report['consistent']);
+        $this->assertContains('allocation_header_mismatch', array_column($report['discrepancies'], 'type'));
+        $this->assertSame('39.00', DB::table('payment_allocations')
+            ->where('payment_id', $payment->getKey())
+            ->value('total_allocated'));
     }
 
     public function test_reconciliation_rejects_customer_from_another_shop(): void
