@@ -7,12 +7,14 @@ use App\Models\CustomerAccount;
 use App\Models\Sale;
 use App\Models\Shop;
 use App\Models\User;
-use App\Modules\Financial\Application\ReconciliationService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
@@ -152,7 +154,7 @@ class ProjectionRepairConcurrencyTest extends TestCase
                 $response = app(Kernel::class)->handle($request);
                 $result = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
                 if ($response->getStatusCode() !== 200) {
-                    throw new \\RuntimeException('Repair API returned HTTP '.$response->getStatusCode().': '.json_encode($result));
+                    throw new \RuntimeException('Repair API returned HTTP '.$response->getStatusCode().': '.json_encode($result));
                 }
 
                 fwrite($childSocket, json_encode($result['data'], JSON_THROW_ON_ERROR)."\n");
