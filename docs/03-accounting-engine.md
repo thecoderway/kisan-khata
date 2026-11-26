@@ -10,7 +10,7 @@
 
 This document defines the technical architecture of the Kisan Khata financial calculation engine.
 
-The engine is responsible for recording financial transactions, maintaining consolidated customer balances, processing payments, calculating interest, maintaining customer advances, processing crop-season settlements, producing customer ledgers, preserving correction history and reproducing historical calculations.
+The engine is responsible for recording financial transactions, maintaining consolidated customer balances, processing payments, calculating interest, processing crop-season settlements, producing customer ledgers, preserving correction history and reproducing historical calculations.
 
 The engine must be independent of the web interface. All authoritative financial calculations must run in backend services. The frontend and future Android application must never independently calculate authoritative balances or interest.
 
@@ -60,9 +60,10 @@ The consolidated outstanding is the amount carried forward after processing elig
 
 New sales after the previous payment retain their individual sale dates. They must not inherit the calculation-cycle start date of an older consolidated outstanding balance.
 
-### 4.5 Customer Advance
+### 4.5 Excess Payment Rejection
 
-An advance represents money received beyond the customer's complete payable amount. It must be separately identifiable and must not be represented as a negative sale.
+Payments exceeding the complete payable amount are rejected before posting. Customer advance balances and future-sale advance adjustments are not supported.
+
 
 ### 4.6 Interest and Settlement
 
@@ -79,7 +80,6 @@ Conceptual transaction types:
 - PAYMENT
 - INTEREST_CALCULATION
 - INTEREST_POSTING
-- CUSTOMER_ADVANCE
 - SETTLEMENT
 - ADJUSTMENT
 
@@ -99,14 +99,13 @@ Every transaction must belong to the correct tenant and customer.
 
 ## 6. Consolidated Customer Account Model
 
-Maintain one consolidated account per customer per shop. It must represent existing carried-forward outstanding, new credit sales, calculated interest, payments, customer advances, settlements and approved adjustments.
+Maintain one consolidated account per customer per shop. It must represent existing carried-forward outstanding, new credit sales, calculated interest, payments, settlements and approved adjustments.
 
 Preserve the distinction between:
 
 1. Consolidated carried-forward balance.
 2. Individual new sales not yet incorporated into a payment calculation.
 3. Separately maintained interest, where the selected policy requires it.
-4. Customer advance balance.
 
 Prevent the same sale or interest amount from being counted twice.
 
@@ -130,7 +129,7 @@ Responsibilities:
 6. Determine complete payable amount.
 7. Subtract the received payment.
 8. Carry forward the remaining outstanding.
-9. Record excess as customer advance, if applicable.
+9. Reject the entire payment if its amount exceeds total payable; do not create a payment or advance posting.
 10. Update account projections.
 11. Record transaction and audit history.
 12. Return an explainable payment result.
@@ -145,7 +144,8 @@ The engine must ensure the same elapsed period is not charged interest twice. Fo
 
 ### 7.3 Excess Payment
 
-If payment exceeds complete payable, outstanding becomes zero and excess becomes a separately stored customer advance, traceable in the ledger. Automatic use of advances against future sales requires a separately approved business rule.
+Reject the entire payment when its amount exceeds outstanding principal plus posted unpaid interest. Do not post a partial payment, customer advance, ledger entry or balance update for the rejected request.
+
 
 ## 8. Interest Calculation Engine
 
@@ -289,7 +289,7 @@ Responsibilities:
 - Fetch chronological customer financial activity.
 - Apply date filters.
 - Calculate opening, running and closing balances.
-- Display credit sales, payments, interest, advances and settlements.
+- Display credit sales, payments, interest and settlements.
 - Explain calculation history.
 - Return printable ledger data.
 
@@ -377,7 +377,7 @@ These are architectural boundaries, not mandatory class names. Implementation ma
 - Payment cannot be processed twice.
 - Same-date payments do not duplicate interest.
 - Payment after new sales calculates eligible interest correctly.
-- Excess payment creates customer advance.
+- Excess payment is rejected; no advance balance is created.
 - Concurrent payments do not corrupt balances.
 - Owner correction preserves previous values and recalculates affected results.
 - Manager and Staff cannot edit posted payments.
@@ -423,7 +423,7 @@ Tests depending on unresolved policies remain pending until those policies are a
 
 ## 19. Accounting Engine Acceptance Criteria
 
-The engine is acceptable only when every customer balance is explainable; consolidated payments follow approved rules; no sale-level allocation is required; same-date payments do not duplicate interest; new sales retain their own interest dates; advances are separately identifiable; interest uses Actual Days / 30 and approved triggers; historical calculations are reproducible; Owner corrections preserve immutable audit history; concurrent operations remain consistent; projections are rebuildable; tenant isolation is enforced; and automated financial tests pass.
+The engine is acceptable only when every customer balance is explainable; consolidated payments follow approved rules; internal FIFO allocation is required while customer-facing payments remain consolidated; same-date payments do not duplicate interest; new sales retain their own interest dates; excess payments are rejected and no advance balance exists; interest uses Actual Days / 30 and approved triggers; historical calculations are reproducible; Owner corrections preserve immutable audit history; concurrent operations remain consistent; projections are rebuildable; tenant isolation is enforced; and automated financial tests pass.
 
 ## 20. Implementation Dependencies
 
@@ -435,7 +435,7 @@ The following decisions must be finalized before implementing the corresponding 
 4. Grace-period eligibility boundary.
 5. Same-date payment and Auto Settlement execution ordering.
 6. Crop-season settlement accounting.
-7. Customer advance adjustment against future sales.
+7. Customer advances are not supported; excess payments are rejected under ADR-0012.
 8. Backdated correction and recalculation behavior.
 9. Final financial database schema and ledger representation.
 
