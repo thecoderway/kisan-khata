@@ -6,9 +6,11 @@ use App\Models\Customer;
 use App\Models\CustomerAccount;
 use App\Models\FinancialTransaction;
 use App\Models\IdempotencyKey;
+use App\Models\LedgerEntry;
 use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\User;
+use Brick\Math\BigDecimal;
 use DateTimeInterface;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -103,6 +105,20 @@ class SalePostingService
                 ]);
                 $sale->save();
 
+                // Every posted Sale creates the authoritative principal debit.
+                // A SALE_DAY_AUTO payment below offsets this with its own credit.
+                $this->postLedgerEntry(
+                    $customer,
+                    $saleTransaction,
+                    $sale,
+                    null,
+                    'SALE',
+                    '1250.00' === $normalizedAmount ? $normalizedAmount : $normalizedAmount,
+                    '0.00',
+                    $effectiveDate,
+                );
+                $this->adjustPrincipalProjection($account, $normalizedAmount);
+
                 $this->audit->recordTransaction(
                     $actor,
                     $customer,
@@ -171,6 +187,22 @@ class SalePostingService
                             ]);
                             $payment->save();
 
+                            $this->postLedgerEntry(
+                                $customer,
+                                $paymentTransaction,
+                                $sale,
+                                $payment,
+                                'PAYMENT',
+                                '0.00',
+                                $normalizedAmount,
+                                $effectiveDate,
+                            );
+                            $lockedAccount = CustomerAccount::query()
+                                ->where('customer_id', $customer->getKey())
+                                ->lockForUpdate()
+                                ->firstOrFail();
+                            $this->adjustPrincipalProjection($lockedAccount, '-'.$normalizedAmount);
+
                             $this->audit->recordTransaction(
                                 $actor,
                                 $customer,
@@ -197,6 +229,46 @@ class SalePostingService
         return Sale::query()
             ->where('financial_transaction_id', $saleTransaction->getKey())
             ->firstOrFail();
+    }
+
+    private function postLedgerEntry(
+        Customer $customer,
+        FinancialTransaction $transaction,
+        Sale $sale,
+        ?Payment $payment,
+        string $entryKind,
+        string $debit,
+        string $credit,
+        string $effectiveDate,
+    ): void {
+        LedgerEntry::query()->create([
+            'customer_id' => $customer->getKey(),
+            'financial_transaction_id' => $transaction->getKey(),
+            'sale_id' => $sale->getKey(),
+            'payment_id' => $payment?->getKey(),
+            'component' => 'PRINCIPAL',
+            'entry_kind' => $entryKind,
+            'debit_amount' => $debit,
+            'credit_amount' => $credit,
+            'effective_date' => $effectiveDate,
+            'sequence_number' => 1,
+        ]);
+    }
+
+    private function adjustPrincipalProjection(CustomerAccount $account, string $delta): void
+    {
+        $principal = BigDecimal::of((string) $account->principal_balance)->plus($delta);
+
+        if ($principal->isNegative()) {
+            throw new ConflictHttpException('A Sale-day payment cannot exceed its own posted principal.');
+        }
+
+        $account->forceFill([
+            'principal_balance' => (string) $principal->toScale(2),
+            'total_payable' => (string) $principal->plus((string) $account->interest_balance)->toScale(2),
+            'last_financial_event_at' => now(),
+            'projection_version' => (int) $account->projection_version + 1,
+        ])->save();
     }
 
     private function normalizeAmount(string|int $amount): string
