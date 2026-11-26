@@ -4,7 +4,6 @@ namespace Tests\Feature\Financial;
 
 use App\Models\Customer;
 use App\Models\CustomerAccount;
-use App\Models\InterestCalculationRun;
 use App\Models\InterestSettlementRun;
 use App\Models\Sale;
 use App\Models\Shop;
