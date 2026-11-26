@@ -134,8 +134,9 @@ There are no custom per-user permissions in the initial release.
 - View, add and edit customer profile information.
 - Record credit sales.
 - Record payments.
-- View own work and transaction history.
-- Cannot delete customers or edit/delete posted financial transactions.
+- View all Customers and all posted Sales, Payments and Customer Ledger records within the assigned Shop, regardless of creator.
+- Record new credit Sales and Payments.
+- Cannot revise posted Sales, reverse/replace Payments, edit/delete ledger entries, configure interest policies or access Owner-only financial audit/reconciliation workflows.
 - Has limited reports and settings access.
 
 ### Owner-only user administration and Owner protection
