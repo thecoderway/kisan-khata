@@ -5,10 +5,12 @@ namespace Tests\Feature\Financial;
 use App\Models\Customer;
 use App\Models\Shop;
 use App\Models\User;
+use App\Modules\Financial\Application\PaymentPostingService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -28,14 +30,27 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ]);
         [, , $foreign] = $this->context();
 
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $first, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Shop-wide Staff read test', 'batch-7-staff-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $first, '20.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Shop-wide Staff read test', 'batch-7-staff-payment',
+        );
+
         $staff = User::factory()->create([
             'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
         ]);
         Sanctum::actingAs($staff, ['app']);
 
-        $this->getJson('/api/v1/customers/'.$first->getKey().'/ledger')->assertOk();
+        $this->getJson('/api/v1/customers/'.$first->getKey().'/ledger')->assertOk()
+            ->assertJsonFragment(['sale_id' => $sale->getKey()]);
         $this->getJson('/api/v1/customers/'.$secondId.'/ledger')->assertOk();
         $this->getJson('/api/v1/customers/'.$foreign->getKey().'/ledger')->assertNotFound();
+        $this->getJson('/api/v1/sales')->assertOk()->assertJsonFragment(['sale_number' => $sale->sale_number]);
+        $this->getJson('/api/v1/payments')->assertOk()->assertJsonFragment(['payment_number' => $payment->payment_number]);
     }
 
     public function test_owner_can_create_effective_dated_shop_policy_and_audit_event(): void
