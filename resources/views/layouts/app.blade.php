@@ -33,7 +33,7 @@
             <a href="{{ route('financial.workspace', ['section' => 'sales']) }}" class="{{ request()->route('section') === 'sales' ? 'active' : '' }}"><i class="ti ti-receipt"></i><span>बिक्री</span></a>
             <a href="{{ route('financial.workspace', ['section' => 'payments']) }}" class="{{ request()->route('section') === 'payments' ? 'active' : '' }}"><i class="ti ti-cash"></i><span>जमा / भुगतान</span></a>
             <a href="{{ route('financial.workspace', ['section' => 'ledger']) }}" class="{{ request()->route('section') === 'ledger' ? 'active' : '' }}"><i class="ti ti-book-2"></i><span>ग्राहक खाता-बही</span></a>
-            @if (auth()->user()->role === \\App\\Models\\User::ROLE_OWNER)
+            @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                 <a href="{{ route('financial.workspace', ['section' => 'interest']) }}" class="{{ request()->route('section') === 'interest' ? 'active' : '' }}"><i class="ti ti-percentage"></i><span>ब्याज सेटिंग्स</span></a>
                 <a href="{{ route('financial.workspace', ['section' => 'reconciliation']) }}" class="{{ request()->route('section') === 'reconciliation' ? 'active' : '' }}"><i class="ti ti-scale"></i><span>लेखा मिलान</span></a>
                 <a href="{{ route('financial.workspace', ['section' => 'audit']) }}" class="{{ request()->route('section') === 'audit' ? 'active' : '' }}"><i class="ti ti-history"></i><span>वित्तीय ऑडिट</span></a>
