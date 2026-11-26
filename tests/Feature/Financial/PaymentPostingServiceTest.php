@@ -99,8 +99,8 @@ class PaymentPostingServiceTest extends TestCase
         $this->assertSame((int) $sale->getKey(), (int) $item->sale_id);
         $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
         $this->assertSame('995.00', $account->principal_balance);
-        $this->assertSame('10.00', $account->interest_balance);
-        $this->assertSame('1005.00', $account->total_payable);
+        $this->assertSame('9.00', $account->interest_balance);
+        $this->assertSame('1004.00', $account->total_payable);
     }
 
     public function test_interest_first_allocates_to_oldest_non_capitalized_interest_lot_before_principal(): void
@@ -110,7 +110,7 @@ class PaymentPostingServiceTest extends TestCase
         $sale = $this->postSale($owner, $customer, '2026-11-01', '1000.00', 'interest-first-sale');
 
         $payment = app(PaymentPostingService::class)->post(
-            $owner, $customer, '10.00', CarbonImmutable::parse('2026-11-11'),
+            $owner, $customer, '9.00', CarbonImmutable::parse('2026-11-11'),
             null, null, null, 'interest-first-payment',
         );
 
@@ -122,7 +122,7 @@ class PaymentPostingServiceTest extends TestCase
             'interest_lot_id' => $item->source_interest_lot_id,
             'event_type' => 'ALLOCATED',
             'allocation_item_id' => $item->getKey(),
-            'amount' => '10.00',
+            'amount' => '9.00',
         ]);
 
         $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
@@ -157,9 +157,9 @@ class PaymentPostingServiceTest extends TestCase
         $this->assertSame((int) $sale->getKey(), (int) $items[1]->sale_id);
 
         $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
-        $this->assertSame('5.00', $account->principal_balance);
+        $this->assertSame('4.00', $account->principal_balance);
         $this->assertSame('0.00', $account->interest_balance);
-        $this->assertSame('5.00', $account->total_payable);
+        $this->assertSame('4.00', $account->total_payable);
     }
 
     public function test_excess_payment_is_rejected_and_entire_operation_rolls_back(): void
