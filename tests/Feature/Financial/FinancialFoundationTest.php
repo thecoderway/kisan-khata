@@ -16,6 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -181,6 +182,40 @@ class FinancialFoundationTest extends TestCase
         } catch (ConflictHttpException) {
             $this->assertDatabaseCount('idempotency_keys', 1);
             $this->assertDatabaseCount('financial_transactions', 1);
+        }
+    }
+
+    public function test_financial_header_requires_matching_idempotency_operation_type(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $transactions = app(FinancialTransactionService::class);
+
+        try {
+            $transactions->executeForCustomer(
+                $owner,
+                $customer,
+                'SALE_POSTING',
+                'sale-post-mismatched-type',
+                ['amount' => '500.00'],
+                fn (CustomerAccount $account, IdempotencyKey $key): FinancialTransaction => $transactions->createHeader(
+                    $owner,
+                    $customer,
+                    $key,
+                    FinancialTransaction::TYPE_PAYMENT_POSTING,
+                    CarbonImmutable::parse('2026-11-26'),
+                ),
+            );
+
+            $this->fail('A mismatched transaction and idempotency type must be rejected.');
+        } catch (InvalidArgumentException) {
+            $this->assertDatabaseMissing('idempotency_keys', [
+                'shop_id' => $shop->getKey(),
+                'operation_type' => 'SALE_POSTING',
+            ]);
+            $this->assertDatabaseMissing('financial_transactions', [
+                'shop_id' => $shop->getKey(),
+                'customer_id' => $customer->getKey(),
+            ]);
         }
     }
 
