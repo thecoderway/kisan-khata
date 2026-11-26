@@ -187,7 +187,7 @@ class PaymentPostingService
                         'lot_sequence' => $item['lot_sequence'],
                     ]);
 
-                    $sequence++;
+                    ++$sequence;
                     LedgerEntry::query()->create([
                         'customer_id' => $customer->getKey(),
                         'financial_transaction_id' => $paymentTransaction->getKey(),
@@ -343,7 +343,7 @@ $this->projections->rebuildLocked($account, $customer, $paymentDateString, (int)
                     continue;
                 }
 
-                $componentSequence++;
+                ++$componentSequence;
                 $plan[] = [
                     'sale_id' => (int) $sale->getKey(),
                     'component_type' => $component['component_type'],
