@@ -16,7 +16,7 @@ class PaymentCorrectionController extends Controller
         $data = $request->validate([
             'reason' => ['required', 'string', 'min:1', 'max:500'],
             'replacement' => ['sometimes', 'nullable', 'array'],
-            'replacement.amount' => ['required_with:replacement', 'numeric', 'gt:0', 'decimal:0,2'],
+            'replacement.amount' => ['required_with:replacement', 'string', 'regex:/^\\d{1,13}(?:\\.\\d{1,2})?$/'],
             'replacement.payment_method' => ['nullable', 'string', 'max:32'],
             'replacement.reference_number' => ['nullable', 'string', 'max:128'],
             'replacement.description' => ['nullable', 'string', 'max:5000'],
