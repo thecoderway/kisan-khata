@@ -177,10 +177,25 @@ class ProjectionRepairConcurrencyTest extends TestCase
                 usleep(20_000);
             } while (microtime(true) < $deadline);
 
-            $this->assertTrue(
-                $observedLockWait,
-                'The repair connection must be observed waiting on the posting transaction lock before the posting commits.',
-            );
+            if (! $observedLockWait) {
+                $process = $observer->selectOne(
+                    'SELECT ID, USER, DB, COMMAND, TIME, STATE, INFO
+                     FROM information_schema.processlist
+                     WHERE ID = ?',
+                    [$repairConnectionId],
+                );
+
+                stream_set_blocking($parentSocket, false);
+                $workerMessage = fgets($parentSocket);
+                stream_set_blocking($parentSocket, true);
+
+                $this->fail(sprintf(
+                    'The repair connection was not observed in LOCK WAIT. Worker connection ID: %d; process: %s; worker message: %s',
+                    $repairConnectionId,
+                    json_encode($process, JSON_THROW_ON_ERROR),
+                    $workerMessage === false ? '[no worker response]' : trim($workerMessage),
+                ));
+            }
 
             $primary->commit();
 
