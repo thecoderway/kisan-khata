@@ -216,7 +216,7 @@ class PaymentPostingService
                     }
                 }
 
-$this->projections->rebuildLocked($account, $customer, $paymentDateString, (int) $paymentTransaction->getKey());
+$this->projections->rebuildLocked($account, $customer, $paymentDateString, (int) $paymentTransaction->getKey(), $paymentDateString);
 
                 $this->audit->recordTransaction(
                     $actor,
