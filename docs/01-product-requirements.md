@@ -275,7 +275,7 @@ The account must maintain:
 - Settlements.
 - Crop-season history.
 
-Payments are not allocated to individual sale IDs.
+Customer-facing payments remain consolidated; internal FIFO allocation across eligible Sales is required under ADR-0012.
 
 ### 8.4 Crop Season
 
