@@ -402,15 +402,17 @@ class FinancialPostingConcurrencyTest extends TestCase
                 ->whereIn('entity_id', $transactionIds)
                 ->delete();
             DB::table('interest_settlement_items')->whereIn('customer_id', $customerIds)->delete();
+            DB::table('interest_lot_events')->whereIn('customer_id', $customerIds)->delete();
+            DB::table('payment_allocation_items')->whereIn('customer_id', $customerIds)->delete();
+            DB::table('payment_allocations')->whereIn('customer_id', $customerIds)->delete();
+            DB::table('interest_lots')->whereIn('customer_id', $customerIds)->delete();
             DB::table('interest_calculation_items')->whereIn('customer_id', $customerIds)->delete();
             DB::table('interest_calculation_runs')->whereIn('customer_id', $customerIds)->delete();
             DB::table('interest_settlement_runs')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('interest_lot_events')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('interest_lots')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('payment_allocation_items')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('payment_allocations')->whereIn('customer_id', $customerIds)->delete();
             DB::table('payment_revisions')->whereIn('customer_id', $customerIds)->delete();
-            DB::table('sale_revisions')->whereIn('sale_id', DB::table('sales')->whereIn('customer_id', $customerIds)->pluck('id'))->delete();
+            DB::table('sale_revisions')
+                ->whereIn('sale_id', DB::table('sales')->whereIn('customer_id', $customerIds)->pluck('id'))
+                ->delete();
             DB::table('ledger_entries')->whereIn('customer_id', $customerIds)->delete();
             DB::table('payments')->whereIn('customer_id', $customerIds)->delete();
             DB::table('account_balance_snapshots')->whereIn('customer_id', $customerIds)->delete();
