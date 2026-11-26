@@ -1,8 +1,8 @@
 # Phase 5 — Batch 8 Financial Integrity and Release Gate
 
 **Last updated:** 2026-11-26  
-**Current `main` baseline:** `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`  
-**Delivery state:** Batches 8.2 and 8.3 are merged through PRs #44 and #45. Batch 8.4 documentation is merged via PR #46. Batch 8.5 adds rollback/audit atomicity and reconciliation authorization regression coverage; it does not declare Phase 5 released.
+**Current `main` baseline:** `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c`  
+**Delivery state:** Batches 8.2, 8.3, 8.4 and 8.5 are merged via PRs #44–#47. Batch 8.5 adds repair rollback/audit atomicity and reconciliation authorization regression coverage; it does not declare Phase 5 released.
 
 ## 1. Purpose and scope
 
@@ -102,9 +102,9 @@ This CI run verifies the tested PR #45 head. It does not establish that the enti
 | Batch 8.2 — Lock ordering and settlement calendar validation | PR #44 merged |
 | Batch 8.3 — API-path lock-first atomic repair | PR #45 merged |
 | Batch 8.4 — Documentation/release-gate synchronization | PR #46 merged; merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c` |
-| Batch 8.5 — Repair rollback/audit atomicity and reconciliation authorization regression coverage | Implementation PR in progress; CI evidence pending |
+| Batch 8.5 — Repair rollback/audit atomicity and reconciliation authorization regression coverage | PR #47 merged; merge commit `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c` |
 
-Current `main` baseline for this document: `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`.
+Current `main` baseline for this document: `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c`.
 
 ## 7. Batch 8.5 — targeted release-gate regression coverage
 
@@ -114,7 +114,7 @@ The current implementation branch adds:
 - API authorization tests proving Manager and Staff cannot repair projections and an Owner cannot address a Customer belonging to another Shop.
 - Policy unit coverage for Manager, Staff, inactive Owner and cross-Shop Owner denial.
 
-CI evidence is pending. These tests cover the repair path only; they do not establish rollback/concurrency acceptance for all Sale, Payment, reversal or settlement workflows.
+GitHub Actions run [45872271027](https://github.com/thecoderway/kisan-khata/actions/runs/45872271027) completed successfully. All steps passed, including the MySQL row-lock integration test, remaining Laravel test suite, Pint formatting, Composer validation and Vite production build. These tests cover the repair path and reconciliation authorization matrix only; they do not establish rollback/concurrency acceptance for all Sale, Payment, reversal or settlement workflows.
 
 ## 8. Remaining Phase 5 acceptance and release gate
 
