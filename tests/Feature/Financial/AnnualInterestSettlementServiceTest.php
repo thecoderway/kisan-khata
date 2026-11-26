@@ -89,6 +89,44 @@ class AnnualInterestSettlementServiceTest extends TestCase
         $this->assertSame('900.00', $account->principal_balance);
     }
 
+    public function test_scheduler_catches_up_all_missed_settlement_dates_in_chronological_order(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner, '3.00000000');
+
+        app(SalePostingService::class)->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-10-01'),
+            '1000.00',
+            'Missed settlement recovery sale',
+            'missed-settlement-recovery-sale',
+        );
+
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-11-02 01:00:00', 'Asia/Kolkata'));
+
+        try {
+            $service = app(AnnualInterestSettlementService::class);
+            $first = $service->runDueSettlements();
+            $second = $service->runDueSettlements();
+
+            $this->assertSame(1, $first['shops']);
+            $this->assertSame(2, $first['completed']);
+            $this->assertSame(2, $second['completed']);
+            $this->assertDatabaseCount('interest_settlement_runs', 2);
+            $this->assertDatabaseCount('interest_calculation_runs', 2);
+            $this->assertSame(
+                ['2026-03-30', '2026-10-30'],
+                InterestSettlementRun::query()->orderBy('settlement_date')->pluck('settlement_date')->map(
+                    fn ($date) => CarbonImmutable::parse($date)->toDateString()
+                )->all(),
+            );
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
     public function test_non_settlement_date_is_skipped_without_financial_writes(): void
     {
         [$shop, $owner] = $this->context();
