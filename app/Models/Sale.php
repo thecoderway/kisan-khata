@@ -6,6 +6,7 @@ use App\Models\Concerns\BelongsToCurrentShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 class Sale extends Model
@@ -93,9 +94,9 @@ class Sale extends Model
         return $this->hasMany(SaleRevision::class);
     }
 
-    /** @return HasMany<Payment, $this> */
-    public function saleDayPayments(): HasMany
+    /** @return HasOne<Payment, $this> */
+    public function saleDayPayment(): HasOne
     {
-        return $this->hasMany(Payment::class, 'source_sale_id');
+        return $this->hasOne(Payment::class, 'source_sale_id');
     }
 }
