@@ -24,7 +24,9 @@ class AnnualInterestSettlementService
     ) {}
 
     /**
-     * Process the previous local calendar day for every active shop.
+     * Process every configured settlement date that has closed in each active
+     * Shop. This deliberately scans policy-version date ranges so a scheduler
+     * outage cannot permanently skip a settlement checkpoint.
      *
      * @return array{shops:int, due:int, completed:int, failed:int, skipped:int}
      */
@@ -37,13 +39,21 @@ class AnnualInterestSettlementService
 
             try {
                 $timezone = $shop->timezone ?: config('app.timezone', 'UTC');
-                $settlementDate = CarbonImmutable::now($timezone)->subDay()->toDateString();
-                $result = $this->settleShopDate($shop, $settlementDate);
+                $throughDate = CarbonImmutable::now($timezone)->subDay()->toDateString();
 
-                $stats['due'] += $result['due'];
-                $stats['completed'] += $result['completed'];
-                $stats['failed'] += $result['failed'];
-                $stats['skipped'] += $result['skipped'];
+                foreach ($this->scheduledSettlementDates((int) $shop->getKey(), $throughDate, $timezone) as $settlementDate) {
+                    try {
+                        $result = $this->settleShopDate($shop, $settlementDate);
+
+                        $stats['due'] += $result['due'];
+                        $stats['completed'] += $result['completed'];
+                        $stats['failed'] += $result['failed'];
+                        $stats['skipped'] += $result['skipped'];
+                    } catch (Throwable $exception) {
+                        report($exception);
+                        $stats['failed']++;
+                    }
+                }
             } catch (Throwable $exception) {
                 report($exception);
                 $stats['failed']++;
@@ -51,6 +61,78 @@ class AnnualInterestSettlementService
         }
 
         return $stats;
+    }
+
+    /**
+     * Return configured settlement dates from effective policy versions that
+     * fall on or before the last closed Shop-local calendar day.
+     *
+     * @return list<string>
+     */
+    private function scheduledSettlementDates(int $shopId, string $throughDate, string $timezone): array
+    {
+        $policy = DB::table('interest_policies')
+            ->where('shop_id', $shopId)
+            ->where('policy_code', InterestPolicyResolver::DEFAULT_POLICY_CODE)
+            ->first();
+
+        if ($policy === null) {
+            return [];
+        }
+
+        $versions = DB::table('interest_policy_versions')
+            ->where('shop_id', $shopId)
+            ->where('interest_policy_id', $policy->id)
+            ->where('effective_from', '<=', $throughDate)
+            ->orderBy('effective_from')
+            ->get([
+                'effective_from',
+                'effective_to',
+                'annual_settlement_month_1',
+                'annual_settlement_day_1',
+                'annual_settlement_month_2',
+                'annual_settlement_day_2',
+            ]);
+
+        $dates = [];
+
+        foreach ($versions as $version) {
+            $firstYear = CarbonImmutable::parse($version->effective_from, $timezone)->year;
+            $lastYear = CarbonImmutable::parse($throughDate, $timezone)->year;
+            $effectiveTo = $version->effective_to === null
+                ? null
+                : CarbonImmutable::parse($version->effective_to, $timezone)->toDateString();
+
+            for ($year = $firstYear; $year <= $lastYear; $year++) {
+                foreach ([1, 2] as $slot) {
+                    $month = (int) $version->{'annual_settlement_month_'.$slot};
+                    $day = (int) $version->{'annual_settlement_day_'.$slot};
+
+                    try {
+                        $date = CarbonImmutable::createSafe($year, $month, $day, 0, 0, 0, $timezone);
+                    } catch (\\InvalidArgumentException) {
+                        // For example, a 29 February settlement exists only in leap years.
+                        continue;
+                    }
+
+                    $dateString = $date->toDateString();
+
+                    if (
+                        $dateString < $version->effective_from
+                        || ($effectiveTo !== null && $dateString >= $effectiveTo)
+                        || $dateString > $throughDate
+                    ) {
+                        continue;
+                    }
+
+                    $dates[$dateString] = $dateString;
+                }
+            }
+        }
+
+        sort($dates, SORT_STRING);
+
+        return array_values($dates);
     }
 
     /**
