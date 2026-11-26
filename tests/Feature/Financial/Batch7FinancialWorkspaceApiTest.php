@@ -226,12 +226,12 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
                         'user_agent' => 'Batch 8.5 regression',
                     ]);
 
-                    throw new \\RuntimeException('Simulated audit persistence failure.');
+                    throw new \RuntimeException('Simulated audit persistence failure.');
                 },
             );
 
             $this->fail('The simulated audit failure should abort the repair transaction.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame('Simulated audit persistence failure.', $exception->getMessage());
         }
 
