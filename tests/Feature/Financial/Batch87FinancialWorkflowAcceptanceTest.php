@@ -1,27 +1,27 @@
 <?php
 
-namespace Tests\\Feature\\Financial;
+namespace Tests\Feature\Financial;
 
-use App\\Models\\Customer;
-use App\\Models\\CustomerAccount;
-use App\\Models\\Payment;
-use App\\Models\\PaymentAllocationItem;
-use App\\Models\\Sale;
-use App\\Models\\Shop;
-use App\\Models\\User;
-use App\\Modules\\Financial\\Application\\AnnualInterestSettlementService;
-use App\\Modules\\Financial\\Application\\FinancialAuditService;
-use App\\Modules\\Financial\\Application\\PaymentPostingService;
-use App\\Modules\\Financial\\Application\\PaymentReversalService;
-use App\\Modules\\Financial\\Application\\ReconciliationService;
-use App\\Modules\\Financial\\Application\\SalePostingService;
-use App\\Tenancy\\CurrentShop;
-use Carbon\\CarbonImmutable;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\DB;
-use Laravel\\Sanctum\\Sanctum;
+use App\Models\Customer;
+use App\Models\CustomerAccount;
+use App\Models\Payment;
+use App\Models\PaymentAllocationItem;
+use App\Models\Sale;
+use App\Models\Shop;
+use App\Models\User;
+use App\Modules\Financial\Application\AnnualInterestSettlementService;
+use App\Modules\Financial\Application\FinancialAuditService;
+use App\Modules\Financial\Application\PaymentPostingService;
+use App\Modules\Financial\Application\PaymentReversalService;
+use App\Modules\Financial\Application\ReconciliationService;
+use App\Modules\Financial\Application\SalePostingService;
+use App\Tenancy\CurrentShop;
+use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\Sanctum;
 use RuntimeException;
-use Tests\\TestCase;
+use Tests\TestCase;
 
 class Batch87FinancialWorkflowAcceptanceTest extends TestCase
 {
@@ -116,7 +116,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
         [, $owner, $customer] = $this->context();
 
         $calls = 0;
-        $audit = \\Mockery::mock(FinancialAuditService::class);
+        $audit = \Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')
             ->twice()
             ->andReturnUsing(function (...$arguments) use (&$calls): void {
@@ -154,7 +154,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
     public function test_payment_allocation_and_interest_checkpoint_roll_back_when_audit_fails(): void
     {
         [$shop, $owner, $customer] = $this->context();
-        $this->createPolicy($shop, $owner, '3.00000000', 0);
+        $this->createPolicy($shop, $owner, '0.00000000', 0);
 
         $sale = app(SalePostingService::class)->post(
             $owner,
@@ -166,7 +166,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
             'batch-8-7-payment-rollback-sale',
         );
 
-        $audit = \\Mockery::mock(FinancialAuditService::class);
+        $audit = \Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')
             ->once()
             ->andThrow(new RuntimeException('Simulated payment audit failure.'));
