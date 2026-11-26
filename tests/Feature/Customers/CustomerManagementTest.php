@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Shop;
 use App\Models\ShopSetting;
 use App\Models\User;
+use App\Modules\Customers\Application\CustomerDeletionEligibility;
 use App\Tenancy\CurrentShop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -388,7 +389,7 @@ class CustomerManagementTest extends TestCase
 
         Schema::shouldReceive('hasTable')->once()->with('customer_accounts')->andReturn(false);
 
-        $eligibility = app(\App\Modules\Customers\Application\CustomerDeletionEligibility::class)
+        $eligibility = app(CustomerDeletionEligibility::class)
             ->check($customer);
 
         $this->assertFalse($eligibility['eligible']);
