@@ -3,16 +3,15 @@
 namespace App\Modules\Financial\Application;
 
 use App\Models\Customer;
-use App\Models\CustomerAccount;
 use App\Models\FinancialTransaction;
 use App\Models\IdempotencyKey;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
+use Closure;
 use DateTimeInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Closure;
 use InvalidArgumentException;
 use LogicException;
 
@@ -36,8 +35,7 @@ class FinancialTransactionService
         string $idempotencyKey,
         array $requestPayload,
         Closure $operation,
-    ): FinancialTransaction
-    {
+    ): FinancialTransaction {
         $this->assertCurrentOwnership($actor, $customer);
 
         return DB::transaction(function () use (
