@@ -410,6 +410,8 @@ Batch 8.8 is merged through PR #50 at merge commit `c740e44434071062c4cb8eac546f
 
 **Observed CI evidence:** [run 45879804264](https://github.com/thecoderway/kisan-khata/actions/runs/45879804264) completed successfully on head `5fd97786b7ca78bd22a1f200d36cebf551182be4`. Composer validation, Pint, Vite production build, MySQL 8.4 row-lock integration group and remaining Laravel test suite all passed. The three new concurrency tests passed as part of the MySQL row-lock group. No application behavior or schema changed; this batch adds test coverage only.
 
-The post-merge `main` CI run [45880048532](https://github.com/thecoderway/kisan-khata/actions/runs/45880048532) was still in progress at the time of this status update; verify its final conclusion before declaring post-merge CI green.
+The post-merge `main` CI run [45880048532](https://github.com/thecoderway/kisan-khata/actions/runs/45880048532) completed successfully on merge commit `c740e44434071062c4cb8eac546f375a7e234126`; post-merge CI is green.
+
+Detailed scenario setup, locking assertions, fixture cleanup and CI evidence are recorded in [Batch 8.8 MySQL financial posting concurrency acceptance](phase-5-batch-8-8-financial-posting-concurrency-acceptance.md).
 
 **Scope and safety:** no production database, production migration, backfill, deployment or release was performed or authorized. Product Owner browser/UI smoke acceptance remains outstanding; Phase 14 production readiness and repository-admin branch-protection verification remain separate gates.
