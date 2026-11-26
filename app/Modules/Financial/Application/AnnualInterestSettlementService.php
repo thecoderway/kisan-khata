@@ -110,7 +110,7 @@ class AnnualInterestSettlementService
 
                     try {
                         $date = CarbonImmutable::createSafe($year, $month, $day, 0, 0, 0, $timezone);
-                    } catch (\\InvalidArgumentException) {
+                    } catch (\InvalidArgumentException) {
                         // For example, a 29 February settlement exists only in leap years.
                         continue;
                     }
