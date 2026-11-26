@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Modules\Financial\Application\PaymentReversalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class PaymentCorrectionController extends Controller
 {
@@ -29,6 +30,8 @@ class PaymentCorrectionController extends Controller
         $paymentModel = Payment::query()
             ->where('customer_id', $customerModel->getKey())
             ->findOrFail($payment);
+
+        Gate::authorize('correct', $paymentModel);
 
         $result = $corrections->correct(
             $request->user(),

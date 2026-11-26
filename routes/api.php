@@ -6,7 +6,12 @@ use App\Http\Controllers\Api\Users\ShopUserLifecycleController;
 use App\Http\Controllers\Api\Users\UserAuditHistoryController;
 use App\Modules\Customers\Presentation\Controllers\Api\CustomerController;
 use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
+use App\Modules\Financial\Presentation\Controllers\Api\CustomerLedgerController;
+use App\Modules\Financial\Presentation\Controllers\Api\CustomerReconciliationController;
+use App\Modules\Financial\Presentation\Controllers\Api\FinancialAdministrationController;
+use App\Modules\Financial\Presentation\Controllers\Api\PaymentController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentCorrectionController;
+use App\Modules\Financial\Presentation\Controllers\Api\SaleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +44,13 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
         });
 
         Route::prefix('v1')->group(function (): void {
+            Route::get('/sales', [SaleController::class, 'index']);
+            Route::post('/sales', [SaleController::class, 'store'])->middleware('throttle:60,1');
+            Route::get('/sales/{sale}', [SaleController::class, 'show']);
+            Route::post('/sales/{sale}/revision', [SaleController::class, 'revise'])->middleware('throttle:10,1');
+            Route::get('/payments', [PaymentController::class, 'index']);
+            Route::post('/payments', [PaymentController::class, 'store'])->middleware('throttle:60,1');
+            Route::get('/payments/{payment}', [PaymentController::class, 'show']);
             Route::get('/customers', [CustomerController::class, 'index']);
             Route::post('/customers', [CustomerController::class, 'store']);
             Route::get('/customers/{customer}', [CustomerController::class, 'show']);
@@ -47,7 +59,15 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::post('/customers/{customer}/reactivate', [CustomerLifecycleController::class, 'reactivate']);
             Route::delete('/customers/{customer}', [CustomerLifecycleController::class, 'softDelete']);
             Route::post('/customers/{customer}/restore', [CustomerLifecycleController::class, 'restore']);
-            Route::post('/customers/{customer}/payments/{payment}/correction', [PaymentCorrectionController::class, 'store']);
+            Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class, 'show']);
+            Route::get('/reconciliation/customers/{customer}', [CustomerReconciliationController::class, 'show']);
+            Route::post('/reconciliation/customers/{customer}/repair', [FinancialAdministrationController::class, 'repairCustomer'])->middleware('throttle:5,1');
+            Route::get('/interest-policy', [FinancialAdministrationController::class, 'shopPolicy']);
+            Route::post('/interest-policy', [FinancialAdministrationController::class, 'updateShopPolicy'])->middleware('throttle:10,1');
+            Route::get('/customers/{customer}/interest-policy', [FinancialAdministrationController::class, 'customerPolicy']);
+            Route::post('/customers/{customer}/interest-policy', [FinancialAdministrationController::class, 'updateCustomerPolicy'])->middleware('throttle:10,1');
+            Route::get('/financial-audit', [FinancialAdministrationController::class, 'auditHistory']);
+            Route::post('/customers/{customer}/payments/{payment}/correction', [PaymentCorrectionController::class, 'store'])->middleware('throttle:10,1');
         });
     });
 });

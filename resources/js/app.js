@@ -6,6 +6,9 @@ import { registerCustomerDirectory } from './customer-directory';
 import { registerUserDirectory } from './user-directory';
 import { registerUserAuditHistory } from './user-audit-history';
 
+
+if (document.getElementById('financial-results')) import('./financial-workspace');
+
 window.Alpine = Alpine;
 
 registerCustomerLocation(Alpine);
