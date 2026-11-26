@@ -50,6 +50,10 @@ class CustomerAccountLockService
             $account = CustomerAccount::query()->create([
                 'customer_id' => $customerId,
             ]);
+
+            // Hydrate database defaults (balances and projection version) before
+            // any posting service applies arithmetic to this new account.
+            $account->refresh();
         }
 
         if ((int) $account->shop_id !== $shopId || (int) $account->customer_id !== $customerId) {
