@@ -1,17 +1,16 @@
 <?php
 
-namespace App\\Modules\\Financial\\Application;
+namespace App\Modules\Financial\Application;
 
-use App\\Models\\AccountBalanceSnapshot;
-use App\\Models\\Customer;
-use App\\Models\\CustomerAccount;
-use App\\Models\\FinancialTransaction;
-use App\\Models\\LedgerEntry;
-use App\\Models\\Sale;
-use App\\Tenancy\\CurrentShop;
-use Brick\\Math\\BigDecimal;
+use App\Models\AccountBalanceSnapshot;
+use App\Models\Customer;
+use App\Models\CustomerAccount;
+use App\Models\LedgerEntry;
+use App\Models\Sale;
+use App\Tenancy\CurrentShop;
+use Brick\Math\BigDecimal;
 use DomainException;
-use Illuminate\\Support\\Facades\\DB;
+use Illuminate\Support\Facades\DB;
 use LogicException;
 
 class BalanceProjectionService
@@ -40,6 +39,7 @@ class BalanceProjectionService
         Customer $customer,
         ?string $changedFromDate = null,
         ?int $sourceTransactionId = null,
+        ?string $interestCutoffDate = null,
     ): CustomerAccount {
         if (DB::transactionLevel() < 1) {
             throw new LogicException('A balance projection rebuild requires an active financial transaction.');
@@ -72,6 +72,7 @@ class BalanceProjectionService
             'interest_balance' => $balances['interest_balance'],
             'total_payable' => $balances['total_payable'],
             'last_financial_event_at' => $lastFinancialEventAt,
+            'last_interest_cutoff_date' => $interestCutoffDate ?? $account->last_interest_cutoff_date?->format('Y-m-d'),
             'projection_version' => (int) $account->projection_version + 1,
         ])->save();
 
@@ -173,12 +174,28 @@ class BalanceProjectionService
         ?string $changedFromDate,
         ?int $sourceTransactionId,
     ): void {
+        $refreshFromDate = $changedFromDate;
+
+        if ($sourceTransactionId !== null) {
+            $sourceMinDate = LedgerEntry::query()
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('financial_transaction_id', $sourceTransactionId)
+                ->min('effective_date');
+
+            if ($sourceMinDate !== null) {
+                $refreshFromDate = $refreshFromDate === null
+                    ? (string) $sourceMinDate
+                    : min($refreshFromDate, (string) $sourceMinDate);
+            }
+        }
+
         $base = DB::table('account_balance_snapshots')
             ->where('shop_id', $customer->shop_id)
             ->where('customer_id', $customer->getKey());
 
-        if ($changedFromDate !== null) {
-            $base->where('as_of_date', '>=', $changedFromDate);
+        if ($refreshFromDate !== null) {
+            $base->where('as_of_date', '>=', $refreshFromDate);
         }
 
         $dates = $base->pluck('as_of_date')
