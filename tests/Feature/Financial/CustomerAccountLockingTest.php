@@ -87,6 +87,8 @@ class CustomerAccountLockingTest extends TestCase
                 $primary->rollBack();
             }
 
+            DB::table('customer_accounts')->where('id', $account->getKey())->delete();
+
             DB::disconnect($connectionName);
             DB::purge($connectionName);
             app(CurrentShop::class)->clear();
