@@ -263,6 +263,63 @@ class ReconciliationService
                     ];
                 }
             }
+
+            $expectedGroups = [];
+            foreach (DB::table('payment_allocation_items')
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('allocation_id', $allocation->id)
+                ->get(['sale_id', 'component_type', 'amount']) as $item) {
+                $component = match ($item->component_type) {
+                    'PRINCIPAL', 'CAPITALIZED_INTEREST_PRINCIPAL' => 'PRINCIPAL',
+                    'NON_CAPITALIZED_INTEREST' => 'INTEREST',
+                    default => null,
+                };
+
+                if ($component === null) {
+                    $discrepancies[] = [
+                        'type' => 'payment_allocation_component_unknown',
+                        'payment_id' => (int) $payment->getKey(),
+                        'component_type' => $item->component_type,
+                    ];
+
+                    continue;
+                }
+
+                $key = $item->sale_id.'|'.$component;
+                $expectedGroups[$key] = ($expectedGroups[$key] ?? BigDecimal::zero())
+                    ->plus((string) $item->amount);
+            }
+
+            $entryKind = $payment->payment_type === Payment::TYPE_REVERSAL ? 'REVERSAL' : 'PAYMENT';
+            $actualGroups = [];
+            foreach (LedgerEntry::query()
+                ->where('shop_id', $customer->shop_id)
+                ->where('customer_id', $customer->getKey())
+                ->where('payment_id', $payment->getKey())
+                ->where('entry_kind', $entryKind)
+                ->get(['sale_id', 'component', 'debit_amount', 'credit_amount']) as $entry) {
+                $key = $entry->sale_id.'|'.$entry->component;
+                $amount = $payment->payment_type === Payment::TYPE_REVERSAL
+                    ? BigDecimal::of((string) $entry->debit_amount)->minus((string) $entry->credit_amount)
+                    : BigDecimal::of((string) $entry->credit_amount)->minus((string) $entry->debit_amount);
+                $actualGroups[$key] = ($actualGroups[$key] ?? BigDecimal::zero())->plus($amount);
+            }
+
+            foreach (array_unique([...array_keys($expectedGroups), ...array_keys($actualGroups)]) as $key) {
+                $expectedAmount = $expectedGroups[$key] ?? BigDecimal::zero();
+                $actualAmount = $actualGroups[$key] ?? BigDecimal::zero();
+
+                if ($expectedAmount->compareTo($actualAmount) !== 0) {
+                    $discrepancies[] = [
+                        'type' => 'payment_allocation_ledger_mismatch',
+                        'payment_id' => (int) $payment->getKey(),
+                        'sale_component' => $key,
+                        'expected' => (string) $expectedAmount->toScale(2),
+                        'actual' => (string) $actualAmount->toScale(2),
+                    ];
+                }
+            }
         }
     }
 
