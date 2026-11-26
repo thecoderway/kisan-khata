@@ -270,16 +270,16 @@ Verify:
 - Payment date is validated.
 - Optional payment method and reference are supported.
 - Successful payment calculates eligible interest through the payment date.
-- Payment is subtracted from the consolidated payable balance.
+- Accepted Payment is internally allocated FIFO across eligible Sales, then by the effective per-Sale waterfall.
 - Remaining balance is carried forward from the payment date.
 - Excess payment is rejected before posting; no advance balance is created.
 - Duplicate payment posting is prevented.
 - Failed payment processing rolls back all related changes.
 - Concurrent payments do not corrupt customer balances.
 - Manager and Staff cannot edit or delete posted payments.
-- Owner can edit posted payments.
-- Owner correction preserves immutable audit history.
-- Owner correction triggers the required financial recalculation.
+- Owner can correct posted Payments only through reversal and optional replacement; direct edits are rejected.
+- Payment reversal/replacement preserves immutable original and allocation history.
+- Unlocked Sale revision preserves before/after values and is rejected for a Sale locked by a later Payment or annual settlement.
 
 ### 8.1 Multiple Payments on the Same Date
 
