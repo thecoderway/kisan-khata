@@ -881,7 +881,7 @@ ADR-0012 is the controlling Product Owner decision for Phase 5 financial behavio
 
 ## Phase 5 — Batch 6 implementation status (2026-11-26)
 
-Batch 5 Annual Interest Auto Settlement is merged through PR #40 (merge commit `b30348130141ab6a43d2a2a56e151d389e3c38f9`). Batch 6 Ledger Projection & Reconciliation implementation is complete on `feat/batch-6-ledger-projection-reconciliation`; PR #41 is open and its CI is green. See [Batch 6 design and implementation contract](phase-5-batch-6-ledger-projection-reconciliation.md). Batch 6 must centralize ledger-derived balance projections, provide a read-only reconciliation report and a separately invoked repair path, and pass MySQL 8.4 integration tests. No new migration, database backfill, production migration or deployment is authorized or included.
+Historical Batch 6 delivery note (superseded by Section 25): Batch 5 Annual Interest Auto Settlement merged through PR #40; Batch 6 Ledger Projection & Reconciliation merged through PR #41. See [Batch 6 design and implementation contract](phase-5-batch-6-ledger-projection-reconciliation.md). Batch 6 centralizes ledger-derived balance projections, provides a read-only reconciliation report and a separately invoked repair path, and passed its MySQL 8.4 integration checks. No new migration, database backfill, production migration or deployment is authorized or included.
 
 
 ---
