@@ -67,6 +67,7 @@ class FinancialAdministrationController extends Controller
                 ->exists();
 
             if ($overlap) {
+
                 throw ValidationException::withMessages(['effective_from' => 'यह तारीख किसी मौजूदा Shop policy version की अवधि से overlap करती है।']);
             }
 
@@ -146,6 +147,7 @@ class FinancialAdministrationController extends Controller
                 ->exists();
 
             if ($overlap) {
+
                 throw ValidationException::withMessages(['effective_from' => 'यह तारीख किसी मौजूदा Customer override की अवधि से overlap करती है।']);
             }
 
