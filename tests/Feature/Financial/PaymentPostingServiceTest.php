@@ -277,6 +277,35 @@ class PaymentPostingServiceTest extends TestCase
         ]);
     }
 
+    public function test_reversal_restores_allocated_interest_lot_with_an_append_only_event(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $this->createPolicy($shop, $owner, '3.00000000', 'INTEREST_FIRST', 0);
+        $this->postSale($owner, $customer, '2026-11-01', '1000.00', 'reversal-interest-sale');
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '9.00', CarbonImmutable::parse('2026-11-11'),
+            null, null, null, 'reversal-interest-payment',
+        );
+        $allocationItem = PaymentAllocationItem::query()->where('payment_id', $payment->getKey())->firstOrFail();
+        $this->assertNotNull($allocationItem->source_interest_lot_id);
+
+        $result = app(PaymentReversalService::class)->correct(
+            $owner, $customer, $payment, 'Restore interest allocation', 'reversal-interest-correction',
+        );
+
+        $this->assertDatabaseHas('interest_lot_events', [
+            'interest_lot_id' => $allocationItem->source_interest_lot_id,
+            'event_type' => 'REVERSED',
+            'allocation_item_id' => DB::table('payment_allocation_items')
+                ->where('payment_id', $result['reversal']->getKey())->value('id'),
+            'amount' => '9.00',
+        ]);
+        $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
+        $this->assertSame('1000.00', $account->principal_balance);
+        $this->assertSame('9.00', $account->interest_balance);
+        $this->assertSame('1009.00', $account->total_payable);
+    }
+
     public function test_payment_reversal_is_blocked_after_a_later_normal_payment(): void
     {
         [$shop, $owner, $customer] = $this->makeCustomerContext();
