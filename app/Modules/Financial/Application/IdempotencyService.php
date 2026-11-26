@@ -32,7 +32,8 @@ class IdempotencyService
         string $idempotencyKey,
         array $requestPayload,
         Closure $operation,
-    ): FinancialTransaction {
+    ): FinancialTransaction
+    {
         if (DB::transactionLevel() < 1) {
             throw new LogicException('Idempotency must execute inside the financial database transaction.');
         }
