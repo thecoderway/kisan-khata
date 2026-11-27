@@ -249,7 +249,7 @@ const formMarkup = (kind, data = {}) => {
             formField('नया विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000">' + esc(data.description || '') + '</textarea>', true) +
             formField('संशोधन का कारण', 'reason', '<input id="FIELD_ID" class="form-control" name="reason" minlength="1" maxlength="500" required>', true) + '</form>';
     }
-    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान reverse होगा। क्या आप आगे बढ़ना चाहते हैं?">' + token +
+    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान reverse होगा। क्या आप आगे बढ़ना चाहते हैं?" data-optional-nested-amount="replacement[amount]">' + token +
         formField('कारण', 'reason', '<textarea id="FIELD_ID" class="form-control" name="reason" rows="2" minlength="1" maxlength="500" required></textarea>', true) +
         formField('Replacement राशि (₹) — वैकल्पिक', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
         formField('Replacement माध्यम', 'replacement.payment_method', '<select id="FIELD_ID" class="form-select" name="replacement[payment_method]"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>');
