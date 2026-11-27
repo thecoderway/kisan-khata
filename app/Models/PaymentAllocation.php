@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +38,11 @@ class PaymentAllocation extends Model
             'allocation_effective_at' => 'immutable_datetime',
             'total_allocated' => 'decimal:2',
         ];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void
