@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,11 @@ class FinancialTransaction extends Model
             'posted_at' => 'immutable_datetime',
             'source_id' => 'integer',
         ];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void
