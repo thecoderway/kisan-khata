@@ -123,6 +123,7 @@ Alpine.data('actionDrawer', () => ({
         event.preventDefault();
 
         if (form.dataset.submitting === 'true') return;
+        if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) return;
 
         this.submitDrawerForm(form);
     },
@@ -173,7 +174,9 @@ Alpine.data('actionDrawer', () => ({
         form.prepend(summary);
 
         Object.entries(errors).forEach(([name, fieldMessages]) => {
-            const field = Array.from(form.elements).find((element) => element.name === name);
+            const field = Array.from(form.elements).find((element) =>
+                element.name === name || element.name.replace(/\]/g, '').replace(/\[/g, '.') === name
+            );
             if (!field || field.type === 'hidden' || !fieldMessages?.length) return;
 
             field.classList.add('is-invalid');
@@ -204,6 +207,10 @@ Alpine.data('actionDrawer', () => ({
         form.setAttribute('aria-busy', 'true');
         this.clearDrawerErrors(form);
 
+        if (form.hasAttribute('data-idempotency') && !form.dataset.idempotencyKey) {
+            form.dataset.idempotencyKey = crypto.randomUUID();
+        }
+
         submitButtons.forEach((button) => {
             button.disabled = true;
             button.setAttribute('aria-disabled', 'true');
@@ -228,6 +235,7 @@ Alpine.data('actionDrawer', () => ({
                 headers: {
                     Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
+                    ...(form.dataset.idempotencyKey ? { 'Idempotency-Key': form.dataset.idempotencyKey } : {}),
                 },
                 credentials: 'same-origin',
             });
@@ -250,6 +258,7 @@ Alpine.data('actionDrawer', () => ({
             }
 
             delete form.dataset.submitting;
+            delete form.dataset.idempotencyKey;
             this.close();
             window.dispatchEvent(new CustomEvent('kk-toast:show', {
                 detail: {
