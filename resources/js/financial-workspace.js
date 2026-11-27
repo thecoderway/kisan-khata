@@ -458,10 +458,20 @@ document.getElementById('open-shop-policy-drawer')?.addEventListener('click', ()
         annual_settlement_day_2: 30,
     };
     if (form) {
-        for (const [name, value] of Object.entries(defaults)) {
+        [
+            'monthly_rate_percent',
+            'grace_days',
+            'capitalization_enabled',
+            'payment_waterfall',
+            'annual_settlement_month_1',
+            'annual_settlement_day_1',
+            'annual_settlement_month_2',
+            'annual_settlement_day_2',
+        ].forEach((name) => {
             const field = form.elements.namedItem(name);
+            const value = defaults[name];
             if (field && value !== null && value !== undefined) field.value = String(value);
-        }
+        });
         const capitalization = form.elements.namedItem('capitalization_enabled');
         if (capitalization) capitalization.value = defaults.capitalization_enabled ? '1' : '0';
     }
