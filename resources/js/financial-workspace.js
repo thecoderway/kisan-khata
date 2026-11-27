@@ -15,6 +15,7 @@ let activeController = null;
 let debounceTimer = null;
 let composing = false;
 let lastLoadedQuery = null;
+let activeQuery = null;
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -204,13 +205,14 @@ const loaders = { sales: loadSales, payments: loadPayments, ledger: loadLedger, 
 
 const refresh = async ({ history = 'none', skipUnchanged = false } = {}) => {
     const queryKey = buildQuery();
-    if (skipUnchanged && queryKey === lastLoadedQuery) {
+    if (skipUnchanged && (queryKey === lastLoadedQuery || (activeController && queryKey === activeQuery))) {
         if (history !== 'none') syncUrl(history);
         return;
     }
     activeController?.abort();
     const controller = new AbortController();
     activeController = controller;
+    activeQuery = queryKey;
     root.setAttribute('aria-busy', 'true');
     if (!root.querySelector('[data-financial-loading]')) {
         root.insertAdjacentHTML('afterbegin', '<div class="financial-loading-indicator" data-financial-loading role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> परिणाम अपडेट हो रहे हैं…</div>');
@@ -228,6 +230,7 @@ const refresh = async ({ history = 'none', skipUnchanged = false } = {}) => {
     } finally {
         if (activeController === controller) {
             activeController = null;
+            activeQuery = null;
             root.removeAttribute('aria-busy');
             root.querySelector('[data-financial-loading]')?.remove();
         }
