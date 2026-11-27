@@ -23,6 +23,9 @@
     @if (in_array($section, ['sales', 'payments'], true))
         <button class="btn btn-primary kk-primary" type="button" id="financial-create"><i class="ti ti-plus me-1"></i> नया {{ $section === 'sales' ? 'बिक्री रिकॉर्ड' : 'भुगतान' }}</button>
     @endif
+    @if ($section === 'ledger')
+        <button class="btn btn-outline-primary" type="button" id="financial-ledger-print"><i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / PDF</button>
+    @endif
 </div>
 
 <div class="content-card mb-3">
@@ -141,6 +144,7 @@ window.KKFinancialWorkspace = {
     role: @json(auth()->user()->role),
     api: @json(url('/api/v1')),
     csrf: @json(csrf_token()),
+    shopName: @json(app(\App\Tenancy\CurrentShop::class)->require()->name),
 };
 </script>
 
