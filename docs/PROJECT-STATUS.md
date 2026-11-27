@@ -1,7 +1,7 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `1a573d813fe10d8113f1b316c5b67b448f3498a2` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
+**Status Snapshot Base:** `main` at `1a573d813fe10d8113f1b316c5b67b448f3498a2` (2026-11-27), including PRs #53–#56 financial UI follow-ups and PR #58 customer lifecycle visibility.  
 **Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation and automated acceptance through Batch 8.8 are merged. PRs #53–#56 subsequently completed Sales/Payments customer dropdowns, approved table/filter/drawer behavior, pagination layout/navigation and sidebar usability. PR #58 accepted ADR-0016 and implemented lifecycle-aware customer visibility across Sales, Payments, Customer Ledger, Interest Settings and Reconciliation. The Product Owner has manually confirmed the Sales/Payments listing, drawer layout, pagination navigation and sidebar behavior. Phase 5 remains OPEN pending fresh-Shop registration and tenant-isolation/role-based browser acceptance, plus complete workflow smoke checks across Sales, Payments, Customer Ledger, Interest Settings and Reconciliation; production-readiness and repository-admin checks remain separate later-stage gates. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
@@ -323,7 +323,7 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current verified `main` HEAD: `6506a4a01526cc54959712721b8f9d30465a88cd` (PR #56 pagination/sidebar follow-up; 2026-11-27).
+- Current verified `main` HEAD: `1a573d813fe10d8113f1b316c5b67b448f3498a2` (PR #58 customer lifecycle visibility; 2026-11-27).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
 - All feature and documentation changes use reviewable PRs. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 - Update status only from verified repository, CI, test or Product Owner evidence.
