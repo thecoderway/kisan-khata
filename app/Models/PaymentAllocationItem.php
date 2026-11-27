@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +43,11 @@ class PaymentAllocationItem extends Model
             'component_sequence' => 'integer',
             'lot_sequence' => 'integer',
         ];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void
