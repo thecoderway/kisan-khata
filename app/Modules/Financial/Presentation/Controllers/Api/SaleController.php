@@ -124,8 +124,14 @@ class SaleController extends Controller
 
     public function show(int $sale): JsonResponse
     {
-        $sale = Sale::query()->with(['customer:id,name_original,name_hi,name_en', 'saleDayPayment'])
-            ->findOrFail($sale);
+        $sale = Sale::query()->with([
+            'customer:id,name_original,name_hi,name_en,status,deleted_at',
+            'saleDayPayment',
+            'allocationItems.payment',
+            'ledgerEntries',
+            'financialTransaction',
+            'revisions.actor:id,name',
+        ])->findOrFail($sale);
         Gate::authorize('view', $sale);
 
         return response()->json(['data' => $sale]);
