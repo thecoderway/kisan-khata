@@ -74,6 +74,44 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/payments')->assertOk()->assertJsonFragment(['payment_number' => $payment->payment_number]);
     }
 
+    public function test_customer_ledger_consolidates_one_payment_allocated_across_multiple_sales(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        $firstSale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '40.00', 'First FIFO sale', 'batch-8a-first-sale',
+        );
+        $secondSale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-21'),
+            '60.00', 'Second FIFO sale', 'batch-8a-second-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '70.00', CarbonImmutable::parse('2026-11-22'),
+            'CASH', null, 'Payment across two sales', 'batch-8a-multi-sale-payment',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $response = $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger')->assertOk();
+        $paymentRows = collect($response->json('data'))
+            ->where('payment_id', $payment->getKey())
+            ->values();
+
+        $this->assertCount(1, $paymentRows);
+        $this->assertSame('70.00', $paymentRows->first()['credit']);
+        $this->assertSame('0.00', $paymentRows->first()['debit']);
+        $this->assertEqualsCanonicalizing(
+            [$firstSale->getKey(), $secondSale->getKey()],
+            $paymentRows->first()['sale_ids'],
+        );
+        $this->assertCount(2, $paymentRows->first()['ledger_entry_ids']);
+        $this->assertSame('PAYMENT', $paymentRows->first()['entry_kind']);
+        $this->assertSame('70.00', $paymentRows->first()['principal_credit']);
+        $this->assertSame(3, $response->json('meta.total'));
+    }
+
     public function test_first_party_web_session_can_use_stateful_financial_api(): void
     {
         [$shop, $owner] = $this->context();
