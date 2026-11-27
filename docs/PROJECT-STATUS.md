@@ -323,7 +323,7 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current verified `main` HEAD: `62419de9872f84a38a6d8d422e11dbadca73a1ca` (PR #56 pagination/sidebar follow-up; 2026-11-27).
+- Current verified `main` HEAD: `6506a4a01526cc54959712721b8f9d30465a88cd` (PR #56 pagination/sidebar follow-up; 2026-11-27).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
 - All feature and documentation changes use reviewable PRs. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 - Update status only from verified repository, CI, test or Product Owner evidence.
@@ -419,7 +419,7 @@ Detailed scenario setup, locking assertions, fixture cleanup and CI evidence are
 
 ## 28. Phase 5 — Financial UI follow-up and partial browser acceptance (2026-11-27)
 
-**Current main baseline:** `62419de9872f84a38a6d8d422e11dbadca73a1ca`.
+**Current main baseline:** `6506a4a01526cc54959712721b8f9d30465a88cd`.
 
 Merged follow-ups after Batch 8.8:
 - PR #53: customer directory loading for financial workflows and JS helper tests.
