@@ -1,9 +1,9 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `d1d36622c866ccb2b4113d254f62d7dcdec65a56` (2026-11-27), including merged PR #73 Phase 9 Interest History and Transparency.  
-**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Phase 11 has been reviewed and planned but not started. This documentation update is delivered through a dedicated PR.
-**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports has been reviewed and planned but has not started and requires explicit authorization. No production deployment or release is claimed.
+**Status Snapshot Base:** `main` at `29a2c0f5eec868a2a581a493e681098fe7de1df7` (2026-11-27), including merged PR #75 Phase 10 deferral / Phase 11 plan.  
+**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Product Owner authorized Phase 11 on 2026-11-27 and Batch 11A is in progress on `feature/phase-11-batch-11a-report-contracts`.
+**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports is authorized and Batch 11A (report definitions/read-only data contracts) is in progress; 11B–11E have not started. No production deployment or release is claimed.
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -724,3 +724,30 @@ Inspected current `main` routes, financial controllers, workspace Blade view, le
 - Reuse existing financial source records and policies; do not duplicate accounting calculations.
 - Any report metric without an authoritative, documented source or date-boundary definition must be clarified before coding.
 - Settlement reporting is excluded while Phase 10 is deferred.
+
+
+## 34. Phase 11 authorization and Batch 11A start (2026-11-27)
+
+### Product Owner direction
+
+- Product Owner explicitly authorized Phase 11 Reports, Printing and Exports to start.
+- Phase 10 Crop-Season Settlement remains deferred to a future release. It is not part of Phase 11 and must not be audited, designed or implemented unless separately reactivated.
+- Batch 11A is active on branch `feature/phase-11-batch-11a-report-contracts`, created from `main` commit `29a2c0f5eec868a2a581a493e681098fe7de1df7`.
+- The detailed first-pass contract is in `docs/phase-11-batch-11a-report-definitions.md`.
+
+### Read-only source audit completed
+
+- Reviewed routes in `routes/api.php` and `routes/web.php`; existing Shop tenant middleware wraps financial APIs and workspace routes.
+- Reviewed `SaleController::index` and `PaymentController::index`: both list only posted records, apply inclusive `from`/`to` filters on their business dates, support Customer/search filters and deterministic date/ID or amount/ID sorting.
+- Reviewed `CustomerLedgerController::show`: reads append-only `ledger_entries`, consolidates allocation-level Payment/Reversal entries for customer display, orders by `effective_date → sequence_number → id`, and uses Brick Math for separate principal/interest running balances and opening balances.
+- Reviewed `Sale`, `Payment`, `LedgerEntry`, `InterestCalculationRun` and `InterestCalculationItem` models and the ledger/interest migrations. Posted Sales/Payments and completed interest history are protected from ordinary mutation; ledger entries and interest items are append-only.
+- Reviewed ADR-0010, ADR-0012, ADR-0015 and ADR-0016 for role access, financial immutability, payment/reversal, interest and customer lifecycle rules.
+- Existing Interest workspace is Owner-only. Staff Shop-wide read permission for Sales, Payments and Customer Ledger does not automatically grant access to detailed interest policy/run metadata.
+
+### Batch 11A state and open Product Owner decisions
+
+- First-pass definitions cover Customer Outstanding as-of snapshot, Sales Register/Summary, Payment Register/Collection Summary, and Interest Calculation/Posted Interest.
+- No source-of-truth change, code, migration, dependency, API, UI, export, PDF or database mutation was made in this audit/specification update.
+- Product Owner decisions still required before 11B: (1) whether zero/negative-balance customers appear by default in Outstanding; (2) confirm the cash collection equation and treatment of sale-day automatic/reversal/replacement Payments; (3) confirm whether Interest report access remains Owner-only or expands to Manager.
+- 11A acceptance remains open until decisions, sample layouts and source-to-report reconciliation checks are approved.
+- No production operation, deployment or release is authorized.
