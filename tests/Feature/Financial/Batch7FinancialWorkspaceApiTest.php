@@ -13,6 +13,7 @@ use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -686,6 +687,43 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
 
         Sanctum::actingAs($owner, ['app']);
         $this->getJson('/api/v1/sales/'.$foreignSale->getKey())->assertNotFound();
+    }
+
+    public function test_bulk_eloquent_mutations_are_blocked_for_payment_lifecycle_records(): void
+    {
+        $models = [
+            \\App\\Models\\Payment::class,
+            \\App\\Models\\PaymentRevision::class,
+            \\App\\Models\\PaymentAllocation::class,
+            \\App\\Models\\PaymentAllocationItem::class,
+            \\App\\Models\\LedgerEntry::class,
+            \\App\\Models\\InterestLotEvent::class,
+        ];
+
+        foreach ($models as $modelClass) {
+            $mutations = [
+                'insert' => fn () => $modelClass::query()->insert([]),
+                'insertOrIgnore' => fn () => $modelClass::query()->insertOrIgnore([]),
+                'update' => fn () => $modelClass::query()->update([]),
+                'delete' => fn () => $modelClass::query()->delete(),
+                'upsert' => fn () => $modelClass::query()->upsert([], ['id']),
+                'increment' => fn () => $modelClass::query()->increment('id'),
+                'decrement' => fn () => $modelClass::query()->decrement('id'),
+                'incrementEach' => fn () => $modelClass::query()->incrementEach(['id' => 1]),
+                'decrementEach' => fn () => $modelClass::query()->decrementEach(['id' => 1]),
+                'updateOrInsert' => fn () => $modelClass::query()->updateOrInsert([], []),
+                'truncate' => fn () => $modelClass::query()->truncate(),
+            ];
+
+            foreach ($mutations as $operation => $mutation) {
+                try {
+                    $mutation();
+                    $this->fail($modelClass.' must reject bulk '.$operation.'.');
+                } catch (LogicException $exception) {
+                    $this->assertStringContainsString('Bulk Eloquent mutations are disabled', $exception->getMessage());
+                }
+            }
+        }
     }
 
     public function test_payment_details_api_returns_allocation_ledger_transaction_and_correction_history(): void
