@@ -24,7 +24,7 @@ class PaymentController extends Controller
             'sort' => ['nullable', Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'per_page' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 20, 50, 100])],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
