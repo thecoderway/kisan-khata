@@ -703,6 +703,12 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             \\App\\Models\\PaymentAllocationItem::class,
             \\App\\Models\\LedgerEntry::class,
             \\App\\Models\\InterestLotEvent::class,
+            \\App\\Models\\FinancialTransaction::class,
+            \\App\\Models\\InterestCalculationRun::class,
+            \\App\\Models\\InterestCalculationItem::class,
+            \\App\\Models\\InterestLot::class,
+            \\App\\Models\\InterestSettlementRun::class,
+            \\App\\Models\\InterestSettlementItem::class,
         ];
 
         foreach ($models as $modelClass) {
