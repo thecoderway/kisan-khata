@@ -32,6 +32,8 @@ class FinancialReportController extends Controller
         ]);
 
         $shopId = $currentShop->require()->getKey();
+        $history = DB::table('ledger_entries')->select('customer_id')->where('shop_id', $shopId)->groupBy('customer_id');
+
         $ledger = DB::table('ledger_entries')
             ->select('customer_id')
             ->selectRaw("SUM(CASE WHEN component = 'PRINCIPAL' THEN debit_amount - credit_amount ELSE 0 END) AS principal_balance")
@@ -41,16 +43,16 @@ class FinancialReportController extends Controller
             ->groupBy('customer_id');
 
         $query = DB::table('customers as c')
-            ->joinSub($ledger, 'balances', fn ($join) => $join->on('balances.customer_id', '=', 'c.id'))
+            ->joinSub($history, 'history', fn ($join) => $join->on('history.customer_id', '=', 'c.id'))
+            ->leftJoinSub($ledger, 'balances', fn ($join) => $join->on('balances.customer_id', '=', 'c.id'))
             ->where('c.shop_id', $shopId)
-            ->whereNotNull('c.id')
             ->select([
                 'c.id as customer_id', 'c.name_original', 'c.name_hi', 'c.name_en',
                 'c.mobile', 'c.status', 'c.deleted_at',
             ])
-            ->selectRaw('CAST(balances.principal_balance AS DECIMAL(20,2)) AS principal')
-            ->selectRaw('CAST(balances.interest_balance AS DECIMAL(20,2)) AS interest')
-            ->selectRaw('CAST(balances.principal_balance + balances.interest_balance AS DECIMAL(20,2)) AS total')
+            ->selectRaw('CAST(COALESCE(balances.principal_balance, 0) AS DECIMAL(20,2)) AS principal')
+            ->selectRaw('CAST(COALESCE(balances.interest_balance, 0) AS DECIMAL(20,2)) AS interest')
+            ->selectRaw('CAST(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0) AS DECIMAL(20,2)) AS total')
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
                 $term = '%'.trim($filters['q']).'%';
                 $builder->where(function (Builder $nested) use ($term): void {
@@ -60,13 +62,13 @@ class FinancialReportController extends Controller
                         ->orWhere('c.mobile', 'like', $term);
                 });
             })
-            ->when(($filters['positive_only'] ?? false) === true, fn (Builder $builder) => $builder->whereRaw('(balances.principal_balance + balances.interest_balance) > 0'))
+            ->when(($filters['positive_only'] ?? false) === true, fn (Builder $builder) => $builder->whereRaw('(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)) > 0'))
             ->orderBy('c.name_original')->orderBy('c.id');
 
         $summary = (clone $query)->reorder()->selectRaw('COUNT(*) AS customer_count')
-            ->selectRaw('COALESCE(SUM(balances.principal_balance), 0) AS principal_total')
-            ->selectRaw('COALESCE(SUM(balances.interest_balance), 0) AS interest_total')
-            ->selectRaw('COALESCE(SUM(balances.principal_balance + balances.interest_balance), 0) AS grand_total')
+            ->selectRaw('COALESCE(SUM(COALESCE(balances.principal_balance, 0)), 0) AS principal_total')
+            ->selectRaw('COALESCE(SUM(COALESCE(balances.interest_balance, 0)), 0) AS interest_total')
+            ->selectRaw('COALESCE(SUM(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)), 0) AS grand_total')
             ->first();
 
         $paginator = $query->paginate((int) ($filters['per_page'] ?? 20));
