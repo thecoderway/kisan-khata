@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +37,11 @@ class LedgerEntry extends Model
             'effective_date' => 'date',
             'sequence_number' => 'integer',
         ];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void
