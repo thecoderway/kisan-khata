@@ -20,7 +20,7 @@ class PaymentController extends Controller
             'customer_id' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:100'],
             'payment_method' => ['nullable', 'string', 'max:32'],
-            'sort' => ['nullable', \\Illuminate\\Validation\\Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
+            'sort' => ['nullable', \Illuminate\Validation\Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
