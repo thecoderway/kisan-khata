@@ -25,7 +25,7 @@ class DemoMaaBijasanShopSeeder extends Seeder
 
     public function run(): void
     {
-        if (!app()->environment(['local', 'testing'])) {
+        if (! app()->environment(['local', 'testing'])) {
             throw new RuntimeException('The Maa Bijasan demo seeder is restricted to local and testing environments.');
         }
 
@@ -168,7 +168,7 @@ class DemoMaaBijasanShopSeeder extends Seeder
 
                     $report = $reconciliation->reconcileCustomer($customer);
 
-                    if (!$report['consistent']) {
+                    if (! $report['consistent']) {
                         throw new RuntimeException(
                             'Demo financial reconciliation failed for customer '.$customer->getKey().': '
                             .json_encode($report['discrepancies'], JSON_UNESCAPED_UNICODE)
