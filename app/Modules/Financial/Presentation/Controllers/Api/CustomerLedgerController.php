@@ -14,7 +14,7 @@ class CustomerLedgerController extends Controller
 {
     public function show(Request $request, int $customer): JsonResponse
     {
-        $customer = $customer = Customer::withTrashed()->findOrFail($customer);
+        $customer = Customer::withTrashed()->findOrFail($customer);
         abort_unless($customer->hasFinancialHistory(), 404);
         Gate::authorize('viewCustomerLedger', $customer);
 
