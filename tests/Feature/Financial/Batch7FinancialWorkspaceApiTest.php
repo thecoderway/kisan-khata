@@ -1052,6 +1052,156 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/payments/'.$foreignPayment->getKey())->assertNotFound();
     }
 
+    public function test_customer_ledger_date_boundaries_are_inclusive_and_opening_balance_carries_forward(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Before selected date', 'batch-8b-before-date',
+        );
+        $selectedSale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-21'),
+            '50.00', 'On selected date', 'batch-8b-on-date',
+        );
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-22'),
+            '25.00', 'After selected date', 'batch-8b-after-date',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $response = $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger?from=2026-11-21&to=2026-11-21')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.opening_balance.principal', '100.00')
+            ->assertJsonPath('data.0.sale_id', $selectedSale->getKey())
+            ->assertJsonPath('data.0.principal_balance', '150.00');
+
+        $this->assertSame('0.00', $response->json('meta.opening_balance.interest'));
+    }
+
+    public function test_customer_ledger_pagination_carries_forward_balance_between_pages(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        for ($day = 1; $day <= 11; $day++) {
+            app(SalePostingService::class)->post(
+                $owner,
+                $customer,
+                'UNPAID',
+                CarbonImmutable::parse('2026-11-'.str_pad((string) $day, 2, '0', STR_PAD_LEFT)),
+                '10.00',
+                'Pagination sale '.$day,
+                'batch-8b-pagination-'.$day,
+            );
+        }
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $firstPage = $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger?per_page=10&page=1')
+            ->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('meta.total', 11)
+            ->assertJsonPath('meta.last_page', 2);
+
+        $secondPage = $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger?per_page=10&page=2')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.opening_balance.principal', '100.00')
+            ->assertJsonPath('data.0.principal_balance', '110.00');
+
+        $this->assertSame('0.00', $firstPage->json('meta.opening_balance.principal'));
+        $this->assertSame('100.00', $firstPage->json('data.9.principal_balance'));
+    }
+
+    public function test_customer_ledger_same_day_entries_use_sequence_then_ledger_id_order(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        $firstSale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '20.00', 'First same-day sale', 'batch-8b-same-day-first',
+        );
+        $secondSale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '30.00', 'Second same-day sale', 'batch-8b-same-day-second',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $response = $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger')
+            ->assertOk();
+
+        $this->assertSame(
+            [$firstSale->getKey(), $secondSale->getKey()],
+            collect($response->json('data'))->pluck('sale_id')->all(),
+        );
+        $this->assertSame(
+            ['20.00', '50.00'],
+            collect($response->json('data'))->pluck('principal_balance')->all(),
+        );
+    }
+
+    public function test_customer_ledger_running_balance_reconciles_sales_and_consolidated_payment(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Opening sale', 'batch-8b-running-sale-one',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '30.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Partial payment', 'batch-8b-running-payment',
+        );
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-22'),
+            '50.00', 'Later sale', 'batch-8b-running-sale-two',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $response = $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 3);
+
+        $rows = collect($response->json('data'));
+        $paymentRow = $rows->firstWhere('payment_id', $payment->getKey());
+
+        $this->assertSame(['100.00', '70.00', '120.00'], $rows->pluck('total_balance')->all());
+        $this->assertSame('30.00', $paymentRow['credit']);
+        $this->assertSame('70.00', $paymentRow['principal_balance']);
+    }
+
+    public function test_empty_customer_ledger_date_range_uses_balance_before_range_not_future_balance(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Before empty date range', 'batch-8b-empty-range-before',
+        );
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-30'),
+            '50.00', 'After empty date range', 'batch-8b-empty-range-after',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger?from=2026-11-25&to=2026-11-25')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.total', 0)
+            ->assertJsonPath('meta.opening_balance.principal', '100.00')
+            ->assertJsonPath('meta.opening_balance.total', '100.00');
+    }
+
     private function context(): array
     {
         $shop = Shop::factory()->create(['timezone' => 'Asia/Kolkata']);
