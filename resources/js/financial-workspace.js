@@ -1,4 +1,5 @@
 import { customerDisplayLabels, fetchFinancialCustomers } from './financial-customer-directory';
+import { fetchAllLedgerPages } from './financial-ledger-print';
 
 const config = window.KKFinancialWorkspace;
 const root = document.getElementById('financial-results');
@@ -238,6 +239,113 @@ const loadLedger = async (signal) => {
     }
     renderPagination(payload.meta);
 };
+const printCustomerLedger = async () => {
+    const customerId = document.getElementById('financial-customer')?.value;
+    if (!customerId) {
+        showMessage('प्रिंट करने से पहले ग्राहक चुनें।', 'error');
+        return;
+    }
+
+    // Open the print tab synchronously from the user click to avoid popup blockers.
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showMessage('ब्राउज़र ने print window रोक दी। कृपया इस साइट के pop-ups की अनुमति दें।', 'error');
+        return;
+    }
+
+    const button = document.getElementById('financial-ledger-print');
+    if (button) button.disabled = true;
+
+    try {
+        const from = document.getElementById('financial-from')?.value || '';
+        const to = document.getElementById('financial-to')?.value || '';
+        const { rows, meta, pages } = await fetchAllLedgerPages(request, customerId, { from, to, perPage: 100 });
+        const customer = customers.find((item) => String(item.id) === String(customerId)) || {};
+        const customerName = customer.name_hi || customer.name_original || customer.name_en || 'ग्राहक';
+        const opening = meta.opening_balance || { principal: '0.00', interest: '0.00', total: '0.00' };
+        const closing = rows.length
+            ? {
+                principal: rows[rows.length - 1].principal_balance,
+                interest: rows[rows.length - 1].interest_balance,
+                total: rows[rows.length - 1].total_balance,
+            }
+            : opening;
+        const cents = (value) => {
+            const [whole, fraction = ''] = String(value || '0').split('.');
+            return (BigInt(whole || '0') * 100n) + BigInt((fraction + '00').slice(0, 2));
+        };
+        const totalDebit = rows.reduce((sum, row) => sum + cents(row.debit), 0n);
+        const totalCredit = rows.reduce((sum, row) => sum + cents(row.credit), 0n);
+        const moneyFromCents = (value) => money(Number(value) / 100);
+        const transactionLabel = (entry) => {
+            if (entry.payment_number) {
+                const reversal = entry.entry_kind === 'PAYMENT_REVERSAL'
+                    || entry.entry_kind === 'REVERSAL'
+                    || entry.payment_type === 'REVERSAL';
+                return (reversal ? 'भुगतान रिवर्सल' : 'भुगतान') + ' · ' + entry.payment_number;
+            }
+            return entry.entry_kind || '—';
+        };
+        const componentLabel = (entry) => entry.component === 'MIXED'
+            ? 'मूलधन + ब्याज'
+            : entry.component === 'PRINCIPAL' ? 'मूलधन'
+                : entry.component === 'INTEREST' ? 'ब्याज' : (entry.component || '—');
+        const tableRows = rows.map((entry) => '<tr>' +
+            '<td>' + esc(date(entry.effective_date)) + '</td>' +
+            '<td>' + esc(transactionLabel(entry)) + '</td>' +
+            '<td>' + esc(componentLabel(entry)) + '</td>' +
+            '<td class="number">' + esc(money(entry.debit)) + '</td>' +
+            '<td class="number">' + esc(money(entry.credit)) + '</td>' +
+            '<td class="number">' + esc(money(entry.principal_balance)) + '</td>' +
+            '<td class="number">' + esc(money(entry.interest_balance)) + '</td>' +
+            '<td class="number">' + esc(money(entry.total_balance)) + '</td>' +
+            '</tr>').join('');
+        const rangeLabel = from || to
+            ? (from ? date(from) : 'शुरुआत से') + ' — ' + (to ? date(to) : 'आज तक')
+            : 'सभी लेन-देन';
+        const html = '<!doctype html><html lang="hi"><head><meta charset="utf-8">' +
+            '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+            '<title>' + esc(customerName) + ' — ग्राहक खाता-बही</title>' +
+            '<style>' +
+            '@page{size:A4 landscape;margin:12mm}' +
+            '*{box-sizing:border-box}body{font-family:Arial,"Noto Sans Devanagari",sans-serif;color:#172033;margin:0;font-size:11px}' +
+            'h1{font-size:22px;margin:0 0 5px}h2{font-size:13px;margin:0 0 8px}.muted{color:#64748b}' +
+            '.header{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #166534;padding-bottom:12px;margin-bottom:14px}' +
+            '.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 16px}' +
+            '.meta div,.balance{border:1px solid #dbe3ec;border-radius:6px;padding:8px}.meta strong,.balance strong{display:block;margin-top:3px;font-size:12px}' +
+            '.balances{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}' +
+            'table{width:100%;border-collapse:collapse;font-size:10px}thead{display:table-header-group}th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:left}th{background:#f1f5f9;font-weight:700}.number{text-align:right;white-space:nowrap}tfoot{font-weight:700;background:#f8fafc}' +
+            '.footer{display:flex;justify-content:space-between;margin-top:14px;color:#64748b;font-size:9px}' +
+            '@media print{.no-print{display:none!important}tr{break-inside:avoid}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+            '</style></head><body>' +
+            '<header class="header"><div><div class="muted">' + esc(config.shopName || 'Kisan Khata') + '</div><h1>ग्राहक खाता-बही</h1><div>' + esc(customerName) + '</div></div>' +
+            '<div class="muted">प्रिंट दिनांक: ' + esc(new Date().toLocaleString('en-IN')) + '</div></header>' +
+            '<section class="meta"><div>ग्राहक<strong>' + esc(customerName) + '</strong></div><div>अवधि<strong>' + esc(rangeLabel) + '</strong></div><div>कुल लेन-देन<strong>' + rows.length + '</strong></div></section>' +
+            '<section class="balances"><div class="balance">प्रारंभिक मूलधन<strong>' + esc(money(opening.principal)) + '</strong></div><div class="balance">प्रारंभिक ब्याज<strong>' + esc(money(opening.interest)) + '</strong></div><div class="balance">प्रारंभिक कुल<strong>' + esc(money(opening.total)) + '</strong></div></section>' +
+            '<table><thead><tr><th>तारीख</th><th>लेन-देन</th><th>खाता</th><th class="number">Debit</th><th class="number">Credit</th><th class="number">मूलधन बाकी</th><th class="number">ब्याज बाकी</th><th class="number">कुल बाकी</th></tr></thead>' +
+            '<tbody>' + (tableRows || '<tr><td colspan="8" style="text-align:center;padding:18px">इस अवधि में कोई लेन-देन नहीं है।</td></tr>') + '</tbody>' +
+            '<tfoot><tr><td colspan="3">कुल</td><td class="number">' + esc(moneyFromCents(totalDebit)) + '</td><td class="number">' + esc(moneyFromCents(totalCredit)) + '</td><td colspan="3">समापन शेष: ' + esc(money(closing.total)) + '</td></tr></tfoot></table>' +
+            '<section class="balances" style="margin-top:14px"><div class="balance">समापन मूलधन<strong>' + esc(money(closing.principal)) + '</strong></div><div class="balance">समापन ब्याज<strong>' + esc(money(closing.interest)) + '</strong></div><div class="balance">समापन कुल<strong>' + esc(money(closing.total)) + '</strong></div></section>' +
+            '<div class="footer"><span>यह विवरण Kisan Khata के ग्राहक ledger से तैयार किया गया है।</span><span>पृष्ठ डेटा: ' + rows.length + ' रिकॉर्ड · ' + pages + ' पेज लोड</span></div>' +
+            '</body></html>';
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        window.setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+        }, 300);
+    } catch (error) {
+        printWindow.document.open();
+        printWindow.document.write('<!doctype html><html><body><p>खाता-बही प्रिंट नहीं हो सकी: ' + esc(error.message) + '</p></body></html>');
+        printWindow.document.close();
+        showMessage('खाता-बही तैयार नहीं हो सकी: ' + error.message, 'error');
+    } finally {
+        if (button) button.disabled = false;
+    }
+};
+
 const loadInterest = async (signal) => {
     const payload = await request('/interest-policy', { signal });
     const versions = payload.data || [];
@@ -489,6 +597,7 @@ const openDrawer = (kind, data = {}) => {
 };
 
 document.getElementById('financial-create')?.addEventListener('click', () => openDrawer(section === 'sales' ? 'sale' : 'payment'));
+document.getElementById('financial-ledger-print')?.addEventListener('click', printCustomerLedger);
 document.addEventListener('click', (event) => {
     const pageButton = event.target.closest('#financial-results [data-financial-page]');
     if (!pageButton) return;
