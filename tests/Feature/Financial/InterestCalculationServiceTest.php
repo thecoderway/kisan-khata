@@ -166,8 +166,8 @@ class InterestCalculationServiceTest extends TestCase
         ]);
         $settlement = InterestSettlementRun::query()->create([
             'customer_id' => $customer->getKey(),
-            'settlement_date' => '2026-11-01',
-            'cutoff_date_exclusive' => '2026-11-01',
+            'settlement_date' => '2026-11-02',
+            'cutoff_date_exclusive' => '2026-11-02',
             'shop_policy_version_id' => $policyVersionId,
             'status' => 'PENDING',
             'idempotency_key_id' => $settlementKeyId,
@@ -201,7 +201,7 @@ class InterestCalculationServiceTest extends TestCase
 
         $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?trigger_type=CUSTOMER_PAYMENT')
             ->assertOk()->assertJsonCount(0, 'data');
-        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?from=2026-11-02&to=2026-11-03')
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?from=2026-11-03&to=2026-11-04')
             ->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?per_page=5')->assertUnprocessable();
         $this->postJson('/api/v1/customers/'.$customer->getKey().'/interest-history')->assertStatus(405);
