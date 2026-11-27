@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Modules\Financial\Application\AnnualInterestSettlementService;
 use App\Modules\Financial\Application\FinancialAuditService;
 use App\Modules\Financial\Application\PaymentPostingService;
+use App\Modules\Financial\Application\PaymentReversalService;
 use App\Modules\Financial\Application\ReconciliationService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
@@ -295,6 +296,122 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
             'reversal_of_payment_id' => $payment->getKey(),
             'payment_type' => Payment::TYPE_REVERSAL,
         ]);
+    }
+
+    public function test_combined_sale_partial_payments_reversal_replacement_and_audit_reconcile(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner, '0.00000000', 30);
+
+        $firstSale = app(SalePostingService::class)->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-01'),
+            '5000.00',
+            'Batch 7C first Sale',
+            'batch-7c-first-sale',
+        );
+        $secondSale = app(SalePostingService::class)->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-02'),
+            '5000.00',
+            'Batch 7C second Sale',
+            'batch-7c-second-sale',
+        );
+
+        $firstPayment = app(PaymentPostingService::class)->post(
+            $owner,
+            $customer,
+            '4000.00',
+            CarbonImmutable::parse('2026-11-03'),
+            'CASH',
+            'BATCH-7C-001',
+            'First partial Payment',
+            'batch-7c-first-payment',
+        );
+        $secondPayment = app(PaymentPostingService::class)->post(
+            $owner,
+            $customer,
+            '2000.00',
+            CarbonImmutable::parse('2026-11-04'),
+            'CASH',
+            'BATCH-7C-002',
+            'Second partial Payment',
+            'batch-7c-second-payment',
+        );
+
+        $secondAllocationSaleIds = PaymentAllocationItem::query()
+            ->where('payment_id', $secondPayment->getKey())
+            ->orderBy('sale_fifo_sequence')
+            ->pluck('sale_id')
+            ->unique()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+        $this->assertSame([$firstSale->getKey(), $secondSale->getKey()], $secondAllocationSaleIds);
+        $this->assertSame(Sale::PAYMENT_STATUS_PAID, $firstSale->fresh()->payment_status);
+        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $secondSale->fresh()->payment_status);
+        $this->assertSame('4000.00', CustomerAccount::query()
+            ->where('customer_id', $customer->getKey())
+            ->value('total_payable'));
+
+        $correction = app(PaymentReversalService::class)->correct(
+            $owner,
+            $customer,
+            $secondPayment,
+            'Batch 7C controlled correction with replacement',
+            'batch-7c-reversal-replacement',
+            [
+                'amount' => '2000.00',
+                'payment_method' => 'UPI',
+                'reference_number' => 'BATCH-7C-REPLACEMENT',
+                'description' => 'Replacement for corrected Payment',
+            ],
+        );
+
+        $this->assertSame(Payment::TYPE_REVERSAL, $correction['reversal']->payment_type);
+        $this->assertNotNull($correction['replacement']);
+        $this->assertSame('2000.00', $correction['replacement']->amount);
+        $this->assertSame((int) $secondPayment->getKey(), (int) $correction['reversal']->reversal_of_payment_id);
+        $this->assertSame((int) $secondPayment->getKey(), (int) $correction['replacement']->replacement_for_payment_id);
+
+        $account = CustomerAccount::query()
+            ->where('customer_id', $customer->getKey())
+            ->firstOrFail();
+        $this->assertSame('4000.00', $account->fresh()->principal_balance);
+        $this->assertSame('0.00', $account->fresh()->interest_balance);
+        $this->assertSame('4000.00', $account->fresh()->total_payable);
+        $this->assertSame(Sale::PAYMENT_STATUS_PAID, $firstSale->fresh()->payment_status);
+        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $secondSale->fresh()->payment_status);
+
+        $debits = (string) DB::table('ledger_entries')->where('customer_id', $customer->getKey())->sum('debit_amount');
+        $credits = (string) DB::table('ledger_entries')->where('customer_id', $customer->getKey())->sum('credit_amount');
+        $this->assertSame('12000.00', BigDecimal::of($debits)->toScale(2)->__toString());
+        $this->assertSame('8000.00', BigDecimal::of($credits)->toScale(2)->__toString());
+        $this->assertSame('4000.00', BigDecimal::of($debits)->minus($credits)->toScale(2)->__toString());
+
+        $audit = DB::table('audit_logs')
+            ->where('shop_id', $shop->getKey())
+            ->where('user_id', $owner->getKey())
+            ->where('action', 'financial.payment_reversed')
+            ->where('reason', 'Batch 7C controlled correction with replacement')
+            ->first();
+        $this->assertNotNull($audit);
+
+        $reconciliation = app(ReconciliationService::class)->reconcileCustomer($customer);
+        $this->assertTrue($reconciliation['consistent'], json_encode($reconciliation['discrepancies']));
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->getJson('/api/v1/payments/'.$secondPayment->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.revisions.0.revision_type', 'REVERSAL')
+            ->assertJsonPath('data.revisions.0.correction_reason', 'Batch 7C controlled correction with replacement')
+            ->assertJsonPath('data.revisions.1.revision_type', 'REPLACEMENT');
+
+        $this->assertSame('4000.00', $firstPayment->fresh()->amount);
     }
 
     private function context(): array
