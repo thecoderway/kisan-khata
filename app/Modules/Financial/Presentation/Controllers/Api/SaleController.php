@@ -29,7 +29,7 @@ class SaleController extends Controller
                 Sale::PAYMENT_STATUS_PARTIALLY_PAID,
                 Sale::PAYMENT_STATUS_PAID,
             ])],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
