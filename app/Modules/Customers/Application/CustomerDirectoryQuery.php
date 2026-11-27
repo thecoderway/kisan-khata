@@ -13,7 +13,7 @@ class CustomerDirectoryQuery
         $search = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', Customer::STATUS_ACTIVE);
 
-        $query = $status === 'deleted' ? Customer::withTrashed() : Customer::query();
+        $query = in_array($status, ['deleted', 'financial-history'], true)\n            ? Customer::withTrashed()\n            : Customer::query();
 
         $query->leftJoin('villages', 'customers.village_code', '=', 'villages.villageCode')
             ->select([
