@@ -1,15 +1,15 @@
 <?php
 
-namespace App\\Modules\\Financial\\Presentation\\Controllers\\Api;
+namespace App\Modules\Financial\Presentation\Controllers\Api;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Customer;
-use App\\Models\\LedgerEntry;
-use Brick\\Math\\BigDecimal;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Collection;
-use Illuminate\\Support\\Facades\\Gate;
+use App\Http\Controllers\Controller;
+use App\Models\Customer;
+use App\Models\LedgerEntry;
+use Brick\Math\BigDecimal;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerLedgerController extends Controller
 {
