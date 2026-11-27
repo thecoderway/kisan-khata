@@ -15,7 +15,7 @@
 <div class="content-card">
     <div class="p-3 border-bottom">
         <div class="row g-3 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label" for="report-type">रिपोर्ट</label>
                 <select class="form-select" id="report-type">
                     <option value="outstanding">ग्राहक बकाया (As of)</option>
@@ -38,15 +38,21 @@
                 <label class="form-label" for="report-to">तक तारीख</label>
                 <input class="form-control" type="date" id="report-to">
             </div>
-            <div class="col-md-2">
-                <label class="form-label" for="report-search">खोजें</label>
-                <input class="form-control" id="report-search" maxlength="100" placeholder="ग्राहक / नंबर">
+            <div class="col-md-3">
+                <label class="form-label" for="report-customer">ग्राहक चुनें</label>
+                <select class="form-select" id="report-customer" disabled>
+                    <option value="">सभी ग्राहक</option>
+                </select>
             </div>
             <div class="col-md-1">
                 <button class="btn btn-primary w-100" id="report-load" type="button">देखें</button>
             </div>
         </div>
         <div class="row g-3 mt-1" id="report-extra-filters">
+            <div class="col-md-3" id="report-search-wrap">
+                <label class="form-label" for="report-search">रिकॉर्ड नंबर / Reference</label>
+                <input class="form-control" id="report-search" maxlength="100" placeholder="बिक्री या जमा नंबर">
+            </div>
             <div class="col-md-3 d-none" id="report-status-wrap">
                 <label class="form-label" for="report-status">बिक्री स्थिति</label>
                 <select class="form-select" id="report-status">
@@ -99,6 +105,7 @@
 <script>
 (() => {
     const api = @json(url('/api/v1/reports'));
+    const customersApi = @json(url('/api/v1/customers'));
     const role = @json(auth()->user()->role);
     const $ = (id) => document.getElementById(id);
     const state = { page: 1, lastPage: 1, report: 'outstanding' };
@@ -129,13 +136,48 @@
             if ($('report-from').value) query.set('from', $('report-from').value);
             if ($('report-to').value) query.set('to', $('report-to').value);
         }
-        if ($('report-search').value.trim()) query.set('q', $('report-search').value.trim());
+        if ($('report-customer').value) query.set('customer_id', $('report-customer').value);
+        if ($('report-search').value.trim() && report !== 'outstanding') query.set('q', $('report-search').value.trim());
         if (report === 'sales' && $('report-status').value) query.set('payment_status', $('report-status').value);
         if (report === 'payments') {
             if ($('report-method').value) query.set('payment_method', $('report-method').value);
             if ($('report-payment-type').value) query.set('payment_type', $('report-payment-type').value);
         }
         return query;
+    }
+
+    async function loadCustomers() {
+        const select = $('report-customer');
+        select.disabled = true;
+        select.innerHTML = '<option value="">ग्राहक सूची लोड हो रही है…</option>';
+
+        const customers = [];
+        let page = 1;
+        let lastPage = 1;
+
+        do {
+            const response = await fetch(customersApi + '?status=financial-history&pageSize=100&page=' + page, {
+                headers: { Accept: 'application/json' }, credentials: 'same-origin',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.message || 'ग्राहक सूची लोड नहीं हो सकी।');
+            customers.push(...(payload.data || []));
+            lastPage = Number(payload.meta?.last_page || 1);
+            page++;
+        } while (page <= lastPage);
+
+        select.innerHTML = '<option value="">सभी ग्राहक</option>';
+        customers.forEach((customer) => {
+            const name = customer.name_hi || customer.name_original || customer.name_en || 'ग्राहक';
+            const details = [
+                customer.customer_code ? 'Code: ' + customer.customer_code : null,
+                customer.mobile ? 'मोबाइल: ' + customer.mobile : null,
+                !customer.customer_code && !customer.mobile ? 'ID: ' + customer.id : null,
+            ].filter(Boolean);
+            const option = new Option(name + ' — ' + details.join(' · '), String(customer.id));
+            select.add(option);
+        });
+        select.disabled = false;
     }
 
     function summaryCards(summary) {
@@ -207,11 +249,15 @@
         }
     }
 
+    $('report-customer').addEventListener('change', () => { state.page = 1; });
     $('report-type').addEventListener('change', () => { state.page = 1; configure(); });
     $('report-load').addEventListener('click', () => { state.page = 1; load(); });
     $('report-prev').addEventListener('click', () => { if (state.page > 1) { state.page--; load(); } });
     $('report-next').addEventListener('click', () => { if (state.page < state.lastPage) { state.page++; load(); } });
-    configure();
+    loadCustomers().then(configure).catch((error) => {
+        $('report-feedback').textContent = error.message;
+        $('report-customer').innerHTML = '<option value="">ग्राहक सूची उपलब्ध नहीं</option>';
+    });
 })();
 </script>
 @endpush
