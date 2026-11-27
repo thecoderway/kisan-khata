@@ -643,6 +643,8 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
     .financial-search-field { grid-column: span 2; }
 }
 @media(max-width:767px) {
+    .financial-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .financial-search-field { grid-column: span 2; }
     .financial-table { min-width: 760px; --kk-financial-cell-padding: 14px; }
     .financial-table thead th:first-child,
     .financial-table tbody td:first-child { min-width: 124px; max-width: 124px; overflow-wrap: anywhere; }
