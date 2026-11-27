@@ -180,8 +180,8 @@ class InterestCalculationServiceTest extends TestCase
         ]);
         Sanctum::actingAs($staff, ['app']);
 
-        $runCount = InterestCalculationRun::query()->count();
-        $itemCount = InterestCalculationItem::query()->count();
+        $runCount = DB::table('interest_calculation_runs')->where('shop_id', $shop->getKey())->count();
+        $itemCount = DB::table('interest_calculation_items')->where('shop_id', $shop->getKey())->count();
         $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history')
             ->assertOk()
             ->assertJsonPath('data.0.id', $run->getKey())
@@ -206,8 +206,8 @@ class InterestCalculationServiceTest extends TestCase
         $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?per_page=5')->assertUnprocessable();
         $this->postJson('/api/v1/customers/'.$customer->getKey().'/interest-history')->assertStatus(405);
 
-        $this->assertSame($runCount, InterestCalculationRun::query()->count());
-        $this->assertSame($itemCount, InterestCalculationItem::query()->count());
+        $this->assertSame($runCount, DB::table('interest_calculation_runs')->where('shop_id', $shop->getKey())->count());
+        $this->assertSame($itemCount, DB::table('interest_calculation_items')->where('shop_id', $shop->getKey())->count());
 
         [, , $foreignCustomer] = $this->makeCustomerContext();
         app(CurrentShop::class)->set($shop);
