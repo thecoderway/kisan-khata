@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,11 @@ class InterestSettlementRun extends Model
             'started_at' => 'immutable_datetime', 'completed_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
         ];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void
