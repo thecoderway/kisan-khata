@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `2651776c0698d14bb3c51743f4c541ac110ab114` (2026-11-27), including PR #66 Batch 7B Payment reversal/replacement safeguards.  
-**Project Status:** Phase 2–4 remain merged and accepted for their recorded scopes. Phase 5 implementation and automated financial acceptance through Batch 8.8 are merged; PR #66 adds Batch 7B Payment reversal/replacement safeguards. Batch 7C combined lifecycle acceptance is now in progress on a dedicated feature branch. The Product Owner reports that the remaining manual browser tests they performed are passing. The controlled Projection Mismatch/Repair scenario has now passed in the local Demo Shop; formal Phase 5 sign-off remains open pending explicit Product Owner acceptance. Production readiness and repository-admin governance checks remain separate later-stage gates. No production deployment or release is claimed.  
+**Status Snapshot Base:** `main` at `e197205e6ac9df41efdc08b2bdf55b55553ed5d1` (2026-11-27), including PR #67 Batch 7C combined financial lifecycle acceptance.  
+**Project Status:** Phases 5, 6 and 7 are formally accepted by the Product Owner on 2026-11-27. Phase 5 financial foundation, Phase 6 credit sales and Phase 7 payments are accepted for the implemented scope; Phase 6/7 capabilities were delivered early within Phase 5 batches and are not to be duplicated. Batch 7C combined lifecycle CI and Product Owner local UI smoke acceptance are recorded. Phase 8 Customer Ledger gap assessment and implementation are next. Production readiness and repository-admin governance checks remain separate later-stage gates. No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -67,10 +67,10 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 2 | Multi-Tenancy Foundation | **Complete — merged into `main` via PR #7** (`8c670a1`). Tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API boundaries and job context are implemented. MySQL 8.4 CI evidence: run #17 (132 tests / 389 assertions, 0 failures, 0 skipped); PR #7 also records successful CI for its merged head. Future modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — merged into `main` via PR #7**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage. MySQL 8.4 CI run #19: 139 tests / 432 assertions, 0 failures, 0 skipped. Cross-domain Customer/Sales/Payment permission enforcement remains required in those domain modules. |
 | Phase 4 | Customer Management | **Implementation complete for merged scope — PRs #10–#14 merged into `main`.** Shop Profile/LGD selectors, customer CRUD/search, bilingual fields and location defaults, approved customer lifecycle policy, safe soft-delete builder behavior, and customer deactivate/reactivate/soft-delete/restore are merged and CI-verified. Product Owner manually smoke-tested Owner/Manager/Staff browser flows. Automatic translation provider integration remains explicitly deferred; no live provider integration is claimed. |
-| Phase 5 | Financial Foundation and Accounting Engine | Core implementation, automated acceptance through Batch 8.8, and PRs #53–#56/#58–#61 follow-ups are merged. Product Owner reports manual browser tests performed are passing; controlled Projection Mismatch/Repair test is now PASS; explicit final sign-off remains OPEN |
-| Phase 6 | Credit Sales | Formal phase acceptance not started. Sale posting/list/detail and related API/UI foundations were delivered early within Phase 5 Batch 7; reconcile remaining scope before implementation to avoid duplication |
-| Phase 7 | Payments | Formal phase acceptance not started. Payment posting/list/detail/correction foundations were delivered early within Phase 5 Batch 7; reconcile remaining scope before implementation to avoid duplication |
-| Phase 8 | Customer Ledger | Ledger projection/reconciliation and customer ledger API/workspace foundations were delivered within Phase 5; formal phase acceptance and print/export scope remain open |
+| Phase 5 | Financial Foundation and Accounting Engine | **COMPLETE — Product Owner accepted 2026-11-27.** Automated financial acceptance, Batch 7C combined lifecycle CI and local UI smoke acceptance recorded. No production release implied. |
+| Phase 6 | Credit Sales | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Sale posting/list/detail, controlled revision, audit, authorization and tenant safeguards delivered early in Phase 5 batches; no duplicate engine work. |
+| Phase 7 | Payments | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Consolidated posting, FIFO, interest integration, reversal/replacement, history, audit, authorization and concurrency safeguards delivered early in Phase 5 batches. |
+| Phase 8 | Customer Ledger | **NEXT — gap assessment and implementation planned.** Reuse existing ledger/projection/reconciliation; complete verified gaps in running ledger UI/API, date filters, opening/carry-forward presentation and Hindi/English print. |
 | Phase 9 | Interest Engine | Interest calculation, effective-dated policy and annual settlement foundations were delivered within Phase 5 under ADR-0012; reconcile formal phase acceptance and remaining scope before duplicate work |
 | Phase 10 | Crop-Season Settlement | Not started |
 | Phase 11 | Reports, Printing and Exports | Not started |
@@ -469,7 +469,7 @@ The authorized local repairAndReconcile() operation returned repaired=true, cons
 
 This is local development evidence only. It does not constitute production verification, production readiness or deployment approval. No production data, production migration, deployment or release was performed.
 
-**Remaining Phase 5 gate:** explicit Product Owner final acceptance/sign-off. Do not start Phase 6 implementation until that sign-off is given.
+**Phase 5–7 acceptance:** Product Owner formally accepted Phases 5, 6 and 7 on 2026-11-27. Phase 5 local UI smoke checks were reported working fine. Phase 6/7 are accepted for the delivered scope; any deferred features or later-phase scope remain subject to the approved roadmap and explicit exclusions.
 
 **Git branch policy:** main is the sole permanent integration branch. Other branches are temporary PR branches and should be deleted after their PRs are merged. Do not create a parallel master branch or retain long-lived feature/documentation branches.
 
@@ -492,3 +492,89 @@ This is local development evidence only. It does not constitute production verif
 - **Current state:** implementation branch prepared; exact-head CI and Product Owner manual UI acceptance are pending. Batch 7C is not yet marked complete.
 - No migrations, schema changes, production DB operations, deployment or release. Permanent exclusions remain Crop/Season tagging, Sale Bill Attachment and Payment Receipt Attachment; no advance balances or physical deletion.
 
+
+
+## 27. Product Owner acceptance — Phases 5, 6 and 7; Phase 8 next (2026-11-27)
+
+### Formal acceptance decision
+
+The Product Owner explicitly accepted **Phase 5 — Financial Foundation**, **Phase 6 — Credit Sales**, and **Phase 7 — Payments** as complete on 2026-11-27. This acceptance is recorded as a product/functional sign-off for the delivered scope.
+
+- Phase 5: financial core, ledger posting, projections, reconciliation/repair, interest and annual settlement foundations, audit/idempotency/concurrency safeguards, and combined lifecycle acceptance are merged. Batch 7C local UI smoke acceptance was reported successful by the Product Owner.
+- Phase 6: Sale creation/posting, listing/details, controlled Owner correction/revision, audit and authorization safeguards were delivered early within the Phase 5 financial batches and are accepted as the Phase 6 delivered scope.
+- Phase 7: consolidated Payment posting, FIFO allocation, interest integration, excess-payment rejection, Payment details/history, Owner-only reversal/replacement, audit/idempotency/concurrency safeguards were delivered early within the Phase 5 batches and are accepted as the Phase 7 delivered scope.
+- Do not recreate or duplicate these existing services, APIs, UI components, migrations or financial engines merely to follow the nominal phase sequence.
+- Product Owner acceptance does not authorize production migration, production data mutation, deployment or release.
+
+### Evidence and boundaries
+
+- Current accepted main baseline at the time of sign-off: `e197205e6ac9df41efdc08b2bdf55b55553ed5d1`.
+- PR #67 Batch 7C is merged. Pre-merge exact-head CI was green (runs #1549/#1550 as recorded in delivery history); post-merge main CI status is not asserted here.
+- Product Owner confirmed local dashboard access and reported all requested local UI smoke checks working. No additional financial transactions were created for this smoke check.
+- The local untracked backup `kisan_khata_before_phase5_2026-11-27_051801.sql` remains untouched.
+- Previously approved exclusions remain: no advance balances, physical deletion, crop/season tagging, Sale bill attachment or Payment receipt attachment unless separately approved.
+
+### Phase 8 — Customer Ledger: implementation report and work plan
+
+**Objective:** deliver a complete, deterministic, consolidated customer account ledger using the existing ledger entries and financial accounting engine as the source of truth.
+
+#### Reuse existing foundations (do not rebuild)
+
+- Append-only ledger entries and authoritative financial posting services.
+- Customer account balance projections and projection repair.
+- Reconciliation service and its read-only report/controlled repair workflow.
+- Existing Customer Ledger API/workspace foundations and tenant/role controls.
+- Existing interest and annual settlement posting foundations.
+
+#### Required read-only audit before implementation
+
+1. Inspect ledger entry schema/model, entry types, source transaction links, indexes and tenant scoping.
+2. Trace the ledger query/service used by Customer Ledger UI/API; confirm whether it reads authoritative ledger entries or derives from mutable projections.
+3. Verify opening balance semantics and how carried-forward principal/interest is represented; do not invent an opening-balance posting rule.
+4. Verify chronological ordering and deterministic tie-breakers for same-day Sales, Payments, interest and settlement entries.
+5. Verify running balance arithmetic uses decimal-safe values and matches CustomerAccount projection and reconciliation.
+6. Inspect existing filters, pagination, endpoint authorization, Owner/Manager/Staff visibility and cross-Shop denial.
+7. Inspect printable/print CSS and Hindi/English font/rendering support; distinguish browser print from PDF export (PDF/export may be a later report-phase deliverable unless approved).
+8. Inventory existing automated tests and UI acceptance gaps.
+
+#### Phase 8 delivery scope
+
+- Complete customer-wise chronological ledger view with opening/carry-forward balance clearly distinguished from current-period transactions.
+- Show Sale, consolidated Payment, Interest, Settlement and approved adjustment/correction entries with original dates and human-readable descriptions.
+- Show Payments as one consolidated customer payment entry; never display internal FIFO allocation rows as separate customer-facing payments.
+- Deterministic running balance after each entry; preserve source transaction date and immutable history.
+- Date range filters, pagination and customer navigation; totals must reconcile with the accounting engine.
+- Responsive, readable ledger UI with clear debit/credit/balance columns.
+- Hindi and English printable ledger layout, with correct glyph/font output.
+- Tenant isolation, role permissions, audit/history integrity and API contract coverage.
+
+#### Explicit non-goals / decisions to resolve before coding
+
+- No new accounting engine, duplicate ledger tables, duplicate migrations or independent balance calculator.
+- No changes to approved FIFO, interest, settlement or posting rules.
+- No customer advance balance.
+- Do not invent opening-balance import/adjustment behavior; identify existing semantics and request Product Owner decision if absent.
+- Do not add PDF export, Excel/CSV export, crop/season settlement or new adjustment transaction types under Phase 8 without scope approval; align exports with Phase 11 and crop-season accounting with Phase 10.
+- No production DB operations or deployment.
+
+#### Acceptance criteria
+
+- Ledger rows are tenant-scoped and authorized server-side.
+- Displayed entries reconcile exactly to authoritative ledger totals and customer projection.
+- Payments appear consolidated, not split into FIFO allocation rows.
+- Ordering and running balance are deterministic for same-date entries.
+- Date filters preserve opening/carry-forward balance semantics.
+- Hindi and English print output is legible and complete.
+- Automated tests cover ledger types, date boundaries, running balances, permissions, cross-Shop isolation and reconciliation.
+- Pint passes every changed PHP file; full relevant CI including MySQL 8.4 passes; frontend build/tests pass.
+- Product Owner completes browser UI and print acceptance before Phase 8 closure.
+
+#### Proposed implementation batches
+
+- **8A — Read-only ledger audit & gap matrix:** schema, services, APIs, UI, permissions, print, tests.
+- **8B — Ledger query/service completion:** deterministic chronological query, safe running balances, opening/carry-forward semantics only as already approved.
+- **8C — Ledger UI & filters:** customer ledger view, date filters, pagination, debit/credit/balance presentation.
+- **8D — Hindi/English print:** print stylesheet/layout and rendering acceptance.
+- **8E — Acceptance & closure:** automated regression, tenant/role security, MySQL CI, browser and print smoke acceptance, documentation.
+
+Phase 8 begins with Batch 8A in read-only mode. No file or database changes until the audit and gap matrix are reviewed and implementation is authorized.
