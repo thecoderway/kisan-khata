@@ -17,7 +17,7 @@ class FinancialWorkspaceController extends Controller
     {
         abort_unless(in_array($section, ['sales', 'payments', 'ledger', 'interest', 'reconciliation', 'audit', 'reports'], true), 404);
 
-        if ($section === 'reports' && auth()->user()->role === User::ROLE_STAFF) {\n            abort(403);\n        }\n\n        if (in_array($section, ['interest', 'reconciliation', 'audit'], true)) {
+        if (in_array($section, ['interest', 'reconciliation', 'audit'], true)) {
             abort_unless(auth()->user()->role === User::ROLE_OWNER, 403);
         }
 
