@@ -696,6 +696,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
 
     public function test_bulk_eloquent_mutations_are_blocked_for_payment_lifecycle_records(): void
     {
+        $this->context();
         $models = [
             \\App\\Models\\Payment::class,
             \\App\\Models\\PaymentRevision::class,
@@ -723,6 +724,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
                 'incrementEach' => fn () => $modelClass::query()->incrementEach(['id' => 1]),
                 'decrementEach' => fn () => $modelClass::query()->decrementEach(['id' => 1]),
                 'updateOrInsert' => fn () => $modelClass::query()->updateOrInsert([], []),
+                'touch' => fn () => $modelClass::query()->touch('created_at'),
                 'truncate' => fn () => $modelClass::query()->truncate(),
             ];
 
