@@ -539,6 +539,64 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ], ['Idempotency-Key' => 'customer-visibility-rejected-payment'])->assertStatus(409);
     }
 
+    public function test_sale_details_api_returns_financial_lifecycle_relations(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Sale details lifecycle test', 'batch-6a-sale-details-posting',
+        );
+        app(PaymentPostingService::class)->post(
+            $owner, $customer, '25.00', CarbonImmutable::parse('2026-11-21'),
+            'UPI', 'BATCH-6A-DETAILS-REF', 'Partial payment for details test',
+            'batch-6a-sale-details-payment',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $response = $this->getJson('/api/v1/sales/'.$sale->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.id', $sale->getKey())
+            ->assertJsonPath('data.sale_number', $sale->sale_number)
+            ->assertJsonPath('data.customer.id', $customer->getKey())
+            ->assertJsonPath('data.payment_status', 'PARTIALLY_PAID')
+            ->assertJsonPath('data.financial_transaction.transaction_type', 'SALE_POSTING');
+
+        $this->assertNotEmpty($response->json('data.ledger_entries'));
+        $this->assertNotEmpty($response->json('data.allocation_items'));
+        $this->assertSame('BATCH-6A-DETAILS-REF', $response->json('data.allocation_items.0.payment.reference_number'));
+    }
+
+    public function test_sale_details_are_available_to_shop_roles_and_foreign_shop_sales_are_hidden(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Shop-scoped sale details', 'batch-6a-role-sale-details',
+        );
+
+        [$foreignShop, $foreignOwner, $foreignCustomer] = $this->context();
+        $this->createPolicy($foreignShop, $foreignOwner);
+        $foreignSale = app(SalePostingService::class)->post(
+            $foreignOwner, $foreignCustomer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '75.00', 'Foreign shop sale details', 'batch-6a-foreign-sale-details',
+        );
+
+        foreach ([User::ROLE_OWNER, User::ROLE_MANAGER, User::ROLE_STAFF] as $role) {
+            $actor = $role === User::ROLE_OWNER ? $owner : User::factory()->create([
+                'shop_id' => $shop->getKey(), 'role' => $role, 'is_active' => true,
+            ]);
+            Sanctum::actingAs($actor, ['app']);
+            $this->getJson('/api/v1/sales/'.$sale->getKey())->assertOk()
+                ->assertJsonPath('data.id', $sale->getKey());
+        }
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->getJson('/api/v1/sales/'.$foreignSale->getKey())->assertNotFound();
+    }
+
     private function context(): array
     {
         $shop = Shop::factory()->create(['timezone' => 'Asia/Kolkata']);
