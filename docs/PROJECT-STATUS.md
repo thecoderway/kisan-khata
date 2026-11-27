@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
-**Last Updated:** 2026-11-26  
-**Status Snapshot Base:** `main` at `5bbdd3bf7198f7892e5e94610fe3c79c277c3396` (2026-11-26).  
-**Project Status:** Phase 2 Multi-Tenancy Foundation and Phase 3 Roles/User Management are merged and accepted. Phase 4 Customer Management (Shop Profile/LGD, customer CRUD and customer lifecycle) is merged through PRs #10–#14 and CI-verified; Product Owner manually smoke-tested Owner/Manager/Staff flows. Automatic translation provider integration remains deferred. Phase 5 Financial Foundation and Accounting Engine is in progress: Groups 1–8 physical schema/model foundation are merged and CI-verified; core financial services and acceptance workflows remain incomplete. No production deployment is claimed.  
+**Last Updated:** 2026-11-27  
+**Status Snapshot Base:** `main` at `62419de9872f84a38a6d8d422e11dbadca73a1ca` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
+**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation and automated acceptance through Batch 8.8 are merged. PRs #53–#56 subsequently completed Sales/Payments customer dropdowns, approved table/filter/drawer behavior, pagination layout/navigation and sidebar usability. The Product Owner has manually confirmed the Sales/Payments listing, drawer layout, pagination navigation and sidebar behavior. Phase 5 remains OPEN pending fresh-Shop registration and tenant-isolation/role-based browser acceptance, plus complete workflow smoke checks across Sales, Payments, Customer Ledger, Interest Settings and Reconciliation; production-readiness and repository-admin checks remain separate later-stage gates. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -14,13 +14,13 @@ These rules are mandatory for all future work, including AI-assisted work:
 1. **Document-first:** Before planning or changing code, read the relevant approved PRD, Business Rules, Accounting Engine, Database, Multi-Tenancy, Security, UI/UX, API and Testing sections, the applicable roadmap phase, and all relevant ADRs.
 2. **Inspect before implementing:** Audit the existing code, migrations, routes, policies, tests and dependencies. Do not assume a feature is absent or complete from a status label alone.
 3. **No silent scope or policy changes:** Do not invent business rules, defaults, permissions, pricing, calculations or architecture. If a requirement is missing, ambiguous or conflicts with an ADR/document, stop the affected work, explain the conflict and obtain Product Owner approval. Update the authoritative document/ADR before implementation.
-4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Never merge to `main` without the Product Owner's explicit approval.
+4. **Small, reviewable delivery:** Work on a dedicated feature/documentation branch, implement one independently verifiable scope at a time, and submit a PR. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 5. **Security and tenancy by design:** Derive tenant context from authenticated membership; never trust client-supplied `shop_id` or role. Enforce authorization server-side and test cross-tenant access for every tenant-owned feature.
 6. **Financial integrity:** Follow Docs 02/03/04 and accepted ADRs exactly. Use decimal-safe arithmetic and MySQL DECIMAL; never PHP floats for authoritative money. Financial posting must be transactional, idempotent, concurrency-safe and auditable. Customer-facing payments remain consolidated; internal FIFO allocation across Sales is required under ADR-0012.
 7. **Tests are evidence:** Add relevant automated tests and actually run them. Never claim tests, builds, migrations or acceptance criteria passed without observed output.
 8. **Review all changes:** Report changed files, migrations, security implications, test output and known limitations. Preserve existing working functionality unless explicitly approved otherwise.
 9. **Documentation stays synchronized:** Update the relevant technical document and this status file in the same delivery whenever implementation changes documented behavior or verified progress. Distinguish implemented, tested, accepted and production-configured states.
-10. **Approval gates:** Ask before significant architecture/business changes, PR creation when not already authorized, and every merge. SMS provider integration is explicitly deferred to the final integration/release-readiness stage by Product Owner instruction.
+10. **Approval gates:** Ask before significant architecture/business changes and PR creation when not already authorized. Under the standing merge authorization, merge only after green CI, mergeability and blocker review; respect any explicit hold/review-only instruction. SMS provider integration is explicitly deferred to the final integration/release-readiness stage by Product Owner instruction.
 
 If any future instruction conflicts with these rules or approved documentation, do not guess; surface the conflict and ask for a decision.
 
@@ -67,15 +67,15 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 2 | Multi-Tenancy Foundation | **Complete — merged into `main` via PR #7** (`8c670a1`). Tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API boundaries and job context are implemented. MySQL 8.4 CI evidence: run #17 (132 tests / 389 assertions, 0 failures, 0 skipped); PR #7 also records successful CI for its merged head. Future modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — merged into `main` via PR #7**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage. MySQL 8.4 CI run #19: 139 tests / 432 assertions, 0 failures, 0 skipped. Cross-domain Customer/Sales/Payment permission enforcement remains required in those domain modules. |
 | Phase 4 | Customer Management | **Implementation complete for merged scope — PRs #10–#14 merged into `main`.** Shop Profile/LGD selectors, customer CRUD/search, bilingual fields and location defaults, approved customer lifecycle policy, safe soft-delete builder behavior, and customer deactivate/reactivate/soft-delete/restore are merged and CI-verified. Product Owner manually smoke-tested Owner/Manager/Staff browser flows. Automatic translation provider integration remains explicitly deferred; no live provider integration is claimed. |
-| Phase 5 | Financial Foundation and Accounting Engine | Not started; critical prerequisite for financial workflows |
-| Phase 6 | Credit Sales | Not started |
-| Phase 7 | Payments | Not started |
-| Phase 8 | Customer Ledger | Not started |
-| Phase 9 | Interest Engine | Not started; unresolved business parameters must be approved first |
+| Phase 5 | Financial Foundation and Accounting Engine | Core implementation and automated acceptance through Batch 8.8 merged; PRs #53–#56 UI follow-ups merged. Partial Sales/Payments browser smoke confirmed; fresh-Shop tenant/role and full financial workflow acceptance remains OPEN |
+| Phase 6 | Credit Sales | Formal phase acceptance not started. Sale posting/list/detail and related API/UI foundations were delivered early within Phase 5 Batch 7; reconcile remaining scope before implementation to avoid duplication |
+| Phase 7 | Payments | Formal phase acceptance not started. Payment posting/list/detail/correction foundations were delivered early within Phase 5 Batch 7; reconcile remaining scope before implementation to avoid duplication |
+| Phase 8 | Customer Ledger | Ledger projection/reconciliation and customer ledger API/workspace foundations were delivered within Phase 5; formal phase acceptance and print/export scope remain open |
+| Phase 9 | Interest Engine | Interest calculation, effective-dated policy and annual settlement foundations were delivered within Phase 5 under ADR-0012; reconcile formal phase acceptance and remaining scope before duplicate work |
 | Phase 10 | Crop-Season Settlement | Not started |
 | Phase 11 | Reports, Printing and Exports | Not started |
 | Phase 12 | Subscription System | Not started |
-| Phase 13 | API Finalization and Android Readiness | Partial groundwork only; full versioned API contract is not complete |
+| Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
 | Phase 14 | Production Readiness | Not started |
 | Phase 15 | Android Application | Not started |
 
@@ -137,7 +137,7 @@ Recorded as complete:
 
 **Infrastructure boundary review:**
 - Current tenant-owned Eloquent data models are `ShopSetting` and `UserAuditLog`; shop users are protected through authenticated shop resolution, explicit shop-bound directory/lifecycle queries and `UserBuilder` mutation safeguards.
-- No Customer, Sales, Payments, Ledger, tenant upload/download, tenant-specific cache consumer, tenant business job or export module exists yet. The Phase 2 primitives are ready for those modules; each module must still add its own resource ownership, authorization and cross-tenant tests before release.
+- Customer and financial modules now exist. Their resource ownership, role authorization and cross-Shop protections must be verified per resource and workflow; the Phase 2 foundation alone is not a substitute for domain-specific acceptance tests.
 - The current raw OTP query-builder path targets only the system-level `mobile_otp_challenges` table. The user-lifecycle audit writer is restricted to its validated shop context. Any future raw SQL/query-builder access to tenant-owned data requires explicit review and tenant filtering.
 - No production deployment or tenant-specific file/cache/job feature is claimed.
 
@@ -178,7 +178,7 @@ Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subje
 - Remaining Laravel suite: **138 passed / 430 assertions**.
 - Combined Laravel result: **139 tests passed / 432 assertions / 0 failures / 0 skipped**.
 
-Phase 3 is accepted as the complete Roles and User Management phase. This is feature-branch acceptance, not production deployment/release approval. No merge to `main` is claimed.
+Phase 3 is accepted as the complete Roles and User Management phase and was merged into `main` through PR #7. This is feature acceptance, not production deployment/release approval.
 
 ### Phase 4 — Customer Management
 
@@ -323,51 +323,114 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current verified `main` HEAD: `5bbdd3bf7198f7892e5e94610fe3c79c277c3396` (Phase 5 Groups 1–8 schema/model foundation; 2026-11-26).
+- Current verified `main` HEAD: `62419de9872f84a38a6d8d422e11dbadca73a1ca` (PR #56 pagination/sidebar follow-up; 2026-11-27).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
-- All feature and documentation changes use reviewable PRs. No future merge to `main` without explicit Product Owner approval.
+- All feature and documentation changes use reviewable PRs. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 - Update status only from verified repository, CI, test or Product Owner evidence.
 - Keep this document and relevant technical documentation synchronized with accepted implementation.
 
 ## 12. Immediate next steps
 
 - Phase 2 and Phase 3 are merged and accepted; Phase 4 implementation is merged and accepted for its recorded scope.
-- **Current phase: Phase 5 — Financial Foundation and Accounting Engine.**
+- **Current phase: Phase 5 automated implementation and acceptance are complete through Batch 8.8; manual Product Owner browser/UI acceptance is the remaining Phase 5 sign-off.**
 - Product Owner financial rules are finalized in ADR-0012 and synchronized with docs/01, docs/02, docs/03, docs/04, docs/06, docs/09, docs/10 and the financial integrity guardrails.
 - The detailed Phase 5 implementation blueprint is `docs/phase-5-implementation-blueprint.md`.
-- Read-only existing-code/schema audit is complete. Batch 0 documentation and CustomerDeletionEligibility implementation are complete on PR #29; MySQL 8.4 CI has passed. PR #29 remains open for Product Owner merge approval.
-- Continue with Batch 1 financial foundation services, then Sale posting/revisions, interest calculation, Payment/FIFO allocation, annual interest settlement, ledger projection/reconciliation, authorization/APIs/UI, and final MySQL 8.4 integration/release gate.
+- PR #49 (Batch 8.7) and PR #50 (Batch 8.8) are merged; final feature-head CI passed. The post-merge `main` CI result is tracked separately in Section 27.
+- Next product phase after Phase 5 sign-off is Phase 6 — Credit Sales. Do not mix later Phase 6–15 roadmap scope into Phase 5.
 - No database migrations, local/production data changes or deployment without separate explicit Product Owner approval.
 - Do not begin production Sales/Payment workflows until Phase 5 foundation passes its critical acceptance tests.
 - Keep production SMS provider integration deferred until final integration/release readiness.
 
-## 13. Phase 5 status — 2026-11-26
+## 13. Phase 5 status — 2026-11-27
 
-**Business rules and blueprint: documented. Physical schema/model foundation: Groups 1–8 merged and CI-verified. Batch 0 implementation: complete on PR #29; awaiting merge approval. Financial services and end-to-end acceptance: not complete.**
+**Current delivery baseline:** Phase 5 financial implementation and automated acceptance through Batch 8.8 are merged into `main`. Batch 8.7 merged in PR #49 (`a67edfaacfc660ce0ecc9bae88ffa3e01307e5f4`); Batch 8.8 merged in PR #50 (`c740e44434071062c4cb8eac546f375a7e234126`). This includes the financial core, tenant-safe posting and locking, FIFO allocation, effective-dated interest, annual auto settlement, ledger projection/reconciliation, financial APIs/UI, workflow/authorization regressions, rollback/audit atomicity checks and MySQL 8.4 concurrent Payment/Sale/settlement tests. Automated acceptance is CI-verified. Product Owner browser/UI smoke acceptance remains outstanding; production readiness is a separate later phase.
 
 Controlling decision: `docs/decisions/ADR-0012-approved-financial-rules.md`.
 
-Finalized rules include:
-- Paid/Unpaid Sale; Paid creates an equal linked automatic Payment atomically.
-- Normal customer Payments remain consolidated in the customer-facing ledger and are internally allocated FIFO by Sale, then by the Shop's Principal First/Interest First waterfall within each Sale.
-- Excess Payment is rejected; no advances.
-- Shop monthly rate default 0%, optional Customer rate override.
-- Shop grace period default 30 calendar days; Sale Date is Day 0; no Customer-specific grace override.
-- Shop capitalization default OFF; optional Customer override.
-- Actual Days / 30; HALF_UP rounding to two decimal places; [start inclusive, end exclusive) interval.
-- Annual Interest Auto Settlement defaults to 30 March and 30 October.
-- Normal Payment precedes annual Auto Settlement on a shared date.
-- Locked historical Sale correction has no exception in the current approved scope; stop and require separate approval and workflow design.
-- Financial history is append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable.
+The approved financial rules remain unchanged: consolidated customer-facing payments with internal FIFO allocation; per-Sale waterfall; excess-payment rejection and no advances; Shop/Customer interest policy; 30-day Shop grace period; Actual Days / 30; HALF_UP two-decimal rounding; [start inclusive, end exclusive) intervals; annual settlement dates defaulting to 30 March and 30 October; Payment-before-settlement ordering on shared dates; append-only, tenant-scoped, atomic, idempotent, concurrency-safe and auditable financial history.
 
-**Current delivery:** Batch 0 is complete on PR #29 (open; not merged). It includes ADR-0012 documentation reconciliation, CustomerDeletionEligibility updates, and focused deletion-guard tests. Next is Batch 1 financial foundation services, followed by the approved batches in sequence. No database migrations or deployment are authorized; obtain separate explicit approval before either.
+**Merged delivery history:**
+- Batch 5 — Annual Interest Auto Settlement: PR #40, merge commit `b30348130141ab6a43d2a2a56e151d389e3c38f9`.
+- Batch 6 — Ledger Projection & Reconciliation: PR #41, merged.
+- Batch 7 — Financial Authorization, APIs & UI: PR #43, merge commit `7b8b9791e04788569dc09935cc1854982732c717`.
+- Batch 8.2 — projection repair lock ordering and recurring settlement calendar validation: PR #44, merge commit `a187480a4cdf132a1ffe6b3af4a8ac185b4b226d`.
+- Batch 8.3 — lock-first, atomic repair through the actual authenticated API endpoint: PR #45, merge commit `bc9afb78811ca28d2238506bcba6ec1154ad05d7`.
+- Batch 8.4 — release-gate documentation synchronization: PR #46, merge commit `a97cf7f9272e5a3d880a0a74ff23d43f633e9c3c`.
+- Batch 8.5 — repair rollback/audit atomicity and reconciliation authorization regressions: PR #47, merge commit `5f98e0d4cdd3cf11eb3786004cac3a359aacb18c`.
+- Batch 8.7 — complete financial workflow and correction-authorization acceptance: PR #49, merge commit `a67edfaacfc660ce0ecc9bae88ffa3e01307e5f4`.
+- Batch 8.8 — real MySQL 8.4 concurrency acceptance for competing Payments, Sale-versus-Payment FIFO and same-day Payment/annual settlement: PR #50, merge commit `c740e44434071062c4cb8eac546f375a7e234126`.
 
-**Verification:** GitHub Actions Laravel CI run [45789193066](https://github.com/thecoderway/kisan-khata/actions/runs/45789193066) passed on commit `6d9830881a9a802ae855b229240f89c7e80cfffd`: Pint **164 files passed**; Composer validation passed; Vite production build passed; MySQL 8.4.13 row-lock integration test **1 passed / 2 assertions**; Laravel suite **233 passed / 802 assertions**. This verifies the PR branch only; it is not a production deployment or migration verification.
+**Batch 8.3 CI evidence:** GitHub Actions run [45868343441](https://github.com/thecoderway/kisan-khata/actions/runs/45868343441) completed successfully. All job steps passed, including MySQL row-lock integration, the remaining Laravel test suite, PHP formatting, Composer validation and Vite production build. This is CI evidence for the merged PR head; it is not production deployment or a full release acceptance sign-off.
 
-## Phase 5 — Batch 5 and Batch 6 delivery update (2026-11-26)
+**Batch 8.5 CI evidence:** GitHub Actions run [45872271027](https://github.com/thecoderway/kisan-khata/actions/runs/45872271027) completed successfully. All steps passed, including MySQL row-lock integration, remaining Laravel tests, Pint formatting, Composer validation and Vite production build. PR #47 adds failure-injection rollback coverage proving projection repair and its audit event roll back together, Manager/Staff repair denial and Owner cross-Shop customer denial, plus policy denial-matrix coverage. This is targeted regression evidence, not complete Phase 5 acceptance.
 
-- **Batch 5 — Annual Interest Auto Settlement:** merged via PR #40, squash merge commit `b30348130141ab6a43d2a2a56e151d389e3c38f9`. The merged scope includes Shop-local configured dates, idempotent settlement runs, same-day payment ordering, and missed-settlement catch-up. CI was green on the final PR head before merge.
-- **Batch 6 — Ledger Projection & Reconciliation:** implementation is complete on `feat/batch-6-ledger-projection-reconciliation`; PR #41 is open for review. The scope centralizes ledger-derived account projection rebuilds across Sale, Payment, Payment reversal and interest posting; provides read-only reconciliation and an explicit ledger-derived repair path; checks snapshots, Sale payment statuses and source posting totals.
-- Batch 6 reuses the already merged financial schema. No new migration, schema mutation, database backfill, production operation or deployment is included.
-- Feature tests cover projection consistency, read-only discrepancy detection, explicit repair, allocation integrity, sale-day auto payments, reversal reconciliation and cross-Shop rejection. PR #41 CI is green on the current head (MySQL 8.4 locking tests, 279 Laravel tests / 1,075 assertions, PHP formatting and frontend build). Keep Batch 6 unmerged until the Product Owner approves.
-- The delivery remains a reviewable PR. No merge to `main` is authorized without explicit Product Owner approval.
+**Remaining Phase 5 acceptance:** Product Owner must complete browser/UI smoke acceptance for the financial Sales, Payments, Customer Ledger, Interest Settings and Reconciliation workflows, including Owner/Manager/Staff visibility and denial paths. Browser automation is not configured, so CI does not claim browser-level acceptance. The automated workflow, role/cross-Shop, rollback, MySQL 8.4 concurrency, formatting, Composer and Vite checks are complete and passed.
+
+**Separate later-stage release gates:** production environment configuration, backup/restore evidence, monitoring and deployment/recovery procedures belong to Phase 14 Production Readiness. Branch-protection and required-check settings remain unknown because the current GitHub integration cannot inspect repository administration settings; a repository administrator must verify them before release.
+
+No production deployment, production data change, migration execution or release is claimed. Database migrations and deployment require separate explicit Product Owner approval.
+
+## Phase 5 — Historical Batch 5 and Batch 6 delivery note (superseded)
+
+The original in-progress delivery notes below were superseded by the merged delivery baseline in Section 13. Batch 5 (PR #40) and Batch 6 (PR #41) are both merged into `main`; neither remains open. The current Phase 5 state and release gate are recorded in Section 13 and the current roadmap release-gate section.
+
+## Phase 5 — Batch 7 and Batch 8 delivery correction (2026-11-26)
+
+This delivery history is superseded by the current Phase 5 status in Section 13 above:
+- Batch 5: merged via PR #40.
+- Batch 6: merged via PR #41.
+- Batch 7: merged via PR #43.
+- Batch 8.2: merged via PR #44.
+- Batch 8.3: merged via PR #45.
+- Batch 8.4 is documentation synchronization only; it does not close the overall Phase 5 acceptance/release gate.
+- Batch 8.5 is targeted rollback/audit atomicity and reconciliation authorization regression coverage; it does not close the overall Phase 5 acceptance/release gate.
+- No production migration, production data change, deployment or release is included or authorized.
+
+
+---
+
+## 26. Phase 5 — Batch 8.7 financial workflow acceptance (2026-11-27)
+
+Batch 8.7 was merged through PR #49 at `a67edfaacfc660ce0ecc9bae88ffa3e01307e5f4`. It adds a consolidated acceptance test for Sale, sale-day automatic Payment, normal Payment/FIFO, annual interest settlement and ledger reconciliation; failure-injection rollback checks for Paid Sale/automatic Payment and normal Payment; and authenticated Payment correction API checks for Owner, Manager, Staff and cross-Shop isolation.
+
+The delivery also aligns `AGENTS.md`, `CLAUDE.md` and `.claude/rules/financial-integrity.md` with ADR-0012: customer-facing Payments remain consolidated while immutable internal FIFO allocation records are required. ADR-0012 supersedes the older ADR-0004 prohibition on internal Sale-wise allocation.
+
+**Verification:** PR #49 feature-head CI runs [45876775514](https://github.com/thecoderway/kisan-khata/actions/runs/45876775514) and [45876767753](https://github.com/thecoderway/kisan-khata/actions/runs/45876767753) completed successfully, including MySQL 8.4 integration, remaining Laravel tests, Pint, Composer validation and Vite build. The post-merge `main` CI was also subsequently verified green in runs [45877841024](https://github.com/thecoderway/kisan-khata/actions/runs/45877841024) and [45877068509](https://github.com/thecoderway/kisan-khata/actions/runs/45877068509).
+
+Browser automation is not configured; browser-level financial UI smoke acceptance remains a Product Owner manual sign-off item. No production database, production migration, backfill, deployment or release was performed or authorized. See [Batch 8.7 financial workflow acceptance](phase-5-batch-8-7-financial-workflow-acceptance.md).
+
+
+## 27. Phase 5 — Batch 8.8 MySQL financial posting concurrency acceptance (2026-11-27)
+
+Batch 8.8 is merged through PR #50 at merge commit `c740e44434071062c4cb8eac546f375a7e234126`. It adds `tests/Feature/Financial/FinancialPostingConcurrencyTest.php` with three MySQL 8.4 multi-connection/fork-based concurrency scenarios:
+
+1. Two competing normal Payments: the first Payment holds the Customer lock; the second waits, re-reads the committed payable and is rejected rather than overdraw the account.
+2. Sale-versus-Payment race: a Payment waits for an uncommitted Sale, then observes the committed Sale and allocates FIFO across both eligible Sales.
+3. Payment-versus-same-day annual settlement: Payment posting and settlement serialize on the Customer lock; the settlement does not post duplicate interest and reconciliation remains consistent.
+
+**Observed CI evidence:** [run 45879804264](https://github.com/thecoderway/kisan-khata/actions/runs/45879804264) completed successfully on head `5fd97786b7ca78bd22a1f200d36cebf551182be4`. Composer validation, Pint, Vite production build, MySQL 8.4 row-lock integration group and remaining Laravel test suite all passed. The three new concurrency tests passed as part of the MySQL row-lock group. No application behavior or schema changed; this batch adds test coverage only.
+
+The post-merge `main` CI run [45880048532](https://github.com/thecoderway/kisan-khata/actions/runs/45880048532) completed successfully on merge commit `c740e44434071062c4cb8eac546f375a7e234126`; post-merge CI is green.
+
+Detailed scenario setup, locking assertions, fixture cleanup and CI evidence are recorded in [Batch 8.8 MySQL financial posting concurrency acceptance](phase-5-batch-8-8-financial-posting-concurrency-acceptance.md).
+
+**Scope and safety:** no production database, production migration, backfill, deployment or release was performed or authorized. Product Owner browser/UI smoke acceptance remains outstanding; Phase 14 production readiness and repository-admin branch-protection verification remain separate gates.
+
+
+## 28. Phase 5 — Financial UI follow-up and partial browser acceptance (2026-11-27)
+
+**Current main baseline:** `62419de9872f84a38a6d8d422e11dbadca73a1ca`.
+
+Merged follow-ups after Batch 8.8:
+- PR #53: customer directory loading for financial workflows and JS helper tests.
+- PR #54: Sales/Payments server-side tables, auto filters, pagination and asynchronous action drawers.
+- PR #55: Customer-style pagination presentation and improved drawer field layout.
+- PR #56: working numbered pagination/Tabler arrows, independently scrollable sidebar with visible shop/logout footer, and Interest Settings moved into Settings.
+
+**Manual evidence reported by Product Owner:** Sales/Payments listing and filters, customer dropdown, drawer layout, pagination navigation and sidebar behavior were checked in the local browser and confirmed working. Local frontend production build succeeded after pulling these changes. This is limited UI smoke evidence, not full Phase 5 acceptance.
+
+**Still required:** create a fresh Shop through registration in a separate Incognito/browser profile; verify Shop A/Shop B isolation; verify Owner/Manager/Staff permitted and forbidden actions; exercise Sale, Payment, FIFO allocation, interest, ledger, reconciliation and explicit repair workflows; verify validation/error/success behavior. No new-Shop acceptance has yet been reported. Phase 5 remains OPEN.
+
+**CI evidence:** post-merge `main` run [45961048236](https://github.com/thecoderway/kisan-khata/actions/runs/45961048236) completed successfully, including PHP formatting, automated tests and frontend build. CI does not replace browser acceptance.
+
+**Next sequence:** complete fresh-Shop browser acceptance, record results, close Phase 5 acceptance, then begin Phase 6. Do not start Phase 6 implementation before Phase 5 sign-off.
