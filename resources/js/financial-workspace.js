@@ -65,6 +65,11 @@ const buildQuery = () => {
             const normalized = String(value).trim();
             if (normalized && key !== 'per_page') params.set(key, normalized);
         }
+    } else {
+        for (const name of ['from', 'to', 'action']) {
+            const value = document.getElementById('financial-' + name)?.value.trim();
+            if (value) params.set(name, value);
+        }
     }
     return params.toString();
 };
@@ -154,7 +159,10 @@ const loadLedger = async (signal) => {
     ]);
     renderTable(['तारीख', 'लेन-देन', 'खाता', 'Debit', 'Credit', 'बाकी'], rows);
     const opening = payload.meta?.opening_balance;
-    if (opening) showMessage('Opening balance — Principal: ' + money(opening.principal) + ' · Interest: ' + money(opening.interest) + ' · Total: ' + money(opening.total));
+    if (opening) {
+        root.insertAdjacentHTML('afterbegin', '<div class="alert alert-info mx-3 mt-3 mb-0" role="status">Opening balance — Principal: <strong>' +
+            money(opening.principal) + '</strong> · Interest: <strong>' + money(opening.interest) + '</strong> · Total: <strong>' + money(opening.total) + '</strong></div>');
+    }
     renderPagination(payload.meta);
 };
 const loadInterest = async (signal) => {
@@ -306,6 +314,8 @@ if (filtersForm) {
     filtersForm.addEventListener('submit', (event) => { event.preventDefault(); applyFilters(); });
     filtersForm.querySelector('[data-financial-reset]')?.addEventListener('click', () => {
         filtersForm.reset();
+        const sort = filtersForm.elements.namedItem('sort');
+        if (sort) sort.value = 'date_desc';
         currentPage = 1;
         applyFilters();
     });
