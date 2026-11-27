@@ -144,7 +144,7 @@ const loadPayments = async (signal) => {
         esc(payment.payment_method || '—'),
         '<span class="badge bg-secondary-lt">' + esc(payment.payment_type) + '</span>',
         config.role === 'owner' && payment.payment_type === 'NORMAL'
-            ? '<button class="btn btn-sm btn-outline-danger" type="button" data-financial-action="correct-payment" data-id="' + esc(payment.id) + '" data-customer-id="' + esc(payment.customer_id) + '"><i class="ti ti-arrow-back-up me-1" aria-hidden="true"></i>रिवर्स / बदलें</button>'
+            ? '<button class="btn btn-sm btn-outline-danger" type="button" data-financial-action="correct-payment" data-id="' + esc(payment.id) + '" data-customer-id="' + esc(payment.customer_id) + '" data-payment-number="' + esc(payment.payment_number) + '" data-payment-amount="' + esc(payment.amount) + '" data-customer-name="' + esc(payment.customer?.name_hi || payment.customer?.name_original || 'ग्राहक') + '"><i class="ti ti-arrow-back-up me-1" aria-hidden="true"></i>रिवर्स / बदलें</button>'
             : '—',
     ]));
     renderPagination(payload.meta);
@@ -251,7 +251,8 @@ const formMarkup = (kind, data = {}) => {
             formField('नया विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000">' + esc(data.description || '') + '</textarea>', true) +
             formField('संशोधन का कारण', 'reason', '<input id="FIELD_ID" class="form-control" name="reason" minlength="1" maxlength="500" required>', true) + '</form>';
     }
-    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान reverse होगा। क्या आप आगे बढ़ना चाहते हैं?" data-optional-nested-amount="replacement[amount]">' + token +
+    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान #' + esc(data.paymentNumber || data.id) + ' (₹' + esc(data.paymentAmount || '') + ') reverse होगा। क्या आप आगे बढ़ना चाहते हैं?" data-optional-nested-amount="replacement[amount]">' + token +
+        '<div class="alert alert-warning financial-form-wide" role="note">मूल भुगतान <strong>#' + esc(data.paymentNumber || data.id) + '</strong> · ग्राहक <strong>' + esc(data.customerName || '—') + '</strong> · राशि <strong>' + money(data.paymentAmount || 0) + '</strong></div>' +
         formField('कारण', 'reason', '<textarea id="FIELD_ID" class="form-control" name="reason" rows="2" minlength="1" maxlength="500" required></textarea>', true) +
         formField('Replacement राशि (₹) — वैकल्पिक', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
         formField('Replacement माध्यम', 'replacement.payment_method', '<select id="FIELD_ID" class="form-select" name="replacement[payment_method]"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>');
@@ -281,6 +282,9 @@ root.addEventListener('click', (event) => {
             id: action.dataset.id,
             customerId: action.dataset.customerId,
             description: action.dataset.description,
+            paymentNumber: action.dataset.paymentNumber,
+            paymentAmount: action.dataset.paymentAmount,
+            customerName: action.dataset.customerName,
         });
         return;
     }
