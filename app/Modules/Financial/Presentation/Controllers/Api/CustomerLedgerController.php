@@ -152,10 +152,24 @@ class CustomerLedgerController extends Controller
                     ->plus($opening['opening_interest'])->toScale(2),
             ];
         } else {
+            // An empty filtered range opens with the balance immediately before
+            // its start date. An out-of-range page carries forward the last row
+            // in the filtered result, never a balance from outside that range.
+            $carryForward = $total > 0
+                ? $filtered->last()
+                : (isset($filters['from'])
+                    ? collect($displayRows)->last(
+                        fn (array $row): bool => $row['_sort_date'] < $filters['from'],
+                    )
+                    : null);
+
+            $openingPrincipal = $carryForward['principal_balance'] ?? '0.00';
+            $openingInterest = $carryForward['interest_balance'] ?? '0.00';
             $openingBalance = [
-                'principal' => (string) $runningPrincipal->toScale(2),
-                'interest' => (string) $runningInterest->toScale(2),
-                'total' => (string) $runningPrincipal->plus($runningInterest)->toScale(2),
+                'principal' => $openingPrincipal,
+                'interest' => $openingInterest,
+                'total' => (string) BigDecimal::of($openingPrincipal)
+                    ->plus($openingInterest)->toScale(2),
             ];
         }
 
