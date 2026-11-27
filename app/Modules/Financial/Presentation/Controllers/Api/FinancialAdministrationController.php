@@ -36,7 +36,7 @@ class FinancialAdministrationController extends Controller
         Gate::authorize('update', InterestPolicy::class);
 
         $data = $request->validate([
-            'effective_from' => ['required', 'date_format:Y-m-d', 'after:today'],
+            'effective_from' => ['required', 'date_format:Y-m-d'],
             'reason' => ['required', 'string', 'min:10', 'max:500'],
             'monthly_rate_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'grace_days' => ['required', 'integer', 'min:0', 'max:365'],
@@ -73,8 +73,22 @@ class FinancialAdministrationController extends Controller
             $open = InterestPolicyVersion::query()->where('interest_policy_id', $policy->getKey())
                 ->whereNull('effective_to')->lockForUpdate()->first();
             $previousVersion = $open?->toArray();
+            $hasPreviousVersions = InterestPolicyVersion::query()
+                ->where('interest_policy_id', $policy->getKey())
+                ->exists();
 
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
+            if ($hasPreviousVersions && $effectiveFrom->lessThanOrEqualTo(CarbonImmutable::today())) {
+                throw ValidationException::withMessages([
+                    'effective_from' => 'मौजूदा Shop policy में बदलाव भविष्य की तारीख से ही लागू हो सकता है।',
+                ]);
+            }
+            if (! $hasPreviousVersions && $effectiveFrom->lessThan(CarbonImmutable::today())) {
+                throw ValidationException::withMessages([
+                    'effective_from' => 'पहली Shop policy आज या भविष्य की तारीख से लागू हो सकती है।',
+                ]);
+            }
+
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
 
                 throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
