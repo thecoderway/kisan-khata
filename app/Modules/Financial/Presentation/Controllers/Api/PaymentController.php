@@ -101,6 +101,7 @@ class PaymentController extends Controller
     {
         $payment = Payment::query()->with([
             'customer:id,name_original,name_hi,name_en,status,deleted_at',
+            'sourceSale:id,sale_number,sale_date,amount,payment_status',
             'allocation.items.sale:id,sale_number,sale_date,amount,payment_status',
             'allocation.items.reversedItem:id,payment_id,sale_id,component_type,amount',
             'ledgerEntries',
