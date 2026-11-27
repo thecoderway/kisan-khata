@@ -378,7 +378,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $inactiveId = DB::table('customers')->insertGetId([
             'shop_id' => $shop->getKey(), 'name_original' => 'Inactive history customer',
             'name_original_language' => 'en', 'name_en' => 'Inactive history customer',
-            'status' => Customer::STATUS_INACTIVE, 'created_by' => $owner->getKey(),
+            'status' => Customer::STATUS_ACTIVE, 'created_by' => $owner->getKey(),
             'created_at' => now(), 'updated_at' => now(),
         ]);
         $deletedId = DB::table('customers')->insertGetId([
@@ -393,6 +393,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             CarbonImmutable::parse('2026-11-20'), '100.00', 'Inactive history',
             'customer-visibility-inactive-sale',
         );
+        DB::table('customers')->where('id', $inactiveId)->update(['status' => Customer::STATUS_INACTIVE]);
         app(SalePostingService::class)->post(
             $owner, Customer::query()->findOrFail($deletedId), 'UNPAID',
             CarbonImmutable::parse('2026-11-21'), '75.00', 'Deleted legacy history',
