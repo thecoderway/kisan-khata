@@ -3,13 +3,13 @@
 namespace App\Modules\Financial\Presentation\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\User;
 use App\Tenancy\CurrentShop;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
