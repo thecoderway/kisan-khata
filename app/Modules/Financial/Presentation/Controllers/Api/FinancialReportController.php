@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 
 class FinancialReportController extends Controller
 {
@@ -214,13 +216,14 @@ class FinancialReportController extends Controller
 
         $paginator = $query->orderByDesc('p.payment_date')->orderByDesc('p.id')
             ->paginate((int) ($filters['per_page'] ?? 20));
-        $normal = (float) $summaryRows->normal_receipts;
-        $reversals = (float) $summaryRows->reversals;
+        $normal = BigDecimal::of((string) $summaryRows->normal_receipts);
+        $reversals = BigDecimal::of((string) $summaryRows->reversals);
+        $netCollection = $normal->minus($reversals)->toScale(2, RoundingMode::HALF_UP)->__toString();
 
         return $this->reportResponse($paginator, [
             'normal_receipts' => $this->decimal($summaryRows->normal_receipts),
             'reversals' => $this->decimal($summaryRows->reversals),
-            'net_collection' => $this->decimal(number_format($normal - $reversals, 2, '.', '')),
+            'net_collection' => $this->decimal($netCollection),
             'unverified_replacements' => $this->decimal($summaryRows->unverified_replacements),
             'auto_settlements' => $this->decimal($summaryRows->auto_settlements),
         ], $filters);
@@ -300,6 +303,6 @@ class FinancialReportController extends Controller
 
     private function decimal(mixed $value): string
     {
-        return number_format((float) $value, 2, '.', '');
+        return BigDecimal::of((string) ($value ?? '0'))->toScale(2, RoundingMode::HALF_UP)->__toString();
     }
 }
