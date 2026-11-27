@@ -24,6 +24,7 @@ class PaymentController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $query = Payment::query()->with('customer:id,name_original,name_hi,name_en')
