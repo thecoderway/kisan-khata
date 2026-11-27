@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,11 @@ class InterestSettlementItem extends Model
     protected function casts(): array
     {
         return ['posted_amount' => 'decimal:2', 'created_at' => 'immutable_datetime'];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void
