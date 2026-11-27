@@ -336,6 +336,12 @@ The accounting engine must support:
 
 **Do not begin full production sales and payment workflows until the financial foundation passes its critical tests.**
 
+### Phase sequencing clarification — work delivered early within Phase 5 (2026-11-27)
+
+The official roadmap phase numbers remain unchanged, but some capabilities originally listed under Phases 6–9 were implemented early as part of the Phase 5 financial foundation and Batch 7 workspace/API delivery. Current `main` already contains Sales and Payments posting/list/detail APIs and UI, customer ledger/projection/reconciliation foundations, interest calculation/policy and annual settlement services, and financial authorization/audit endpoints. PRs #53–#56 subsequently refined Sales/Payments customer selection, server-side tables/filters/pagination and asynchronous drawers.
+
+This early implementation does **not** mean formal Phase 6–9 acceptance is complete. After Phase 5 sign-off, the team must map each later-phase deliverable against the existing code and tests, mark already-delivered scope as reused, and implement only genuine gaps. Do not recreate modules or duplicate migrations/services merely to follow the original phase order. Product Owner browser acceptance for Phase 5 remains open until fresh-Shop tenant isolation and role/workflow checks are recorded in `docs/PROJECT-STATUS.md`.
+
 ## 9. Phase 6 — Credit Sales
 
 ### Objectives
