@@ -2,6 +2,8 @@
 
 namespace App\Modules\Financial\Presentation\Controllers\Api;
 
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Payment;
@@ -14,8 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
 
 class FinancialReportController extends Controller
 {
