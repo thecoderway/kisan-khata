@@ -213,7 +213,7 @@ class InterestCalculationServiceTest extends TestCase
         $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?from=2026-11-02&to=2026-11-03')
             ->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?per_page=5')->assertUnprocessable();
-        $this->postJson('/api/v1/customers/'.$customer->getKey().'/interest-history')->assertMethodNotAllowed();
+        $this->postJson('/api/v1/customers/'.$customer->getKey().'/interest-history')->assertStatus(405);
 
         $this->assertSame($runCount, InterestCalculationRun::query()->count());
         $this->assertSame($itemCount, InterestCalculationItem::query()->count());
