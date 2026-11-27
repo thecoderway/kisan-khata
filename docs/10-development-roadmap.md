@@ -934,3 +934,37 @@ Operational environment configuration, backup/restore evidence, monitoring and d
 ### Explicit safety boundary
 
 No production database migration, production data mutation, backfill, deployment or release is claimed. Any migration execution or deployment requires separate explicit Product Owner approval. Green CI and merged PRs do not imply production release approval.
+
+
+---
+
+## 25. Product Owner acceptance — Phases 5, 6 and 7 (2026-11-27)
+
+The Product Owner formally accepted **Phase 5 — Financial Foundation**, **Phase 6 — Credit Sales**, and **Phase 7 — Payments** as complete for the delivered scope on 2026-11-27.
+
+- Phase 5 financial foundation, automated acceptance through Batch 8.8, Batch 7C combined lifecycle acceptance, and local UI smoke acceptance are accepted.
+- Phase 6 Sale posting/list/details and controlled correction/audit/authorization safeguards were delivered early within Phase 5 batches and are accepted as the delivered Credit Sales scope.
+- Phase 7 consolidated Payment posting, FIFO, interest integration, excess-payment rejection, reversal/replacement, Payment history, audit/authorization/idempotency/concurrency safeguards were delivered early within Phase 5 batches and are accepted as the delivered Payments scope.
+- Reuse the merged implementation. Do not duplicate existing posting, FIFO, interest, ledger, projection, reconciliation, correction, API or UI foundations.
+- This is Product Owner functional acceptance, not production migration, deployment or release authorization.
+
+### Phase 8 — Customer Ledger implementation plan
+
+Phase 8 must start with a read-only audit of existing ledger schema, ledger-entry source links, query/service, API, UI, projections, reconciliation, opening/carry-forward semantics, same-date ordering, filters, role authorization, tenant isolation, and Hindi/English print support.
+
+The implementation target is a complete customer-wise consolidated chronological ledger with:
+- opening/carry-forward balance shown according to existing approved semantics;
+- Sale, consolidated Payment, Interest, Settlement and approved correction/adjustment entries;
+- deterministic debit, credit and running balance;
+- date filters and pagination;
+- customer ledger API and responsive UI;
+- Hindi and English printable output;
+- reconciliation with authoritative ledger and customer projection.
+
+Payments must remain one consolidated customer-facing ledger entry; internal FIFO allocations must not appear as separate customer Payments. Reuse the existing append-only ledger and projection/reconciliation engine. Do not create a second ledger, duplicate balance calculator or new posting rules.
+
+Before coding, resolve any missing opening-balance or adjustment semantics with the Product Owner. PDF/Excel exports remain aligned to Phase 11 unless separately approved; crop-season settlement remains Phase 10. No production database operations or deployment are included.
+
+Proposed batches: **8A** read-only audit/gap matrix; **8B** deterministic ledger query and running balance; **8C** UI/date filters/pagination; **8D** Hindi/English print; **8E** automated, security, reconciliation, browser and print acceptance.
+
+Phase 8 Batch 8A begins in read-only mode. No code or database changes until its audit report is reviewed and implementation is authorized.
