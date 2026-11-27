@@ -336,7 +336,7 @@ class SalePostingTest extends TestCase
         $sale = $this->postUnpaidSale($owner, $customer);
         $idempotencyCount = DB::table('idempotency_keys')->count();
 
-        $audit = \\Mockery::mock(FinancialAuditService::class);
+        $audit = \Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordSaleRevision')->once()
             ->andThrow(new RuntimeException('Simulated audit write failure.'));
         $this->app->instance(FinancialAuditService::class, $audit);
