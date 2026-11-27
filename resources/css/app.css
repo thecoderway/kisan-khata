@@ -50,10 +50,9 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
 .sidebar-shop small,.sidebar-shop strong { display:block; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sidebar-shop small { color:var(--kk-muted); font-size:10px; }
 .sidebar-shop strong { margin-top:2px; font-size:12px; }
-.app-navigation { display:grid; flex:1 1 auto; align-content:start; gap:5px; min-height:0; margin-top:24px; margin-bottom:16px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#cbd5e1 transparent; }
-.app-navigation::-webkit-scrollbar { width:6px; }
-.app-navigation::-webkit-scrollbar-thumb { border-radius:999px; background:#cbd5e1; }
-.app-navigation::-webkit-scrollbar-track { background:transparent; }
+.app-navigation { display:grid; flex:1 1 auto; align-content:start; gap:5px; min-height:0; margin-top:24px; margin-bottom:16px; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; -ms-overflow-style:none; }
+.app-navigation::-webkit-scrollbar { display:none; width:0; height:0; }
+.app-navigation:focus-visible { outline:2px solid var(--kk-green-strong); outline-offset:2px; }
 .app-brand,.sidebar-shop,.sidebar-bottom { flex-shrink:0; }
 .sidebar-bottom { margin-top:0; }
 .app-navigation a { display:flex; align-items:center; gap:12px; min-height:44px; padding:0 12px; border-radius:9px; color:#475569; font-size:13px; font-weight:600; text-decoration:none; transition:background .15s,color .15s; }
@@ -682,4 +681,14 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
     color: #475569;
     box-shadow: 0 4px 14px rgb(15 23 42 / 8%);
     font-size: 11px;
+}
+
+
+.interest-policy-header { align-items:center; }
+.interest-policy-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px; }
+.interest-policy-actions .btn { min-height:42px; white-space:normal; }
+@media(max-width:767px) {
+    .interest-policy-header { align-items:stretch; flex-direction:column; }
+    .interest-policy-actions { display:grid; grid-template-columns:1fr; width:100%; }
+    .interest-policy-actions .btn { width:100%; }
 }
