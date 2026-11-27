@@ -23,7 +23,7 @@
                 </a>
             @endif
         </div>
-        <nav class="app-navigation" aria-label="मुख्य नेविगेशन">
+        <nav class="app-navigation" aria-label="मुख्य नेविगेशन" tabindex="0">
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="ti ti-layout-dashboard"></i><span>डैशबोर्ड</span>
             </a>

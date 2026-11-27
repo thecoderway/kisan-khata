@@ -66,6 +66,55 @@ class RegisteredShopController
                 'created_at' => now(),
             ]);
 
+            // Every shop starts with the approved zero-interest policy. Owners
+            // can change it prospectively from Interest Settings.
+            $policyId = DB::table('interest_policies')->insertGetId([
+                'shop_id' => $shop->getKey(),
+                'policy_code' => 'DEFAULT',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $effectiveFrom = now('Asia/Kolkata')->toDateString();
+            $versionId = DB::table('interest_policy_versions')->insertGetId([
+                'shop_id' => $shop->getKey(),
+                'interest_policy_id' => $policyId,
+                'version_number' => 1,
+                'effective_from' => $effectiveFrom,
+                'effective_to' => null,
+                'monthly_rate_percent' => '0.00000000',
+                'grace_days' => 30,
+                'capitalization_enabled' => false,
+                'payment_waterfall' => 'PRINCIPAL_FIRST',
+                'annual_settlement_month_1' => 3,
+                'annual_settlement_day_1' => 30,
+                'annual_settlement_month_2' => 10,
+                'annual_settlement_day_2' => 30,
+                'created_by' => $user->getKey(),
+                'created_at' => now(),
+            ]);
+
+            DB::table('audit_logs')->insert([
+                'shop_id' => $shop->getKey(),
+                'user_id' => $user->getKey(),
+                'action' => 'financial.shop_interest_policy_initialized',
+                'entity_type' => 'interest_policy_version',
+                'entity_id' => $versionId,
+                'reason' => 'Initial default policy created during shop registration',
+                'old_values' => null,
+                'new_values' => json_encode([
+                    'policy_code' => 'DEFAULT',
+                    'version_number' => 1,
+                    'effective_from' => $effectiveFrom,
+                    'monthly_rate_percent' => '0.00000000',
+                    'grace_days' => 30,
+                    'capitalization_enabled' => false,
+                    'payment_waterfall' => 'PRINCIPAL_FIRST',
+                    'annual_settlement_dates' => ['03-30', '10-30'],
+                ], JSON_THROW_ON_ERROR),
+                'created_at' => now(),
+            ]);
+
             return $user;
         });
 

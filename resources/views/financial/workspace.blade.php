@@ -26,6 +26,18 @@
 </div>
 
 <div class="content-card mb-3">
+    @if ($section === 'interest')
+        <div class="content-card-header interest-policy-header">
+            <div>
+                <h2>ब्याज नीति</h2>
+                <p>दुकान की वर्तमान ब्याज नीति और ग्राहक-विशिष्ट बदलाव नियंत्रित करें।</p>
+            </div>
+            <div class="interest-policy-actions">
+                <button type="button" class="btn btn-outline-success" id="open-shop-policy-drawer"><i class="ti ti-settings me-1" aria-hidden="true"></i> नई Shop Interest Policy</button>
+                <button type="button" class="btn btn-primary kk-primary" id="open-customer-policy-drawer"><i class="ti ti-user-cog me-1" aria-hidden="true"></i> Customer Interest Override</button>
+            </div>
+        </div>
+    @endif
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
             <div class="financial-filter-grid">
@@ -64,32 +76,7 @@
     </div>
 </div>
 
-@if ($section === 'interest')
-    <div class="content-card mb-3">
-        <div class="content-card-header"><div><h2>नई Shop Interest Policy</h2><p>पुरानी policy immutable रहेगी; बदलाव भविष्य की तारीख से लागू होगा।</p></div></div>
-        <form id="shop-policy-form" class="financial-form-grid p-3">
-            <div><label class="form-label">लागू होने की तारीख</label><input class="form-control" type="date" name="effective_from" required></div>
-            <div><label class="form-label">मासिक ब्याज दर (%)</label><input class="form-control" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" required></div>
-            <div><label class="form-label">Grace days</label><input class="form-control" type="number" name="grace_days" min="0" max="365" value="30" required></div>
-            <div><label class="form-label">Payment waterfall</label><select class="form-select" name="payment_waterfall"><option value="PRINCIPAL_FIRST">Principal first</option><option value="INTEREST_FIRST">Interest first</option></select></div>
-            <div><label class="form-label">Capitalization</label><select class="form-select" name="capitalization_enabled"><option value="0">बंद</option><option value="1">चालू</option></select></div>
-            <div><label class="form-label">Settlement date 1 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_1" min="1" max="12" value="3" required><input class="form-control" type="number" name="annual_settlement_day_1" min="1" max="31" value="30" required></div></div>
-            <div><label class="form-label">Settlement date 2 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_2" min="1" max="12" value="10" required><input class="form-control" type="number" name="annual_settlement_day_2" min="1" max="31" value="30" required></div></div>
-            <div class="financial-form-wide"><label class="form-label">बदलाव का कारण</label><input class="form-control" name="reason" minlength="10" maxlength="500" required></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary" type="submit">नई policy version सेव करें</button></div>
-        </form>
-    </div>
-    <div class="content-card">
-        <div class="content-card-header"><div><h2>Customer Interest Override</h2><p>खाली छोड़े गए fields Shop policy से inherit होंगे।</p></div></div>
-        <form id="customer-policy-form" class="financial-form-grid p-3">
-            <div><label class="form-label">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
-            <div><label class="form-label">लागू होने की तारीख</label><input class="form-control" type="date" name="effective_from" required></div>
-            <div><label class="form-label">मासिक ब्याज दर (%)</label><input class="form-control" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="Shop policy से inherit"></div>
-            <div><label class="form-label">Capitalization override</label><select class="form-select" name="capitalization_enabled"><option value="">Shop policy से inherit</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
-            <div class="financial-form-wide"><label class="form-label">बदलाव का कारण</label><input class="form-control" name="reason" minlength="10" maxlength="500" required></div><div class="financial-form-submit"><button class="btn btn-outline-success" type="submit">Customer override सेव करें</button></div>
-        </form>
-        <div id="customer-policy-history" class="p-3"></div>
-    </div>
-@endif
+
 
 @if ($section === 'reconciliation')
     <div class="content-card mt-3">
@@ -103,6 +90,40 @@
 @endsection
 
 @push('drawers')
+    @if ($section === 'interest')
+        <x-ui.action-drawer id="shop-interest-policy-drawer" title="नई Shop Interest Policy">
+            <form id="shop-policy-form" class="financial-form-grid" method="POST" action="{{ url('/api/v1/interest-policy') }}" data-drawer-ajax>
+                @csrf
+                <div><label class="form-label" for="shop-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="shop-policy-effective-from" type="date" name="effective_from" min="{{ now()->toDateString() }}" required></div>
+                <div><label class="form-label" for="shop-policy-rate">मासिक ब्याज दर (%)</label><input class="form-control" id="shop-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" required></div>
+                <div><label class="form-label" for="shop-policy-grace">Grace days</label><input class="form-control" id="shop-policy-grace" type="number" name="grace_days" min="0" max="365" value="30" required></div>
+                <div><label class="form-label" for="shop-policy-waterfall">Payment waterfall</label><select class="form-select" id="shop-policy-waterfall" name="payment_waterfall"><option value="PRINCIPAL_FIRST">Principal first</option><option value="INTEREST_FIRST">Interest first</option></select></div>
+                <div><label class="form-label" for="shop-policy-capitalization">Capitalization</label><select class="form-select" id="shop-policy-capitalization" name="capitalization_enabled"><option value="0">बंद</option><option value="1">चालू</option></select></div>
+                <div><label class="form-label">Settlement date 1 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_1" min="1" max="12" value="3" aria-label="Settlement month 1" required><input class="form-control" type="number" name="annual_settlement_day_1" min="1" max="31" value="30" aria-label="Settlement day 1" required></div></div>
+                <div><label class="form-label">Settlement date 2 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_2" min="1" max="12" value="10" aria-label="Settlement month 2" required><input class="form-control" type="number" name="annual_settlement_day_2" min="1" max="31" value="30" aria-label="Settlement day 2" required></div></div>
+                <div class="financial-form-wide"><label class="form-label" for="shop-policy-reason">बदलाव का कारण</label><input class="form-control" id="shop-policy-reason" name="reason" minlength="10" maxlength="500" required></div>
+            </form>
+            <x-slot:footer>
+                <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+                <button type="submit" form="shop-policy-form" class="btn btn-primary kk-primary">Policy सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
+            </x-slot:footer>
+        </x-ui.action-drawer>
+        <x-ui.action-drawer id="customer-interest-override-drawer" title="Customer Interest Override">
+            <form id="customer-policy-form" class="financial-form-grid" method="POST" data-drawer-ajax>
+                @csrf
+                <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="customer-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="customer-policy-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
+                <div><label class="form-label" for="customer-policy-rate">मासिक ब्याज दर (%)</label><input class="form-control" id="customer-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="Shop policy से inherit"></div>
+                <div class="financial-form-wide"><label class="form-label" for="customer-policy-capitalization">Capitalization override</label><select class="form-select" id="customer-policy-capitalization" name="capitalization_enabled"><option value="">Shop policy से inherit</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
+                <div class="financial-form-wide"><label class="form-label" for="customer-policy-reason">बदलाव का कारण</label><input class="form-control" id="customer-policy-reason" name="reason" minlength="10" maxlength="500" required></div>
+            </form>
+            <div id="customer-policy-history" class="pt-3"></div>
+            <x-slot:footer>
+                <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+                <button type="submit" form="customer-policy-form" class="btn btn-primary kk-primary">Override सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
+            </x-slot:footer>
+        </x-ui.action-drawer>
+    @endif
     @if (in_array($section, ['sales', 'payments'], true))
         <x-ui.action-drawer id="financial-action-drawer" title="वित्तीय कार्रवाई" width="wide">
             <x-slot:footer>

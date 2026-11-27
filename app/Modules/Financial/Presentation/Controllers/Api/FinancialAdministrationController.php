@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\CustomerInterestPolicyVersion;
 use App\Models\InterestPolicy;
 use App\Models\InterestPolicyVersion;
+use App\Models\Shop;
 use App\Modules\Financial\Application\ReconciliationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -23,10 +24,10 @@ class FinancialAdministrationController extends Controller
     {
         Gate::authorize('update', InterestPolicy::class);
 
-        $policy = InterestPolicy::query()->where('policy_code', 'DEFAULT')->firstOrFail();
+        $policy = InterestPolicy::query()->where('policy_code', 'DEFAULT')->first();
 
         return response()->json([
-            'data' => $policy->versions()->orderByDesc('version_number')->get(),
+            'data' => $policy?->versions()->orderByDesc('version_number')->get() ?? [],
         ]);
     }
 
@@ -35,7 +36,7 @@ class FinancialAdministrationController extends Controller
         Gate::authorize('update', InterestPolicy::class);
 
         $data = $request->validate([
-            'effective_from' => ['required', 'date_format:Y-m-d', 'after:today'],
+            'effective_from' => ['required', 'date_format:Y-m-d'],
             'reason' => ['required', 'string', 'min:10', 'max:500'],
             'monthly_rate_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'grace_days' => ['required', 'integer', 'min:0', 'max:365'],
@@ -60,12 +61,34 @@ class FinancialAdministrationController extends Controller
         }
 
         $version = DB::transaction(function () use ($request, $data) {
-            $policy = InterestPolicy::query()->where('policy_code', 'DEFAULT')->lockForUpdate()->firstOrFail();
+            // Serialize first-time policy setup for this shop. Legacy shops created
+            // before interest-policy provisioning have no DEFAULT row yet.
+            Shop::query()->whereKey($request->user()->shop_id)->lockForUpdate()->firstOrFail();
+
+            $policy = InterestPolicy::query()->where('policy_code', 'DEFAULT')->lockForUpdate()->first();
+
+            if ($policy === null) {
+                $policy = InterestPolicy::query()->create(['policy_code' => 'DEFAULT']);
+            }
             $open = InterestPolicyVersion::query()->where('interest_policy_id', $policy->getKey())
                 ->whereNull('effective_to')->lockForUpdate()->first();
             $previousVersion = $open?->toArray();
+            $hasPreviousVersions = InterestPolicyVersion::query()
+                ->where('interest_policy_id', $policy->getKey())
+                ->exists();
 
             $effectiveFrom = CarbonImmutable::createFromFormat('!Y-m-d', $data['effective_from']);
+            if ($hasPreviousVersions && $effectiveFrom->lessThanOrEqualTo(CarbonImmutable::today())) {
+                throw ValidationException::withMessages([
+                    'effective_from' => 'मौजूदा Shop policy में बदलाव भविष्य की तारीख से ही लागू हो सकता है।',
+                ]);
+            }
+            if (! $hasPreviousVersions && $effectiveFrom->lessThan(CarbonImmutable::today())) {
+                throw ValidationException::withMessages([
+                    'effective_from' => 'पहली Shop policy आज या भविष्य की तारीख से लागू हो सकती है।',
+                ]);
+            }
+
             if ($open !== null && $effectiveFrom->lessThanOrEqualTo($open->effective_from)) {
 
                 throw ValidationException::withMessages(['effective_from' => 'नई policy की तारीख मौजूदा policy के effective start से आगे होनी चाहिए।']);
@@ -112,7 +135,11 @@ class FinancialAdministrationController extends Controller
             return $version;
         }, 3);
 
-        return response()->json(['data' => $version], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'नई Shop Interest Policy सेव हो गई।',
+            'data' => $version,
+        ], 201);
     }
 
     public function customerPolicy(Request $request, int $customer): JsonResponse
@@ -196,7 +223,11 @@ class FinancialAdministrationController extends Controller
             return $version;
         }, 3);
 
-        return response()->json(['data' => $version], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer Interest Override सेव हो गया।',
+            'data' => $version,
+        ], 201);
     }
 
     public function auditHistory(Request $request): JsonResponse
