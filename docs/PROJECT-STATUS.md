@@ -71,7 +71,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 5 | Financial Foundation and Accounting Engine | **COMPLETE — Product Owner accepted 2026-11-27.** Automated financial acceptance, Batch 7C combined lifecycle CI and local UI smoke acceptance recorded. No production release implied. |
 | Phase 6 | Credit Sales | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Sale posting/list/detail, controlled revision, audit, authorization and tenant safeguards delivered early in Phase 5 batches; no duplicate engine work. |
 | Phase 7 | Payments | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Consolidated posting, FIFO, interest integration, reversal/replacement, history, audit, authorization and concurrency safeguards delivered early in Phase 5 batches. |
-| Phase 8 | Customer Ledger | **IN PROGRESS — Batch 8A authorized.** Existing API/UI, tenant/role controls, opening balance, date filters, pagination and decimal-safe running balances exist. Acceptance gaps: customer-facing Payment rows are not consolidated before pagination/running-balance calculation; live Hindi/English print is absent; targeted regression and browser/print acceptance are incomplete. |
+| Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. Local `main` is synchronized with `origin/main` at `2e53191715edbd3293736586887965c9b53e5dca`. |
 | Phase 9 | Interest Engine | **CORE FOUNDATIONS IMPLEMENTED; ACCEPTANCE INCOMPLETE.** Effective-dated policies, overrides, Actual Days / 30 calculation, grace period, HALF_UP rounding, capitalization, FIFO integration and annual settlement foundations exist. Acceptance gaps: customer-facing calculation run/item history API/UI and transparent calculation explanations are missing; scenario regression and formal acceptance remain incomplete. |
 | Phase 10 | Crop-Season Settlement | Not started |
 | Phase 11 | Reports, Printing and Exports | Not started |
@@ -592,3 +592,37 @@ The audit confirmed that the existing Customer Ledger API reads tenant-scoped au
 - **8D — Automated, browser and print acceptance:** run relevant automated tests and CI; Product Owner verifies browser and print output before Phase 8 closure.
 
 Phase 8 Batch 8A implementation is authorized after completion and review of the read-only audit. No database schema change, migration, production operation, or change to underlying FIFO/accounting rules is authorized by this batch.
+
+
+---
+
+## 28. Product Owner acceptance — Phase 8 Customer Ledger (2026-11-27)
+
+The Product Owner confirmed **all Batch 8D browser acceptance checks passed**. Phase 8 — Customer Ledger is therefore **COMPLETE / ACCEPTED** for the delivered scope.
+
+### Merged delivery and verification
+
+| Batch | Scope | Pull request | Status |
+|---|---|---|---|
+| 8A | Consolidated customer-facing Payment ledger entries | [PR #69](https://github.com/thecoderway/kisan-khata/pull/69) | Merged; CI green |
+| 8B | Ledger regression coverage and balance/date/pagination correctness | [PR #70](https://github.com/thecoderway/kisan-khata/pull/70) | Merged; CI green |
+| 8C | Printable customer ledger statement | [PR #71](https://github.com/thecoderway/kisan-khata/pull/71) | Merged; CI green |
+| 8D | Combined browser, print/PDF and financial ledger acceptance | Product Owner browser verification | Passed, user-confirmed |
+
+- PRs #69, #70 and #71 are closed and merged into `main`.
+- Local `main` and `origin/main` were verified at the same commit: `2e53191715edbd3293736586887965c9b53e5dca`.
+- Docker app, database, frontend, Nginx and phpMyAdmin services were reported running; MySQL reported healthy.
+- The Product Owner reported all checklist items passed, including consolidated payments, opening/carry-forward and running balances, date boundaries, pagination, same-day ordering, printable statement contents, multi-page output, and final regression checks.
+- The untracked local backup `kisan_khata_before_phase5_2026-11-27_051801.sql` was preserved.
+- No production migration, production data mutation, deployment or release is claimed.
+
+### Phase 9 — Interest Engine: previously approved execution plan
+
+Phase 9 is the next implementation phase. Preserve the existing approved interest calculation basis, business rules, ADRs and accounting behavior. Reuse existing interest policy, calculation, posting, capitalization, FIFO and annual settlement foundations; do not duplicate or silently alter them.
+
+1. **Batch 9A — Calculation History API:** implement a secure, read-only API for interest runs and calculation items, including policy version, cutoff date and posted interest. Enforce tenant isolation and role authorization. Expose historical records without recalculating, posting, mutating or changing financial data.
+2. **Batch 9B — Interest Transparency UI:** provide customer-wise interest calculation history and a clear calculation breakdown, including the source run/item and relevant policy/calculation details already persisted.
+3. **Batch 9C — Regression Coverage:** add and run scenario tests for grace period, policy changes, capitalization, payment waterfall, rounding and same-day settlement. Preserve the approved calculation basis and deterministic financial behavior.
+4. **Batch 9D — Acceptance:** complete automated tests, UI verification and financial reconciliation before Phase 9 is marked complete.
+
+Phase 9 work must begin with a read-only audit of the existing interest models, calculation runs/items, policy versioning, calculation and posting services, cutoff semantics, ledger links, APIs, UI, authorization, tenant isolation and existing tests. Do not create a second interest engine or duplicate calculation history. No production operations or deployment are authorized by this plan.
