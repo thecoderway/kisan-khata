@@ -264,6 +264,8 @@ class FinancialReportController extends Controller
             ->leftJoin('ledger_entries as le', function ($join): void {
                 $join->on('le.id', '=', 'i.ledger_entry_id')->on('le.shop_id', '=', 'i.shop_id')
                     ->on('le.customer_id', '=', 'i.customer_id')
+                    ->whereColumn('le.sale_id', 'i.sale_id')
+                    ->whereColumn('le.effective_date', 'i.interval_end_date_exclusive')
                     ->where('le.debit_amount', '=', DB::raw('i.posted_interest'))
                     ->where('le.credit_amount', '=', '0')
                     ->where(function ($entry): void {
