@@ -17,7 +17,7 @@ Customer lifecycle has three distinct states: Active, Inactive and Soft Deleted.
 5. Soft deletion remains prohibited whenever any financial or transaction history exists. The historical lookup for Soft Deleted Customers is a defensive compatibility path for legacy/imported/inconsistent data; it does not authorize ordinary soft deletion with history.
 6. Customer lifecycle changes never delete, hide, reverse, rewrite or recalculate financial history. Financial corrections remain governed by the existing Owner-only correction workflows.
 7. Every lookup and financial endpoint remains tenant-scoped and server-authorized. The API must not trust client-supplied Shop IDs or lifecycle state.
-8. New Sale/Payment posting must serialize against customer lifecycle changes so a concurrent soft-delete cannot race with a financial posting.
+8. New Sale/Payment posting must serialize against customer lifecycle changes. Financial posting and customer lifecycle operations use the same Customer-row-first lock order before any Customer Account lock or financial-history eligibility checks, preventing a concurrent soft-delete from racing with a posting and avoiding lock-order inversion.
 
 ## Consequences
 
