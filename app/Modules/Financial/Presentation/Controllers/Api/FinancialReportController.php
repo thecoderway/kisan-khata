@@ -249,6 +249,7 @@ class FinancialReportController extends Controller
         $filters = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'q' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -297,6 +298,15 @@ class FinancialReportController extends Controller
             ])
             ->when(isset($filters['from']), fn (Builder $builder) => $builder->whereDate('le.effective_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('le.effective_date', '<=', $filters['to']))
+            ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
+                $term = '%'.trim($filters['q']).'%';
+                $builder->where(function (Builder $nested) use ($term): void {
+                    $nested->where('c.name_original', 'like', $term)
+                        ->orWhere('c.name_hi', 'like', $term)
+                        ->orWhere('c.name_en', 'like', $term)
+                        ->orWhere('s.sale_number', 'like', $term);
+                });
+            })
             ->orderBy('le.effective_date')->orderBy('i.id');
 
         $summaryQuery = (clone $query)->reorder();
