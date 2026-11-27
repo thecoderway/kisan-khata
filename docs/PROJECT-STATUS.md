@@ -1,9 +1,9 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `e197205e6ac9df41efdc08b2bdf55b55553ed5d1` (2026-11-27), including PR #67 Batch 7C combined financial lifecycle acceptance.  
-**Documentation PR:** PR #68 (`docs/phase-5-6-7-acceptance-phase-8-plan`); exact-head GitHub Actions run #1556 completed successfully. PR merge state must be checked independently; no merge is claimed here.  
-**Project Status:** Phases 5, 6 and 7 are formally accepted by the Product Owner on 2026-11-27. Batch 7C combined lifecycle CI and Product Owner local UI smoke acceptance are recorded. The read-only Phase 8 and Phase 9 acceptance audit is complete: both phases have core foundations but remain incomplete against their acceptance criteria. Phase 8 Batch 8A consolidated customer-facing Payment ledger work is authorized and underway on local feature branch `feature/phase-8-batch-8a-consolidated-ledger-entries`; no implementation changes have been made yet. Phase 9 calculation-history and transparency gaps remain queued after Phase 8. Production readiness and repository-admin governance checks remain separate later-stage gates. No production deployment or release is claimed.  
+**Status Snapshot Base:** `main` at `6a9146c496b82143a7813683ed32a178eb60efb3` (2026-11-27), including merged PR #73 Phase 9 Interest History and Transparency.  
+**Documentation update:** Phase 9 completion and Phase 10 readiness are recorded in this update; this documentation change is being delivered through a dedicated PR.
+**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is next and must begin with a read-only audit and business-rule gap review. No production deployment or release is claimed.
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -71,9 +71,9 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 5 | Financial Foundation and Accounting Engine | **COMPLETE — Product Owner accepted 2026-11-27.** Automated financial acceptance, Batch 7C combined lifecycle CI and local UI smoke acceptance recorded. No production release implied. |
 | Phase 6 | Credit Sales | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Sale posting/list/detail, controlled revision, audit, authorization and tenant safeguards delivered early in Phase 5 batches; no duplicate engine work. |
 | Phase 7 | Payments | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Consolidated posting, FIFO, interest integration, reversal/replacement, history, audit, authorization and concurrency safeguards delivered early in Phase 5 batches. |
-| Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. Local `main` is synchronized with `origin/main` at `2e53191715edbd3293736586887965c9b53e5dca`. |
-| Phase 9 | Interest Engine | **CORE FOUNDATIONS IMPLEMENTED; ACCEPTANCE INCOMPLETE.** Effective-dated policies, overrides, Actual Days / 30 calculation, grace period, HALF_UP rounding, capitalization, FIFO integration and annual settlement foundations exist. Acceptance gaps: customer-facing calculation run/item history API/UI and transparent calculation explanations are missing; scenario regression and formal acceptance remain incomplete. |
-| Phase 10 | Crop-Season Settlement | Not started |
+| Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. |
+| Phase 9 | Interest Engine | **COMPLETE / ACCEPTED — 2026-11-27.** PR #73 merged as `6a9146c496b82143a7813683ed32a178eb60efb3`; exact-head CI passed. Product Owner confirmed UI, calculation breakdown, filters and pagination. Browser before/after DB comparison was not independently performed; automated read-only regression tests passed. |
+| Phase 10 | Crop-Season Settlement | **NEXT — READ-ONLY AUDIT FIRST.** Existing settlement and interest foundations must be mapped before proposing implementation; business semantics and carry-forward rules must be confirmed against ADRs and current code. |
 | Phase 11 | Reports, Printing and Exports | Not started |
 | Phase 12 | Subscription System | Not started |
 | Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
@@ -626,3 +626,54 @@ Phase 9 is the next implementation phase. Preserve the existing approved interes
 4. **Batch 9D — Acceptance:** complete automated tests, UI verification and financial reconciliation before Phase 9 is marked complete.
 
 Phase 9 work must begin with a read-only audit of the existing interest models, calculation runs/items, policy versioning, calculation and posting services, cutoff semantics, ledger links, APIs, UI, authorization, tenant isolation and existing tests. Do not create a second interest engine or duplicate calculation history. No production operations or deployment are authorized by this plan.
+
+---
+
+## 32. Phase 9 — Interest History and Transparency completion; Phase 10 handoff (2026-11-27)
+
+### Phase 9 completion record
+
+- **PR #73:** [Phase 9 — Interest calculation history and transparency](https://github.com/thecoderway/kisan-khata/pull/73), merged into `main`.
+- **Feature branch:** `feature/phase-9-interest-history-transparency`.
+- **Merge commit:** `6a9146c496b82143a7813683ed32a178eb60efb3`.
+- **Exact PR head:** `04a0a60cca3ddcc4f5adbfe6a6d56a813b4cc91b`; its two GitHub check runs completed successfully.
+- Read-only, tenant-scoped customer interest calculation history list and run-detail APIs reuse persisted calculation runs/items.
+- Customer-wise Interest Transparency UI exposes persisted calculation breakdown and relevant policy, interval, principal, interest, capitalization, ledger and event linkage fields.
+- API regression coverage includes authorization, tenant isolation, filters, pagination validation and read-only behavior.
+- Financial regression coverage preserves existing calculation/posting behavior and covers historical policy segmentation and related interest invariants.
+- No migration/schema change and no change to the calculation engine, financial posting, ledger or policy rules were introduced by PR #73.
+- Product Owner confirmed the customer-wise Interest History UI, calculation breakdown, filters and pagination tests passed.
+- The Product Owner's local interpretation of the displayed 30-day grace period and 22 eligible days was discussed and accepted for this test scenario. The display's day-count terminology must remain grounded in persisted fields; do not reinterpret or change calculation semantics without a separate audit and approval.
+- **Read-only acceptance qualification:** automated tests cover read-only API behavior. A live browser before/after database comparison was not independently performed because interactive browser control was unavailable. Do not claim that this specific manual DB comparison was completed.
+- No production migration, production data mutation, deployment or release is claimed.
+
+### Phase 10 — Crop-Season Settlement: approved roadmap scope
+
+Official Phase 10 scope remains the existing Section 13 definition in this roadmap:
+- Settlement preparation and calculation.
+- Full and partial settlement.
+- Carry-forward of remaining outstanding to the next crop season.
+- Settlement history and audit history.
+- Settlement services, ledger entries, API, UI and automated tests.
+
+Acceptance must establish that full settlement closes only the eligible balance; partial settlement retains the correct residual; carry-forward preserves outstanding and prior financial history; interest follows approved rules; duplicate settlement is prevented; and all settlement actions are auditable.
+
+### Mandatory Phase 10 start gate — read-only audit
+
+Before implementation, inspect existing code and persisted architecture for:
+1. Crop/season master data and any existing Sale crop/season fields or tagging support (do not assume the roadmap's legacy Sale tagging text is already implemented).
+2. Existing annual interest settlement models/services, settlement runs/items, ledger entry types, idempotency keys and financial audit events.
+3. Customer account principal/interest balances, FIFO allocations, outstanding projections and reconciliation behavior before/after existing annual settlement.
+4. Existing settlement-related API routes/controllers, workspace UI, authorization policies, tenant scoping and role visibility.
+5. Existing migrations, indexes, foreign keys, uniqueness constraints and deletion/immutability safeguards.
+6. Existing automated tests for annual settlement, same-date payment ordering, duplicate prevention, rollback, concurrency and ledger reconciliation.
+7. Whether crop-season boundaries, eligible Sale selection, partial settlement allocation, carry-forward destination, treatment of posted/unpaid interest, and settlement correction/reversal semantics are explicitly defined in approved requirements/ADRs.
+
+Produce a read-only audit and gap matrix mapping each Phase 10 criterion to existing models, services, routes, UI, tests and documentation. Reuse existing financial/interest foundations. Do not create a second settlement engine or duplicate ledger/accounting records.
+
+### Phase 10 safety and approval boundaries
+
+- Do not invent crop-season dates, crop eligibility, settlement allocation order, carry-forward semantics, interest treatment or correction rules.
+- If a required business rule is absent or conflicts with ADR-0012 or another accepted ADR, stop and request Product Owner clarification; update approved documentation before coding.
+- No code changes, migrations, database writes, financial postings, production operations, deployment or release are authorized by this read-only audit.
+- Any implementation proposal must identify schema changes, transaction/locking/idempotency strategy, tenant/role authorization, audit requirements, regression tests and migration/data-safety implications before implementation approval.
