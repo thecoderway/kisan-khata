@@ -1,6 +1,6 @@
 # Kisan Khata — Business Rules
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Status:** Approved  
 **Related Document:** `docs/01-product-requirements.md`
 
