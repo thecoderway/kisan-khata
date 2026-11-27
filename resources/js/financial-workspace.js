@@ -118,17 +118,39 @@ const renderPagination = (meta = {}) => {
     const lastPage = Math.max(1, Number(meta.last_page || Math.ceil(total / perPage)));
     const first = total === 0 ? 0 : ((page - 1) * perPage) + 1;
     const last = total === 0 ? 0 : Math.min(page * perPage, total);
+    const pageItems = [];
+    const addPage = (number) => pageItems.push(
+        '<li class="page-item' + (number === page ? ' active' : '') + '">' +
+        '<a class="page-link" href="#" data-financial-page="' + number + '"' +
+        (number === page ? ' aria-current="page"' : '') + '>' + number + '</a></li>'
+    );
+    const addEllipsis = () => pageItems.push(
+        '<li class="page-item disabled" aria-hidden="true"><span class="page-link">…</span></li>'
+    );
+
+    if (lastPage <= 7) {
+        for (let number = 1; number <= lastPage; number += 1) addPage(number);
+    } else {
+        addPage(1);
+        if (page > 3) addEllipsis();
+        const rangeStart = Math.max(2, page - 1);
+        const rangeEnd = Math.min(lastPage - 1, page + 1);
+        for (let number = rangeStart; number <= rangeEnd; number += 1) addPage(number);
+        if (page < lastPage - 2) addEllipsis();
+        addPage(lastPage);
+    }
+
     root.insertAdjacentHTML('beforeend',
-        '<div class="financial-pagination d-flex flex-wrap align-items-center justify-content-between gap-3">' +
-        '<span class="text-secondary small" aria-live="polite">Showing <strong>' + first + '–' + last + '</strong> of <strong>' + total + '</strong> records</span>' +
-        '<div class="d-flex flex-wrap align-items-center gap-3">' +
-        '<label class="d-flex align-items-center gap-2 text-secondary small"><span>Rows per page</span><select class="form-select form-select-sm" data-financial-page-size aria-label="Rows per page">' +
+        '<div class="financial-pagination customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">' +
+        '<span class="customer-pagination-summary text-secondary small" aria-live="polite">Showing <strong>' + first + '–' + last + '</strong> of <strong>' + total + '</strong> records</span>' +
+        '<div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">' +
+        '<label class="customer-page-size d-flex align-items-center gap-2 text-secondary small"><span>Rows per page</span><select class="form-select form-select-sm" data-financial-page-size aria-label="Rows per page">' +
         [10, 20, 50, 100].map((size) => '<option value="' + size + '"' + (size === perPage ? ' selected' : '') + '>' + size + '</option>').join('') +
-        '</select></label><div class="d-flex gap-2">' +
-        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + ' aria-label="पिछला पेज">पिछला</button>' +
-        '<span class="small text-secondary align-self-center">पेज ' + page + ' / ' + lastPage + '</span>' +
-        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' disabled' : '') + ' aria-label="अगला पेज">अगला</button>' +
-        '</div></div></div>');
+        '</select></label><nav aria-label="Financial records pagination"><ul class="pagination">' +
+        '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="#" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '') + '>Previous</a></li>' +
+        pageItems.join('') +
+        '<li class="page-item' + (page >= lastPage ? ' disabled' : '') + '"><a class="page-link" href="#" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' aria-disabled="true" tabindex="-1"' : '') + '>Next</a></li>' +
+        '</ul></nav></div></div>');
 };
 const loadCustomers = async () => {
     customers = await fetchFinancialCustomers(request);
