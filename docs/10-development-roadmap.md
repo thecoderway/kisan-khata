@@ -535,7 +535,7 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 
 ## 13. Phase 10 — Crop-Season Settlement
 
-**Status: Next phase — mandatory read-only audit before implementation.** See the Phase 9/10 handoff in `docs/PROJECT-STATUS.md` for the audit checklist and approval boundaries. The existing annual-interest settlement engine is a dependency to inspect and reuse, not a substitute for crop-season settlement semantics.
+**Status: DEFERRED TO A FUTURE RELEASE — NOT IN THE CURRENT WORK PLAN.** The Product Owner explicitly deferred Phase 10 on 2026-11-27. Do not schedule, branch, audit further, design in detail, implement, migrate or change financial data for this phase unless the Product Owner explicitly reactivates it. The scope below is retained as a future placeholder only. The existing annual-interest settlement engine must not be treated as crop-season settlement.
 
 ### Objectives
 
@@ -568,34 +568,78 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 
 ## 14. Phase 11 — Reports, Printing and Exports
 
+**Status: REVIEWED AND PLANNED — NOT STARTED.** Phase 11 is the next candidate phase only after the Product Owner authorizes it. Phase 10 remains deferred and is not a prerequisite for the non-settlement reports below. A Crop-Season Settlement Report is explicitly excluded until Phase 10 is reactivated and delivered.
+
 ### Objectives
 
-- Customer outstanding report.
-- Sales report.
-- Payment report.
-- Interest report.
-- Settlement report.
-- Customer ledger print.
-- PDF exports.
-- Excel/CSV exports.
-- Date and customer filters.
+- Shop-wide Customer Outstanding Report.
+- Sales Register / Sales Summary Report.
+- Payment Register / Collection Summary Report.
+- Interest Calculation / Posted Interest Report.
+- Customer Ledger print and downloadable statement improvements where needed.
+- PDF print/export for approved report types.
+- CSV export and an evaluated Excel-compatible export path.
+- Consistent date, customer, status and payment-method filters where relevant.
 
-### Deliverables
+### Existing capability review (2026-11-27)
 
-- Reporting services.
-- Report UI.
-- PDF generation.
-- Excel/CSV export.
-- Report tests.
+- Sales API already provides tenant-scoped listing, customer/date/search filters, stable sorting and pagination.
+- Payments API already provides tenant-scoped listing, customer/date/method/search filters, stable sorting and pagination.
+- Customer Ledger API already returns consolidated customer-facing payment rows and principal/interest running balances; its ledger view has a Print/PDF action using the existing browser print flow and fetches all ledger pages for a statement.
+- Interest Calculation History API already provides customer-scoped run/item history, date filters and pagination from persisted calculation records.
+- Financial workspace already has Sales, Payments, Ledger, Interest, Reconciliation and Audit sections.
+- No dedicated shop-wide reporting module, aggregate report endpoints, general report centre, CSV/XLSX export workflow or server-generated PDF reporting service was found in the inspected current-main routes/controllers/views/assets.
+- `composer.json` currently requires Laravel, Sanctum and Brick Math; no dedicated PDF or Excel/XLSX export package is currently declared. Do not add a package until format, security, operational and maintenance needs are evaluated and approved.
+
+### Proposed delivery plan (subject to Product Owner approval)
+
+**11A — Report definitions and read-only data contracts**
+- Confirm report columns, date semantics, status treatment, totals, grouping and role visibility.
+- Map each metric to existing posted financial records / immutable ledger data and existing policy-calculation records.
+- Define as-of outstanding semantics and treatment of reversals/replacements before coding.
+- Produce sample report layouts and reconciliation equations; no writes or new accounting calculations.
+
+**11B — Core financial report APIs and report centre UI**
+- Implement read-only, tenant-scoped endpoints and UI for Customer Outstanding, Sales, Payments and Interest reports.
+- Reuse existing policies, tenant context, financial records and calculation history; do not duplicate posting or interest engines.
+- Add filters, deterministic sorting, pagination, empty states and totals/summary metadata.
+
+**11C — Print and PDF output**
+- Provide Hindi/English print layouts with shop/customer/date context, generated-at metadata and page numbering.
+- Reuse the existing customer-ledger print conventions where appropriate.
+- Decide browser-print-to-PDF versus server-generated PDF only after reviewing fidelity, page breaks, fonts, large reports and deployment constraints. No PDF library is pre-approved.
+
+**11D — CSV and Excel-compatible export**
+- Add authorized exports using the same validated filters and report definitions as on-screen results.
+- Stream or chunk large datasets; enforce export limits/rate controls and prevent formula injection in CSV-compatible output.
+- Evaluate native CSV plus XLSX library options; record the package/dependency decision before adding dependencies.
+
+**11E — Reconciliation, security and acceptance**
+- Verify tenant isolation, Owner/Manager/Staff visibility, date boundaries, reversals/replacements, zero/empty datasets and large-data behavior.
+- Reconcile report totals to authoritative ledger/account records and persisted interest calculation/posting records.
+- Verify exports match on-screen filters and totals, Hindi/English rendering, stable ordering and no financial writes.
+- Run full regression suite and obtain Product Owner browser acceptance.
+
+### Scope boundaries and dependencies
+
+- Phase 10 Crop-Season Settlement Report is deferred with Phase 10; do not create placeholder settlement totals or infer crop-season balances.
+- No new financial transaction types, ledger entries, interest postings or account projection mutations are permitted in Phase 11.
+- Reports are read-only projections over existing financial source records. Any metric that cannot be reconciled to a defined source must be blocked pending an approved definition.
+- Do not infer historical/as-of balances from current projections without a validated ledger-based method.
+- Subscription/billing reports belong to Phase 12 unless separately approved.
 
 ### Acceptance criteria
 
-- All reports are tenant-scoped.
-- Totals match authoritative ledger data.
-- Role permissions are enforced.
-- Hindi and English printing work.
-- Large datasets are handled safely.
-- Exported data is consistent with the accounting engine.
+- Every report is tenant-scoped and server-authorized; cross-shop access is denied.
+- Role visibility follows existing approved policies and is tested for Owner, Manager and Staff.
+- All monetary totals use decimal-safe arithmetic; no PHP floats for authoritative money.
+- Report definitions, inclusive/exclusive date boundaries, reversal handling and as-of semantics are documented and tested.
+- Totals reconcile to authoritative ledger/accounting records and persisted interest records.
+- PDF/print and CSV/XLSX outputs match the same filters, rows and totals shown on screen.
+- Hindi and English output is readable and correctly paginated.
+- Large datasets are streamed/chunked safely with deterministic ordering and explicit limits.
+- Read-only report viewing/export does not create or mutate financial records.
+- Existing Sales, Payments, Ledger, Interest and reconciliation workflows continue to pass regression tests.
 
 ## 15. Phase 12 — Subscription System
 
