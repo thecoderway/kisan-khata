@@ -753,6 +753,10 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
     {
         [$shop, $owner, $customer] = $this->context();
         $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Shop-scoped Payment details Sale', 'batch-7a-role-payment-sale',
+        );
         $payment = app(PaymentPostingService::class)->post(
             $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-21'),
             'CASH', null, 'Shop-scoped Payment details', 'batch-7a-role-payment-details',
@@ -760,6 +764,10 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
 
         [$foreignShop, $foreignOwner, $foreignCustomer] = $this->context();
         $this->createPolicy($foreignShop, $foreignOwner);
+        app(SalePostingService::class)->post(
+            $foreignOwner, $foreignCustomer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '75.00', 'Foreign Shop Payment details Sale', 'batch-7a-foreign-payment-sale',
+        );
         $foreignPayment = app(PaymentPostingService::class)->post(
             $foreignOwner, $foreignCustomer, '15.00', CarbonImmutable::parse('2026-11-21'),
             'CASH', null, 'Foreign Shop Payment details', 'batch-7a-foreign-payment-details',
