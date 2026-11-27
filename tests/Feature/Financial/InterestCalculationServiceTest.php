@@ -208,6 +208,13 @@ class InterestCalculationServiceTest extends TestCase
             ->assertJsonPath('data.items.0.shop_policy.version', 1)
             ->assertJsonPath('data.items.0.sale.id', $sale->getKey());
 
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?trigger_type=CUSTOMER_PAYMENT')
+            ->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?from=2026-11-02&to=2026-11-03')
+            ->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history?per_page=5')->assertUnprocessable();
+        $this->postJson('/api/v1/customers/'.$customer->getKey().'/interest-history')->assertMethodNotAllowed();
+
         $this->assertSame($runCount, InterestCalculationRun::query()->count());
         $this->assertSame($itemCount, InterestCalculationItem::query()->count());
 
