@@ -7,7 +7,7 @@
 
 ## 1. Purpose and implementation boundary
 
-Define stable, auditable report contracts before implementing report APIs or UI. This batch is documentation/specification and read-only source mapping only.
+Define stable, auditable report contracts before implementing report APIs or UI. This batch includes documentation/specification, read-only source mapping, and a narrowly scoped authorization correction to the existing Interest Calculation History API because the approved Owner-only rule exposed an existing API security defect.
 
 Included report families:
 
@@ -131,7 +131,7 @@ The existing customer ledger read model groups allocation-level ledger entries i
 
 **Approved Product Owner decision — Option A:** Interest Calculation and Posted Interest report detail is Owner-only. Manager and Staff must be denied report UI and API access. Posted interest already visible as part of the Customer Ledger remains governed by the ledger's existing permissions; this does not grant access to calculation-run, policy-version or report-detail metadata.
 
-**Source-level security finding:** `FinancialWorkspaceController` explicitly restricts the `interest` web section to Owner. However, the existing `InterestCalculationHistoryController::index` and `show` endpoints currently authorize `viewCustomerLedger`, and `CustomerLedgerPolicy` allows active Owner, Manager and Staff users in the same Shop. Therefore the existing API can expose detailed interest history to Manager/Staff despite the Owner-only workspace. Batch 11 report endpoints must use a dedicated Owner-only authorization check; add regression tests proving Manager and Staff receive 403 from every interest-detail/report endpoint. Treat the existing history API authorization mismatch as a security defect to be separately fixed or explicitly included in the approved implementation scope before relying on it.
+**Source-level security finding:** `FinancialWorkspaceController` explicitly restricts the `interest` web section to Owner. However, the existing `InterestCalculationHistoryController::index` and `show` endpoints currently authorize `viewCustomerLedger`, and `CustomerLedgerPolicy` allows active Owner, Manager and Staff users in the same Shop. Therefore the existing API can expose detailed interest history to Manager/Staff despite the Owner-only workspace. Batch 11 report endpoints must use a dedicated Owner-only authorization check; add regression tests proving Manager and Staff receive 403 from every interest-detail/report endpoint. Treat the existing history API authorization mismatch as a security defect. It is now corrected in the Batch 11A branch; see the authorization correction record below.
 
 ## 5. Reconciliation equations and invariants
 
@@ -164,7 +164,7 @@ The Product Owner approved the following decisions on 2026-11-27:
 The above business decisions are approved. The following source/implementation gates remain before 11B:
 
 - Resolve the replacement actual-collection evidence/audit mechanism. Existing source creates a separately posted NORMAL replacement and stores linkage/revision/audit records, but does not persist an independent actual-cash-confirmation field. Do not infer real-world collection from posting alone.
-- Enforce Owner-only authorization on every interest report endpoint. Existing Interest History API currently uses the broader `viewCustomerLedger` Gate; its web workspace Owner-only check is not sufficient API protection.
+- ~~Enforce Owner-only authorization on every interest report endpoint.~~ The existing Interest Calculation History API `index` and `show` actions now use the dedicated `viewInterestCalculationHistory` Gate, which permits only an active Owner in the same Shop. `Batch7FinancialWorkspaceApiTest` now covers Owner access, Manager/Staff denial on both actions, and inactive Owner denial. This resolves the identified existing-history API gap; every new interest report endpoint must use the same Owner-only authorization rule and have endpoint-specific tests.
 - Verify the report-specific reconciliation equations against application services and MySQL integration fixtures, including all/zero/negative Outstanding, NORMAL receipt/reversal pairs, replacement included/excluded cases, SALE_DAY_AUTO separation, and interest ledger links.
 - Approve sample layouts and the final report response schemas before API/UI implementation.
 
@@ -179,18 +179,19 @@ If any source trace contradicts these definitions, stop and update this contract
 - [x] Ledger date ordering, append-only behavior and decimal-safe balance method inspected.
 - [x] Interest run/item persisted fields and linked ledger source inspected.
 - [x] Product Owner decisions in Section 7 recorded.
+- [x] Existing Interest Calculation History API restricted to active same-Shop Owner; Manager/Staff and inactive-Owner regression cases added (execution still requires CI/local test verification).
 - [ ] Final report schemas and sample layouts approved.
 - [ ] Report-specific reconciliation queries/equations verified against existing application services and MySQL integration tests.
 - [ ] Batch 11A specification accepted before 11B implementation.
 
 ## 9. Safety
 
-This document authorizes report-definition work only. It does not authorize migrations, new packages, API/UI implementation, exports, PDF generation, database writes, financial posting, projection repair, production operations, deployment or release. Phase 10 remains deferred; no Crop-Season Settlement reporting is included.
+This document records report-definition work and the narrowly scoped existing Interest History API authorization correction. It does not authorize new report APIs/UI, migrations, new packages, exports, PDF generation, database writes, financial posting, projection repair, production operations, deployment or release. Phase 10 remains deferred; no Crop-Season Settlement reporting is included.
 
 
 ## 10. Source-level verification record — 2026-11-27
 
-Read-only source review was performed on the active Batch 11A branch. No application code or database records were changed.
+Read-only source review was performed on the active Batch 11A branch. The subsequent narrowly scoped Interest History API authorization correction changed application code and added regression coverage; no database records or schema were changed.
 
 ### Payment collection and correction trace
 
@@ -216,3 +217,12 @@ Read-only source review was performed on the active Batch 11A branch. No applica
 - This was a source-level read-only review. No live database sample-data audit or new MySQL reconciliation query was executed in this step.
 - Existing tests cover reversal/replacement lifecycle and ledger reconciliation, but Phase 11 still needs report-specific tests for aggregate totals, date filters, replacement eligibility, auto-payment separation, all/zero/negative Outstanding rows, and Owner-only report API access.
 - Batch 11A remains IN PROGRESS until sample layouts and reconciliation queries/equations are reviewed and accepted. Batch 11B must not begin until the actual-collection evidence rule and Interest API authorization gate are resolved.
+
+
+### Interest History API authorization correction — 2026-11-27
+
+- Added the dedicated `viewInterestCalculationHistory` Gate in `AppServiceProvider`. It requires an active Owner and matching authenticated Shop/customer tenant.
+- Updated both `InterestCalculationHistoryController::index` and `show` to authorize through this dedicated Gate before querying calculation history.
+- Added a feature test proving active Owner access, Manager and Staff 403 responses for both list and detail actions, and inactive Owner 403 responses for both actions.
+- The existing Customer Ledger Gate/policy remains unchanged; Staff and Manager ledger access is not reduced.
+- Code is committed on the Batch 11A feature branch. Automated execution, Pint and CI are still pending; do not treat this correction as verified until those checks pass.
