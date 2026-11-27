@@ -35,7 +35,7 @@ Route::middleware(['auth', 'password.changed'])->group(function (): void {
 
 Route::middleware(['auth', 'password.changed', 'tenant'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
-    Route::get('/financial/{section}', FinancialWorkspaceController::class)->whereIn('section', ['sales', 'payments', 'ledger', 'interest', 'reconciliation', 'audit'])->name('financial.workspace');
+    Route::get('/financial/{section}', FinancialWorkspaceController::class)->whereIn('section', ['sales', 'payments', 'ledger', 'interest', 'reconciliation', 'audit', 'reports'])->name('financial.workspace');
 
     Route::resource('customers', CustomerController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::post('/customers/{customer}/deactivate', [CustomerLifecycleController::class, 'deactivate'])->name('customers.deactivate');
