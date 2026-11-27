@@ -348,6 +348,10 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/sales?per_page=101')->assertUnprocessable();
         $this->getJson('/api/v1/sales?page=0')->assertUnprocessable();
 
+        // API middleware clears the request-scoped tenant context after each request.
+        // Restore the explicit shop context before invoking the posting service directly.
+        app(CurrentShop::class)->set($shop);
+
         app(PaymentPostingService::class)->post(
             $owner,
             $customer,
