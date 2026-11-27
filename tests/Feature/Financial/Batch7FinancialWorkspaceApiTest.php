@@ -153,6 +153,11 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
     {
         [$shop, $owner] = $this->context();
         $this->createPolicy($shop, $owner);
+        Sanctum::actingAs($owner, ['app']);
+        $this->getJson('/api/v1/financial-audit?per_page=10')
+            ->assertOk()->assertJsonPath('meta.per_page', 10);
+        $this->getJson('/api/v1/financial-audit?per_page=15')->assertUnprocessable();
+
         $staff = User::factory()->create([
             'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
         ]);
