@@ -25,7 +25,7 @@ class FinancialReportController extends Controller
 
         $filters = $request->validate([
             'as_of' => ['required', 'date_format:Y-m-d'],
-            'q' => ['nullable', 'string', 'max:100'],
+            'customer_id' => ['nullable', 'integer', 'min:1'],
             'positive_only' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -53,15 +53,7 @@ class FinancialReportController extends Controller
             ->selectRaw('CAST(COALESCE(balances.principal_balance, 0) AS DECIMAL(20,2)) AS principal')
             ->selectRaw('CAST(COALESCE(balances.interest_balance, 0) AS DECIMAL(20,2)) AS interest')
             ->selectRaw('CAST(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0) AS DECIMAL(20,2)) AS total')
-            ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
-                $term = '%'.trim($filters['q']).'%';
-                $builder->where(function (Builder $nested) use ($term): void {
-                    $nested->where('c.name_original', 'like', $term)
-                        ->orWhere('c.name_hi', 'like', $term)
-                        ->orWhere('c.name_en', 'like', $term)
-                        ->orWhere('c.mobile', 'like', $term);
-                });
-            })
+            ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('c.id', $filters['customer_id']))
             ->when(filter_var($filters['positive_only'] ?? false, FILTER_VALIDATE_BOOLEAN), fn (Builder $builder) => $builder->whereRaw('(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)) > 0'))
             ->orderBy('c.name_original')->orderBy('c.id');
 
@@ -114,13 +106,7 @@ class FinancialReportController extends Controller
             ->when(isset($filters['payment_status']), fn (Builder $builder) => $builder->where('s.payment_status', $filters['payment_status']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
                 $term = '%'.trim($filters['q']).'%';
-                $builder->where(function (Builder $nested) use ($term): void {
-                    $nested->where('s.sale_number', 'like', $term)
-                        ->orWhere('c.name_original', 'like', $term)
-                        ->orWhere('c.name_hi', 'like', $term)
-                        ->orWhere('c.name_en', 'like', $term)
-                        ->orWhere('c.mobile', 'like', $term);
-                });
+                $builder->where('s.sale_number', 'like', $term);
             });
 
         $summary = (clone $query)->reorder()->select([])->selectRaw('COUNT(*) AS sale_count')
@@ -180,11 +166,7 @@ class FinancialReportController extends Controller
                 $term = '%'.trim($filters['q']).'%';
                 $builder->where(function (Builder $nested) use ($term): void {
                     $nested->where('p.payment_number', 'like', $term)
-                        ->orWhere('p.reference_number', 'like', $term)
-                        ->orWhere('c.name_original', 'like', $term)
-                        ->orWhere('c.name_hi', 'like', $term)
-                        ->orWhere('c.name_en', 'like', $term)
-                        ->orWhere('c.mobile', 'like', $term);
+                        ->orWhere('p.reference_number', 'like', $term);
                 });
             });
 
@@ -201,11 +183,7 @@ class FinancialReportController extends Controller
                         ->whereColumn('c.shop_id', 'p.shop_id')
                         ->where(function (Builder $nested) use ($term): void {
                             $nested->where('p.payment_number', 'like', $term)
-                                ->orWhere('p.reference_number', 'like', $term)
-                                ->orWhere('c.name_original', 'like', $term)
-                                ->orWhere('c.name_hi', 'like', $term)
-                                ->orWhere('c.name_en', 'like', $term)
-                                ->orWhere('c.mobile', 'like', $term);
+                                ->orWhere('p.reference_number', 'like', $term);
                         });
                 });
             });
@@ -249,6 +227,7 @@ class FinancialReportController extends Controller
         $filters = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'customer_id' => ['nullable', 'integer', 'min:1'],
             'q' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -298,14 +277,10 @@ class FinancialReportController extends Controller
             ])
             ->when(isset($filters['from']), fn (Builder $builder) => $builder->whereDate('le.effective_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('le.effective_date', '<=', $filters['to']))
+            ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('i.customer_id', $filters['customer_id']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
                 $term = '%'.trim($filters['q']).'%';
-                $builder->where(function (Builder $nested) use ($term): void {
-                    $nested->where('c.name_original', 'like', $term)
-                        ->orWhere('c.name_hi', 'like', $term)
-                        ->orWhere('c.name_en', 'like', $term)
-                        ->orWhere('s.sale_number', 'like', $term);
-                });
+                $builder->where('s.sale_number', 'like', $term);
             })
             ->orderBy('le.effective_date')->orderBy('i.id');
 
