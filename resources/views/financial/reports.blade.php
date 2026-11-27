@@ -91,11 +91,21 @@
             <tbody id="report-body"><tr><td class="text-secondary p-4">रिपोर्ट देखने के लिए फ़िल्टर चुनें।</td></tr></tbody>
         </table>
     </div>
-    <div class="d-flex justify-content-between align-items-center p-3 border-top">
-        <span class="text-secondary small" id="report-page-info"></span>
-        <div class="btn-list">
-            <button class="btn btn-outline-secondary btn-sm" id="report-prev" type="button" disabled>पिछला</button>
-            <button class="btn btn-outline-secondary btn-sm" id="report-next" type="button" disabled>अगला</button>
+    <div id="report-pagination" class="financial-pagination customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <span class="customer-pagination-summary text-secondary small" id="report-page-info" aria-live="polite">Showing 0–0 of 0 records</span>
+        <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
+            <label class="customer-page-size d-flex align-items-center gap-2 text-secondary small">
+                <span>Rows per page</span>
+                <select class="form-select form-select-sm" id="report-page-size" aria-label="Rows per page">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </label>
+            <nav aria-label="Report pagination">
+                <ul class="pagination mb-0" id="report-page-links"></ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -108,7 +118,7 @@
     const customersApi = @json(url('/api/v1/customers'));
     const role = @json(auth()->user()->role);
     const $ = (id) => document.getElementById(id);
-    const state = { page: 1, lastPage: 1, report: 'outstanding' };
+    const state = { page: 1, perPage: 20, lastPage: 1, report: 'outstanding' };
     const money = (value) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(Number(value || 0));
     const safe = (value) => String(value ?? '—');
     const cell = (value) => '<td>' + safe(value).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch])) + '</td>';
@@ -127,7 +137,7 @@
     }
 
     function params() {
-        const query = new URLSearchParams({ page: String(state.page), per_page: '20' });
+        const query = new URLSearchParams({ page: String(state.page), per_page: String(state.perPage) });
         const report = state.report;
         if (report === 'outstanding') {
             if (!$('report-as-of').value) throw new Error('कृपया As-of तारीख चुनें।');
@@ -221,10 +231,63 @@
                 '<tr><td colspan="11" class="p-4 text-secondary">कोई completed interest calculation नहीं मिली।</td></tr>';
         }
         summaryCards(payload.summary);
-        state.lastPage = payload.meta?.last_page || 1;
-        $('report-page-info').textContent = 'कुल रिकॉर्ड: ' + (payload.meta?.total || 0) + ' · पेज ' + (payload.meta?.current_page || 1) + ' / ' + state.lastPage;
-        $('report-prev').disabled = state.page <= 1;
-        $('report-next').disabled = state.page >= state.lastPage;
+        state.page = Number(payload.meta?.current_page || state.page);
+        state.perPage = Number(payload.meta?.per_page || state.perPage);
+        state.lastPage = Number(payload.meta?.last_page || 1);
+        renderPagination(Number(payload.meta?.total || 0));
+    }
+
+    function renderPagination(total) {
+        const page = state.page;
+        const perPage = state.perPage;
+        const lastPage = state.lastPage;
+        const first = total === 0 ? 0 : ((page - 1) * perPage) + 1;
+        const last = total === 0 ? 0 : Math.min(page * perPage, total);
+        const links = [];
+
+        const addPage = (number) => {
+            links.push(
+                '<li class="page-item' + (number === page ? ' active' : '') + '">' +
+                '<a class="page-link" href="#" data-report-page="' + number + '"' +
+                (number === page ? ' aria-current="page"' : '') + '>' + number + '</a></li>'
+            );
+        };
+        const addEllipsis = () => {
+            links.push('<li class="page-item disabled" aria-hidden="true"><span class="page-link">…</span></li>');
+        };
+
+        if (lastPage > 1) {
+            links.push(
+                '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '">' +
+                '<a class="page-link" href="#" data-report-page="' + (page - 1) + '"' +
+                (page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '') +
+                ' aria-label="Previous page"><i class="ti ti-chevron-left" aria-hidden="true"></i></a></li>'
+            );
+
+            if (lastPage <= 7) {
+                for (let number = 1; number <= lastPage; number++) addPage(number);
+            } else {
+                addPage(1);
+                if (page > 3) addEllipsis();
+                for (let number = Math.max(2, page - 1); number <= Math.min(lastPage - 1, page + 1); number++) {
+                    addPage(number);
+                }
+                if (page < lastPage - 2) addEllipsis();
+                addPage(lastPage);
+            }
+
+            links.push(
+                '<li class="page-item' + (page >= lastPage ? ' disabled' : '') + '">' +
+                '<a class="page-link" href="#" data-report-page="' + (page + 1) + '"' +
+                (page >= lastPage ? ' aria-disabled="true" tabindex="-1"' : '') +
+                ' aria-label="Next page"><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>'
+            );
+        }
+
+        $('report-page-info').innerHTML = 'Showing <strong>' + first + '–' + last +
+            '</strong> of <strong>' + total + '</strong> records';
+        $('report-page-size').value = String(perPage);
+        $('report-page-links').innerHTML = links.join('');
     }
 
     async function load() {
@@ -244,6 +307,8 @@
             $('report-feedback').textContent = error.message;
             $('report-body').innerHTML = '';
             $('report-summary').innerHTML = '';
+            $('report-page-links').innerHTML = '';
+            $('report-page-info').textContent = 'Showing 0–0 of 0 records';
         } finally {
             $('report-load').disabled = false;
         }
@@ -252,8 +317,27 @@
     $('report-customer').addEventListener('change', () => { state.page = 1; });
     $('report-type').addEventListener('change', () => { state.page = 1; configure(); });
     $('report-load').addEventListener('click', () => { state.page = 1; load(); });
-    $('report-prev').addEventListener('click', () => { if (state.page > 1) { state.page--; load(); } });
-    $('report-next').addEventListener('click', () => { if (state.page < state.lastPage) { state.page++; load(); } });
+    $('report-page-links').addEventListener('click', (event) => {
+        const link = event.target.closest('[data-report-page]');
+        if (!link) return;
+        event.preventDefault();
+        if (link.getAttribute('aria-disabled') === 'true') return;
+
+        const requestedPage = Number(link.dataset.reportPage);
+        if (!Number.isInteger(requestedPage) || requestedPage < 1 ||
+            requestedPage > state.lastPage || requestedPage === state.page) return;
+
+        state.page = requestedPage;
+        load();
+    });
+    $('report-page-size').addEventListener('change', (event) => {
+        const requestedSize = Number(event.target.value);
+        if (![10, 20, 50, 100].includes(requestedSize)) return;
+
+        state.perPage = requestedSize;
+        state.page = 1;
+        load();
+    });
     loadCustomers().then(configure).catch((error) => {
         $('report-feedback').textContent = error.message;
         $('report-customer').innerHTML = '<option value="">ग्राहक सूची उपलब्ध नहीं</option>';
