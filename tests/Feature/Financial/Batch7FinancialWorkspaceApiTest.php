@@ -1141,10 +1141,8 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             collect($response->json('data'))->pluck('sale_id')->all(),
         );
         $this->assertSame(
-            [1, 2],
-            collect($response->json('data'))->pluck('principal_balance')->map(
-                fn (string $balance): int => (int) (float) $balance / 10,
-            )->all(),
+            ['20.00', '50.00'],
+            collect($response->json('data'))->pluck('principal_balance')->all(),
         );
     }
 
