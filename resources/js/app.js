@@ -128,11 +128,13 @@ Alpine.data('actionDrawer', () => ({
             const amount = form.elements.namedItem('amount')?.value;
             const date = form.elements.namedItem('sale_date')?.value || form.elements.namedItem('payment_date')?.value;
             const method = form.elements.namedItem('payment_method')?.selectedOptions?.[0]?.textContent?.trim();
+            const paymentChoice = form.elements.namedItem('payment_choice')?.selectedOptions?.[0]?.textContent?.trim();
             const summary = [
                 customer ? 'ग्राहक: ' + customer : null,
                 amount ? 'राशि: ₹' + amount : null,
                 date ? 'तारीख: ' + date : null,
                 method ? 'माध्यम: ' + method : null,
+                paymentChoice ? 'भुगतान स्थिति: ' + paymentChoice : null,
             ].filter(Boolean);
             const message = [form.dataset.confirm, ...summary].join('\n');
             if (!window.confirm(message)) return;
