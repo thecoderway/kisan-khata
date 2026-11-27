@@ -9,6 +9,7 @@ const csrf = config?.csrf;
 const filtersForm = document.getElementById('financial-filters');
 const drawerRoot = document.querySelector('#financial-action-drawer')?.closest('.kk-drawer-root');
 let customers = [];
+let currentShopPolicy = null;
 let currentPage = 1;
 let pageSize = 20;
 let lastPage = 1;
@@ -230,6 +231,7 @@ const loadLedger = async (signal) => {
 const loadInterest = async (signal) => {
     const payload = await request('/interest-policy', { signal });
     const versions = payload.data || [];
+    currentShopPolicy = versions[0] || null;
     const overrideButton = document.getElementById('open-customer-policy-drawer');
     if (overrideButton) {
         overrideButton.disabled = versions.length === 0;
@@ -443,7 +445,26 @@ const openInterestDrawer = (drawerId, title) => {
     }));
 };
 document.getElementById('open-shop-policy-drawer')?.addEventListener('click', () => {
-    document.getElementById('shop-policy-form')?.reset();
+    const form = document.getElementById('shop-policy-form');
+    form?.reset();
+    const defaults = currentShopPolicy || {
+        monthly_rate_percent: '0.00000000',
+        grace_days: 30,
+        capitalization_enabled: false,
+        payment_waterfall: 'PRINCIPAL_FIRST',
+        annual_settlement_month_1: 3,
+        annual_settlement_day_1: 30,
+        annual_settlement_month_2: 10,
+        annual_settlement_day_2: 30,
+    };
+    if (form) {
+        for (const [name, value] of Object.entries(defaults)) {
+            const field = form.elements.namedItem(name);
+            if (field && value !== null && value !== undefined) field.value = String(value);
+        }
+        const capitalization = form.elements.namedItem('capitalization_enabled');
+        if (capitalization) capitalization.value = defaults.capitalization_enabled ? '1' : '0';
+    }
     openInterestDrawer('shop-interest-policy-drawer', 'नई Shop Interest Policy');
 });
 document.getElementById('open-customer-policy-drawer')?.addEventListener('click', () => {
