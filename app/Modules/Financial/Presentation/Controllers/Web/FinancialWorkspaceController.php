@@ -21,7 +21,15 @@ class FinancialWorkspaceController extends Controller
             abort_unless(auth()->user()->role === User::ROLE_OWNER, 403);
         }
 
-        if ($section === 'reports') {\n            Gate::authorize('viewAny', Sale::class);\n            Gate::authorize('viewAny', Payment::class);\n            Gate::authorize('viewAny', Customer::class);\n\n            return view('financial.reports');\n        }\n\n        if ($section === 'sales') {
+        if ($section === 'reports') {
+            Gate::authorize('viewAny', Sale::class);
+            Gate::authorize('viewAny', Payment::class);
+            Gate::authorize('viewAny', Customer::class);
+
+            return view('financial.reports');
+        }
+
+        if ($section === 'sales') {
             Gate::authorize('viewAny', Sale::class);
         } elseif ($section === 'payments') {
             Gate::authorize('viewAny', Payment::class);
