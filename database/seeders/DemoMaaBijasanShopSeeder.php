@@ -26,7 +26,7 @@ class DemoMaaBijasanShopSeeder extends Seeder
 
     public function run(): void
     {
-        $password = (string) env('DEMO_SHOP_OWNER_PASSWORD');
+        if (! app()->environment(['local', 'testing'])) {\n            throw new RuntimeException('The Maa Bijasan demo seeder is restricted to local and testing environments.');\n        }\n\n        $password = (string) env('DEMO_SHOP_OWNER_PASSWORD');
 
         if ($password === '') {
             throw new RuntimeException(
@@ -124,7 +124,7 @@ class DemoMaaBijasanShopSeeder extends Seeder
 
                     $baseDate = CarbonImmutable::parse('2026-05-15')->addDays($index % 20);
                     $paidAmount = (string) fake()->numberBetween(1200, 6500).'.00';
-                    $creditAmount = (string) fake()->numberBetween(3000, 16000).'.00';
+                    $creditAmountInteger = fake()->numberBetween(3000, 16000);\n                    $creditAmount = (string) $creditAmountInteger.'.00';
 
                     $saleService->post(
                         $owner,
@@ -146,7 +146,7 @@ class DemoMaaBijasanShopSeeder extends Seeder
                         'demo-maa-bijasan-credit-sale-'.$sequence,
                     );
 
-                    $paymentAmount = number_format(((float) $creditAmount) * fake()->randomFloat(2, 0.20, 0.45), 2, '.', '');
+                    $paymentAmount = (string) fake()->numberBetween(\n                        intdiv($creditAmountInteger * 20, 100),\n                        intdiv($creditAmountInteger * 45, 100),\n                    ).'.00';
 
                     $paymentService->post(
                         $owner,
