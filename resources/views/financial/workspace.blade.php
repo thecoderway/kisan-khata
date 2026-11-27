@@ -41,6 +41,17 @@
             </div>
         </div>
     @endif
+    @if ($section === 'interest')
+        <div class="financial-toolbar">
+            <div class="financial-filter-grid">
+                <div><label class="form-label" for="interest-history-customer">Calculation history के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="financial-from">से cutoff तारीख</label><input class="form-control" type="date" id="financial-from"></div>
+                <div><label class="form-label" for="financial-to">तक cutoff तारीख</label><input class="form-control" type="date" id="financial-to"></div>
+                <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> History रिफ्रेश</button></div>
+            </div>
+        </div>
+        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">Calculation history देखने के लिए ग्राहक चुनें।</div></div>
+    @endif
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
             <div class="financial-filter-grid">
