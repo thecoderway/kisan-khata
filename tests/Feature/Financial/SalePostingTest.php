@@ -279,6 +279,13 @@ class SalePostingTest extends TestCase
         $sale = $this->postUnpaidSale($owner, $customer);
 
         try {
+            Sale::query()->insert(['shop_id' => $sale->shop_id, 'customer_id' => $customer->getKey()]);
+            $this->fail('Bulk Sale insertion must be rejected in favor of the posting service.');
+        } catch (LogicException) {
+            $this->assertDatabaseCount('sales', 1);
+        }
+
+        try {
             Sale::query()->whereKey($sale->getKey())->update(['amount' => '1.00']);
             $this->fail('Bulk Sale updates must be rejected.');
         } catch (LogicException) {
@@ -296,6 +303,13 @@ class SalePostingTest extends TestCase
             $owner, $sale, 'Corrected goods description', 'Correction reason',
             'sale-revision-builder-guard',
         );
+
+        try {
+            SaleRevision::query()->insert(['shop_id' => $sale->shop_id, 'sale_id' => $sale->getKey()]);
+            $this->fail('Bulk Sale revision insertion must be rejected in favor of the revision service.');
+        } catch (LogicException) {
+            $this->assertDatabaseCount('sale_revisions', 1);
+        }
 
         try {
             SaleRevision::query()->whereKey($revision->getKey())->update(['correction_reason' => 'Tampered']);
