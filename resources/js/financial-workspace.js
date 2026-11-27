@@ -1,3 +1,5 @@
+import { customerDisplayLabels, fetchFinancialCustomers } from './financial-customer-directory';
+
 const config = window.KKFinancialWorkspace;
 const root = document.getElementById('financial-results');
 const feedback = document.getElementById('financial-feedback');
@@ -55,30 +57,15 @@ const renderTable = (headers, rows) => {
     root.innerHTML = '<table class="table table-vcenter financial-table"><thead><tr>' + headers.map(x => '<th>' + esc(x) + '</th>').join('') + '</tr></thead><tbody>' +
         rows.map(row => '<tr>' + row.map(cell => '<td>' + cell + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
 };
-const fetchCustomerSet = async (status = 'active') => {
-    const params = new URLSearchParams({ pageSize: '100', page: '1' });
-    if (status !== 'active') params.set('status', status);
-    const first = await request('/customers?' + params.toString());
-    const records = [...(first.data || [])];
-    const lastPage = Number(first.meta?.last_page || 1);
-    for (let page = 2; page <= lastPage; page++) {
-        params.set('page', String(page));
-        const next = await request('/customers?' + params.toString());
-        records.push(...(next.data || []));
-    }
-    return records;
-};
 const loadCustomers = async () => {
-    const [activeCustomers, inactiveCustomers] = await Promise.all([
-        fetchCustomerSet('active'),
-        fetchCustomerSet('inactive'),
-    ]);
-    customers = [...activeCustomers, ...inactiveCustomers];
+    customers = await fetchFinancialCustomers(request);
+    const labels = customerDisplayLabels(customers);
+
     ['financial-customer', 'interest-customer'].forEach(id => {
         const select = document.getElementById(id);
         if (!select) return;
-        select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map(c =>
-            '<option value="' + esc(c.id) + '">' + esc(c.name_original || c.name_hi || c.name_en || ('Customer #' + c.id)) + '</option>'
+        select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map((customer, index) =>
+            '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
         ).join('');
     });
 };
@@ -171,7 +158,12 @@ const formMarkup = () => {
     if (section === 'sales') return '<form id="financial-entry-form" class="financial-form-grid p-3"><div><label class="form-label">ग्राहक</label><select class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select></div><div><label class="form-label">बिक्री तारीख</label><input class="form-control" type="date" name="sale_date" required></div><div><label class="form-label">राशि (₹)</label><input class="form-control" type="number" min="0.01" step="0.01" name="amount" required></div><div><label class="form-label">भुगतान स्थिति</label><select class="form-select" name="payment_choice"><option value="UNPAID">उधार</option><option value="PAID">नकद / Paid</option></select></div><div class="financial-form-wide"><label class="form-label">विवरण</label><input class="form-control" name="description" maxlength="5000"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">बिक्री पोस्ट करें</button></div></form>';
     return '<form id="financial-entry-form" class="financial-form-grid p-3"><div><label class="form-label">ग्राहक</label><select class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select></div><div><label class="form-label">भुगतान तारीख</label><input class="form-control" type="date" name="payment_date" required></div><div><label class="form-label">राशि (₹)</label><input class="form-control" type="number" min="0.01" step="0.01" name="amount" required></div><div><label class="form-label">माध्यम</label><select class="form-select" name="payment_method"><option value="">चुनें</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><label class="form-label">Reference number</label><input class="form-control" name="reference_number" maxlength="128"></div><div class="financial-form-wide"><label class="form-label">विवरण</label><input class="form-control" name="description" maxlength="5000"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">भुगतान पोस्ट करें</button></div></form>';
 };
-const customerOptions = () => customers.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name_original || c.name_hi || c.name_en || ('Customer #' + c.id)) + '</option>').join('');
+const customerOptions = () => {
+    const labels = customerDisplayLabels(customers);
+    return customers.map((customer, index) =>
+        '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
+    ).join('');
+};
 
 root.addEventListener('click', (event) => {
     const revise = event.target.closest('[data-revise-sale]');
@@ -332,7 +324,7 @@ document.getElementById('projection-repair-form')?.addEventListener('submit', as
 
 (async () => {
     try {
-        if (['ledger', 'reconciliation', 'interest'].includes(section)) await loadCustomers();
+        if (['sales', 'payments', 'ledger', 'reconciliation', 'interest'].includes(section)) await loadCustomers();
         await refresh();
     } catch (error) {
         root.innerHTML = '<div class="empty-state"><h3>Workspace शुरू नहीं हो सका</h3><p>' + esc(error.message) + '</p></div>';
