@@ -48,10 +48,10 @@ All decisions are enforced on the server through Policies/Gates and domain servi
 |---|---|---|---|
 | View shop financial overview | Yes | Yes, permitted operational view | Shop-wide operational financial view only where explicitly exposed; no Owner-only administration/audit |
 | Create credit Sale | Yes | Yes | Yes |
-| View Sales | All shop Sales | Shop Sales | Own created Sales |
+| View Sales | All shop Sales | Shop Sales | All shop Sales (read-only; ADR-0015) |
 | Correct/revise an eligible unlocked Sale | Yes, controlled workflow | No | No |
 | Record customer Payment | Yes | Yes | Yes |
-| View Payments | All shop Payments | Shop Payments | Own recorded Payments |
+| View Payments | All shop Payments | Shop Payments | All shop Payments (read-only; ADR-0015) |
 | Reverse/replace Payment | Yes, mandatory reason + idempotency | No | No |
 | View Customer Ledger | All shop Customers | Shop-wide operational customer access | All Customers and ledger entries within assigned Shop (ADR-0015) |
 | Configure Shop interest policy | Yes | No | No |
