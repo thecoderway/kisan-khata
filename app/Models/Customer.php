@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -74,6 +75,24 @@ class Customer extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function hasFinancialHistory(): bool
+    {
+        foreach ([
+            fn () => $this->sales()->exists(),
+            fn () => $this->payments()->exists(),
+            fn () => $this->ledgerEntries()->exists(),
+            fn () => $this->balanceSnapshots()->exists(),
+            fn () => DB::table('financial_transactions')->where('customer_id', $this->getKey())->exists(),
+            fn () => DB::table('customer_accounts')->where('customer_id', $this->getKey())->exists(),
+        ] as $check) {
+            if ($check()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return BelongsTo<User, $this> */
