@@ -397,7 +397,12 @@ const renderPaymentDetails = (payment) => {
     const revisionRows = revisions.map((revision) => {
         const reversal = revision.reversal_payment || {};
         const replacement = revision.replacement_payment || {};
-        return '<tr><td>' + detailValue(revision.revision_number) + '</td><td>' + detailValue(revision.revision_type) + '</td><td>' + (revision.changed_at ? new Date(revision.changed_at).toLocaleString('en-IN') : '—') + '</td><td>' + detailValue(revision.actor?.name || revision.changed_by) + '</td><td>' + detailValue(revision.correction_reason) + '</td><td>' + detailValue(reversal.payment_number) + (reversal.payment_number ? ' · ' + money(reversal.amount) : '') + '</td><td>' + detailValue(replacement.payment_number) + (replacement.payment_number ? ' · ' + money(replacement.amount) : '') + '</td></tr>';
+        const oldSnapshot = revision.old_values || {};
+        const newSnapshot = revision.new_values || {};
+        const snapshotLabel = (snapshot) => snapshot.payment_number
+            ? snapshot.payment_number + ' · ' + money(snapshot.amount) + ' · ' + paymentMethodLabel(snapshot.payment_method)
+            : '—';
+        return '<tr><td>' + detailValue(revision.revision_number) + '</td><td>' + detailValue(revision.revision_type) + '</td><td>' + (revision.changed_at ? new Date(revision.changed_at).toLocaleString('en-IN') : '—') + '</td><td>' + detailValue(revision.actor?.name || revision.changed_by) + '</td><td>' + detailValue(revision.correction_reason) + '</td><td>' + detailValue(snapshotLabel(oldSnapshot)) + '</td><td>' + detailValue(snapshotLabel(newSnapshot)) + '</td><td>' + detailValue(reversal.payment_number) + (reversal.payment_number ? ' · ' + money(reversal.amount) : '') + '</td><td>' + detailValue(replacement.payment_number) + (replacement.payment_number ? ' · ' + money(replacement.amount) : '') + '</td></tr>';
     }).join('');
     return '<div class="financial-payment-details">' +
         '<section class="mb-4"><h3 class="h4 mb-2">भुगतान जानकारी</h3>' +
@@ -411,6 +416,7 @@ const renderPaymentDetails = (payment) => {
         detailRow('प्रकार', paymentTypeLabel(payment.payment_type)) +
         detailRow('विवरण', payment.description) +
         detailRow('Posted at', payment.posted_at ? new Date(payment.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
+        (payment.source_sale ? '<section class="mb-4"><h3 class="h4 mb-2">संबंधित Sale</h3>' + detailRow('Sale Number', payment.source_sale.sale_number) + detailRow('Sale Date / Amount', date(payment.source_sale.sale_date) + ' · ' + money(payment.source_sale.amount)) + detailRow('स्थिति', saleStatusLabel(payment.source_sale.payment_status)) + '</section>' : '') +
         '<section class="mb-4"><h3 class="h4 mb-2">FIFO Allocation</h3>' +
         detailRow('Allocation ID', allocation.id) +
         detailRow('Allocation Type', allocation.allocation_type) +
@@ -422,7 +428,7 @@ const renderPaymentDetails = (payment) => {
         '<section class="mb-4"><h3 class="h4 mb-2">Ledger References</h3>' +
         (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>ID</th><th>तारीख</th><th>Component</th><th>Entry</th><th>Debit</th><th>Credit</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">Correction History</h3>' +
-        (revisionRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Version</th><th>Type</th><th>तारीख</th><th>किसने किया</th><th>कारण</th><th>Reversal</th><th>Replacement</th></tr></thead><tbody>' + revisionRows + '</tbody></table></div>' : '<p class="text-secondary small">कोई correction दर्ज नहीं है।</p>') + '</section>' +
+        (revisionRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Version</th><th>Type</th><th>तारीख</th><th>किसने किया</th><th>कारण</th><th>पहले</th><th>बाद में</th><th>Reversal</th><th>Replacement</th></tr></thead><tbody>' + revisionRows + '</tbody></table></div>' : '<p class="text-secondary small">कोई correction दर्ज नहीं है।</p>') + '</section>' +
         (relatedPayment ? '<section><h3 class="h4 mb-2">संबंधित मूल भुगतान</h3>' + detailRow('Payment Number', relatedPayment.payment_number) + detailRow('प्रकार', paymentTypeLabel(relatedPayment.payment_type)) + detailRow('तारीख / राशि', date(relatedPayment.payment_date) + ' · ' + money(relatedPayment.amount)) + '</section>' : '') +
         '</div>';
 };
