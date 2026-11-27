@@ -86,7 +86,7 @@ The existing customer ledger read model groups allocation-level ledger entries i
 
 **Required summary:** customer count in the selected result set; principal total; interest total; grand total. Summary must be computed over the full filtered set, not only the current page.
 
-**Open Product Owner decision:** whether the default report includes every Customer with financial history (including zero/negative balances) or defaults to positive outstanding only. The contract must support an explicit filter if approved; no implicit balance exclusion is allowed.
+**Approved Product Owner decision — Option A:** include every Customer with financial history in the authenticated Shop, including positive, zero and negative balances. This is the default report population; no positive-balance-only exclusion is permitted. A positive-only quick filter may be offered as an explicit user-selected filter without changing the default. Customers without financial history are excluded.
 
 ### 4.2 Sales Register / Summary
 
@@ -113,9 +113,11 @@ The existing customer ledger read model groups allocation-level ledger entries i
 - Distinguish `NORMAL`, `SALE_DAY_AUTO` and `REVERSAL` records.
 - A sale-day automatic Payment is an accounting settlement of its own Paid Sale, not a cash collection. It must be reported separately from customer cash receipts.
 - Show reversal and replacement linkage explicitly. Do not treat a replacement as an overwrite of the original.
-- The proposed cash-collection metric is NORMAL receipts less reversals linked to NORMAL receipts. Sale-day automatic Payments and reversals of those automatic Payments are reported separately and excluded from cash collected.
-
-**Open Product Owner decision:** confirm the proposed net cash-collection equation and confirm whether replacement Payments are counted as new receipts (the current record model suggests they are separate posted records). Before implementation, trace reversal source types and verify that each reversal can be paired unambiguously to its original Payment.
+- **Approved Product Owner decision — Option A:** base the cash-collection metric on NORMAL receipts less reversals linked to those NORMAL receipts. SALE_DAY_AUTO records are an accounting settlement of Paid Sales, not customer cash; report them separately and exclude them from cash collection.
+- Every posted Payment and REVERSAL remains a separate register event. Preserve `reversal_of_payment_id`, `replacement_for_payment_id`, `PaymentRevision.reversal_payment_id`, `PaymentRevision.replacement_payment_id`, and audit linkage.
+- A replacement Payment is a separate NORMAL posted record, but its existence/linkage alone is **not proof of a new real-world cash receipt**. Keep replacement-linked amounts in a separate, explicitly identified reconciliation bucket and exclude them from confirmed cash collected until an audit/evidence check establishes that money was actually received. If confirmed, count the replacement once; never count the reversed original as collected.
+- Source verification found the correction service creates a reversal for the original NORMAL Payment, then optionally posts a replacement through `PaymentPostingService`; the replacement receives `replacement_for_payment_id` and a REPLACEMENT revision record. The current schema does not store a dedicated actual-cash-confirmation/evidence field. Therefore, replacement inclusion in confirmed collection is blocked pending an agreed auditable evidence source or explicit manual audit workflow.
+- The current reversal service accepts only original `NORMAL` Payments. It rejects `SALE_DAY_AUTO` as a correction source; do not imply automatic-payment reversals are currently supported. Any legacy or future auto-payment reversal must remain separately identified and excluded from customer cash collection.
 
 ### 4.4 Interest Calculation / Posted Interest
 
@@ -127,9 +129,9 @@ The existing customer ledger read model groups allocation-level ledger entries i
 
 **Read-only rule:** never recalculate interest for a report. Do not infer posted interest from policy settings or from an unposted calculation item. Keep calculation interval dates distinct from posting/effective dates.
 
-**Current access baseline:** the existing Financial Workspace restricts the Interest section to Owner. Retain Owner-only visibility for calculation/policy detail unless the Product Owner explicitly approves an expanded role matrix. Posted interest already visible as part of the Customer Ledger remains governed by the ledger's existing permissions.
+**Approved Product Owner decision — Option A:** Interest Calculation and Posted Interest report detail is Owner-only. Manager and Staff must be denied report UI and API access. Posted interest already visible as part of the Customer Ledger remains governed by the ledger's existing permissions; this does not grant access to calculation-run, policy-version or report-detail metadata.
 
-**Open Product Owner decision:** confirm whether Interest Calculation/Posted Interest reports remain Owner-only, or whether Manager receives read access. Staff's existing permission to view posted Customer Ledger entries does not by itself authorize access to detailed policy-version/calculation-run metadata.
+**Source-level security finding:** `FinancialWorkspaceController` explicitly restricts the `interest` web section to Owner. However, the existing `InterestCalculationHistoryController::index` and `show` endpoints currently authorize `viewCustomerLedger`, and `CustomerLedgerPolicy` allows active Owner, Manager and Staff users in the same Shop. Therefore the existing API can expose detailed interest history to Manager/Staff despite the Owner-only workspace. Batch 11 report endpoints must use a dedicated Owner-only authorization check; add regression tests proving Manager and Staff receive 403 from every interest-detail/report endpoint. Treat the existing history API authorization mismatch as a security defect to be separately fixed or explicitly included in the approved implementation scope before relying on it.
 
 ## 5. Reconciliation equations and invariants
 
@@ -139,26 +141,34 @@ The existing customer ledger read model groups allocation-level ledger entries i
 4. **Interest:** posted-interest totals must reconcile to linked persisted calculation items and their authoritative ledger entries. Unlinked calculation items must not inflate posted totals.
 5. **Cross-report:** no report may create, update, delete, repair or post financial records. Reading a report must not trigger interest calculation or change projections.
 
-## 6. Role matrix — existing baseline and pending decision
+## 6. Role matrix — approved Batch 11A report access
 
 | Report/data | Owner | Manager | Staff | Basis |
 |---|---|---|---|---|
 | Customer Outstanding / Ledger-derived balances | Existing Shop-wide financial access | Existing Shop-wide financial access | Existing Shop-wide financial read access | ADR-0015 plus ledger policy |
 | Sales Register | Allowed | Allowed | Allowed | ADR-0015 |
 | Payment Register | Allowed | Allowed | Allowed | ADR-0015 |
-| Interest calculation/policy detail | Allowed | Pending Product Owner confirmation; existing workspace is Owner-only | Not authorized by current workspace; any expansion requires explicit approval | Current FinancialWorkspaceController and ADR-0015 |
+| Interest calculation/policy/report detail | Allowed | Denied | Denied | Product Owner approved Owner-only; API must enforce Owner-only independently of ledger permissions |
 | Financial Audit / Reconciliation and repair | Existing Owner-only controls | Not allowed where current policy restricts | Not allowed | ADR-0015 and existing workspace authorization |
 
 This matrix is a mapping of current approved access, not a new permission grant. The implementation must reuse the actual policies and verify each endpoint.
 
-## 7. Decisions required before 11B implementation
+## 7. Approved Product Owner decisions and 11B implementation gates
 
-1. Customer Outstanding default: include all customers with financial history (including zero/negative) or positive outstanding only?
-2. Payment collection summary: approve NORMAL receipts minus linked NORMAL reversals; keep SALE_DAY_AUTO separate; confirm treatment of replacement Payments.
-3. Interest report: keep Owner-only or grant Manager read access? Staff remains limited to posted ledger visibility unless explicitly expanded.
-4. Confirm whether Customer Outstanding should show zero-balance customers by default and whether a positive-only quick filter is required.
+The Product Owner approved the following decisions on 2026-11-27:
 
-If any source trace contradicts these definitions, stop and update this contract before implementation. No endpoint/UI implementation should begin for an unresolved metric.
+1. **Customer Outstanding — Option A:** default population is every customer with financial history in the Shop, including zero and negative balances. Customers without financial history are excluded. Positive-only is an optional explicit filter, never the default.
+2. **Payment Collection — Option A:** confirmed cash collection is NORMAL receipts less reversals linked to those NORMAL receipts. SALE_DAY_AUTO is shown separately and excluded from cash collection. A replacement Payment is not counted merely because it is posted or linked; count it only after an audit confirms actual receipt of money. Until then, show it separately as an unverified replacement and exclude it from confirmed collection.
+3. **Interest Access — Option A:** Interest Calculation and Posted Interest report detail is Owner-only. Manager and Staff are denied; Staff's existing Customer Ledger visibility remains unchanged.
+
+The above business decisions are approved. The following source/implementation gates remain before 11B:
+
+- Resolve the replacement actual-collection evidence/audit mechanism. Existing source creates a separately posted NORMAL replacement and stores linkage/revision/audit records, but does not persist an independent actual-cash-confirmation field. Do not infer real-world collection from posting alone.
+- Enforce Owner-only authorization on every interest report endpoint. Existing Interest History API currently uses the broader `viewCustomerLedger` Gate; its web workspace Owner-only check is not sufficient API protection.
+- Verify the report-specific reconciliation equations against application services and MySQL integration fixtures, including all/zero/negative Outstanding, NORMAL receipt/reversal pairs, replacement included/excluded cases, SALE_DAY_AUTO separation, and interest ledger links.
+- Approve sample layouts and the final report response schemas before API/UI implementation.
+
+If any source trace contradicts these definitions, stop and update this contract before implementation. No unresolved collection metric or authorization gap may be bypassed in 11B.
 
 ## 8. Batch 11A acceptance checklist
 
@@ -168,7 +178,7 @@ If any source trace contradicts these definitions, stop and update this contract
 - [x] Existing Sales, Payments, Ledger and Interest API route/controller/model sources mapped.
 - [x] Ledger date ordering, append-only behavior and decimal-safe balance method inspected.
 - [x] Interest run/item persisted fields and linked ledger source inspected.
-- [ ] Product Owner decisions in Section 7 recorded.
+- [x] Product Owner decisions in Section 7 recorded.
 - [ ] Final report schemas and sample layouts approved.
 - [ ] Report-specific reconciliation queries/equations verified against existing application services and MySQL integration tests.
 - [ ] Batch 11A specification accepted before 11B implementation.
@@ -176,3 +186,33 @@ If any source trace contradicts these definitions, stop and update this contract
 ## 9. Safety
 
 This document authorizes report-definition work only. It does not authorize migrations, new packages, API/UI implementation, exports, PDF generation, database writes, financial posting, projection repair, production operations, deployment or release. Phase 10 remains deferred; no Crop-Season Settlement reporting is included.
+
+
+## 10. Source-level verification record — 2026-11-27
+
+Read-only source review was performed on the active Batch 11A branch. No application code or database records were changed.
+
+### Payment collection and correction trace
+
+- `Payment` defines `NORMAL`, `SALE_DAY_AUTO` and `REVERSAL` types, plus self-links `reversal_of_payment_id` and `replacement_for_payment_id`. The payments migration enforces same-Shop/same-Customer foreign-key linkage and requires reversal type to carry an original-payment reference.
+- `PaymentReversalService::correct` only accepts an original `NORMAL` Payment, rejects a second reversal, validates original ledger/allocation totals, writes an immutable `REVERSAL` Payment and reversing ledger entries, and appends a `REVERSAL` PaymentRevision plus financial audit event.
+- If replacement is requested, the service calls `PaymentPostingService::post` in the same transaction. That service creates a separate `NORMAL` Payment with `replacement_for_payment_id` set to the original Payment, and the correction service appends a `REPLACEMENT` PaymentRevision referencing the new Payment. The replacement amount may differ from the original.
+- Existing feature tests cover atomic reversal/replacement, explicit linkage, audit rollback, idempotent replay, and ledger/projection reconciliation. These tests prove application-record behavior, not independent proof that the replacement money was actually received.
+- No dedicated persisted actual-cash-confirmation/evidence field was found in the inspected Payment/PaymentRevision schema or service path. Replacement inclusion in confirmed collection therefore remains gated on an auditable evidence source. SALE_DAY_AUTO correction is not supported by the current reversal service.
+
+### Interest authorization trace
+
+- The web Financial Workspace explicitly rejects non-Owner access to the `interest` section.
+- The existing Interest Calculation History API uses `Gate::authorize('viewCustomerLedger', $customer)` in both list and detail actions. `CustomerLedgerPolicy` permits active Owner, Manager and Staff in the same Shop.
+- Existing tests prove Staff cannot access Interest Policy or Financial Audit APIs, but the inspected tests do not establish Owner-only denial for the Interest History API. The API authorization mismatch must be corrected or separately approved for remediation before report detail is exposed.
+
+### Tenant and ledger foundations
+
+- `Payment`, `LedgerEntry` and interest run/item models use the current-Shop tenant scope; payment correction foreign keys also enforce Shop/Customer consistency.
+- `LedgerEntry` and `InterestCalculationItem` are append-only at model level; completed InterestCalculationRun records are protected from mutation. The Customer Ledger uses deterministic effective-date/sequence/id ordering and decimal-safe BigDecimal balances.
+
+### Verification limitations / remaining work
+
+- This was a source-level read-only review. No live database sample-data audit or new MySQL reconciliation query was executed in this step.
+- Existing tests cover reversal/replacement lifecycle and ledger reconciliation, but Phase 11 still needs report-specific tests for aggregate totals, date filters, replacement eligibility, auto-payment separation, all/zero/negative Outstanding rows, and Owner-only report API access.
+- Batch 11A remains IN PROGRESS until sample layouts and reconciliation queries/equations are reviewed and accepted. Batch 11B must not begin until the actual-collection evidence rule and Interest API authorization gate are resolved.
