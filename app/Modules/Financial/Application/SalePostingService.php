@@ -69,7 +69,7 @@ class SalePostingService
                 $description,
                 $idempotencyKey,
             ): FinancialTransaction {
-                $lockedCustomer = Customer::query()->whereKey($customer->getKey())->lockForUpdate()->firstOrFail();
+                $lockedCustomer = Customer::query()->whereKey($customer->getKey())->firstOrFail();
 
                 if ($lockedCustomer->status !== Customer::STATUS_ACTIVE) {
                     throw new ConflictHttpException('Inactive customers cannot receive new Sales.');
