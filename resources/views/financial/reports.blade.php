@@ -172,7 +172,7 @@
             const details = [
                 customer.customer_code ? 'Code: ' + customer.customer_code : null,
                 customer.mobile ? 'मोबाइल: ' + customer.mobile : null,
-                !customer.customer_code && !customer.mobile ? 'ID: ' + customer.id : null,
+                'ID: ' + customer.id,
             ].filter(Boolean);
             const option = new Option(name + ' — ' + details.join(' · '), String(customer.id));
             select.add(option);
