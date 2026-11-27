@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at Batch 8.8 final MySQL concurrency acceptance merge commit `c740e44434071062c4cb8eac546f375a7e234126` (2026-11-27).  
-**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 implementation and automated acceptance coverage through Batch 8.8 are merged; PR #49 verifies end-to-end workflow/role corrections and PR #50 adds MySQL 8.4 concurrent posting acceptance. The full CI pipeline passed on the final Batch 8.8 head. Phase 5's remaining acceptance item is Product Owner browser/UI smoke acceptance; production-readiness and repository-admin checks remain separate later-stage gates. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
+**Status Snapshot Base:** `main` at `62419de9872f84a38a6d8d422e11dbadca73a1ca` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
+**Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation and automated acceptance through Batch 8.8 are merged. PRs #53–#56 subsequently completed Sales/Payments customer dropdowns, approved table/filter/drawer behavior, pagination layout/navigation and sidebar usability. The Product Owner has manually confirmed the Sales/Payments listing, drawer layout, pagination navigation and sidebar behavior. Phase 5 remains OPEN pending fresh-Shop registration and tenant-isolation/role-based browser acceptance, plus complete workflow smoke checks across Sales, Payments, Customer Ledger, Interest Settings and Reconciliation; production-readiness and repository-admin checks remain separate later-stage gates. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -40,7 +40,7 @@ If any future instruction conflicts with these rules or approved documentation, 
 | 10 | Development Roadmap | Approved v2.0 |
 | 11 | Geographic Master Data and Import Runbook | Added 2026-11-24 |
 
-Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments; ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events (specified scope only; parameters remain open); ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions; ADR-0011 Geographic Master Data and Shop/Customer Location Defaults.
+Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments (superseded in part by ADR-0012); ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events; ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions; ADR-0011 Geographic Master Data and Shop/Customer Location Defaults; ADR-0012 Approved Financial Rules; ADR-0013 Asynchronous Action Drawer Form Submission; ADR-0014 Application-Wide Right-Side Drawer Standard; ADR-0015 Staff Shop-Wide Financial Read Access.
 
 See [approved docs](https://github.com/thecoderway/kisan-khata/tree/main/docs) and [ADR index](https://github.com/thecoderway/kisan-khata/blob/main/docs/decisions/README.md).
 
@@ -67,15 +67,15 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 2 | Multi-Tenancy Foundation | **Complete — merged into `main` via PR #7** (`8c670a1`). Tenant context, fail-closed tenant queries, tenant-safe bulk writes, User/UserAuditLog ownership, private storage paths, cache-key namespacing, web/API boundaries and job context are implemented. MySQL 8.4 CI evidence: run #17 (132 tests / 389 assertions, 0 failures, 0 skipped); PR #7 also records successful CI for its merged head. Future modules still require resource-specific isolation tests. |
 | Phase 3 | Roles and User Management | **Complete — merged into `main` via PR #7**. Owner-only user administration, Manager read-only Staff directory, capacity enforcement, lifecycle/session/token revocation, append-only audit, Web/API authorization and regression coverage. MySQL 8.4 CI run #19: 139 tests / 432 assertions, 0 failures, 0 skipped. Cross-domain Customer/Sales/Payment permission enforcement remains required in those domain modules. |
 | Phase 4 | Customer Management | **Implementation complete for merged scope — PRs #10–#14 merged into `main`.** Shop Profile/LGD selectors, customer CRUD/search, bilingual fields and location defaults, approved customer lifecycle policy, safe soft-delete builder behavior, and customer deactivate/reactivate/soft-delete/restore are merged and CI-verified. Product Owner manually smoke-tested Owner/Manager/Staff browser flows. Automatic translation provider integration remains explicitly deferred; no live provider integration is claimed. |
-| Phase 5 | Financial Foundation and Accounting Engine | Implementation and automated acceptance through Batch 8.8 merged and CI-verified; Product Owner browser/UI smoke acceptance remains open |
-| Phase 6 | Credit Sales | Not started |
-| Phase 7 | Payments | Not started |
-| Phase 8 | Customer Ledger | Not started |
-| Phase 9 | Interest Engine | Not started; unresolved business parameters must be approved first |
+| Phase 5 | Financial Foundation and Accounting Engine | Core implementation and automated acceptance through Batch 8.8 merged; PRs #53–#56 UI follow-ups merged. Partial Sales/Payments browser smoke confirmed; fresh-Shop tenant/role and full financial workflow acceptance remains OPEN |
+| Phase 6 | Credit Sales | Formal phase acceptance not started. Sale posting/list/detail and related API/UI foundations were delivered early within Phase 5 Batch 7; reconcile remaining scope before implementation to avoid duplication |
+| Phase 7 | Payments | Formal phase acceptance not started. Payment posting/list/detail/correction foundations were delivered early within Phase 5 Batch 7; reconcile remaining scope before implementation to avoid duplication |
+| Phase 8 | Customer Ledger | Ledger projection/reconciliation and customer ledger API/workspace foundations were delivered within Phase 5; formal phase acceptance and print/export scope remain open |
+| Phase 9 | Interest Engine | Interest calculation, effective-dated policy and annual settlement foundations were delivered within Phase 5 under ADR-0012; reconcile formal phase acceptance and remaining scope before duplicate work |
 | Phase 10 | Crop-Season Settlement | Not started |
 | Phase 11 | Reports, Printing and Exports | Not started |
 | Phase 12 | Subscription System | Not started |
-| Phase 13 | API Finalization and Android Readiness | Partial groundwork only; full versioned API contract is not complete |
+| Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
 | Phase 14 | Production Readiness | Not started |
 | Phase 15 | Android Application | Not started |
 
@@ -137,7 +137,7 @@ Recorded as complete:
 
 **Infrastructure boundary review:**
 - Current tenant-owned Eloquent data models are `ShopSetting` and `UserAuditLog`; shop users are protected through authenticated shop resolution, explicit shop-bound directory/lifecycle queries and `UserBuilder` mutation safeguards.
-- No Customer, Sales, Payments, Ledger, tenant upload/download, tenant-specific cache consumer, tenant business job or export module exists yet. The Phase 2 primitives are ready for those modules; each module must still add its own resource ownership, authorization and cross-tenant tests before release.
+- Customer and financial modules now exist. Their resource ownership, role authorization and cross-Shop protections must be verified per resource and workflow; the Phase 2 foundation alone is not a substitute for domain-specific acceptance tests.
 - The current raw OTP query-builder path targets only the system-level `mobile_otp_challenges` table. The user-lifecycle audit writer is restricted to its validated shop context. Any future raw SQL/query-builder access to tenant-owned data requires explicit review and tenant filtering.
 - No production deployment or tenant-specific file/cache/job feature is claimed.
 
@@ -323,7 +323,7 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current verified `main` HEAD: `c740e44434071062c4cb8eac546f375a7e234126` (Batch 8.8 MySQL concurrency acceptance; 2026-11-27).
+- Current verified `main` HEAD: `62419de9872f84a38a6d8d422e11dbadca73a1ca` (PR #56 pagination/sidebar follow-up; 2026-11-27).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
 - All feature and documentation changes use reviewable PRs. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 - Update status only from verified repository, CI, test or Product Owner evidence.
@@ -415,3 +415,22 @@ The post-merge `main` CI run [45880048532](https://github.com/thecoderway/kisan-
 Detailed scenario setup, locking assertions, fixture cleanup and CI evidence are recorded in [Batch 8.8 MySQL financial posting concurrency acceptance](phase-5-batch-8-8-financial-posting-concurrency-acceptance.md).
 
 **Scope and safety:** no production database, production migration, backfill, deployment or release was performed or authorized. Product Owner browser/UI smoke acceptance remains outstanding; Phase 14 production readiness and repository-admin branch-protection verification remain separate gates.
+
+
+## 28. Phase 5 — Financial UI follow-up and partial browser acceptance (2026-11-27)
+
+**Current main baseline:** `62419de9872f84a38a6d8d422e11dbadca73a1ca`.
+
+Merged follow-ups after Batch 8.8:
+- PR #53: customer directory loading for financial workflows and JS helper tests.
+- PR #54: Sales/Payments server-side tables, auto filters, pagination and asynchronous action drawers.
+- PR #55: Customer-style pagination presentation and improved drawer field layout.
+- PR #56: working numbered pagination/Tabler arrows, independently scrollable sidebar with visible shop/logout footer, and Interest Settings moved into Settings.
+
+**Manual evidence reported by Product Owner:** Sales/Payments listing and filters, customer dropdown, drawer layout, pagination navigation and sidebar behavior were checked in the local browser and confirmed working. Local frontend production build succeeded after pulling these changes. This is limited UI smoke evidence, not full Phase 5 acceptance.
+
+**Still required:** create a fresh Shop through registration in a separate Incognito/browser profile; verify Shop A/Shop B isolation; verify Owner/Manager/Staff permitted and forbidden actions; exercise Sale, Payment, FIFO allocation, interest, ledger, reconciliation and explicit repair workflows; verify validation/error/success behavior. No new-Shop acceptance has yet been reported. Phase 5 remains OPEN.
+
+**CI evidence:** post-merge `main` run [45961048236](https://github.com/thecoderway/kisan-khata/actions/runs/45961048236) completed successfully, including PHP formatting, automated tests and frontend build. CI does not replace browser acceptance.
+
+**Next sequence:** complete fresh-Shop browser acceptance, record results, close Phase 5 acceptance, then begin Phase 6. Do not start Phase 6 implementation before Phase 5 sign-off.
