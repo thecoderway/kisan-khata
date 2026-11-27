@@ -50,7 +50,17 @@ class PaymentController extends Controller
             default => $query->orderByDesc('payment_date')->orderByDesc('id'),
         };
 
-        return response()->json($query->paginate((int) ($filters['per_page'] ?? 20)));
+        $paginator = $query->paginate((int) ($filters['per_page'] ?? 20));
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
     }
 
     public function store(Request $request, PaymentPostingService $posting): JsonResponse
