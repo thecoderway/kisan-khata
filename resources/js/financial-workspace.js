@@ -194,7 +194,8 @@ const loadSales = async (signal) => {
         esc(sale.customer?.name_hi || sale.customer?.name_original || '—') + customerLifecycleLabel(sale.customer),
         date(sale.sale_date), money(sale.amount),
         '<span class="badge bg-' + (sale.payment_status === 'PAID' ? 'success' : 'warning') + '-lt">' + esc(saleStatusLabel(sale.payment_status)) + '</span>',
-        config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-action="revise-sale" data-id="' + esc(sale.id) + '" data-description="' + esc(sale.description || '') + '"><i class="ti ti-edit me-1" aria-hidden="true"></i>विवरण संशोधन</button>' : '—',
+        '<div class="d-flex flex-wrap gap-1"><button class="btn btn-sm btn-outline-primary" type="button" data-financial-action="view-sale" data-id="' + esc(sale.id) + '"><i class="ti ti-eye me-1" aria-hidden="true"></i>विवरण</button>' +
+            (config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-action="revise-sale" data-id="' + esc(sale.id) + '" data-description="' + esc(sale.description || '') + '"><i class="ti ti-edit me-1" aria-hidden="true"></i>विवरण संशोधन</button>' : '') + '</div>',
     ]));
     renderPagination(payload.meta);
 };
@@ -339,12 +340,68 @@ const formMarkup = (kind, data = {}) => {
         formField('Replacement राशि (₹) — वैकल्पिक', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
         formField('Replacement माध्यम', 'replacement.payment_method', '<select id="FIELD_ID" class="form-select" name="replacement[payment_method]"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>');
 };
+const detailValue = (value) => value === null || value === undefined || value === '' ? '—' : esc(value);
+const detailRow = (label, value) => '<div class="d-flex justify-content-between gap-3 py-2 border-bottom"><span class="text-secondary">' + esc(label) + '</span><strong class="text-end">' + detailValue(value) + '</strong></div>';
+const renderSaleDetails = (sale) => {
+    const customer = sale.customer || {};
+    const automaticPayment = sale.sale_day_payment;
+    const allocations = (sale.allocation_items || []).filter((item) => item.payment?.payment_type !== 'SALE_DAY_AUTO');
+    const ledgerEntries = sale.ledger_entries || [];
+    const revisions = sale.revisions || [];
+    const transaction = sale.financial_transaction;
+    const paymentRows = allocations.map((item) => {
+        const payment = item.payment || {};
+        return '<tr><td>' + detailValue(payment.payment_number) + '</td><td>' + date(payment.payment_date) + '</td><td>' + money(payment.amount) + '</td><td>' + detailValue(paymentMethodLabel(payment.payment_method)) + '</td><td>' + detailValue(item.component_type) + '</td><td>' + money(item.amount) + '</td></tr>';
+    }).join('');
+    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(entry.component) + '</td><td>' + detailValue(entry.entry_kind) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
+    const revisionRows = revisions.map((revision) => '<tr><td>' + detailValue(revision.revision_number) + '</td><td>' + date(revision.changed_at) + '</td><td>' + detailValue(revision.actor?.name || revision.changed_by) + '</td><td>' + detailValue(revision.correction_reason) + '</td><td>' + detailValue(revision.new_values?.description) + '</td></tr>').join('');
+    return '<div class="financial-sale-details">' +
+        '<section class="mb-4"><h3 class="h4 mb-2">बिक्री जानकारी</h3>' +
+        detailRow('Sale Number', sale.sale_number) +
+        detailRow('ग्राहक', customer.name_hi || customer.name_original || customer.name_en) +
+        detailRow('ग्राहक स्थिति', customer.deleted_at ? 'हटाया गया' : customer.status) +
+        detailRow('बिक्री तारीख', date(sale.sale_date)) +
+        detailRow('राशि', money(sale.amount)) +
+        detailRow('भुगतान स्थिति', saleStatusLabel(sale.payment_status)) +
+        detailRow('Interest settlement', sale.interest_settlement_status) +
+        detailRow('विवरण', sale.description) +
+        detailRow('Posted at', sale.posted_at ? new Date(sale.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">स्वतः बिक्री-दिवस भुगतान</h3>' +
+        (automaticPayment ? detailRow('Payment Number', automaticPayment.payment_number) +
+            detailRow('तारीख / राशि', date(automaticPayment.payment_date) + ' · ' + money(automaticPayment.amount)) +
+            detailRow('माध्यम', paymentMethodLabel(automaticPayment.payment_method)) +
+            detailRow('प्रकार', paymentTypeLabel(automaticPayment.payment_type)) : '<p class="text-secondary small">इस बिक्री के साथ स्वतः भुगतान दर्ज नहीं हुआ।</p>') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">अन्य भुगतानों का Sale-wise Allocation</h3>' +
+        (paymentRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Payment</th><th>तारीख</th><th>कुल राशि</th><th>माध्यम</th><th>Component</th><th>Allocated</th></tr></thead><tbody>' + paymentRows + '</tbody></table></div>' : '<p class="text-secondary small">इस बिक्री पर अन्य भुगतान allocation उपलब्ध नहीं है।</p>') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">Financial Transaction</h3>' +
+        (transaction ? detailRow('Transaction ID', transaction.id) + detailRow('प्रकार', transaction.transaction_type) + detailRow('Effective date', date(transaction.effective_date)) + detailRow('Posted at', transaction.posted_at ? new Date(transaction.posted_at).toLocaleString('en-IN') : '—') : '<p class="text-secondary small">Financial transaction उपलब्ध नहीं है।</p>') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">Ledger References</h3>' +
+        (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>ID</th><th>तारीख</th><th>Component</th><th>Entry</th><th>Debit</th><th>Credit</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
+        '<section><h3 class="h4 mb-2">Revision History</h3>' +
+        (revisionRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Version</th><th>तारीख</th><th>किसने बदला</th><th>कारण</th><th>नया विवरण</th></tr></thead><tbody>' + revisionRows + '</tbody></table></div>' : '<p class="text-secondary small">कोई revision दर्ज नहीं है।</p>') + '</section></div>';
+};
+const openSaleDetails = async (saleId) => {
+    if (!drawerRoot) return;
+    const body = drawerRoot.querySelector('.kk-drawer-body');
+    const submit = drawerRoot.querySelector('[data-financial-drawer-submit]');
+    if (submit) submit.hidden = true;
+    body.innerHTML = '<div class="d-flex align-items-center gap-2 text-secondary" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> बिक्री विवरण लोड हो रहा है…</div>';
+    drawerRoot.dispatchEvent(new CustomEvent('kk-drawer:open', { bubbles: true, detail: { title: 'बिक्री विवरण', width: 'wide' } }));
+    try {
+        const payload = await request('/sales/' + encodeURIComponent(saleId));
+        body.innerHTML = renderSaleDetails(payload.data || {});
+    } catch (error) {
+        body.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'बिक्री विवरण लोड नहीं हो सका।') + '</div><button type="button" class="btn btn-outline-secondary" data-sale-details-retry>फिर प्रयास करें</button>';
+        body.querySelector('[data-sale-details-retry]')?.addEventListener('click', () => openSaleDetails(saleId));
+    }
+};
 const openDrawer = (kind, data = {}) => {
     if (!drawerRoot) return;
     const body = drawerRoot.querySelector('.kk-drawer-body');
     const title = kind === 'sale' ? 'नई बिक्री' : kind === 'payment' ? 'नया भुगतान' : kind === 'revise-sale' ? 'बिक्री विवरण संशोधन' : 'भुगतान सुधार';
     const submit = drawerRoot.querySelector('[data-financial-drawer-submit]');
     body.innerHTML = formMarkup(kind, data);
+    if (submit) submit.hidden = false;
     if (submit) {
         submit.textContent = kind === 'correct-payment' ? 'भुगतान reverse करें' : kind === 'revise-sale' ? 'संशोधन सेव करें' : kind === 'sale' ? 'बिक्री पोस्ट करें' : 'भुगतान पोस्ट करें';
         submit.classList.toggle('btn-outline-danger', kind === 'correct-payment');
@@ -372,6 +429,10 @@ document.addEventListener('click', (event) => {
 root.addEventListener('click', (event) => {
     const action = event.target.closest('[data-financial-action]');
     if (action) {
+        if (action.dataset.financialAction === 'view-sale') {
+            openSaleDetails(action.dataset.id);
+            return;
+        }
         openDrawer(action.dataset.financialAction, {
             id: action.dataset.id,
             customerId: action.dataset.customerId,
