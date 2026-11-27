@@ -652,3 +652,22 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
     .financial-filter-grid { grid-template-columns: 1fr; }
     .financial-search-field { grid-column: auto; }
 }
+
+
+.financial-loading-indicator {
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 9px;
+    margin: 8px 12px -42px auto;
+    padding: 8px 12px;
+    border: 1px solid #dbe3ec;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    box-shadow: 0 4px 14px rgb(15 23 42 / 8%);
+    font-size: 11px;
+}
