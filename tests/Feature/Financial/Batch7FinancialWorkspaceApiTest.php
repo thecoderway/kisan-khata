@@ -357,6 +357,36 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/financial-audit')->assertForbidden();
     }
 
+    public function test_interest_calculation_history_api_is_owner_only_for_index_and_show(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history')
+            ->assertOk();
+
+        foreach ([User::ROLE_MANAGER, User::ROLE_STAFF] as $role) {
+            $actor = User::factory()->create([
+                'shop_id' => $shop->getKey(), 'role' => $role, 'is_active' => true,
+            ]);
+            Sanctum::actingAs($actor, ['app']);
+
+            $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history')
+                ->assertForbidden();
+            $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history/999999')
+                ->assertForbidden();
+        }
+
+        DB::table('users')->where('id', $owner->getKey())->update(['is_active' => false]);
+        $owner->refresh();
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history')
+            ->assertForbidden();
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history/999999')
+            ->assertForbidden();
+    }
+
     public function test_owner_projection_repair_requires_reason_and_writes_audit_in_same_operation(): void
     {
         [$shop, $owner, $customer] = $this->context();
