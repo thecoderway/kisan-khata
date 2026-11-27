@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\Customers\Application;
+namespace App\\Modules\\Customers\\Application;
 
-use App\Models\Customer;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Http\Request;
+use App\\Models\\Customer;
+use Illuminate\\Contracts\\Pagination\\LengthAwarePaginator;
+use Illuminate\\Http\\Request;
 
 class CustomerDirectoryQuery
 {
@@ -13,7 +13,9 @@ class CustomerDirectoryQuery
         $search = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', Customer::STATUS_ACTIVE);
 
-        $query = in_array($status, ['deleted', 'financial-history'], true)\n            ? Customer::withTrashed()\n            : Customer::query();
+        $query = in_array($status, ['deleted', 'financial-history'], true)
+            ? Customer::withTrashed()
+            : Customer::query();
 
         $query->leftJoin('villages', 'customers.village_code', '=', 'villages.villageCode')
             ->select([
@@ -24,10 +26,20 @@ class CustomerDirectoryQuery
 
         if ($status === 'deleted') {
             $query->whereNotNull('customers.deleted_at');
+        } elseif ($status === 'financial-history') {
+            $query->where(function ($history): void {
+                foreach (['sales', 'payments', 'ledger_entries', 'financial_transactions', 'customer_accounts', 'account_balance_snapshots'] as $table) {
+                    $history->orWhereExists(fn ($subquery) => $subquery
+                        ->selectRaw('1')
+                        ->from($table)
+                        ->whereColumn($table.'.customer_id', 'customers.id'));
+                }
+            });
         } elseif ($status === Customer::STATUS_INACTIVE) {
             $query->where('customers.status', Customer::STATUS_INACTIVE);
+        } elseif ($status === 'all') {
+            // All non-deleted customers; used only for Owner-managed policy workflows.
         } else {
-            $status = Customer::STATUS_ACTIVE;
             $query->where('customers.status', Customer::STATUS_ACTIVE);
         }
 
