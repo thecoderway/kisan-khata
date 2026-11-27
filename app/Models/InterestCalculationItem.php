@@ -54,4 +54,24 @@ class InterestCalculationItem extends Model
     {
         return $this->belongsTo(Sale::class);
     }
+
+    public function shopPolicyVersion(): BelongsTo
+    {
+        return $this->belongsTo(InterestPolicyVersion::class, 'shop_policy_version_id');
+    }
+
+    public function customerPolicyVersion(): BelongsTo
+    {
+        return $this->belongsTo(CustomerInterestPolicyVersion::class, 'customer_policy_version_id');
+    }
+
+    public function ledgerEntry(): BelongsTo
+    {
+        return $this->belongsTo(LedgerEntry::class);
+    }
+
+    public function sourceInterestLot(): BelongsTo
+    {
+        return $this->belongsTo(InterestLot::class, 'source_interest_lot_id');
+    }
 }

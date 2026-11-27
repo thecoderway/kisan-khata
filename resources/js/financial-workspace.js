@@ -11,6 +11,7 @@ const filtersForm = document.getElementById('financial-filters');
 const drawerRoot = document.querySelector('#financial-action-drawer')?.closest('.kk-drawer-root');
 let customers = [];
 let currentShopPolicy = null;
+let interestHistoryPage = 1;
 let currentPage = 1;
 let pageSize = 20;
 let lastPage = 1;
@@ -173,15 +174,17 @@ const loadCustomers = async () => {
         : section === 'interest' ? 'policy' : 'transaction';
     customers = await fetchFinancialCustomers(request, mode);
     const labels = customerDisplayLabels(customers, { includeStatus: mode !== 'transaction' });
-    const selectId = ['ledger', 'reconciliation'].includes(section)
-        ? 'financial-customer'
-        : section === 'interest' ? 'interest-customer' : null;
-    const select = selectId ? document.getElementById(selectId) : null;
-    if (select) {
-        select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map((customer, index) =>
-            '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
-        ).join('');
-    }
+    const selectIds = ['ledger', 'reconciliation'].includes(section)
+        ? ['financial-customer']
+        : section === 'interest' ? ['interest-customer', 'interest-history-customer'] : [];
+    selectIds.forEach((selectId) => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map((customer, index) =>
+                '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
+            ).join('');
+        }
+    });
 };
 const customerOptions = () => {
     const labels = customerDisplayLabels(customers);
@@ -357,6 +360,7 @@ const loadInterest = async (signal) => {
     }
     if (versions.length === 0) {
         root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>Shop Interest Policy अभी configure नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई Shop Interest Policy” से पहली policy बनाएँ। कोई ब्याज दर अपने-आप लागू नहीं की जाएगी।</p></div>';
+        await loadInterestHistory(signal);
         return;
     }
     renderTable(['Version', 'लागू तारीख', 'मासिक दर', 'Grace', 'Capitalization', 'Waterfall', 'Settlement dates'],
@@ -366,6 +370,61 @@ const loadInterest = async (signal) => {
             esc(version.payment_waterfall),
             esc(version.annual_settlement_month_1 + '/' + version.annual_settlement_day_1 + ' · ' + version.annual_settlement_month_2 + '/' + version.annual_settlement_day_2),
         ]));
+    await loadInterestHistory(signal);
+};
+const loadInterestHistory = async (signal) => {
+    const target = document.getElementById('interest-history-results');
+    const customerId = document.getElementById('interest-history-customer')?.value;
+    if (!target) return;
+    if (!customerId) {
+        target.innerHTML = '<div class="text-secondary">Calculation history देखने के लिए ग्राहक चुनें।</div>';
+        return;
+    }
+    const params = new URLSearchParams({ page: String(interestHistoryPage), per_page: '20' });
+    const from = document.getElementById('financial-from')?.value;
+    const to = document.getElementById('financial-to')?.value;
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    try {
+        const payload = await request('/customers/' + encodeURIComponent(customerId) + '/interest-history?' + params.toString(), { signal });
+        const rows = payload.data || [];
+        const meta = payload.meta || {};
+        const table = rows.map((run) => '<tr>' +
+            '<td>' + esc(run.id) + '</td><td>' + esc(run.trigger_type === 'CUSTOMER_PAYMENT' ? 'भुगतान पर' : 'वार्षिक settlement') + '</td>' +
+            '<td>' + date(run.cutoff_date_exclusive) + '</td><td>' + esc(run.status) + '</td>' +
+            '<td class="text-end">' + money(run.posted_interest_total) + '</td><td>' + esc(run.items_count) + '</td>' +
+            '<td><button type="button" class="btn btn-sm btn-outline-primary" data-interest-run="' + esc(run.id) + '">पूरा विवरण</button></td></tr>').join('');
+        target.innerHTML = (rows.length
+            ? '<div class="kk-data-table-wrap"><table class="table table-vcenter financial-table"><thead><tr><th>Run</th><th>कारण</th><th>Cutoff (exclusive)</th><th>स्थिति</th><th class="text-end">Posted ब्याज</th><th>Items</th><th>विवरण</th></tr></thead><tbody>' + table + '</tbody></table></div>'
+            : '<div class="empty-state"><h3>Calculation history उपलब्ध नहीं है</h3><p>इस ग्राहक के लिए चुनी गई अवधि में कोई calculation run नहीं मिला।</p></div>') +
+            '<div class="d-flex align-items-center justify-content-between gap-2 mt-3"><span class="text-secondary small">कुल ' + esc(meta.total || 0) + ' runs · Page ' + esc(meta.current_page || 1) + ' / ' + esc(meta.last_page || 1) + '</span><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.max(1, Number(meta.current_page || 1) - 1) + '"' + (Number(meta.current_page || 1) <= 1 ? ' disabled' : '') + '>पिछला</button><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.min(Number(meta.last_page || 1), Number(meta.current_page || 1) + 1) + '"' + (Number(meta.current_page || 1) >= Number(meta.last_page || 1) ? ' disabled' : '') + '>अगला</button></div></div>' +
+            '<div id="interest-run-detail" class="mt-3"></div>';
+    } catch (error) {
+        if (error.name !== 'AbortError') target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'Interest history लोड नहीं हो सकी।') + '</div>';
+    }
+};
+const loadInterestRunDetail = async (runId) => {
+    const target = document.getElementById('interest-run-detail');
+    const customerId = document.getElementById('interest-history-customer')?.value;
+    if (!target || !customerId) return;
+    target.innerHTML = '<div class="text-secondary" role="status">Calculation breakdown लोड हो रहा है…</div>';
+    try {
+        const payload = await request('/customers/' + encodeURIComponent(customerId) + '/interest-history/' + encodeURIComponent(runId));
+        const run = payload.data || {};
+        const rows = (run.items || []).map((item) => '<tr>' +
+            '<td>' + esc(item.sale?.number || item.sale?.id || '—') + '<div class="text-secondary small">' + date(item.sale?.date) + '</div></td>' +
+            '<td>' + date(item.interval_start_date) + ' – ' + date(item.interval_end_date_exclusive) + '</td>' +
+            '<td class="text-end">' + esc(item.actual_days) + '</td><td class="text-end">' + esc(item.grace_days_applied) + '</td>' +
+            '<td class="text-end">' + esc(item.monthly_rate_percent) + '%</td><td class="text-end">' + money(item.eligible_principal_basis) + '</td>' +
+            '<td class="text-end">' + money(item.unrounded_interest) + '</td><td class="text-end"><strong>' + money(item.posted_interest) + '</strong></td>' +
+            '<td>' + (item.capitalization_enabled ? 'चालू' : 'बंद') + '</td></tr>').join('');
+        target.innerHTML = '<section class="content-card p-3"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h3 class="h4 mb-1">Calculation Run #' + esc(run.id) + '</h3><p class="text-secondary small mb-0">' + esc(run.trigger_type) + ' · Exclusive cutoff: ' + date(run.cutoff_date_exclusive) + ' · ' + esc(run.status) + '</p></div></div>' +
+            '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Sale</th><th>Calculation interval</th><th class="text-end">Actual days</th><th class="text-end">Grace days</th><th class="text-end">Monthly rate</th><th class="text-end">Eligible principal</th><th class="text-end">Unrounded</th><th class="text-end">Posted</th><th>Capitalization</th></tr></thead><tbody>' + (rows || '<tr><td colspan="9">इस run में कोई calculation item नहीं है।</td></tr>') + '</tbody></table></div>' +
+            (run.items || []).map((item) => '<div class="border rounded p-2 mt-2"><strong>Sale #' + esc(item.sale?.number || item.sale?.id || '—') + '</strong><div class="small text-secondary">Shop policy v' + esc(item.shop_policy?.version ?? '—') + ' · Customer override v' + esc(item.customer_policy?.version ?? '—') + ' · Payment waterfall: ' + esc(item.shop_policy?.payment_waterfall || '—') + '</div><div class="small">Ledger: ' + (item.ledger_entry ? '#' + esc(item.ledger_entry.id) + ' · ' + esc(item.ledger_entry.component) + ' · ' + money(item.ledger_entry.debit) + ' / ' + money(item.ledger_entry.credit) : 'कोई ledger entry link नहीं') + '</div></div>').join('') +
+            '</section>';
+    } catch (error) {
+        target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'Calculation detail लोड नहीं हो सका।') + '</div>';
+    }
 };
 const loadReconciliation = async (signal) => {
     const id = document.getElementById('financial-customer')?.value;
@@ -668,6 +727,7 @@ if (filtersForm) {
     ['from', 'to'].forEach((name) => {
         document.getElementById('financial-' + name)?.addEventListener('change', () => {
             currentPage = 1;
+            if (section === 'interest') interestHistoryPage = 1;
             refresh({ history: 'replace', skipUnchanged: true });
         });
     });
@@ -681,6 +741,18 @@ if (filtersForm) {
     });
 }
 document.getElementById('financial-refresh')?.addEventListener('click', () => refresh());
+document.getElementById('interest-history-customer')?.addEventListener('change', () => { interestHistoryPage = 1; refresh(); });
+document.getElementById('interest-history-refresh')?.addEventListener('click', () => { interestHistoryPage = 1; refresh(); });
+document.getElementById('interest-history-results')?.addEventListener('click', (event) => {
+    const page = event.target.closest('[data-interest-page]');
+    if (page && !page.disabled) {
+        interestHistoryPage = Number(page.dataset.interestPage);
+        refresh();
+        return;
+    }
+    const run = event.target.closest('[data-interest-run]');
+    if (run) loadInterestRunDetail(run.dataset.interestRun);
+});
 document.getElementById('financial-customer')?.addEventListener('change', () => { currentPage = 1; refresh({ history: 'replace' }); });
 window.addEventListener('popstate', () => { readUrlState(); refresh(); });
 window.addEventListener('kk-drawer:success', () => refresh());

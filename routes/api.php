@@ -9,6 +9,7 @@ use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerLedgerController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerReconciliationController;
 use App\Modules\Financial\Presentation\Controllers\Api\FinancialAdministrationController;
+use App\Modules\Financial\Presentation\Controllers\Api\InterestCalculationHistoryController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentCorrectionController;
 use App\Modules\Financial\Presentation\Controllers\Api\SaleController;
@@ -60,6 +61,8 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
             Route::delete('/customers/{customer}', [CustomerLifecycleController::class, 'softDelete']);
             Route::post('/customers/{customer}/restore', [CustomerLifecycleController::class, 'restore']);
             Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class, 'show']);
+            Route::get('/customers/{customer}/interest-history', [InterestCalculationHistoryController::class, 'index']);
+            Route::get('/customers/{customer}/interest-history/{run}', [InterestCalculationHistoryController::class, 'show']);
             Route::get('/reconciliation/customers/{customer}', [CustomerReconciliationController::class, 'show']);
             Route::post('/reconciliation/customers/{customer}/repair', [FinancialAdministrationController::class, 'repairCustomer'])->middleware('throttle:5,1');
             Route::get('/interest-policy', [FinancialAdministrationController::class, 'shopPolicy']);

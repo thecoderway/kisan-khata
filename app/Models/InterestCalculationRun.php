@@ -59,4 +59,9 @@ class InterestCalculationRun extends Model
     {
         return $this->belongsTo(Payment::class, 'trigger_payment_id');
     }
+
+    public function settlementRun(): BelongsTo
+    {
+        return $this->belongsTo(InterestSettlementRun::class, 'settlement_run_id');
+    }
 }
