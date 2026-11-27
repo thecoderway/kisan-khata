@@ -460,15 +460,41 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
 
         Sanctum::actingAs($owner, ['app']);
 
-        $this->getJson('/api/v1/sales')
-            ->assertOk()
-            ->assertJsonPath('data.0.customer.name_original', $customer->name_original)
-            ->assertJsonPath('data.0.customer.deleted_at', fn ($value) => $value !== null);
+        $sales = $this->getJson('/api/v1/sales')->assertOk();
+        $sales->assertJsonPath('data.0.customer.name_original', $customer->name_original);
+        $this->assertNotNull($sales->json('data.0.customer.deleted_at'));
 
-        $this->getJson('/api/v1/payments')
-            ->assertOk()
-            ->assertJsonPath('data.0.customer.name_original', $customer->name_original)
-            ->assertJsonPath('data.0.customer.deleted_at', fn ($value) => $value !== null);
+        $payments = $this->getJson('/api/v1/payments')->assertOk();
+        $payments->assertJsonPath('data.0.customer.name_original', $customer->name_original);
+        $this->assertNotNull($payments->json('data.0.customer.deleted_at'));
+    }
+
+    public function test_inactive_customer_cannot_be_used_for_new_sale_or_payment(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Existing balance before deactivation', 'customer-visibility-inactive-existing-sale',
+        );
+        DB::table('customers')->where('id', $customer->getKey())
+            ->update(['status' => Customer::STATUS_INACTIVE]);
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->postJson('/api/v1/sales', [
+            'customer_id' => $customer->getKey(),
+            'payment_choice' => 'UNPAID',
+            'sale_date' => '2026-11-22',
+            'amount' => '10.00',
+        ], ['Idempotency-Key' => 'customer-visibility-rejected-sale'])->assertStatus(409);
+
+        $this->postJson('/api/v1/payments', [
+            'customer_id' => $customer->getKey(),
+            'payment_date' => '2026-11-22',
+            'amount' => '10.00',
+            'payment_method' => 'CASH',
+        ], ['Idempotency-Key' => 'customer-visibility-rejected-payment'])->assertStatus(409);
     }
 
     private function context(): array
