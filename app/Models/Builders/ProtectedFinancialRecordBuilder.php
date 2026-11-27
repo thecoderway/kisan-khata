@@ -29,8 +29,25 @@ class ProtectedFinancialRecordBuilder extends TenantOwnedBuilder
         $this->rejectBulkMutation();
     }
 
+    private bool $allowModelUpdate = false;
+
+    public function updateModelRecord(array $values)
+    {
+        $this->allowModelUpdate = true;
+
+        try {
+            return parent::update($values);
+        } finally {
+            $this->allowModelUpdate = false;
+        }
+    }
+
     public function update(array $values)
     {
+        if ($this->allowModelUpdate) {
+            return parent::update($values);
+        }
+
         $this->rejectBulkMutation();
     }
 
