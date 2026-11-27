@@ -692,7 +692,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
     {
         [$shop, $owner, $customer] = $this->context();
         $this->createPolicy($shop, $owner);
-        app(SalePostingService::class)->post(
+        $sale = app(SalePostingService::class)->post(
             $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
             '100.00', 'Payment details linked Sale', 'batch-7a-payment-details-sale',
         );
@@ -713,7 +713,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             ->assertJsonPath('data.financial_transaction.transaction_type', 'PAYMENT_POSTING')
             ->assertJsonPath('data.allocation.allocation_type', 'NORMAL_FIFO')
             ->assertJsonPath('data.allocation.total_allocated', '25.00')
-            ->assertJsonPath('data.allocation.items.0.sale.sale_number', fn ($value) => is_string($value));
+            ->assertJsonPath('data.allocation.items.0.sale.sale_number', $sale->sale_number);
 
         $this->assertNotEmpty($response->json('data.ledger_entries'));
         $this->assertSame('PRINCIPAL', $response->json('data.allocation.items.0.component_type'));
