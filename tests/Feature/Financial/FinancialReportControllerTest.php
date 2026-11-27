@@ -171,7 +171,7 @@ class FinancialReportControllerTest extends TestCase
             ->assertJsonPath('data.0.ledger_entry_id', $item->ledger_entry_id);
 
         DB::table('interest_calculation_items')->where('id', $item->getKey())
-            ->update(['ledger_entry_id' => $sale->ledgerEntries()->value('id')]);
+            ->update(['ledger_entry_id' => DB::table('ledger_entries')->where('sale_id', $sale->getKey())->value('id')]);
 
         $this->getJson('/api/v1/reports/interest')
             ->assertOk()
