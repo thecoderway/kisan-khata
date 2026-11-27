@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class FinancialAdministrationController extends Controller
@@ -206,7 +207,7 @@ class FinancialAdministrationController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'action' => ['nullable', 'string', 'max:100'],
-            'per_page' => ['nullable', 'integer', IlluminateValidationRule::in([10, 20, 50, 100])],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
