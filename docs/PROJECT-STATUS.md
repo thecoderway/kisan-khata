@@ -744,7 +744,24 @@ Inspected current `main` routes, financial controllers, workspace Blade view, le
 - Reviewed ADR-0010, ADR-0012, ADR-0015 and ADR-0016 for role access, financial immutability, payment/reversal, interest and customer lifecycle rules.
 - Existing Interest workspace is Owner-only. Staff Shop-wide read permission for Sales, Payments and Customer Ledger does not automatically grant access to detailed interest policy/run metadata.
 
-### Batch 11A state and open Product Owner decisions
+### Batch 11A approved decisions and source verification
+
+The Product Owner approved all three Batch 11A decisions on 2026-11-27:
+
+1. **Customer Outstanding — Option A:** include all customers with financial history by default, including zero and negative balances. Positive-only is an explicit optional filter.
+2. **Payment Collection — Option A:** NORMAL receipts less linked NORMAL reversals; SALE_DAY_AUTO is separate and excluded from cash collection. A replacement is counted only after an audit confirms actual receipt; posting/linkage alone is not proof.
+3. **Interest Access — Option A:** detailed Interest Calculation and Posted Interest reports are Owner-only. Manager and Staff remain denied; existing Staff ledger visibility is unchanged.
+
+**Source-level findings (read-only):**
+- Payment reversal source supports only original NORMAL Payments, writes a separately linked REVERSAL Payment, reversing ledger entries, immutable PaymentRevision and audit event. Optional replacement is a separate NORMAL Payment with `replacement_for_payment_id` and a REPLACEMENT revision.
+- Existing source does not persist a dedicated actual-cash-confirmation/evidence field. Replacement-linked amount must remain outside confirmed cash collection until an auditable evidence mechanism is defined.
+- SALE_DAY_AUTO is a distinct payment type and is not supported as an original Payment by the current reversal service; it remains separately reported and excluded from cash collection.
+- **Interest API authorization gap found:** web Financial Workspace blocks non-Owner users from the Interest section, but both Interest Calculation History API actions use `viewCustomerLedger`; CustomerLedgerPolicy permits Owner, Manager and Staff. UI restrictions do not secure the API. A dedicated Owner-only API authorization check and Owner/Manager/Staff regression tests are mandatory before exposing reports.
+- Tenant scopes, immutable ledger/interest models and existing Payment correction/reconciliation tests were inspected. No code, migrations or database records were changed.
+
+**Remaining 11A gates:** finalize actual-collection evidence rule, verify report-specific reconciliation queries/equations against MySQL fixtures, and approve sample layouts/response schemas. Batch 11A remains IN PROGRESS; Batch 11B has not started. Detailed evidence is in `docs/phase-11-batch-11a-report-definitions.md`.
+
+No production operation, deployment or release is authorized.
 
 - First-pass definitions cover Customer Outstanding as-of snapshot, Sales Register/Summary, Payment Register/Collection Summary, and Interest Calculation/Posted Interest.
 - No source-of-truth change, code, migration, dependency, API, UI, export, PDF or database mutation was made in this audit/specification update.
