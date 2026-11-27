@@ -535,6 +535,8 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 
 ## 13. Phase 10 — Crop-Season Settlement
 
+**Status: Next phase — mandatory read-only audit before implementation.** See the Phase 9/10 handoff in `docs/PROJECT-STATUS.md` for the audit checklist and approval boundaries. The existing annual-interest settlement engine is a dependency to inspect and reuse, not a substitute for crop-season settlement semantics.
+
 ### Objectives
 
 - Settlement preparation.
