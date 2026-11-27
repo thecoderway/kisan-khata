@@ -134,7 +134,7 @@ Alpine.data('actionDrawer', () => ({
                 date ? 'तारीख: ' + date : null,
                 method ? 'माध्यम: ' + method : null,
             ].filter(Boolean);
-            const message = [form.dataset.confirm, ...summary].join('\\n');
+            const message = [form.dataset.confirm, ...summary].join('\n');
             if (!window.confirm(message)) return;
         }
 
