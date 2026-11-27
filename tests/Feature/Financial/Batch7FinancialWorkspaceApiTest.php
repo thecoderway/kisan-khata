@@ -816,6 +816,47 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         }
     }
 
+    public function test_completed_annual_interest_settlement_blocks_historical_payment_reversal(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Settlement restriction Sale', 'batch-7b-settlement-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Settlement restriction Payment', 'batch-7b-settlement-payment',
+        );
+
+        $transaction = DB::table('financial_transactions')->where('id', $payment->financial_transaction_id)->first();
+        $policyVersionId = DB::table('interest_policy_versions')
+            ->where('shop_id', $shop->getKey())->value('id');
+        DB::table('interest_settlement_runs')->insert([
+            'shop_id' => $shop->getKey(),
+            'customer_id' => $customer->getKey(),
+            'settlement_date' => '2026-11-30',
+            'cutoff_date_exclusive' => '2026-11-30',
+            'shop_policy_version_id' => $policyVersionId,
+            'status' => 'COMPLETED',
+            'idempotency_key_id' => $transaction->idempotency_key_id,
+            'started_at' => now(),
+            'completed_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        try {
+            app(PaymentReversalService::class)->correct(
+                $owner, $customer, $payment, 'Historical settlement restriction', 'batch-7b-settlement-reversal',
+            );
+            $this->fail('A completed annual settlement must block reversal of an earlier Payment.');
+        } catch (ConflictHttpException $exception) {
+            $this->assertStringContainsString('annual interest settlement', $exception->getMessage());
+            $this->assertDatabaseCount('payment_revisions', 0);
+            $this->assertDatabaseCount('payments', 1);
+        }
+    }
+
     public function test_payment_reversal_idempotency_replays_and_rejects_changed_payload(): void
     {
         [$shop, $owner, $customer] = $this->context();
