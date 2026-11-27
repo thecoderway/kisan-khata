@@ -1,6 +1,6 @@
 # Phase 5 — Batch 7C Combined Financial Lifecycle Acceptance
 
-**Status:** Acceptance test added; branch CI and Product Owner browser acceptance pending.  
+**Status:** COMPLETE — merged in PR #67; exact-head pre-merge CI passed; Product Owner local UI smoke acceptance confirmed 2026-11-27.  
 **Branch:** `test/batch-7c-combined-financial-acceptance`  
 **Base:** `main` after Batch 7B PR #66 merge, commit `2651776c0698d14bb3c51743f4c541ac110ab114`.
 
@@ -35,12 +35,15 @@ The new test supplements these suites; it does not replace them.
 ## Acceptance gate
 
 Batch 7C may be marked complete only after:
-- Pint and the full GitHub Actions workflow pass on the exact PR head SHA, including MySQL 8.4 row-lock integration and the remaining Laravel suite.
+- Pint and the full GitHub Actions workflow passed on the exact PR head SHA, including MySQL 8.4 row-lock integration and the remaining Laravel suite (pre-merge runs #1549/#1550).
 - Existing tenant isolation and role-authorization tests remain green.
 - Combined Sale/Payment/FIFO/reversal/replacement/ledger/projection/audit assertions pass.
-- Product Owner completes the applicable manual UI smoke test for Sale and Payment Details/reversal history. Automated API assertions are not browser acceptance.
-- Documentation and Project Status reflect observed results.
+- Product Owner completed the applicable local UI smoke test for Sale and Payment Details/reversal history and reported all checks working on 2026-11-27. Automated API assertions are not browser acceptance.
+- Documentation and Project Status record the merged implementation and Product Owner acceptance.
 
 ## Safety boundary
 
 No migrations, schema changes, database operations, production data changes, deployment or release are included. Do not alter Ledger/Sales/Payments business rules or introduce Crop/Season tagging, Sale Bill Attachment, Payment Receipt Attachment, advance balances or physical deletion. Preserve financial history and the local untracked backup. PR merge is permitted only after exact-head CI is green, GitHub reports mergeability and no blocker remains; never merge directly to `main`.
+
+
+**Final acceptance:** Product Owner confirmed the local dashboard opened and the requested UI smoke checklist worked correctly on 2026-11-27. No additional financial transaction or database mutation was performed for this smoke test. This acceptance does not authorize production deployment or release.
