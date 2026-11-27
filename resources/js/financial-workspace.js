@@ -48,13 +48,17 @@ const readUrlState = () => {
     const url = new URL(window.location.href);
     currentPage = Math.max(1, Number(url.searchParams.get('page') || 1));
     pageSize = [10, 20, 50, 100].includes(Number(url.searchParams.get('per_page'))) ? Number(url.searchParams.get('per_page')) : 20;
-    if (!filtersForm) return;
-    for (const name of ['q', 'from', 'to', 'payment_status', 'payment_method', 'sort']) {
-        const input = filtersForm.elements.namedItem(name);
-        if (input) input.value = url.searchParams.get(name) || (name === 'sort' ? 'date_desc' : '');
+    if (filtersForm) {
+        for (const name of ['q', 'from', 'to', 'payment_status', 'payment_method', 'sort']) {
+            const input = filtersForm.elements.namedItem(name);
+            if (input) input.value = url.searchParams.get(name) || (name === 'sort' ? 'date_desc' : '');
+        }
+    } else {
+        for (const name of ['from', 'to', 'action']) {
+            const input = document.getElementById('financial-' + name);
+            if (input) input.value = url.searchParams.get(name) || '';
+        }
     }
-    const size = filtersForm.elements.namedItem('per_page');
-    if (size) size.value = String(pageSize);
 };
 const buildQuery = () => {
     const params = new URLSearchParams();
@@ -326,6 +330,21 @@ if (filtersForm) {
         if (sort) sort.value = 'date_desc';
         currentPage = 1;
         applyFilters();
+    });
+} else {
+    ['from', 'to'].forEach((name) => {
+        document.getElementById('financial-' + name)?.addEventListener('change', () => {
+            currentPage = 1;
+            refresh({ history: 'replace' });
+        });
+    });
+    const actionFilter = document.getElementById('financial-action');
+    actionFilter?.addEventListener('input', () => {
+        window.clearTimeout(debounceTimer);
+        debounceTimer = window.setTimeout(() => {
+            currentPage = 1;
+            refresh({ history: 'replace' });
+        }, 375);
     });
 }
 document.getElementById('financial-refresh')?.addEventListener('click', () => refresh());
