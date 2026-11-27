@@ -94,6 +94,7 @@ class CustomerLedgerController extends Controller
             $rawEntries = $group['entries'];
             $payment = $first->payment;
             $components = collect($rawEntries)->pluck('component')->unique()->values();
+            $saleIds = collect($rawEntries)->pluck('sale_id')->filter()->unique()->values();
 
             $displayRows[] = [
                 'id' => (int) $first->getKey(),
@@ -102,7 +103,9 @@ class CustomerLedgerController extends Controller
                     ? ($first->entry_kind === 'REVERSAL' ? 'PAYMENT_REVERSAL' : 'PAYMENT')
                     : $first->entry_kind,
                 'component' => $components->count() > 1 ? 'MIXED' : $first->component,
-                'sale_id' => $components->count() === 1 ? $first->sale_id : null,
+                'sale_id' => $saleIds->count() === 1 ? (int) $saleIds->first() : null,
+                'sale_ids' => $saleIds->map(fn ($id): int => (int) $id)->all(),
+                'ledger_entry_ids' => collect($rawEntries)->map(fn (LedgerEntry $item): int => (int) $item->getKey())->all(),
                 'payment_id' => $first->payment_id,
                 'payment_number' => $payment?->payment_number,
                 'payment_type' => $payment?->payment_type,
