@@ -22,6 +22,22 @@ const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
 }[char]));
 const money = (value) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(Number(value || 0));
 const date = (value) => value ? new Date(value).toLocaleDateString('en-IN') : '—';
+const saleStatusLabel = (value) => ({
+    UNPAID: 'उधार',
+    PARTIALLY_PAID: 'आंशिक जमा',
+    PAID: 'जमा पूर्ण',
+}[value] || value);
+const paymentMethodLabel = (value) => ({
+    CASH: 'नकद',
+    UPI: 'UPI',
+    BANK: 'बैंक',
+    CHEQUE: 'चेक',
+}[value] || value || '—');
+const paymentTypeLabel = (value) => ({
+    NORMAL: 'सामान्य जमा',
+    SALE_DAY_AUTO: 'बिक्री के साथ स्वतः जमा',
+    REVERSAL: 'रिवर्सल',
+}[value] || value);
 const showMessage = (message, kind = 'success') => {
     window.dispatchEvent(new CustomEvent('kk-toast:show', {
         detail: { message, variant: kind === 'error' ? 'error' : 'success' },
@@ -136,7 +152,7 @@ const loadSales = async (signal) => {
         '<strong>' + esc(sale.sale_number) + '</strong>',
         esc(sale.customer?.name_hi || sale.customer?.name_original || '—'),
         date(sale.sale_date), money(sale.amount),
-        '<span class="badge bg-' + (sale.payment_status === 'PAID' ? 'success' : 'warning') + '-lt">' + esc(sale.payment_status) + '</span>',
+        '<span class="badge bg-' + (sale.payment_status === 'PAID' ? 'success' : 'warning') + '-lt">' + esc(saleStatusLabel(sale.payment_status)) + '</span>',
         config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-action="revise-sale" data-id="' + esc(sale.id) + '" data-description="' + esc(sale.description || '') + '"><i class="ti ti-edit me-1" aria-hidden="true"></i>विवरण संशोधन</button>' : '—',
     ]));
     renderPagination(payload.meta);
@@ -147,8 +163,8 @@ const loadPayments = async (signal) => {
         '<strong>' + esc(payment.payment_number) + '</strong>',
         esc(payment.customer?.name_hi || payment.customer?.name_original || '—'),
         date(payment.payment_date), money(payment.amount),
-        esc(payment.payment_method || '—'),
-        '<span class="badge bg-secondary-lt">' + esc(payment.payment_type) + '</span>',
+        esc(paymentMethodLabel(payment.payment_method)),
+        '<span class="badge bg-secondary-lt">' + esc(paymentTypeLabel(payment.payment_type)) + '</span>',
         config.role === 'owner' && payment.payment_type === 'NORMAL'
             ? '<button class="btn btn-sm btn-outline-danger" type="button" data-financial-action="correct-payment" data-id="' + esc(payment.id) + '" data-customer-id="' + esc(payment.customer_id) + '" data-payment-number="' + esc(payment.payment_number) + '" data-payment-amount="' + esc(payment.amount) + '" data-customer-name="' + esc(payment.customer?.name_hi || payment.customer?.name_original || 'ग्राहक') + '"><i class="ti ti-arrow-back-up me-1" aria-hidden="true"></i>रिवर्स / बदलें</button>'
             : '—',
