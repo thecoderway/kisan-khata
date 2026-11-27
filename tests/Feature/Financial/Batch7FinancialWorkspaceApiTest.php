@@ -149,6 +149,47 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_configure_first_shop_policy_for_legacy_shop_without_policy_row(): void
+    {
+        [$shop, $owner] = $this->context();
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->getJson('/api/v1/interest-policy')
+            ->assertOk()
+            ->assertExactJson(['data' => []]);
+
+        $effectiveFrom = now()->addDays(5)->toDateString();
+        $this->postJson('/api/v1/interest-policy', [
+            'effective_from' => $effectiveFrom,
+            'reason' => 'Initial policy setup for legacy shop',
+            'monthly_rate_percent' => '1.50000000',
+            'grace_days' => 30,
+            'capitalization_enabled' => false,
+            'payment_waterfall' => 'PRINCIPAL_FIRST',
+            'annual_settlement_month_1' => 3,
+            'annual_settlement_day_1' => 30,
+            'annual_settlement_month_2' => 10,
+            'annual_settlement_day_2' => 30,
+        ])->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.version_number', 1);
+
+        $this->assertDatabaseHas('interest_policies', [
+            'shop_id' => $shop->getKey(),
+            'policy_code' => 'DEFAULT',
+        ]);
+        $this->assertDatabaseHas('interest_policy_versions', [
+            'shop_id' => $shop->getKey(),
+            'version_number' => 1,
+            'effective_from' => $effectiveFrom,
+            'monthly_rate_percent' => '1.50000000',
+        ]);
+
+        $this->getJson('/api/v1/interest-policy')
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
     public function test_staff_cannot_change_interest_policy_or_view_financial_audit(): void
     {
         [$shop, $owner] = $this->context();
