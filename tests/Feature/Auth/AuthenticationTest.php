@@ -36,6 +36,32 @@ class AuthenticationTest extends TestCase
         $this->assertTrue(Hash::check('StrongPass123', $user->password));
         $this->assertDatabaseCount('shops', 1);
         $this->assertDatabaseCount('users', 1);
+        $policy = DB::table('interest_policies')
+            ->where('shop_id', $shop->id)
+            ->where('policy_code', 'DEFAULT')
+            ->first();
+        $this->assertNotNull($policy);
+        $this->assertDatabaseHas('interest_policy_versions', [
+            'shop_id' => $shop->id,
+            'interest_policy_id' => $policy->id,
+            'version_number' => 1,
+            'effective_from' => now('Asia/Kolkata')->toDateString(),
+            'monthly_rate_percent' => '0.00000000',
+            'grace_days' => 30,
+            'capitalization_enabled' => false,
+            'payment_waterfall' => 'PRINCIPAL_FIRST',
+            'annual_settlement_month_1' => 3,
+            'annual_settlement_day_1' => 30,
+            'annual_settlement_month_2' => 10,
+            'annual_settlement_day_2' => 30,
+            'created_by' => $user->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'shop_id' => $shop->id,
+            'user_id' => $user->id,
+            'action' => 'financial.shop_interest_policy_initialized',
+            'entity_type' => 'interest_policy_version',
+        ]);
         $this->assertDatabaseHas('user_audit_logs', [
             'shop_id' => $shop->id,
             'actor_user_id' => $user->id,
