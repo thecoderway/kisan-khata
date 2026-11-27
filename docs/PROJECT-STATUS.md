@@ -148,6 +148,7 @@ Recorded as complete:
 - MySQL row-lock integration: **1 passed / 2 assertions**.
 - Remaining Laravel suite: **131 passed / 387 assertions**.
 - Combined Laravel result: **132 tests passed / 389 assertions / 0 failures / 0 skipped**.
+
 Phase 2 is accepted as the multi-tenancy foundation. Future modules remain subject to the tenant-isolation requirements in Docs 04/05/06/09 and ADR-0002/ADR-0005; this acceptance does not pre-approve their implementation or release.
 
 ### Phase 3 — Roles and User Management
@@ -296,7 +297,8 @@ After PR #5, the Product Owner separately confirmed local `main` synced to `13ad
 **Additional feature-branch verification reported by Product Owner (2026-11-23):**
 - Feature branch: `feat/tenant-isolation-foundation`, local fast-forward to commit `9cd5cc4`.
 - Working tree was clean before the test run.
-- `vendor/bin/pint --test`: **57 files PASS**.- `TenantMiddlewareIsolationTest`: **10 passed, 25 assertions**.
+- `vendor/bin/pint --test`: **57 files PASS**.
+- `TenantMiddlewareIsolationTest`: **10 passed, 25 assertions**.
 - `TenantOwnedModelIsolationTest`: **17 passed, 26 assertions**.
 - Full `php artisan test`: **57 passed, 164 assertions, 0 failures**.
 - The cache/session/storage/jobs/database-access audit was also reported; findings are recorded in the Phase 2 section above.
