@@ -79,7 +79,7 @@ class FinancialReportController extends Controller
         $filters = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'customer_id' => ['nullable', 'integer'],
+            'customer_id' => ['nullable', 'integer', 'min:1'],
             'payment_status' => ['nullable', Rule::in([
                 Sale::PAYMENT_STATUS_UNPAID, Sale::PAYMENT_STATUS_PARTIALLY_PAID, Sale::PAYMENT_STATUS_PAID,
             ])],
@@ -126,7 +126,7 @@ class FinancialReportController extends Controller
         $filters = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'customer_id' => ['nullable', 'integer'],
+            'customer_id' => ['nullable', 'integer', 'min:1'],
             'payment_method' => ['nullable', 'string', 'max:32'],
             'payment_type' => ['nullable', Rule::in([Payment::TYPE_NORMAL, Payment::TYPE_SALE_DAY_AUTO, Payment::TYPE_REVERSAL])],
             'q' => ['nullable', 'string', 'max:100'],
