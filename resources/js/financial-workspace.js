@@ -34,6 +34,12 @@ const paymentMethodLabel = (value) => ({
     BANK: 'बैंक',
     CHEQUE: 'चेक',
 }[value] || value || '—');
+const customerLifecycleLabel = (customer) => {
+    if (!customer) return '';
+    if (customer.deleted_at) return ' <span class="badge bg-secondary-lt">हटाया गया</span>';
+    if (customer.status === 'inactive') return ' <span class="badge bg-warning-lt">निष्क्रिय</span>';
+    return '';
+};
 const paymentTypeLabel = (value) => ({
     NORMAL: 'सामान्य जमा',
     SALE_DAY_AUTO: 'बिक्री के साथ स्वतः जमा',
@@ -160,15 +166,20 @@ const renderPagination = (meta = {}) => {
         '</ul></nav></div></div>');
 };
 const loadCustomers = async () => {
-    customers = await fetchFinancialCustomers(request);
-    const labels = customerDisplayLabels(customers);
-    ['financial-customer', 'interest-customer'].forEach((id) => {
-        const select = document.getElementById(id);
-        if (!select) return;
+    const mode = ['ledger', 'reconciliation'].includes(section)
+        ? 'history'
+        : section === 'interest' ? 'policy' : 'transaction';
+    customers = await fetchFinancialCustomers(request, mode);
+    const labels = customerDisplayLabels(customers, { includeStatus: mode !== 'transaction' });
+    const selectId = ['ledger', 'reconciliation'].includes(section)
+        ? 'financial-customer'
+        : section === 'interest' ? 'interest-customer' : null;
+    const select = selectId ? document.getElementById(selectId) : null;
+    if (select) {
         select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map((customer, index) =>
             '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
         ).join('');
-    });
+    }
 };
 const customerOptions = () => {
     const labels = customerDisplayLabels(customers);
@@ -179,7 +190,7 @@ const loadSales = async (signal) => {
     const payload = await request('/sales?' + buildQuery(), { signal });
     renderTable(['बिक्री नंबर', 'ग्राहक', 'तारीख', 'राशि', 'स्थिति', 'कार्रवाई'], (payload.data || []).map((sale) => [
         '<strong>' + esc(sale.sale_number) + '</strong>',
-        esc(sale.customer?.name_hi || sale.customer?.name_original || '—'),
+        esc(sale.customer?.name_hi || sale.customer?.name_original || '—') + customerLifecycleLabel(sale.customer),
         date(sale.sale_date), money(sale.amount),
         '<span class="badge bg-' + (sale.payment_status === 'PAID' ? 'success' : 'warning') + '-lt">' + esc(saleStatusLabel(sale.payment_status)) + '</span>',
         config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-action="revise-sale" data-id="' + esc(sale.id) + '" data-description="' + esc(sale.description || '') + '"><i class="ti ti-edit me-1" aria-hidden="true"></i>विवरण संशोधन</button>' : '—',
@@ -190,7 +201,7 @@ const loadPayments = async (signal) => {
     const payload = await request('/payments?' + buildQuery(), { signal });
     renderTable(['भुगतान नंबर', 'ग्राहक', 'तारीख', 'राशि', 'माध्यम', 'प्रकार', 'कार्रवाई'], (payload.data || []).map((payment) => [
         '<strong>' + esc(payment.payment_number) + '</strong>',
-        esc(payment.customer?.name_hi || payment.customer?.name_original || '—'),
+        esc(payment.customer?.name_hi || payment.customer?.name_original || '—') + customerLifecycleLabel(payment.customer),
         date(payment.payment_date), money(payment.amount),
         esc(paymentMethodLabel(payment.payment_method)),
         '<span class="badge bg-secondary-lt">' + esc(paymentTypeLabel(payment.payment_type)) + '</span>',
