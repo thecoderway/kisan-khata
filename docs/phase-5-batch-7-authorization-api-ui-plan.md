@@ -46,14 +46,14 @@ All decisions are enforced on the server through Policies/Gates and domain servi
 
 | Capability | Owner | Manager | Staff |
 |---|---|---|---|
-| View shop financial overview | Yes | Yes, permitted operational view | No aggregate dashboard by default |
+| View shop financial overview | Yes | Yes, permitted operational view | Shop-wide operational financial view only where explicitly exposed; no Owner-only administration/audit |
 | Create credit Sale | Yes | Yes | Yes |
 | View Sales | All shop Sales | Shop Sales | Own created Sales |
 | Correct/revise an eligible unlocked Sale | Yes, controlled workflow | No | No |
 | Record customer Payment | Yes | Yes | Yes |
 | View Payments | All shop Payments | Shop Payments | Own recorded Payments |
 | Reverse/replace Payment | Yes, mandatory reason + idempotency | No | No |
-| View Customer Ledger | All shop Customers | Operational customer access | Only customers permitted by existing customer visibility rules; no unrestricted ledger browsing |
+| View Customer Ledger | All shop Customers | Shop-wide operational customer access | All Customers and ledger entries within assigned Shop (ADR-0015) |
 | Configure Shop interest policy | Yes | No | No |
 | Configure Customer interest overrides | Yes | No | No |
 | View interest calculations/settlements | All shop | Permitted operational read | Own work/customer context only |
@@ -66,7 +66,7 @@ Additional constraints:
 - Active Shop membership and Shop context must be resolved from the authenticated user; never trust request `shop_id`, role, creator ID or actor ID.
 - Manager and Staff cannot edit or delete posted Sales or Payments.
 - Only Owner can initiate Payment reversal/replacement and eligible Sale revision; locked Sale corrections remain rejected under ADR-0012.
-- Staff financial visibility must not expand their existing customer visibility or reveal other users' work.
+- Under accepted ADR-0015, active Staff may read all Customer profiles, posted Sales, Payments and Customer Ledger entries within their assigned Shop, regardless of creator. Staff cannot access Owner-only financial audit history, interest administration, reconciliation/repair or correction actions.
 - Do not introduce custom per-user permissions, multi-shop membership or ownership transfer.
 - If existing ADR-0010/roadmap language conflicts with a domain-specific rule, ADR-0010 and the approved domain rule take precedence; document any ambiguity rather than silently broadening access.
 
@@ -238,7 +238,7 @@ Use existing audit infrastructure where it meets the required append-only and te
 - Inactive users are rejected.
 - Owner/Manager/Staff allowed actions match the matrix.
 - Manager/Staff cannot revise Sales, correct Payments, configure interest, view financial audit logs, reconcile or repair.
-- Staff cannot view another user's Sales/Payments or unrestricted customer ledger data.
+- Staff can view Shop-wide Sales/Payments/Ledger read data under ADR-0015; cross-Shop access and Owner-only administration/correction remain forbidden.
 - Cross-Shop Customer/Sale/Payment/policy/reconciliation IDs cannot be accessed or mutated.
 - Client-supplied Shop ID, role, actor ID and creator ID cannot change authorization context.
 
@@ -312,7 +312,7 @@ PR merge, production migrations, backfill and deployment remain separate explici
 ## 12. Approval checkpoints and open clarifications
 
 This document is a planning artifact, not authorization to implement Batch 7. The Product Owner has requested the plan. Before coding, confirm only unresolved product-level details discovered during the 7.0 audit:
-- precise Staff customer-ledger visibility (own recorded work versus all Customers assigned/visible under current Customer rules);
+- Staff financial read visibility is resolved by accepted ADR-0015: Shop-wide read access for all Customers, posted Sales, Payments and Customer Ledger entries; no further clarification is required.
 - whether Sale revision is required in this batch or can be limited to the existing approved revision service contract;
 - whether financial audit history should reuse the current shared audit screen or have a dedicated financial view;
 - whether bill/receipt attachment upload is already supported end-to-end and should be included now.
