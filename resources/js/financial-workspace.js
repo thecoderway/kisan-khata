@@ -218,10 +218,18 @@ const loadLedger = async (signal) => {
     const id = document.getElementById('financial-customer')?.value;
     if (!id) { root.innerHTML = '<div class="empty-state"><i class="ti ti-user-search"></i><h3>ग्राहक चुनें</h3><p>उस ग्राहक की खाता-बही देखने के लिए ऊपर से चयन करें।</p></div>'; return; }
     const payload = await request('/customers/' + id + '/ledger?' + buildQuery(), { signal });
-    const rows = (payload.data || []).map((entry) => [
-        date(entry.effective_date), esc(entry.entry_kind), esc(entry.component),
-        money(entry.debit), money(entry.credit), money(entry.total_balance),
-    ]);
+    const rows = (payload.data || []).map((entry) => {
+        const transactionLabel = entry.payment_number
+            ? (entry.payment_type === 'REVERSAL' ? 'भुगतान रिवर्सल' : 'भुगतान') + ' · ' + esc(entry.payment_number)
+            : esc(entry.entry_kind);
+        const componentLabel = entry.component === 'MIXED'
+            ? 'मूलधन + ब्याज'
+            : (entry.component === 'PRINCIPAL' ? 'मूलधन' : (entry.component === 'INTEREST' ? 'ब्याज' : esc(entry.component)));
+        return [
+            date(entry.effective_date), transactionLabel, componentLabel,
+            money(entry.debit), money(entry.credit), money(entry.total_balance),
+        ];
+    });
     renderTable(['तारीख', 'लेन-देन', 'खाता', 'Debit', 'Credit', 'बाकी'], rows);
     const opening = payload.meta?.opening_balance;
     if (opening) {

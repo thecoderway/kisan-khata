@@ -8,6 +8,7 @@ use App\Models\LedgerEntry;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 
 class CustomerLedgerController extends Controller
@@ -25,96 +26,147 @@ class CustomerLedgerController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $base = LedgerEntry::query()
+        // Keep the immutable allocation-level ledger intact. Consolidation is a
+        // read-model concern: one posted Payment/Reversal becomes one display row.
+        $entries = LedgerEntry::query()
+            ->with('payment:id,payment_number,payment_type,payment_method,description')
             ->where('shop_id', $customer->shop_id)
-            ->where('customer_id', $customer->getKey());
-
-        if (isset($filters['from'])) {
-            $base->where('effective_date', '>=', $filters['from']);
-        }
-        if (isset($filters['to'])) {
-            $base->where('effective_date', '<=', $filters['to']);
-        }
-
-        $perPage = (int) ($filters['per_page'] ?? 20);
-        $page = (int) ($filters['page'] ?? 1);
-        $entries = (clone $base)
+            ->where('customer_id', $customer->getKey())
             ->orderBy('effective_date')
             ->orderBy('sequence_number')
             ->orderBy('id')
-            ->forPage($page, $perPage)
             ->get();
 
-        $openingQuery = LedgerEntry::query()
-            ->where('shop_id', $customer->shop_id)
-            ->where('customer_id', $customer->getKey());
-
-        if ($entries->isNotEmpty()) {
-            $first = $entries->first();
-            $openingQuery->where(function ($query) use ($first): void {
-                $query->where('effective_date', '<', $first->effective_date)
-                    ->orWhere(function ($sameDate) use ($first): void {
-                        $sameDate->where('effective_date', $first->effective_date)
-                            ->where(function ($sequence) use ($first): void {
-                                $sequence->where('sequence_number', '<', $first->sequence_number)
-                                    ->orWhere(function ($id) use ($first): void {
-                                        $id->where('sequence_number', $first->sequence_number)
-                                            ->where('id', '<', $first->getKey());
-                                    });
-                            });
-                    });
-            });
-        } elseif (isset($filters['from'])) {
-            $openingQuery->where('effective_date', '<', $filters['from']);
-        }
-
-        $principalQuery = (clone $openingQuery)->where('component', 'PRINCIPAL');
-        $interestQuery = (clone $openingQuery)->where('component', 'INTEREST');
-        $principal = BigDecimal::of((string) $principalQuery->sum('debit_amount'))
-            ->minus((string) $principalQuery->sum('credit_amount'));
-        $interest = BigDecimal::of((string) $interestQuery->sum('debit_amount'))
-            ->minus((string) $interestQuery->sum('credit_amount'));
-
-        $runningPrincipal = $principal;
-        $runningInterest = $interest;
-        $items = [];
-
+        $groups = [];
         foreach ($entries as $entry) {
-            $delta = BigDecimal::of((string) $entry->debit_amount)
-                ->minus((string) $entry->credit_amount);
+            $isPayment = $entry->payment_id !== null
+                && in_array($entry->entry_kind, ['PAYMENT', 'REVERSAL'], true);
+            $groupKey = $isPayment
+                ? $entry->entry_kind.':'.$entry->payment_id
+                : 'ledger:'.$entry->getKey();
 
-            if ($entry->component === 'PRINCIPAL') {
-                $runningPrincipal = $runningPrincipal->plus($delta);
-            } else {
-                $runningInterest = $runningInterest->plus($delta);
+            if (! isset($groups[$groupKey])) {
+                $groups[$groupKey] = [
+                    'first' => $entry,
+                    'entries' => [],
+                    'principal_debit' => BigDecimal::zero(),
+                    'principal_credit' => BigDecimal::zero(),
+                    'interest_debit' => BigDecimal::zero(),
+                    'interest_credit' => BigDecimal::zero(),
+                    'debit' => BigDecimal::zero(),
+                    'credit' => BigDecimal::zero(),
+                ];
             }
 
-            $items[] = [
-                'id' => (int) $entry->getKey(),
-                'effective_date' => $entry->effective_date->toDateString(),
-                'entry_kind' => $entry->entry_kind,
-                'component' => $entry->component,
-                'sale_id' => $entry->sale_id,
-                'payment_id' => $entry->payment_id,
-                'debit' => (string) $entry->debit_amount,
-                'credit' => (string) $entry->credit_amount,
+            $group = &$groups[$groupKey];
+            $group['entries'][] = $entry;
+            $debit = BigDecimal::of((string) $entry->debit_amount);
+            $credit = BigDecimal::of((string) $entry->credit_amount);
+            $group['debit'] = $group['debit']->plus($debit);
+            $group['credit'] = $group['credit']->plus($credit);
+
+            if ($entry->component === 'PRINCIPAL') {
+                $group['principal_debit'] = $group['principal_debit']->plus($debit);
+                $group['principal_credit'] = $group['principal_credit']->plus($credit);
+            } else {
+                $group['interest_debit'] = $group['interest_debit']->plus($debit);
+                $group['interest_credit'] = $group['interest_credit']->plus($credit);
+            }
+            unset($group);
+        }
+
+        $runningPrincipal = BigDecimal::zero();
+        $runningInterest = BigDecimal::zero();
+        $displayRows = [];
+
+        foreach ($groups as $group) {
+            $first = $group['first'];
+            $openingPrincipal = $runningPrincipal;
+            $openingInterest = $runningInterest;
+
+            $runningPrincipal = $runningPrincipal
+                ->plus($group['principal_debit'])
+                ->minus($group['principal_credit']);
+            $runningInterest = $runningInterest
+                ->plus($group['interest_debit'])
+                ->minus($group['interest_credit']);
+
+            $rawEntries = $group['entries'];
+            $payment = $first->payment;
+            $components = collect($rawEntries)->pluck('component')->unique()->values();
+            $saleIds = collect($rawEntries)->pluck('sale_id')->filter()->unique()->values();
+
+            $displayRows[] = [
+                'id' => (int) $first->getKey(),
+                'effective_date' => $first->effective_date->toDateString(),
+                'entry_kind' => count($rawEntries) > 1 && $first->payment_id !== null
+                    ? ($first->entry_kind === 'REVERSAL' ? 'PAYMENT_REVERSAL' : 'PAYMENT')
+                    : $first->entry_kind,
+                'component' => $components->count() > 1 ? 'MIXED' : $first->component,
+                'sale_id' => $saleIds->count() === 1 ? (int) $saleIds->first() : null,
+                'sale_ids' => $saleIds->map(fn ($id): int => (int) $id)->all(),
+                'ledger_entry_ids' => collect($rawEntries)->map(fn (LedgerEntry $item): int => (int) $item->getKey())->all(),
+                'payment_id' => $first->payment_id,
+                'payment_number' => $payment?->payment_number,
+                'payment_type' => $payment?->payment_type,
+                'payment_method' => $payment?->payment_method,
+                'description' => $payment?->description,
+                'allocation_count' => count($rawEntries),
+                'debit' => (string) $group['debit']->toScale(2),
+                'credit' => (string) $group['credit']->toScale(2),
+                'principal_debit' => (string) $group['principal_debit']->toScale(2),
+                'principal_credit' => (string) $group['principal_credit']->toScale(2),
+                'interest_debit' => (string) $group['interest_debit']->toScale(2),
+                'interest_credit' => (string) $group['interest_credit']->toScale(2),
+                'opening_principal' => (string) $openingPrincipal->toScale(2),
+                'opening_interest' => (string) $openingInterest->toScale(2),
                 'principal_balance' => (string) $runningPrincipal->toScale(2),
                 'interest_balance' => (string) $runningInterest->toScale(2),
                 'total_balance' => (string) $runningPrincipal->plus($runningInterest)->toScale(2),
+                '_sort_date' => $first->effective_date->toDateString(),
+            ];
+        }
+
+        $filtered = collect($displayRows)
+            ->when(isset($filters['from']), fn (Collection $rows) => $rows->where('_sort_date', '>=', $filters['from']))
+            ->when(isset($filters['to']), fn (Collection $rows) => $rows->where('_sort_date', '<=', $filters['to']))
+            ->values();
+
+        $perPage = (int) ($filters['per_page'] ?? 20);
+        $page = (int) ($filters['page'] ?? 1);
+        $total = $filtered->count();
+        $pageRows = $filtered->forPage($page, $perPage)->values();
+        $opening = $pageRows->first();
+
+        $data = $pageRows->map(function (array $row): array {
+            unset($row['_sort_date'], $row['opening_principal'], $row['opening_interest']);
+
+            return $row;
+        })->all();
+
+        if ($opening !== null) {
+            $openingBalance = [
+                'principal' => $opening['opening_principal'],
+                'interest' => $opening['opening_interest'],
+                'total' => (string) BigDecimal::of($opening['opening_principal'])
+                    ->plus($opening['opening_interest'])->toScale(2),
+            ];
+        } else {
+            $openingBalance = [
+                'principal' => (string) $runningPrincipal->toScale(2),
+                'interest' => (string) $runningInterest->toScale(2),
+                'total' => (string) $runningPrincipal->plus($runningInterest)->toScale(2),
             ];
         }
 
         return response()->json([
-            'data' => $items,
+            'data' => $data,
             'meta' => [
                 'page' => $page,
                 'per_page' => $perPage,
-                'total' => (clone $base)->count(),
-                'opening_balance' => [
-                    'principal' => (string) $principal->toScale(2),
-                    'interest' => (string) $interest->toScale(2),
-                    'total' => (string) $principal->plus($interest)->toScale(2),
-                ],
+                'total' => $total,
+                'last_page' => max(1, (int) ceil($total / $perPage)),
+                'opening_balance' => $openingBalance,
             ],
         ]);
     }
