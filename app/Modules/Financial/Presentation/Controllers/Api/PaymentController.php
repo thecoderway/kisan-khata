@@ -105,6 +105,7 @@ class PaymentController extends Controller
             'allocation.items.reversedItem:id,payment_id,sale_id,component_type,amount',
             'ledgerEntries',
             'financialTransaction',
+            'revisions' => fn ($query) => $query->orderBy('revision_number'),
             'revisions.actor:id,name',
             'revisions.reversalPayment:id,payment_number,payment_type,payment_date,amount',
             'revisions.replacementPayment:id,payment_number,payment_type,payment_date,amount',
