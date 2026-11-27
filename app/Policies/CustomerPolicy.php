@@ -17,6 +17,12 @@ class CustomerPolicy
         return $this->belongsToSameShop($actor, $customer);
     }
 
+    public function viewDeleted(User $actor): bool
+    {
+        return $this->isActiveShopUser($actor)
+            && in_array($actor->role, [User::ROLE_OWNER, User::ROLE_MANAGER], true);
+    }
+
     public function create(User $actor): bool
     {
         return $this->isActiveShopUser($actor);

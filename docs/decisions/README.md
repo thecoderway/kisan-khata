@@ -26,6 +26,7 @@ ADRs record important accepted or proposed technical/business architecture decis
 | ADR-0013 | Asynchronous Action Drawer Form Submission | ACCEPTED |
 | ADR-0014 | Application-Wide Right-Side Drawer Standard | ACCEPTED |
 | ADR-0015 | Staff Shop-Wide Financial Read Access | ACCEPTED |
+| ADR-0016 | Customer Lifecycle Visibility Across Financial Workspaces | ACCEPTED |
 
 ## ADR template
 Each ADR must include context, decision, consequences, security/data-integrity impact, related docs and reconsideration criteria. Preserve accepted decision history; changes require explicit approval and a superseding ADR.

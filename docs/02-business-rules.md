@@ -1,6 +1,6 @@
 # Kisan Khata — Business Rules
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Status:** Approved  
 **Related Document:** `docs/01-product-requirements.md`
 
@@ -183,7 +183,29 @@ Customer lifecycle has exactly three states:
 5. Concurrent lifecycle requests must serialize or otherwise use safe locking so invalid transitions cannot both succeed.
 6. No permanent-delete action is available in the normal customer UI or API.
 
-### 4.2 Crop-Season Tagging
+### 4.2 Financial Module Customer Visibility
+
+Customer lifecycle state must be interpreted according to the operation being performed. A single customer list must not be reused indiscriminately for transaction creation and historical financial review.
+
+| Customer lifecycle | New Sale selector | New Payment selector | Customer Ledger selector | Reconciliation selector | Customer interest override |
+|---|---|---|---|---|---|
+| Active, not deleted | Included | Included | Included only when financial history exists | Included only when financial history exists | Included |
+| Inactive, not deleted | Excluded | Excluded | Included when financial history exists | Included when financial history exists | Included for Owner-managed prospective policy where supported |
+| Soft Deleted | Excluded | Excluded | Included only through an explicit historical lookup when legacy financial history exists | Included only through an explicit historical lookup when legacy financial history exists | Excluded |
+
+Rules:
+
+1. New Sale and Payment selectors must return only Active, non-deleted Customers. The API and posting services must independently enforce this rule; frontend filtering is not an authorization or integrity boundary.
+2. Inactive Customers remain available for historical financial review. Their existing Sales, Payments, Ledger entries, balances, interest history and reconciliation evidence must not be hidden or removed because of deactivation.
+3. Customer Ledger and Reconciliation selectors must be limited to Customers with relevant financial history. They may include Active and Inactive Customers.
+4. Soft Deleted Customers must never appear in new transaction selectors or ordinary customer/interest-policy workflows.
+5. Soft deletion is prohibited when financial or transaction history exists. If legacy or manually imported data nevertheless contains financial history for a Soft Deleted Customer, posted transactions and their customer identity must remain readable. The Customer may be accessed only through an explicit historical-financial lookup for Ledger/Reconciliation; do not automatically restore or reactivate the Customer.
+6. Posted Sales and Payments remain visible regardless of the associated Customer's current lifecycle state. Where a historical transaction belongs to an Inactive or Soft Deleted Customer, the UI must preserve the Customer identity and display a clear lifecycle label.
+7. The Customer's lifecycle state must not alter, reverse, exclude or recalculate existing financial entries. Only the separately authorized financial correction and reconciliation workflows may change their permitted effects.
+8. Historical lookup and all associated API requests remain tenant-scoped and role-authorized. A client-supplied Customer ID must never bypass Shop isolation or lifecycle rules.
+9. Customer selection labels in historical workflows must distinguish Inactive and Soft Deleted records from Active records.
+
+### 4.3 Crop-Season Tagging
 
 1. A sale may be associated with a crop season.
 2. Examples include Kharif and Rabi.

@@ -11,12 +11,22 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
     public function index(Request $request, CustomerDirectoryQuery $directory): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Customer::class);
+        $request->validate([
+            'status' => ['nullable', Rule::in(['active', 'inactive', 'all', 'financial-history', 'deleted'])],
+            'q' => ['nullable', 'string', 'max:100'],
+            'pageSize' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+        if ($request->query('status') === 'deleted') {
+            Gate::authorize('viewDeleted', Customer::class);
+        }
 
         return CustomerResource::collection($directory->paginate($request));
     }

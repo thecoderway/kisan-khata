@@ -33,6 +33,7 @@ class CustomerResource extends JsonResource
             'address_en' => $this->address_en,
             'notes' => $this->notes,
             'status' => $this->status,
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

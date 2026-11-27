@@ -369,6 +369,135 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             ->assertJsonFragment(['reference_number' => 'FIN-SEARCH-REF']);
     }
 
+    public function test_customer_directory_modes_separate_transaction_policy_and_financial_history_visibility(): void
+    {
+        [$shop, $owner, $active] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(CurrentShop::class)->set($shop);
+
+        $inactiveId = DB::table('customers')->insertGetId([
+            'shop_id' => $shop->getKey(), 'name_original' => 'Inactive history customer',
+            'name_original_language' => 'en', 'name_en' => 'Inactive history customer',
+            'status' => Customer::STATUS_ACTIVE, 'created_by' => $owner->getKey(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $deletedId = DB::table('customers')->insertGetId([
+            'shop_id' => $shop->getKey(), 'name_original' => 'Deleted legacy customer',
+            'name_original_language' => 'en', 'name_en' => 'Deleted legacy customer',
+            'status' => Customer::STATUS_ACTIVE, 'created_by' => $owner->getKey(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        app(SalePostingService::class)->post(
+            $owner, Customer::query()->findOrFail($inactiveId), 'UNPAID',
+            CarbonImmutable::parse('2026-11-20'), '100.00', 'Inactive history',
+            'customer-visibility-inactive-sale',
+        );
+        DB::table('customers')->where('id', $inactiveId)->update(['status' => Customer::STATUS_INACTIVE]);
+        app(SalePostingService::class)->post(
+            $owner, Customer::query()->findOrFail($deletedId), 'UNPAID',
+            CarbonImmutable::parse('2026-11-21'), '75.00', 'Deleted legacy history',
+            'customer-visibility-deleted-sale',
+        );
+        DB::table('customers')->where('id', $deletedId)->update(['deleted_at' => now()]);
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->getJson('/api/v1/customers?status=active')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $active->getKey()])
+            ->assertJsonMissing(['id' => $inactiveId])
+            ->assertJsonMissing(['id' => $deletedId]);
+
+        $this->getJson('/api/v1/customers?status=all')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $active->getKey()])
+            ->assertJsonFragment(['id' => $inactiveId])
+            ->assertJsonMissing(['id' => $deletedId]);
+
+        $this->getJson('/api/v1/customers?status=financial-history')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $inactiveId])
+            ->assertJsonFragment(['id' => $deletedId])
+            ->assertJsonMissing(['id' => $active->getKey()]);
+
+        $this->getJson('/api/v1/customers?status=deleted')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $deletedId]);
+    }
+
+    public function test_staff_cannot_browse_soft_deleted_customer_directory_but_can_read_legacy_ledger(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Legacy deleted customer ledger', 'customer-visibility-deleted-ledger',
+        );
+        DB::table('customers')->where('id', $customer->getKey())->update(['deleted_at' => now()]);
+
+        $staff = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
+        ]);
+        Sanctum::actingAs($staff, ['app']);
+
+        $this->getJson('/api/v1/customers?status=deleted')->assertForbidden();
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/ledger')->assertOk();
+    }
+
+    public function test_posted_sales_and_payments_keep_soft_deleted_customer_identity(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Historical customer relationship', 'customer-visibility-history-sale',
+        );
+        app(PaymentPostingService::class)->post(
+            $owner, $customer, '25.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Historical customer relationship', 'customer-visibility-history-payment',
+        );
+        DB::table('customers')->where('id', $customer->getKey())->update(['deleted_at' => now()]);
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $sales = $this->getJson('/api/v1/sales')->assertOk();
+        $sales->assertJsonPath('data.0.customer.name_original', $customer->name_original);
+        $this->assertNotNull($sales->json('data.0.customer.deleted_at'));
+
+        $payments = $this->getJson('/api/v1/payments')->assertOk();
+        $payments->assertJsonPath('data.0.customer.name_original', $customer->name_original);
+        $this->assertNotNull($payments->json('data.0.customer.deleted_at'));
+    }
+
+    public function test_inactive_customer_cannot_be_used_for_new_sale_or_payment(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Existing balance before deactivation', 'customer-visibility-inactive-existing-sale',
+        );
+        DB::table('customers')->where('id', $customer->getKey())
+            ->update(['status' => Customer::STATUS_INACTIVE]);
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->postJson('/api/v1/sales', [
+            'customer_id' => $customer->getKey(),
+            'payment_choice' => 'UNPAID',
+            'sale_date' => '2026-11-22',
+            'amount' => '10.00',
+        ], ['Idempotency-Key' => 'customer-visibility-rejected-sale'])->assertStatus(409);
+
+        $this->postJson('/api/v1/payments', [
+            'customer_id' => $customer->getKey(),
+            'payment_date' => '2026-11-22',
+            'amount' => '10.00',
+            'payment_method' => 'CASH',
+        ], ['Idempotency-Key' => 'customer-visibility-rejected-payment'])->assertStatus(409);
+    }
+
     private function context(): array
     {
         $shop = Shop::factory()->create(['timezone' => 'Asia/Kolkata']);

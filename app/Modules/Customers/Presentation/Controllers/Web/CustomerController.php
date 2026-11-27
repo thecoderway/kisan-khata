@@ -21,6 +21,9 @@ class CustomerController extends Controller
     public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View|Response|JsonResponse
     {
         Gate::authorize('viewAny', Customer::class);
+        if ($request->query('status') === 'deleted') {
+            Gate::authorize('viewDeleted', Customer::class);
+        }
 
         if ($request->expectsJson() && $request->boolean('fragment')) {
             $customers = $directory->paginate($request);

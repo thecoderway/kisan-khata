@@ -56,7 +56,7 @@ class Payment extends Model
     /** @return BelongsTo<Customer, $this> */
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class)->withTrashed();
     }
 
     /** @return BelongsTo<Sale, $this> */

@@ -1,7 +1,7 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `62419de9872f84a38a6d8d422e11dbadca73a1ca` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
+**Status Snapshot Base:** `main` at `6506a4a01526cc54959712721b8f9d30465a88cd` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
 **Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation and automated acceptance through Batch 8.8 are merged. PRs #53–#56 subsequently completed Sales/Payments customer dropdowns, approved table/filter/drawer behavior, pagination layout/navigation and sidebar usability. The Product Owner has manually confirmed the Sales/Payments listing, drawer layout, pagination navigation and sidebar behavior. Phase 5 remains OPEN pending fresh-Shop registration and tenant-isolation/role-based browser acceptance, plus complete workflow smoke checks across Sales, Payments, Customer Ledger, Interest Settings and Reconciliation; production-readiness and repository-admin checks remain separate later-stage gates. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
@@ -40,7 +40,7 @@ If any future instruction conflicts with these rules or approved documentation, 
 | 10 | Development Roadmap | Approved v2.0 |
 | 11 | Geographic Master Data and Import Runbook | Added 2026-11-24 |
 
-Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments (superseded in part by ADR-0012); ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events; ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions; ADR-0011 Geographic Master Data and Shop/Customer Location Defaults; ADR-0012 Approved Financial Rules; ADR-0013 Asynchronous Action Drawer Form Submission; ADR-0014 Application-Wide Right-Side Drawer Standard; ADR-0015 Staff Shop-Wide Financial Read Access.
+Accepted ADRs: ADR-0001 Modular Monolith; ADR-0002 Shared Database Multi-Tenancy; ADR-0003 Web-First, API-Ready Architecture; ADR-0004 Consolidated Customer Ledger and Payments (superseded in part by ADR-0012); ADR-0005 User, Shop and Role Relationship; ADR-0006 Financial Transaction Correction and Audit; ADR-0007 Interest Calculation Events; ADR-0008 Bilingual Customer Data; ADR-0009 Shop-Level Subscriptions; ADR-0010 User Lifecycle and Role Permissions; ADR-0011 Geographic Master Data and Shop/Customer Location Defaults; ADR-0012 Approved Financial Rules; ADR-0013 Asynchronous Action Drawer Form Submission; ADR-0014 Application-Wide Right-Side Drawer Standard; ADR-0015 Staff Shop-Wide Financial Read Access; ADR-0016 Customer Lifecycle Financial Visibility.
 
 See [approved docs](https://github.com/thecoderway/kisan-khata/tree/main/docs) and [ADR index](https://github.com/thecoderway/kisan-khata/blob/main/docs/decisions/README.md).
 
@@ -323,7 +323,7 @@ No production deployment or release is claimed.
 ## 11. Git and delivery workflow
 
 - Stable branch: `main`.
-- Current verified `main` HEAD: `62419de9872f84a38a6d8d422e11dbadca73a1ca` (PR #56 pagination/sidebar follow-up; 2026-11-27).
+- Current verified `main` HEAD: `6506a4a01526cc54959712721b8f9d30465a88cd` (PR #56 pagination/sidebar follow-up; 2026-11-27).
 - PRs #7 and #10–#14 are confirmed merged into `main`; no open Draft status is carried forward for these deliveries.
 - All feature and documentation changes use reviewable PRs. Standing Product Owner authorization permits merge when CI is green, GitHub reports the PR mergeable, and no unresolved blocker or hold exists; otherwise stop and report.
 - Update status only from verified repository, CI, test or Product Owner evidence.
@@ -369,6 +369,10 @@ The approved financial rules remain unchanged: consolidated customer-facing paym
 **Separate later-stage release gates:** production environment configuration, backup/restore evidence, monitoring and deployment/recovery procedures belong to Phase 14 Production Readiness. Branch-protection and required-check settings remain unknown because the current GitHub integration cannot inspect repository administration settings; a repository administrator must verify them before release.
 
 No production deployment, production data change, migration execution or release is claimed. Database migrations and deployment require separate explicit Product Owner approval.
+
+## 29. Customer lifecycle financial visibility policy and implementation (2026-11-27)
+
+ADR-0016 is accepted and the customer lifecycle visibility policy is added to `docs/02-business-rules.md`. The policy separates active-only transaction selectors from historical financial lookups, preserves legacy soft-deleted customer identity in posted Sale/Payment relations, restricts ordinary deleted-customer directory browsing to Owner/Manager, and retains tenant and role authorization. Implementation and automated regression coverage are in progress on `fix/customer-lifecycle-financial-visibility`; no CI or browser acceptance is claimed until observed. Phase 5 remains OPEN. No migrations, data backfills, production operations or deployment are included.
 
 ## Phase 5 — Historical Batch 5 and Batch 6 delivery note (superseded)
 
@@ -419,7 +423,7 @@ Detailed scenario setup, locking assertions, fixture cleanup and CI evidence are
 
 ## 28. Phase 5 — Financial UI follow-up and partial browser acceptance (2026-11-27)
 
-**Current main baseline:** `62419de9872f84a38a6d8d422e11dbadca73a1ca`.
+**Current main baseline:** `6506a4a01526cc54959712721b8f9d30465a88cd`.
 
 Merged follow-ups after Batch 8.8:
 - PR #53: customer directory loading for financial workflows and JS helper tests.
