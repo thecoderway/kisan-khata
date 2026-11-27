@@ -65,7 +65,7 @@ class FinancialReportController extends Controller
             ->when(filter_var($filters['positive_only'] ?? false, FILTER_VALIDATE_BOOLEAN), fn (Builder $builder) => $builder->whereRaw('(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)) > 0'))
             ->orderBy('c.name_original')->orderBy('c.id');
 
-        $summary = (clone $query)->reorder()->selectRaw('COUNT(*) AS customer_count')
+        $summary = (clone $query)->reorder()->select([])->selectRaw('COUNT(*) AS customer_count')
             ->selectRaw('COALESCE(SUM(COALESCE(balances.principal_balance, 0)), 0) AS principal_total')
             ->selectRaw('COALESCE(SUM(COALESCE(balances.interest_balance, 0)), 0) AS interest_total')
             ->selectRaw('COALESCE(SUM(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)), 0) AS grand_total')
@@ -123,7 +123,7 @@ class FinancialReportController extends Controller
                 });
             });
 
-        $summary = (clone $query)->reorder()->selectRaw('COUNT(*) AS sale_count')
+        $summary = (clone $query)->reorder()->select([])->selectRaw('COUNT(*) AS sale_count')
             ->selectRaw('COALESCE(SUM(s.amount), 0) AS gross_sales')->first();
         $paginator = $query->orderByDesc('s.sale_date')->orderByDesc('s.id')
             ->paginate((int) ($filters['per_page'] ?? 20));
@@ -231,7 +231,7 @@ class FinancialReportController extends Controller
             ->paginate((int) ($filters['per_page'] ?? 20));
         $normal = BigDecimal::of((string) $summaryRows->normal_receipts);
         $reversals = BigDecimal::of((string) $summaryRows->reversals);
-        $netCollection = $normal->minus($reversals)->toScale(2, RoundingMode::HALF_UP)->__toString();
+        $netCollection = $normal->minus($reversals)->toScale(2, RoundingMode::HalfUp)->__toString();
 
         return $this->reportResponse($paginator, [
             'normal_receipts' => $this->decimal($summaryRows->normal_receipts),
@@ -309,7 +309,7 @@ class FinancialReportController extends Controller
             })
             ->orderBy('le.effective_date')->orderBy('i.id');
 
-        $summaryQuery = (clone $query)->reorder();
+        $summaryQuery = (clone $query)->reorder()->select([]);
         $summary = $summaryQuery->selectRaw('COUNT(*) AS item_count')
             ->selectRaw('COALESCE(SUM(CASE WHEN le.id IS NOT NULL THEN i.posted_interest ELSE 0 END), 0) AS posted_interest_total')
             ->first();
@@ -339,6 +339,6 @@ class FinancialReportController extends Controller
 
     private function decimal(mixed $value): string
     {
-        return BigDecimal::of((string) ($value ?? '0'))->toScale(2, RoundingMode::HALF_UP)->__toString();
+        return BigDecimal::of((string) ($value ?? '0'))->toScale(2, RoundingMode::HalfUp)->__toString();
     }
 }
