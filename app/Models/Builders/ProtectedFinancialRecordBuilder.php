@@ -1,6 +1,6 @@
 <?php
 
-namespace App\\Models\\Builders;
+namespace App\Models\Builders;
 
 use LogicException;
 
@@ -8,7 +8,7 @@ use LogicException;
  * Prevent set-based Eloquent writes from bypassing financial record lifecycle
  * rules and per-model immutability events.
  *
- * @template TModel of \\Illuminate\\Database\\Eloquent\\Model
+ * @template TModel of \Illuminate\Database\Eloquent\Model
  *
  * @extends TenantOwnedBuilder<TModel>
  */
