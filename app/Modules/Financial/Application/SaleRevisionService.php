@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\SaleRevision;
 use App\Models\User;
+use App\Tenancy\CurrentShop;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -35,12 +36,16 @@ class SaleRevisionService
         string $reason,
         string $idempotencyKey,
     ): SaleRevision {
-        if ($actor->role !== User::ROLE_OWNER) {
-            throw new AuthorizationException('Only the Shop Owner may initiate a posted Sale revision.');
-        }
+        $currentShopId = app(CurrentShop::class)->id();
 
-        if ((int) $actor->shop_id !== (int) $sale->shop_id) {
-            throw new AuthorizationException('The Sale does not belong to the current Shop Owner.');
+        if (
+            ! $actor->is_active
+            || $actor->role !== User::ROLE_OWNER
+            || $currentShopId === null
+            || (int) $actor->shop_id !== $currentShopId
+            || (int) $sale->shop_id !== $currentShopId
+        ) {
+            throw new AuthorizationException('Only an active Owner of the current Shop may initiate a posted Sale revision.');
         }
 
         $reason = trim($reason);
@@ -56,6 +61,10 @@ class SaleRevisionService
         }
 
         $customer = Customer::query()->whereKey($sale->customer_id)->firstOrFail();
+
+        if ((int) $customer->shop_id !== $currentShopId || (int) $customer->getKey() !== (int) $sale->customer_id) {
+            throw new AuthorizationException('The Sale customer does not belong to the current Shop.');
+        }
 
         $fingerprint = [
             'actor_id' => (int) $actor->getKey(),
@@ -96,7 +105,7 @@ class SaleRevisionService
                     }
 
                     if ($lockedSale->description === $description) {
-                        throw new InvalidArgumentException('The revised Sale description must differ from the current value.');
+                        throw new ConflictHttpException('The revised Sale description must differ from the current value.');
                     }
 
                     $now = now();
