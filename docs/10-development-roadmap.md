@@ -489,6 +489,15 @@ A product category or sale type is not mandatory.
 - Annual auto settlement.
 - Interest transparency.
 
+### Approved delivery batches
+
+1. **Batch 9A — Calculation History API:** secure, tenant-scoped, role-authorized read-only API for interest runs and calculation items, exposing policy version, cutoff date and posted interest. Reads must not recalculate, post or mutate financial records.
+2. **Batch 9B — Interest Transparency UI:** customer-wise interest calculation history and a transparent calculation breakdown based on persisted calculation records.
+3. **Batch 9C — Regression Coverage:** regression scenarios for grace period, policy changes, capitalization, payment waterfall, rounding and same-day settlement.
+4. **Batch 9D — Acceptance:** automated tests, UI verification and financial reconciliation.
+
+Begin Phase 9 with a read-only audit of the existing interest models, calculation runs/items, policy versioning, calculation/posting services, cutoff semantics, ledger links, APIs, UI, authorization, tenant isolation and tests. Reuse existing foundations; do not create a second interest engine or duplicate calculation history. Preserve approved calculation rules. No production operation or deployment is included.
+
 ### Approved calculation basis
 
 `Interest = Eligible Base × (Monthly Rate / 100) × (Eligible Days / 30)`
