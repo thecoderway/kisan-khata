@@ -84,8 +84,17 @@ class Customer extends Model
             fn () => $this->payments()->exists(),
             fn () => $this->ledgerEntries()->exists(),
             fn () => $this->balanceSnapshots()->exists(),
+            fn () => $this->paymentAllocations()->exists(),
+            fn () => $this->interestPolicyVersions()->exists(),
+            fn () => $this->interestCalculationRuns()->exists(),
+            fn () => $this->interestLots()->exists(),
+            fn () => $this->interestSettlementRuns()->exists(),
             fn () => DB::table('financial_transactions')->where('customer_id', $this->getKey())->exists(),
             fn () => DB::table('customer_accounts')->where('customer_id', $this->getKey())->exists(),
+            fn () => DB::table('payment_allocation_items')->where('customer_id', $this->getKey())->exists(),
+            fn () => DB::table('interest_calculation_items')->where('customer_id', $this->getKey())->exists(),
+            fn () => DB::table('interest_lot_events')->where('customer_id', $this->getKey())->exists(),
+            fn () => DB::table('interest_settlement_items')->where('customer_id', $this->getKey())->exists(),
         ] as $check) {
             if ($check()) {
                 return true;
