@@ -1,9 +1,9 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `6a9146c496b82143a7813683ed32a178eb60efb3` (2026-11-27), including merged PR #73 Phase 9 Interest History and Transparency.  
-**Documentation update:** Phase 9 completion and Phase 10 readiness are recorded in this update; this documentation change is being delivered through a dedicated PR.
-**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is next and must begin with a read-only audit and business-rule gap review. No production deployment or release is claimed.
+**Status Snapshot Base:** `main` at `d1d36622c866ccb2b4113d254f62d7dcdec65a56` (2026-11-27), including merged PR #73 Phase 9 Interest History and Transparency.  
+**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Phase 11 has been reviewed and planned but not started. This documentation update is delivered through a dedicated PR.
+**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports has been reviewed and planned but has not started and requires explicit authorization. No production deployment or release is claimed.
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -73,8 +73,8 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 7 | Payments | **COMPLETE — Product Owner accepted 2026-11-27** for the delivered scope. Consolidated posting, FIFO, interest integration, reversal/replacement, history, audit, authorization and concurrency safeguards delivered early in Phase 5 batches. |
 | Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. |
 | Phase 9 | Interest Engine | **COMPLETE / ACCEPTED — 2026-11-27.** PR #73 merged as `6a9146c496b82143a7813683ed32a178eb60efb3`; exact-head CI passed. Product Owner confirmed UI, calculation breakdown, filters and pagination. Browser before/after DB comparison was not independently performed; automated read-only regression tests passed. |
-| Phase 10 | Crop-Season Settlement | **NEXT — READ-ONLY AUDIT FIRST.** Existing settlement and interest foundations must be mapped before proposing implementation; business semantics and carry-forward rules must be confirmed against ADRs and current code. |
-| Phase 11 | Reports, Printing and Exports | Not started |
+| Phase 10 | Crop-Season Settlement | **DEFERRED TO FUTURE RELEASE — NOT STARTED.** Product Owner explicitly deferred this phase on 2026-11-27. Do not schedule or resume without explicit reactivation. |
+| Phase 11 | Reports, Printing and Exports | **REVIEWED / PLANNED — NOT STARTED.** Existing list APIs, ledger print/PDF and interest history are reusable foundations; aggregate report APIs/UI and general CSV/XLSX exports are not present in inspected scope. Requires Product Owner authorization to begin. |
 | Phase 12 | Subscription System | Not started |
 | Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
 | Phase 14 | Production Readiness | Not started |
@@ -240,8 +240,8 @@ Phase 4 implementation and merged-scope verification are recorded as complete. T
 4. **Phase 7 — Payments:** consolidated payment processing, interest through payment date, internal FIFO allocation, excess-payment rejection, idempotency and concurrency protection.
 5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/corrections, filters and printable Hindi/English ledger.
 6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
-7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention.
-8. **Phase 11 — Reports, Printing and Exports:** tenant-scoped reports, PDF and Excel/CSV, totals reconciled to ledger.
+7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention. **Deferred to a future release by Product Owner instruction; do not start.**
+8. **Phase 11 — Reports, Printing and Exports:** reviewed/planned but not started; tenant-scoped reports, PDF and CSV/Excel-compatible exports, totals reconciled to authoritative records. Requires explicit start authorization.
 9. **Phase 12 — Subscription System:** shop-level plans, trial, monthly/annual billing, renewal/expiry, three-day grace period, read-only enforcement and Owner data export. Do not invent pricing/entitlements.
 10. **Phase 13 — API Finalization and Android Readiness:** complete approved versioned REST API, auth/customer/sales/payment/ledger/interest/settlement/file endpoints, documentation and integration tests. Current auth routes are under `/api`; approved architecture specifies `/api/v1`, so versioning remains outstanding.
 11. **Phase 14 — Production Readiness:** hosting, HTTPS, secure configuration, encrypted off-site backup, restore tests, monitoring, logging, security/performance review and deployment/recovery procedures.
@@ -629,7 +629,7 @@ Phase 9 work must begin with a read-only audit of the existing interest models, 
 
 ---
 
-## 32. Phase 9 — Interest History and Transparency completion; Phase 10 handoff (2026-11-27)
+## 32. Phase 9 completion; Phase 10 future deferral and Phase 11 planning review (2026-11-27)
 
 ### Phase 9 completion record
 
@@ -647,9 +647,9 @@ Phase 9 work must begin with a read-only audit of the existing interest models, 
 - **Read-only acceptance qualification:** automated tests cover read-only API behavior. A live browser before/after database comparison was not independently performed because interactive browser control was unavailable. Do not claim that this specific manual DB comparison was completed.
 - No production migration, production data mutation, deployment or release is claimed.
 
-### Phase 10 — Crop-Season Settlement: approved roadmap scope
+### Phase 10 — Crop-Season Settlement: deferred to a future release
 
-Official Phase 10 scope remains the existing Section 13 definition in this roadmap:
+Phase 10 is explicitly deferred by the Product Owner and will not be developed in the current work plan. The following is retained only as a future scope reference; it is not authorization to audit further or implement:
 - Settlement preparation and calculation.
 - Full and partial settlement.
 - Carry-forward of remaining outstanding to the next crop season.
@@ -658,7 +658,7 @@ Official Phase 10 scope remains the existing Section 13 definition in this roadm
 
 Acceptance must establish that full settlement closes only the eligible balance; partial settlement retains the correct residual; carry-forward preserves outstanding and prior financial history; interest follows approved rules; duplicate settlement is prevented; and all settlement actions are auditable.
 
-### Mandatory Phase 10 start gate — read-only audit
+### Phase 10 reactivation gate (future, only if explicitly requested)
 
 Before implementation, inspect existing code and persisted architecture for:
 1. Crop/season master data and any existing Sale crop/season fields or tagging support (do not assume the roadmap's legacy Sale tagging text is already implemented).
@@ -669,11 +669,58 @@ Before implementation, inspect existing code and persisted architecture for:
 6. Existing automated tests for annual settlement, same-date payment ordering, duplicate prevention, rollback, concurrency and ledger reconciliation.
 7. Whether crop-season boundaries, eligible Sale selection, partial settlement allocation, carry-forward destination, treatment of posted/unpaid interest, and settlement correction/reversal semantics are explicitly defined in approved requirements/ADRs.
 
-Produce a read-only audit and gap matrix mapping each Phase 10 criterion to existing models, services, routes, UI, tests and documentation. Reuse existing financial/interest foundations. Do not create a second settlement engine or duplicate ledger/accounting records.
+Only after explicit reactivation, perform a fresh read-only audit and business-rule review before implementation. Until then, no further Phase 10 work is authorized.
 
-### Phase 10 safety and approval boundaries
+### Phase 10 future safety and approval boundaries
 
 - Do not invent crop-season dates, crop eligibility, settlement allocation order, carry-forward semantics, interest treatment or correction rules.
 - If a required business rule is absent or conflicts with ADR-0012 or another accepted ADR, stop and request Product Owner clarification; update approved documentation before coding.
 - No code changes, migrations, database writes, financial postings, production operations, deployment or release are authorized by this read-only audit.
 - Any implementation proposal must identify schema changes, transaction/locking/idempotency strategy, tenant/role authorization, audit requirements, regression tests and migration/data-safety implications before implementation approval.
+
+
+---
+
+## 33. Phase 10 deferral and Phase 11 review (2026-11-27)
+
+### Product Owner direction — Phase 10
+
+- Phase 10 Crop-Season Settlement is deferred to a future release.
+- It is not the next phase and must not be started, scheduled for implementation, branched, or subjected to further design/audit work unless the Product Owner explicitly reactivates it.
+- Existing annual-interest settlement is not crop-season settlement.
+- This is a roadmap sequencing decision; it does not remove the future scope placeholder from the roadmap.
+
+### Phase 11 review findings
+
+Inspected current `main` routes, financial controllers, workspace Blade view, ledger print JavaScript and Composer dependencies.
+
+**Reusable foundations found:**
+- Sales listing API: tenant-scoped, searchable, date/customer filters, stable sorting and pagination.
+- Payments listing API: tenant-scoped, searchable, date/customer/payment-method filters, stable sorting and pagination.
+- Customer Ledger API: consolidated customer-facing rows and principal/interest running balances.
+- Customer Ledger UI already exposes a Print/PDF action; the print helper retrieves all ledger pages for the selected statement.
+- Interest Calculation History API: customer-specific persisted run/item history, cutoff date filters and pagination.
+- Existing financial workspace sections: Sales, Payments, Ledger, Interest, Reconciliation and Audit.
+- Existing authorization policies and tenant middleware are the required baseline for report access.
+
+**Gaps found in inspected scope:**
+- No dedicated report centre or aggregate shop-wide report API/controller was found.
+- No general CSV or XLSX export workflow was found.
+- No server-side general PDF report-generation service was found; existing ledger output uses browser print/PDF.
+- Composer currently has Laravel, Sanctum and Brick Math; no dedicated PDF or XLSX package is declared.
+- No Crop-Season Settlement report can be built until Phase 10 is reactivated and delivered.
+
+**Recommended Phase 11 delivery sequence:**
+1. 11A — Approve report definitions, columns, totals, date-boundary rules, reversal handling, as-of balance semantics and role visibility.
+2. 11B — Read-only tenant-scoped report APIs and report centre UI for outstanding, sales, payments and interest.
+3. 11C — Hindi/English print layouts and PDF strategy decision; reuse ledger print conventions where appropriate.
+4. 11D — CSV and Excel-compatible export with chunking/streaming, deterministic ordering, limits and formula-injection protection.
+5. 11E — Financial reconciliation, tenant/role authorization, export parity, no-write verification, full regression and Product Owner browser acceptance.
+
+**Phase 11 approval and safety gates:**
+- This is a review and proposal only. Phase 11 has not started.
+- Do not create code, migrations, export packages, endpoints, UI or branches for implementation until explicitly authorized.
+- Do not introduce new ledger entries, payments, interest postings, projection repairs or other financial writes.
+- Reuse existing financial source records and policies; do not duplicate accounting calculations.
+- Any report metric without an authoritative, documented source or date-boundary definition must be clarified before coding.
+- Settlement reporting is excluded while Phase 10 is deferred.
