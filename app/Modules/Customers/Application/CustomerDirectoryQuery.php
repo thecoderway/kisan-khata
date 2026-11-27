@@ -28,7 +28,7 @@ class CustomerDirectoryQuery
             $query->whereNotNull('customers.deleted_at');
         } elseif ($status === 'financial-history') {
             $query->where(function ($history): void {
-                foreach (['sales', 'payments', 'ledger_entries', 'financial_transactions', 'customer_accounts', 'account_balance_snapshots', 'payment_allocations', 'payment_allocation_items', 'customer_interest_policy_versions', 'interest_calculation_runs', 'interest_calculation_items', 'interest_lots', 'interest_lot_events', 'interest_settlement_runs', 'interest_settlement_items'] as $table) {
+                foreach (['sales', 'payments', 'payment_revisions', 'ledger_entries', 'financial_transactions', 'customer_accounts', 'account_balance_snapshots', 'payment_allocations', 'payment_allocation_items', 'customer_interest_policy_versions', 'interest_calculation_runs', 'interest_calculation_items', 'interest_lots', 'interest_lot_events', 'interest_settlement_runs', 'interest_settlement_items'] as $table) {
                     $history->orWhereExists(fn ($subquery) => $subquery
                         ->selectRaw('1')
                         ->from($table)
