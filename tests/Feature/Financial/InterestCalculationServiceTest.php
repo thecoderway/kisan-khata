@@ -130,6 +130,89 @@ class InterestCalculationServiceTest extends TestCase
         $this->assertDatabaseCount('ledger_entries', 3);
     }
 
+    public function test_customer_interest_history_api_is_read_only_scoped_and_explains_calculation_items(): void
+    {
+        [$shop, $owner, $customer] = $this->makeCustomerContext();
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-10-01'), '1000.00',
+            'Interest history API test', 'interest-history-sale-001',
+        );
+
+        $policyId = DB::table('interest_policies')->insertGetId([
+            'shop_id' => $shop->getKey(), 'policy_code' => 'DEFAULT',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $policyVersionId = DB::table('interest_policy_versions')->insertGetId([
+            'shop_id' => $shop->getKey(), 'interest_policy_id' => $policyId,
+            'version_number' => 1, 'effective_from' => '2026-01-01',
+            'effective_to' => null, 'monthly_rate_percent' => '2.00000000',
+            'grace_days' => 30, 'capitalization_enabled' => false,
+            'payment_waterfall' => 'PRINCIPAL_FIRST',
+            'annual_settlement_month_1' => 3, 'annual_settlement_day_1' => 30,
+            'annual_settlement_month_2' => 10, 'annual_settlement_day_2' => 30,
+            'created_by' => $owner->getKey(), 'created_at' => now(),
+        ]);
+        $keyId = DB::table('idempotency_keys')->insertGetId([
+            'shop_id' => $shop->getKey(), 'operation_type' => 'ANNUAL_AUTO_SETTLEMENT',
+            'key_hash' => hash('sha256', 'interest-history-key'),
+            'request_hash' => hash('sha256', 'interest-history-payload'),
+            'status' => 'COMPLETED', 'resource_type' => null, 'resource_id' => null,
+            'response_code' => null, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $run = InterestCalculationRun::query()->create([
+            'customer_id' => $customer->getKey(),
+            'trigger_type' => InterestCalculationService::TRIGGER_ANNUAL_AUTO_SETTLEMENT,
+            'cutoff_date_exclusive' => '2026-11-01',
+            'event_key_hash' => hash('sha256', 'interest-history-event'),
+            'started_at' => now(), 'completed_at' => now(),
+            'status' => 'COMPLETED', 'idempotency_key_id' => $keyId,
+        ]);
+        InterestCalculationItem::query()->create([
+            'customer_id' => $customer->getKey(),
+            'calculation_run_id' => $run->getKey(), 'sale_id' => $sale->getKey(),
+            'shop_policy_version_id' => $policyVersionId,
+            'interval_start_date' => '2026-10-01',
+            'interval_end_date_exclusive' => '2026-11-01',
+            'actual_days' => 31, 'grace_days_applied' => 30,
+            'monthly_rate_percent' => '2.00000000',
+            'eligible_principal_basis' => '1000.00000000',
+            'unrounded_interest' => '6.66666667', 'posted_interest' => '6.67',
+            'capitalization_enabled' => false,
+            'item_key_hash' => hash('sha256', 'interest-history-item'),
+        ]);
+
+        $staff = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
+        ]);
+        Sanctum::actingAs($staff, ['app']);
+
+        $runCount = InterestCalculationRun::query()->count();
+        $itemCount = InterestCalculationItem::query()->count();
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $run->getKey())
+            ->assertJsonPath('data.0.items_count', 1)
+            ->assertJsonPath('data.0.posted_interest_total', '6.67');
+        $this->getJson('/api/v1/customers/'.$customer->getKey().'/interest-history/'.$run->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.items.0.actual_days', 31)
+            ->assertJsonPath('data.items.0.grace_days_applied', 30)
+            ->assertJsonPath('data.items.0.monthly_rate_percent', '2.00000000')
+            ->assertJsonPath('data.items.0.eligible_principal_basis', '1000.00000000')
+            ->assertJsonPath('data.items.0.unrounded_interest', '6.66666667')
+            ->assertJsonPath('data.items.0.posted_interest', '6.67')
+            ->assertJsonPath('data.items.0.shop_policy.version', 1)
+            ->assertJsonPath('data.items.0.sale.id', $sale->getKey());
+
+        $this->assertSame($runCount, InterestCalculationRun::query()->count());
+        $this->assertSame($itemCount, InterestCalculationItem::query()->count());
+
+        [, , $foreignCustomer] = $this->makeCustomerContext();
+        app(CurrentShop::class)->set($shop);
+        $this->getJson('/api/v1/customers/'.$foreignCustomer->getKey().'/interest-history')->assertNotFound();
+    }
+
     /**
      * @return array{Shop, User, Customer}
      */
