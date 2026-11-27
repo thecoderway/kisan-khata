@@ -17,6 +17,9 @@ class CustomerController extends Controller
     public function index(Request $request, CustomerDirectoryQuery $directory): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Customer::class);
+        if ($request->query('status') === 'deleted') {
+            Gate::authorize('viewDeleted', Customer::class);
+        }
 
         return CustomerResource::collection($directory->paginate($request));
     }
