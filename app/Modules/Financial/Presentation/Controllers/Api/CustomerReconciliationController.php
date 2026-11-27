@@ -13,7 +13,7 @@ class CustomerReconciliationController extends Controller
     public function show(int $customer, ReconciliationService $reconciliation): JsonResponse
     {
         $customer = Customer::withTrashed()->findOrFail($customer);
-        abort_unless($customer->hasFinancialHistory(), 404);
+        abort_unless(! $customer->trashed() || $customer->hasFinancialHistory(), 404);
         Gate::authorize('viewCustomerReconciliation', $customer);
 
         return response()->json([
