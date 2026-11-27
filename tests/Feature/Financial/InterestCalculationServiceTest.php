@@ -69,7 +69,7 @@ class InterestCalculationServiceTest extends TestCase
             'effective_to' => null,
             'monthly_rate_percent' => '6.00000000',
             'grace_days' => 0,
-            'capitalization_enabled' => false,
+            'capitalization_enabled' => true,
             'payment_waterfall' => 'PRINCIPAL_FIRST',
             'annual_settlement_month_1' => 3,
             'annual_settlement_day_1' => 30,
@@ -119,18 +119,19 @@ class InterestCalculationServiceTest extends TestCase
         $this->assertSame(17, $items[1]->actual_days);
         $this->assertSame('6.00000000', $items[1]->monthly_rate_percent);
         $this->assertSame('34.00', $items[1]->posted_interest);
+        $this->assertTrue($items[1]->capitalization_enabled);
 
         $account = CustomerAccount::query()->where('customer_id', $customer->getKey())->firstOrFail();
-        $this->assertSame('1000.00', $account->principal_balance);
-        $this->assertSame('47.00', $account->interest_balance);
+        $this->assertSame('1034.00', $account->principal_balance);
+        $this->assertSame('13.00', $account->interest_balance);
         $this->assertSame('1047.00', $account->total_payable);
-        $this->assertDatabaseCount('ledger_entries', 3);
+        $this->assertDatabaseCount('ledger_entries', 5);
 
         $replayed = $service->calculateForSettlement($owner, $customer, $settlement->fresh());
         $this->assertSame($run->getKey(), $replayed->getKey());
         $this->assertDatabaseCount('interest_calculation_runs', 1);
         $this->assertDatabaseCount('interest_calculation_items', 2);
-        $this->assertDatabaseCount('ledger_entries', 3);
+        $this->assertDatabaseCount('ledger_entries', 5);
     }
 
     public function test_customer_interest_history_api_is_read_only_scoped_and_explains_calculation_items(): void
