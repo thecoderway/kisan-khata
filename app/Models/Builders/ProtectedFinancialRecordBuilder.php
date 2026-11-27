@@ -19,6 +19,21 @@ class ProtectedFinancialRecordBuilder extends TenantOwnedBuilder
         throw new LogicException('Bulk Eloquent mutations are disabled for protected financial records; use an approved lifecycle service.');
     }
 
+    public function insert(array $values)
+    {
+        $this->rejectBulkMutation();
+    }
+
+    public function insertOrIgnore(array $values)
+    {
+        $this->rejectBulkMutation();
+    }
+
+    public function insertGetId(array $values, $sequence = null)
+    {
+        $this->rejectBulkMutation();
+    }
+
     public function update(array $values)
     {
         $this->rejectBulkMutation();
