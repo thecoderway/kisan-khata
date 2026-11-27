@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-11-27  
 **Status Snapshot Base:** `main` at `29a2c0f5eec868a2a581a493e681098fe7de1df7` (2026-11-27), including merged PR #75 Phase 10 deferral / Phase 11 plan.  
-**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Product Owner authorized Phase 11 on 2026-11-27 and Batch 11A is in progress on `feature/phase-11-batch-11a-report-contracts`.
+**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Product Owner authorized Phase 11 and approved all three Batch 11A report decisions on 2026-11-27. Batch 11A source verification found a replacement-cash evidence gap and an Owner-only Interest API authorization gap; both remain 11A/11B gates.
 **Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports is authorized and Batch 11A (report definitions/read-only data contracts) is in progress; 11B–11E have not started. No production deployment or release is claimed.
 **Release:** Not released; no production deployment is claimed.
 
