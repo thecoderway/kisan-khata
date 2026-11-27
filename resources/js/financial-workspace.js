@@ -727,6 +727,7 @@ if (filtersForm) {
     ['from', 'to'].forEach((name) => {
         document.getElementById('financial-' + name)?.addEventListener('change', () => {
             currentPage = 1;
+            if (section === 'interest') interestHistoryPage = 1;
             refresh({ history: 'replace', skipUnchanged: true });
         });
     });
