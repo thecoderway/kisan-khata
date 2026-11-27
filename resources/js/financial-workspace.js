@@ -360,6 +360,7 @@ const loadInterest = async (signal) => {
     }
     if (versions.length === 0) {
         root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>Shop Interest Policy अभी configure नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई Shop Interest Policy” से पहली policy बनाएँ। कोई ब्याज दर अपने-आप लागू नहीं की जाएगी।</p></div>';
+        await loadInterestHistory(signal);
         return;
     }
     renderTable(['Version', 'लागू तारीख', 'मासिक दर', 'Grace', 'Capitalization', 'Waterfall', 'Settlement dates'],
