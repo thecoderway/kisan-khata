@@ -120,6 +120,88 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         ]);
     }
 
+    public function test_sale_revision_validation_and_audit_api_preserve_revision_details(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Original description', 'batch-6b-validation-sale',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Whitespace reason should fail', 'reason' => '   ',
+        ], ['Idempotency-Key' => 'batch-6b-whitespace-reason'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reason');
+
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Original description', 'reason' => 'No actual change',
+        ], ['Idempotency-Key' => 'batch-6b-unchanged-description'])
+            ->assertStatus(409);
+
+        $revision = $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Corrected description', 'reason' => 'Correcting the original entry',
+        ], ['Idempotency-Key' => 'batch-6b-audit-api'])
+            ->assertCreated()
+            ->assertJsonPath('data.old_values.description', 'Original description')
+            ->assertJsonPath('data.new_values.description', 'Corrected description')
+            ->assertJsonPath('data.correction_reason', 'Correcting the original entry')
+            ->json('data');
+
+        $audit = $this->getJson('/api/v1/financial-audit?action=financial.sale_revised')
+            ->assertOk()
+            ->assertJsonPath('data.0.action', 'financial.sale_revised')
+            ->assertJsonPath('data.0.entity_type', 'sale_revision')
+            ->assertJsonPath('data.0.entity_id', $revision['id'])
+            ->assertJsonPath('data.0.user.id', $owner->getKey())
+            ->assertJsonPath('data.0.reason', 'Correcting the original entry')
+            ->assertJsonPath('data.0.old_values.description', 'Original description')
+            ->assertJsonPath('data.0.new_values.description', 'Corrected description');
+
+        $this->assertNotEmpty($audit->json('data.0.created_at'));
+    }
+
+    public function test_manager_inactive_owner_and_foreign_shop_cannot_revise_sales(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Protected sale', 'batch-6b-authorization-sale',
+        );
+
+        $manager = User::factory()->create([
+            'shop_id' => $shop->getKey(), 'role' => User::ROLE_MANAGER, 'is_active' => true,
+        ]);
+        Sanctum::actingAs($manager, ['app']);
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Manager edit', 'reason' => 'Manager is not authorized',
+        ], ['Idempotency-Key' => 'batch-6b-manager-revision'])->assertForbidden();
+
+        DB::table('users')->where('id', $owner->getKey())->update(['is_active' => false]);
+        $owner->refresh();
+        Sanctum::actingAs($owner, ['app']);
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Inactive Owner edit', 'reason' => 'Inactive Owner is not authorized',
+        ], ['Idempotency-Key' => 'batch-6b-inactive-owner-revision'])->assertForbidden();
+
+        [$foreignShop, $foreignOwner, $foreignCustomer] = $this->context();
+        $this->createPolicy($foreignShop, $foreignOwner);
+        $foreignSale = app(SalePostingService::class)->post(
+            $foreignOwner, $foreignCustomer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '75.00', 'Foreign shop sale', 'batch-6b-foreign-sale',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->postJson('/api/v1/sales/'.$foreignSale->getKey().'/revision', [
+            'description' => 'Cross-shop edit', 'reason' => 'Cross-shop access must fail',
+        ], ['Idempotency-Key' => 'batch-6b-foreign-revision'])->assertNotFound();
+        $this->getJson('/api/v1/sales/'.$foreignSale->getKey())->assertNotFound();
+    }
+
     public function test_owner_can_create_effective_dated_shop_policy_and_audit_event(): void
     {
         [$shop, $owner] = $this->context();
