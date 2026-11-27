@@ -6,8 +6,14 @@ const feedback = document.getElementById('financial-feedback');
 const section = config?.section;
 const api = config?.api;
 const csrf = config?.csrf;
+const filtersForm = document.getElementById('financial-filters');
+const drawerRoot = document.querySelector('#financial-action-drawer')?.closest('.kk-drawer-root');
 let customers = [];
 let currentPage = 1;
+let pageSize = 20;
+let activeController = null;
+let debounceTimer = null;
+let composing = false;
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -15,7 +21,9 @@ const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
 const money = (value) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(Number(value || 0));
 const date = (value) => value ? new Date(value).toLocaleDateString('en-IN') : '—';
 const showMessage = (message, kind = 'success') => {
-    feedback.innerHTML = '<div class="alert alert-' + (kind === 'error' ? 'danger' : 'success') + '" role="status">' + esc(message) + '</div>';
+    window.dispatchEvent(new CustomEvent('kk-toast:show', {
+        detail: { message, variant: kind === 'error' ? 'error' : 'success' },
+    }));
 };
 const request = async (path, options = {}) => {
     const response = await fetch(api + path, {
@@ -35,33 +43,70 @@ const request = async (path, options = {}) => {
     }
     return payload;
 };
-const queryString = () => {
+
+const readUrlState = () => {
+    const url = new URL(window.location.href);
+    currentPage = Math.max(1, Number(url.searchParams.get('page') || 1));
+    pageSize = [10, 20, 50, 100].includes(Number(url.searchParams.get('per_page'))) ? Number(url.searchParams.get('per_page')) : 20;
+    if (!filtersForm) return;
+    for (const name of ['q', 'from', 'to', 'payment_status', 'payment_method', 'sort']) {
+        const input = filtersForm.elements.namedItem(name);
+        if (input) input.value = url.searchParams.get(name) || (name === 'sort' ? 'date_desc' : '');
+    }
+    const size = filtersForm.elements.namedItem('per_page');
+    if (size) size.value = String(pageSize);
+};
+const buildQuery = () => {
     const params = new URLSearchParams();
     params.set('page', String(currentPage));
-    params.set('per_page', '100');
-    const from = document.getElementById('financial-from')?.value;
-    const to = document.getElementById('financial-to')?.value;
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
-    if (section === 'audit') {
-        const action = document.getElementById('financial-action')?.value.trim();
-        if (action) params.set('action', action);
+    params.set('per_page', String(pageSize));
+    if (filtersForm) {
+        for (const [key, value] of new FormData(filtersForm).entries()) {
+            const normalized = String(value).trim();
+            if (normalized && key !== 'per_page') params.set(key, normalized);
+        }
     }
-    return params.toString() ? '?' + params.toString() : '';
+    return params.toString();
 };
-const renderTable = (headers, rows) => {
+const syncUrl = (mode = 'replace') => {
+    const url = new URL(window.location.href);
+    url.search = buildQuery();
+    if (mode === 'push') window.history.pushState({}, '', url);
+    else if (mode === 'replace') window.history.replaceState({}, '', url);
+};
+const renderTable = (headers, rows, emptyTitle = 'कोई रिकॉर्ड नहीं मिला') => {
     if (!rows.length) {
-        root.innerHTML = '<div class="empty-state"><i class="ti ti-inbox"></i><h3>कोई रिकॉर्ड नहीं मिला</h3><p>चुने गए filter के अनुसार कोई डेटा उपलब्ध नहीं है।</p></div>';
+        root.innerHTML = '<div class="empty-state"><i class="ti ti-inbox" aria-hidden="true"></i><h3>' + esc(emptyTitle) + '</h3><p>चुने गए filter के अनुसार कोई डेटा उपलब्ध नहीं है।</p></div>';
         return;
     }
-    root.innerHTML = '<table class="table table-vcenter financial-table"><thead><tr>' + headers.map(x => '<th>' + esc(x) + '</th>').join('') + '</tr></thead><tbody>' +
-        rows.map(row => '<tr>' + row.map(cell => '<td>' + cell + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+    root.innerHTML = '<div class="kk-data-table-wrap" role="region" aria-label="वित्तीय रिकॉर्ड" tabindex="0"><table class="table table-vcenter financial-table"><thead><tr>' +
+        headers.map((header) => '<th scope="col">' + esc(header) + '</th>').join('') +
+        '</tr></thead><tbody>' + rows.map((row) => '<tr>' + row.map((cell) => '<td>' + cell + '</td>').join('') + '</tr>').join('') +
+        '</tbody></table></div>';
+};
+const renderPagination = (meta = {}) => {
+    const page = Number(meta.current_page || 1);
+    const perPage = Number(meta.per_page || pageSize);
+    const total = Number(meta.total || 0);
+    const lastPage = Math.max(1, Number(meta.last_page || Math.ceil(total / perPage)));
+    const first = total === 0 ? 0 : ((page - 1) * perPage) + 1;
+    const last = total === 0 ? 0 : Math.min(page * perPage, total);
+    root.insertAdjacentHTML('beforeend',
+        '<div class="financial-pagination d-flex flex-wrap align-items-center justify-content-between gap-3">' +
+        '<span class="text-secondary small" aria-live="polite">Showing <strong>' + first + '–' + last + '</strong> of <strong>' + total + '</strong> records</span>' +
+        '<div class="d-flex flex-wrap align-items-center gap-3">' +
+        '<label class="d-flex align-items-center gap-2 text-secondary small"><span>Rows per page</span><select class="form-select form-select-sm" data-financial-page-size aria-label="Rows per page">' +
+        [10, 20, 50, 100].map((size) => '<option value="' + size + '"' + (size === perPage ? ' selected' : '') + '>' + size + '</option>').join('') +
+        '</select></label><div class="d-flex gap-2">' +
+        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + ' aria-label="पिछला पेज">पिछला</button>' +
+        '<span class="small text-secondary align-self-center">पेज ' + page + ' / ' + lastPage + '</span>' +
+        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' disabled' : '') + ' aria-label="अगला पेज">अगला</button>' +
+        '</div></div></div>');
 };
 const loadCustomers = async () => {
     customers = await fetchFinancialCustomers(request);
     const labels = customerDisplayLabels(customers);
-
-    ['financial-customer', 'interest-customer'].forEach(id => {
+    ['financial-customer', 'interest-customer'].forEach((id) => {
         const select = document.getElementById(id);
         if (!select) return;
         select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map((customer, index) =>
@@ -69,203 +114,206 @@ const loadCustomers = async () => {
         ).join('');
     });
 };
-
-const renderPagination = (meta = {}) => {
-    const page = Number(meta.current_page || meta.page || 1);
-    const perPage = Number(meta.per_page || 100);
-    const total = Number(meta.total || 0);
-    const lastPage = Number(meta.last_page || Math.max(1, Math.ceil(total / perPage)));
-    if (lastPage <= 1) return;
-    root.insertAdjacentHTML('beforeend',
-        '<div class="financial-pagination"><span>कुल ' + total + ' रिकॉर्ड · पेज ' + page + ' / ' + lastPage + '</span><div class="d-flex gap-2">' +
-        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>पिछला</button>' +
-        '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' disabled' : '') + '>अगला</button>' +
-        '</div></div>'
-    );
+const customerOptions = () => {
+    const labels = customerDisplayLabels(customers);
+    return customers.map((customer, index) => '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>').join('');
 };
 
-const loadSales = async () => {
-    const payload = await request('/sales' + queryString());
-    renderTable(['बिक्री नंबर', 'ग्राहक', 'तारीख', 'राशि', 'स्थिति', 'कार्रवाई'], (payload.data || []).map(s => [
-        '<strong>' + esc(s.sale_number) + '</strong>',
-        esc(s.customer?.name_original || s.customer?.name_hi || '—'),
-        date(s.sale_date), money(s.amount),
-        '<span class="role-pill">' + esc(s.payment_status) + '</span>',
-        config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" data-revise-sale="' + esc(s.id) + '" data-current-description="' + esc(s.description || '') + '">विवरण संशोधन</button>' : '—',
+const loadSales = async (signal) => {
+    const payload = await request('/sales?' + buildQuery(), { signal });
+    renderTable(['बिक्री नंबर', 'ग्राहक', 'तारीख', 'राशि', 'स्थिति', 'कार्रवाई'], (payload.data || []).map((sale) => [
+        '<strong>' + esc(sale.sale_number) + '</strong>',
+        esc(sale.customer?.name_hi || sale.customer?.name_original || '—'),
+        date(sale.sale_date), money(sale.amount),
+        '<span class="badge bg-' + (sale.payment_status === 'PAID' ? 'success' : 'warning') + '-lt">' + esc(sale.payment_status) + '</span>',
+        config.role === 'owner' ? '<button class="btn btn-sm btn-outline-secondary" type="button" data-financial-action="revise-sale" data-id="' + esc(sale.id) + '" data-description="' + esc(sale.description || '') + '"><i class="ti ti-edit me-1" aria-hidden="true"></i>विवरण संशोधन</button>' : '—',
     ]));
     renderPagination(payload.meta);
 };
-const loadPayments = async () => {
-    const payload = await request('/payments' + queryString());
-    renderTable(['भुगतान नंबर', 'ग्राहक', 'तारीख', 'राशि', 'प्रकार', 'कार्रवाई'], (payload.data || []).map(p => [
-        '<strong>' + esc(p.payment_number) + '</strong>',
-        esc(p.customer?.name_original || p.customer?.name_hi || '—'),
-        date(p.payment_date), money(p.amount),
-        '<span class="role-pill">' + esc(p.payment_type) + '</span>',
-        config.role === 'owner' && p.payment_type === 'NORMAL' ? '<button class="btn btn-sm btn-outline-danger" data-correct-payment="' + esc(p.id) + '" data-customer-id="' + esc(p.customer_id) + '">रिवर्स / बदलें</button>' : '—',
+const loadPayments = async (signal) => {
+    const payload = await request('/payments?' + buildQuery(), { signal });
+    renderTable(['भुगतान नंबर', 'ग्राहक', 'तारीख', 'राशि', 'माध्यम', 'प्रकार', 'कार्रवाई'], (payload.data || []).map((payment) => [
+        '<strong>' + esc(payment.payment_number) + '</strong>',
+        esc(payment.customer?.name_hi || payment.customer?.name_original || '—'),
+        date(payment.payment_date), money(payment.amount),
+        esc(payment.payment_method || '—'),
+        '<span class="badge bg-secondary-lt">' + esc(payment.payment_type) + '</span>',
+        config.role === 'owner' && payment.payment_type === 'NORMAL'
+            ? '<button class="btn btn-sm btn-outline-danger" type="button" data-financial-action="correct-payment" data-id="' + esc(payment.id) + '" data-customer-id="' + esc(payment.customer_id) + '"><i class="ti ti-arrow-back-up me-1" aria-hidden="true"></i>रिवर्स / बदलें</button>'
+            : '—',
     ]));
     renderPagination(payload.meta);
 };
-const loadLedger = async () => {
+const loadLedger = async (signal) => {
     const id = document.getElementById('financial-customer')?.value;
     if (!id) { root.innerHTML = '<div class="empty-state"><i class="ti ti-user-search"></i><h3>ग्राहक चुनें</h3><p>उस ग्राहक की खाता-बही देखने के लिए ऊपर से चयन करें।</p></div>'; return; }
-    const payload = await request('/customers/' + id + '/ledger' + queryString());
-    const rows = (payload.data || []).map(e => [
-        date(e.effective_date), esc(e.entry_kind), esc(e.component),
-        money(e.debit), money(e.credit), money(e.total_balance),
+    const payload = await request('/customers/' + id + '/ledger?' + buildQuery(), { signal });
+    const rows = (payload.data || []).map((entry) => [
+        date(entry.effective_date), esc(entry.entry_kind), esc(entry.component),
+        money(entry.debit), money(entry.credit), money(entry.total_balance),
     ]);
     renderTable(['तारीख', 'लेन-देन', 'खाता', 'Debit', 'Credit', 'बाकी'], rows);
     const opening = payload.meta?.opening_balance;
     if (opening) showMessage('Opening balance — Principal: ' + money(opening.principal) + ' · Interest: ' + money(opening.interest) + ' · Total: ' + money(opening.total));
     renderPagination(payload.meta);
 };
-const loadInterest = async () => {
-    const payload = await request('/interest-policy');
+const loadInterest = async (signal) => {
+    const payload = await request('/interest-policy', { signal });
     renderTable(['Version', 'लागू तारीख', 'मासिक दर', 'Grace', 'Capitalization', 'Waterfall', 'Settlement dates'],
-        (payload.data || []).map(v => [
-            esc(v.version_number), date(v.effective_from), esc(v.monthly_rate_percent) + '%',
-            esc(v.grace_days) + ' दिन', v.capitalization_enabled ? 'चालू' : 'बंद',
-            esc(v.payment_waterfall),
-            esc(v.annual_settlement_month_1 + '/' + v.annual_settlement_day_1 + ' · ' + v.annual_settlement_month_2 + '/' + v.annual_settlement_day_2),
+        (payload.data || []).map((version) => [
+            esc(version.version_number), date(version.effective_from), esc(version.monthly_rate_percent) + '%',
+            esc(version.grace_days) + ' दिन', version.capitalization_enabled ? 'चालू' : 'बंद',
+            esc(version.payment_waterfall),
+            esc(version.annual_settlement_month_1 + '/' + version.annual_settlement_day_1 + ' · ' + version.annual_settlement_month_2 + '/' + version.annual_settlement_day_2),
         ]));
 };
-const loadReconciliation = async () => {
+const loadReconciliation = async (signal) => {
     const id = document.getElementById('financial-customer')?.value;
     if (!id) { root.innerHTML = '<div class="empty-state"><i class="ti ti-user-search"></i><h3>ग्राहक चुनें</h3><p>Projection reconciliation के लिए Customer चुनें।</p></div>'; return; }
-    const payload = await request('/reconciliation/customers/' + id);
+    const payload = await request('/reconciliation/customers/' + id, { signal });
     const result = payload.data;
-    showMessage(result.consistent ? 'Ledger और projection में कोई अंतर नहीं मिला।' : result.discrepancies.length + ' discrepancy मिली।', result.consistent ? 'success' : 'error');
-    renderTable(['स्थिति', 'Field / तारीख', 'Expected', 'Actual'], (result.discrepancies || []).map(d => [
-        '<span class="role-pill">' + esc(d.type) + '</span>',
-        esc(d.field || d.as_of_date || d.sale_id || d.payment_id || '—'),
-        esc(JSON.stringify(d.expected ?? '—')), esc(JSON.stringify(d.actual ?? '—')),
+    renderTable(['स्थिति', 'Field / तारीख', 'Expected', 'Actual'], (result.discrepancies || []).map((item) => [
+        '<span class="badge bg-secondary-lt">' + esc(item.type) + '</span>',
+        esc(item.field || item.as_of_date || item.sale_id || item.payment_id || '—'),
+        esc(JSON.stringify(item.expected ?? '—')), esc(JSON.stringify(item.actual ?? '—')),
     ]));
+    showMessage(result.consistent ? 'Ledger और projection में कोई अंतर नहीं मिला।' : result.discrepancies.length + ' discrepancy मिली।', result.consistent ? 'success' : 'error');
 };
-const loadAudit = async () => {
-    const payload = await request('/financial-audit' + queryString());
-    renderTable(['समय', 'User', 'Action', 'Entity', 'Reason'], (payload.data || []).map(a => [
-        date(a.created_at), esc(a.user?.name || 'System'), esc(a.action),
-        esc(a.entity_type + ' #' + a.entity_id), esc(a.reason || '—'),
+const loadAudit = async (signal) => {
+    const payload = await request('/financial-audit?' + buildQuery(), { signal });
+    renderTable(['समय', 'User', 'Action', 'Entity', 'Reason'], (payload.data || []).map((audit) => [
+        date(audit.created_at), esc(audit.user?.name || 'System'), esc(audit.action),
+        esc(audit.entity_type + ' #' + audit.entity_id), esc(audit.reason || '—'),
     ]));
     renderPagination(payload.meta);
 };
 const loaders = { sales: loadSales, payments: loadPayments, ledger: loadLedger, interest: loadInterest, reconciliation: loadReconciliation, audit: loadAudit };
-const refresh = async () => {
-    root.innerHTML = '<div class="empty-state"><i class="ti ti-loader-2"></i><h3>लोड हो रहा है…</h3></div>';
-    try { await loaders[section](); } catch (error) { root.innerHTML = '<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>डेटा लोड नहीं हुआ</h3><p>' + esc(error.message) + '</p></div>'; }
-};
-const formMarkup = () => {
-    if (section === 'sales') return '<form id="financial-entry-form" class="financial-form-grid p-3"><div><label class="form-label">ग्राहक</label><select class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select></div><div><label class="form-label">बिक्री तारीख</label><input class="form-control" type="date" name="sale_date" required></div><div><label class="form-label">राशि (₹)</label><input class="form-control" type="number" min="0.01" step="0.01" name="amount" required></div><div><label class="form-label">भुगतान स्थिति</label><select class="form-select" name="payment_choice"><option value="UNPAID">उधार</option><option value="PAID">नकद / Paid</option></select></div><div class="financial-form-wide"><label class="form-label">विवरण</label><input class="form-control" name="description" maxlength="5000"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">बिक्री पोस्ट करें</button></div></form>';
-    return '<form id="financial-entry-form" class="financial-form-grid p-3"><div><label class="form-label">ग्राहक</label><select class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select></div><div><label class="form-label">भुगतान तारीख</label><input class="form-control" type="date" name="payment_date" required></div><div><label class="form-label">राशि (₹)</label><input class="form-control" type="number" min="0.01" step="0.01" name="amount" required></div><div><label class="form-label">माध्यम</label><select class="form-select" name="payment_method"><option value="">चुनें</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><label class="form-label">Reference number</label><input class="form-control" name="reference_number" maxlength="128"></div><div class="financial-form-wide"><label class="form-label">विवरण</label><input class="form-control" name="description" maxlength="5000"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">भुगतान पोस्ट करें</button></div></form>';
-};
-const customerOptions = () => {
-    const labels = customerDisplayLabels(customers);
-    return customers.map((customer, index) =>
-        '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
-    ).join('');
-};
 
-root.addEventListener('click', (event) => {
-    const revise = event.target.closest('[data-revise-sale]');
-    const correct = event.target.closest('[data-correct-payment]');
-    if (!revise && !correct) return;
-    document.getElementById('financial-correction-card')?.remove();
-    const card = document.createElement('div');
-    card.id = 'financial-correction-card';
-    card.className = 'content-card mb-3';
-    if (revise) {
-        card.innerHTML = '<div class="content-card-header"><div><h2>बिक्री विवरण संशोधन</h2><p>केवल विवरण बदलेगा; तारीख और राशि immutable हैं।</p></div></div><form class="financial-form-grid p-3" id="sale-revision-form"><div class="financial-form-wide"><label class="form-label">नया विवरण</label><textarea class="form-control" name="description" rows="2" maxlength="5000">' + esc(revise.dataset.currentDescription) + '</textarea></div><div class="financial-form-wide"><label class="form-label">संशोधन का कारण</label><input class="form-control" name="reason" required maxlength="500"></div><div class="financial-form-submit"><button class="btn btn-primary kk-primary">संशोधन दर्ज करें</button></div></form>';
-        document.querySelector('.page-heading').after(card);
-        card.querySelector('form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            if (form.dataset.submitting === 'true') return;
-            form.dataset.submitting = 'true';
-            const submit = form.querySelector('button[type="submit"]');
-            if (submit) submit.disabled = true;
-            const data = Object.fromEntries(new FormData(form).entries());
-            const key = form.dataset.idempotencyKey || (form.dataset.idempotencyKey = crypto.randomUUID());
-            try {
-                await request('/sales/' + revise.dataset.reviseSale + '/revision', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(data),
-                });
-                delete form.dataset.idempotencyKey;
-                showMessage('Sale revision audit के साथ दर्ज हुई।');
-                card.remove(); await refresh();
-            } catch (error) { showMessage(error.message, 'error'); }
-            finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
-        });
-    } else {
-        card.innerHTML = '<div class="content-card-header"><div><h2>भुगतान सुधार</h2><p>मूल Payment reverse होगा। Replacement वैकल्पिक है।</p></div></div><form class="financial-form-grid p-3" id="payment-correction-form"><div class="financial-form-wide"><label class="form-label">कारण</label><input class="form-control" name="reason" required maxlength="500"></div><div><label class="form-label">Replacement राशि (₹) — वैकल्पिक</label><input class="form-control" type="number" min="0.01" step="0.01" name="replacement_amount"></div><div><label class="form-label">Replacement माध्यम</label><select class="form-select" name="replacement_method"><option value="">चुनें</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div class="financial-form-submit"><button class="btn btn-outline-danger">Payment reverse करें</button></div></form>';
-        document.querySelector('.page-heading').after(card);
-        card.querySelector('form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            if (form.dataset.submitting === 'true') return;
-            form.dataset.submitting = 'true';
-            const submit = form.querySelector('button[type="submit"]');
-            if (submit) submit.disabled = true;
-            const formData = Object.fromEntries(new FormData(form).entries());
-            const data = { reason: formData.reason };
-            const key = form.dataset.idempotencyKey || (form.dataset.idempotencyKey = crypto.randomUUID());
-            if (formData.replacement_amount) {
-                data.replacement = { amount: formData.replacement_amount, payment_method: formData.replacement_method || null };
-            }
-            try {
-                await request('/customers/' + correct.dataset.customerId + '/payments/' + correct.dataset.correctPayment + '/correction', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(data),
-                });
-                delete form.dataset.idempotencyKey;
-                showMessage('Payment correction audit के साथ दर्ज हुआ।');
-                card.remove(); await refresh();
-            } catch (error) { showMessage(error.message, 'error'); }
-            finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
-        });
+const refresh = async ({ history = 'none' } = {}) => {
+    activeController?.abort();
+    const controller = new AbortController();
+    activeController = controller;
+    root.setAttribute('aria-busy', 'true');
+    feedback.textContent = '';
+    try {
+        await loaders[section](controller.signal);
+        if (history !== 'none') syncUrl(history);
+    } catch (error) {
+        if (error.name !== 'AbortError' && activeController === controller) {
+            feedback.innerHTML = '<div class="alert alert-danger d-flex align-items-center justify-content-between gap-2" role="alert"><span>' +
+                esc(error.message || 'डेटा लोड नहीं हो सका।') + '</span><button type="button" class="btn btn-sm btn-outline-danger" data-financial-retry>फिर प्रयास करें</button></div>';
+        }
+    } finally {
+        if (activeController === controller) {
+            activeController = null;
+            root.removeAttribute('aria-busy');
+        }
     }
-});
+};
 
-document.getElementById('financial-create')?.addEventListener('click', () => {
-    const existing = document.getElementById('financial-entry-card');
-    if (existing) { existing.remove(); return; }
-    const card = document.createElement('div');
-    card.id = 'financial-entry-card';
-    card.className = 'content-card mb-3';
-    card.innerHTML = '<div class="content-card-header"><div><h2>' + (section === 'sales' ? 'नई बिक्री' : 'नया भुगतान') + '</h2><p>रिकॉर्ड post होने के बाद financial ledger में append-only entry बनेगी।</p></div><button class="btn btn-sm btn-outline-secondary" type="button" id="financial-entry-close">बंद करें</button></div>' + formMarkup();
-    document.querySelector('.page-heading').after(card);
-    card.querySelector('#financial-entry-close').addEventListener('click', () => card.remove());
-    card.querySelector('form').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        if (form.dataset.submitting === 'true') return;
-        form.dataset.submitting = 'true';
-        const submit = form.querySelector('button[type="submit"]');
-        if (submit) submit.disabled = true;
-        const data = Object.fromEntries(new FormData(form).entries());
-        const key = form.dataset.idempotencyKey || (form.dataset.idempotencyKey = crypto.randomUUID());
-        try {
-            await request(section === 'sales' ? '/sales' : '/payments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
-                body: JSON.stringify(data),
-            });
-            delete form.dataset.idempotencyKey;
-            showMessage(section === 'sales' ? 'बिक्री सफलतापूर्वक पोस्ट हुई।' : 'भुगतान सफलतापूर्वक पोस्ट हुआ।');
-            card.remove();
-            await refresh();
-        } catch (error) { showMessage(error.message, 'error'); }
-        finally { delete form.dataset.submitting; if (submit) submit.disabled = false; }
-    });
-});
-document.getElementById('financial-refresh')?.addEventListener('click', () => { currentPage = 1; refresh(); });
-document.getElementById('financial-customer')?.addEventListener('change', () => { currentPage = 1; refresh(); });
-document.getElementById('financial-from')?.addEventListener('change', () => { currentPage = 1; });
-document.getElementById('financial-to')?.addEventListener('change', () => { currentPage = 1; });
+const formField = (label, name, control, wide = false) =>
+    '<div' + (wide ? ' class="financial-form-wide"' : '') + '><label class="form-label" for="financial-' + esc(name.replace(/[^a-z0-9]+/gi, '-')) + '">' + esc(label) + '</label>' +
+    control.replace('FIELD_ID', 'financial-' + esc(name.replace(/[^a-z0-9]+/gi, '-'))) + '</div>';
+const formMarkup = (kind, data = {}) => {
+    const formStart = '<form id="financial-drawer-form" class="financial-form-grid" method="POST" data-drawer-ajax data-idempotency action="';
+    const token = '<input type="hidden" name="_token" value="' + esc(csrf) + '">';
+    if (kind === 'sale') {
+        return formStart + esc(api + '/sales') + '" data-confirm="क्या आप इस बिक्री को पोस्ट करना चाहते हैं?">' + token +
+            formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
+            formField('बिक्री तारीख', 'sale_date', '<input id="FIELD_ID" class="form-control" type="date" name="sale_date" value="' + new Date().toLocaleDateString('en-CA') + '" required>') +
+            formField('राशि (₹)', 'amount', '<input id="FIELD_ID" class="form-control" type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>') +
+            formField('भुगतान स्थिति', 'payment_choice', '<select id="FIELD_ID" class="form-select" name="payment_choice" required><option value="UNPAID">उधार</option><option value="PAID">नकद / Paid</option></select>') +
+            formField('विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000"></textarea>', true) + '</form>';
+    }
+    if (kind === 'payment') {
+        return formStart + esc(api + '/payments') + '" data-confirm="क्या आप यह भुगतान पोस्ट करना चाहते हैं?">' + token +
+            formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
+            formField('भुगतान तारीख', 'payment_date', '<input id="FIELD_ID" class="form-control" type="date" name="payment_date" value="' + new Date().toLocaleDateString('en-CA') + '" required>') +
+            formField('राशि (₹)', 'amount', '<input id="FIELD_ID" class="form-control" type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>') +
+            formField('माध्यम', 'payment_method', '<select id="FIELD_ID" class="form-select" name="payment_method"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>') +
+            formField('Reference number', 'reference_number', '<input id="FIELD_ID" class="form-control" name="reference_number" maxlength="128">') +
+            formField('विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000"></textarea>', true) + '</form>';
+    }
+    if (kind === 'revise-sale') {
+        return formStart + esc(api + '/sales/' + data.id + '/revision') + '" data-confirm="क्या आप बिक्री का विवरण संशोधित करना चाहते हैं?">' + token +
+            formField('नया विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000">' + esc(data.description || '') + '</textarea>', true) +
+            formField('संशोधन का कारण', 'reason', '<input id="FIELD_ID" class="form-control" name="reason" minlength="1" maxlength="500" required>', true) + '</form>';
+    }
+    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान reverse होगा। क्या आप आगे बढ़ना चाहते हैं?">' + token +
+        formField('कारण', 'reason', '<textarea id="FIELD_ID" class="form-control" name="reason" rows="2" minlength="1" maxlength="500" required></textarea>', true) +
+        formField('Replacement राशि (₹) — वैकल्पिक', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
+        formField('Replacement माध्यम', 'replacement.payment_method', '<select id="FIELD_ID" class="form-select" name="replacement[payment_method]"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>');
+};
+const openDrawer = (kind, data = {}) => {
+    if (!drawerRoot) return;
+    const body = drawerRoot.querySelector('.kk-drawer-body');
+    const title = kind === 'sale' ? 'नई बिक्री' : kind === 'payment' ? 'नया भुगतान' : kind === 'revise-sale' ? 'बिक्री विवरण संशोधन' : 'भुगतान सुधार';
+    const submit = drawerRoot.querySelector('[data-financial-drawer-submit]');
+    body.innerHTML = formMarkup(kind, data);
+    if (submit) {
+        submit.textContent = kind === 'correct-payment' ? 'भुगतान reverse करें' : kind === 'revise-sale' ? 'संशोधन सेव करें' : kind === 'sale' ? 'बिक्री पोस्ट करें' : 'भुगतान पोस्ट करें';
+        submit.classList.toggle('btn-outline-danger', kind === 'correct-payment');
+        submit.classList.toggle('btn-primary', kind !== 'correct-payment');
+    }
+    drawerRoot.dispatchEvent(new CustomEvent('kk-drawer:open', {
+        bubbles: true,
+        detail: { title, width: 'wide' },
+    }));
+};
+
+document.getElementById('financial-create')?.addEventListener('click', () => openDrawer(section === 'sales' ? 'sale' : 'payment'));
 root.addEventListener('click', (event) => {
+    const action = event.target.closest('[data-financial-action]');
+    if (action) {
+        openDrawer(action.dataset.financialAction, {
+            id: action.dataset.id,
+            customerId: action.dataset.customerId,
+            description: action.dataset.description,
+        });
+        return;
+    }
     const pageButton = event.target.closest('[data-financial-page]');
-    if (!pageButton || pageButton.disabled) return;
-    currentPage = Number(pageButton.dataset.financialPage);
-    refresh();
+    if (pageButton && !pageButton.disabled) {
+        currentPage = Number(pageButton.dataset.financialPage);
+        refresh({ history: 'push' });
+        return;
+    }
+    if (event.target.closest('[data-financial-retry]')) refresh();
 });
+root.addEventListener('change', (event) => {
+    const size = event.target.closest('[data-financial-page-size]');
+    if (!size) return;
+    pageSize = Number(size.value);
+    currentPage = 1;
+    refresh({ history: 'push' });
+});
+const applyFilters = () => {
+    currentPage = 1;
+    refresh({ history: 'replace' });
+};
+if (filtersForm) {
+    const search = filtersForm.elements.namedItem('q');
+    search?.addEventListener('compositionstart', () => { composing = true; window.clearTimeout(debounceTimer); });
+    search?.addEventListener('compositionend', () => { composing = false; applyFilters(); });
+    search?.addEventListener('input', () => {
+        if (composing) return;
+        window.clearTimeout(debounceTimer);
+        debounceTimer = window.setTimeout(applyFilters, 375);
+    });
+    filtersForm.querySelectorAll('select, input[type="date"]').forEach((input) => {
+        input.addEventListener('change', applyFilters);
+    });
+    filtersForm.addEventListener('submit', (event) => { event.preventDefault(); applyFilters(); });
+    filtersForm.querySelector('[data-financial-reset]')?.addEventListener('click', () => {
+        filtersForm.reset();
+        currentPage = 1;
+        applyFilters();
+    });
+}
+document.getElementById('financial-refresh')?.addEventListener('click', () => refresh());
+document.getElementById('financial-customer')?.addEventListener('change', () => { currentPage = 1; refresh({ history: 'replace' }); });
+window.addEventListener('popstate', () => { readUrlState(); refresh(); });
+window.addEventListener('kk-drawer:success', () => refresh());
 
 document.getElementById('shop-policy-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -292,7 +340,6 @@ document.getElementById('customer-policy-form')?.addEventListener('submit', asyn
         event.currentTarget.reset();
     } catch (error) { showMessage(error.message, 'error'); }
 });
-
 document.getElementById('interest-customer')?.addEventListener('change', async (event) => {
     const id = event.target.value;
     const target = document.getElementById('customer-policy-history');
@@ -302,13 +349,12 @@ document.getElementById('interest-customer')?.addEventListener('change', async (
         const payload = await request('/customers/' + id + '/interest-policy');
         const versions = payload.data || [];
         target.innerHTML = versions.length
-            ? '<h3 class="h4 mb-3">Customer override history</h3><div class="table-responsive"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>Capitalization</th></tr></thead><tbody>' +
-                versions.map(v => '<tr><td>' + esc(v.version_number) + '</td><td>' + date(v.effective_from) + '</td><td>' + date(v.effective_to) + '</td><td>' + esc(v.monthly_rate_percent ?? 'Shop default') + '</td><td>' + (v.capitalization_enabled === null ? 'Shop default' : (v.capitalization_enabled ? 'चालू' : 'बंद')) + '</td></tr>').join('') +
+            ? '<h3 class="h4 mb-3">Customer override history</h3><div class="kk-data-table-wrap" role="region" aria-label="Customer override history" tabindex="0"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>Capitalization</th></tr></thead><tbody>' +
+                versions.map((version) => '<tr><td>' + esc(version.version_number) + '</td><td>' + date(version.effective_from) + '</td><td>' + date(version.effective_to) + '</td><td>' + esc(version.monthly_rate_percent ?? 'Shop default') + '</td><td>' + (version.capitalization_enabled === null ? 'Shop default' : (version.capitalization_enabled ? 'चालू' : 'बंद')) + '</td></tr>').join('') +
                 '</tbody></table></div>'
             : '<p class="text-secondary small mb-0">इस Customer पर कोई override नहीं है।</p>';
     } catch (error) { target.textContent = error.message; }
 });
-
 document.getElementById('projection-repair-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = document.getElementById('financial-customer')?.value;
@@ -324,6 +370,7 @@ document.getElementById('projection-repair-form')?.addEventListener('submit', as
 
 (async () => {
     try {
+        readUrlState();
         if (['sales', 'payments', 'ledger', 'reconciliation', 'interest'].includes(section)) await loadCustomers();
         await refresh();
     } catch (error) {
