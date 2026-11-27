@@ -688,6 +688,104 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
         $this->getJson('/api/v1/sales/'.$foreignSale->getKey())->assertNotFound();
     }
 
+    public function test_payment_details_api_returns_allocation_ledger_transaction_and_correction_history(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        $sale = app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Payment details linked Sale', 'batch-7a-payment-details-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '25.00', CarbonImmutable::parse('2026-11-21'),
+            'UPI', 'BATCH-7A-DETAILS-REF', 'Payment details lifecycle test',
+            'batch-7a-payment-details-posting',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $response = $this->getJson('/api/v1/payments/'.$payment->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.id', $payment->getKey())
+            ->assertJsonPath('data.payment_number', $payment->payment_number)
+            ->assertJsonPath('data.customer.id', $customer->getKey())
+            ->assertJsonPath('data.reference_number', 'BATCH-7A-DETAILS-REF')
+            ->assertJsonPath('data.financial_transaction.transaction_type', 'PAYMENT_POSTING')
+            ->assertJsonPath('data.allocation.allocation_type', 'NORMAL_FIFO')
+            ->assertJsonPath('data.allocation.total_allocated', '25.00')
+            ->assertJsonPath('data.allocation.items.0.sale.sale_number', $sale->sale_number);
+
+        $this->assertNotEmpty($response->json('data.ledger_entries'));
+        $this->assertSame('PRINCIPAL', $response->json('data.allocation.items.0.component_type'));
+
+        $this->postJson('/api/v1/customers/'.$customer->getKey().'/payments/'.$payment->getKey().'/correction', [
+            'reason' => 'Correcting the received payment entry',
+            'replacement' => [
+                'amount' => '25.00',
+                'payment_method' => 'UPI',
+                'reference_number' => 'BATCH-7A-REPLACEMENT-REF',
+                'description' => 'Replacement payment for detail history',
+            ],
+        ], ['Idempotency-Key' => 'batch-7a-payment-details-correction'])
+            ->assertCreated();
+
+        $corrected = $this->getJson('/api/v1/payments/'.$payment->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.revisions.0.revision_type', 'REVERSAL')
+            ->assertJsonPath('data.revisions.0.correction_reason', 'Correcting the received payment entry')
+            ->assertJsonPath('data.revisions.1.revision_type', 'REPLACEMENT');
+
+        $this->assertNotEmpty($corrected->json('data.revisions.0.reversal_payment.payment_number'));
+        $this->assertNotEmpty($corrected->json('data.revisions.1.replacement_payment.payment_number'));
+
+        $reversalId = $corrected->json('data.revisions.0.reversal_payment.id');
+        $replacementId = $corrected->json('data.revisions.1.replacement_payment.id');
+
+        $this->getJson('/api/v1/payments/'.$reversalId)
+            ->assertOk()
+            ->assertJsonPath('data.reversed_payment.payment_number', $payment->payment_number);
+        $this->getJson('/api/v1/payments/'.$replacementId)
+            ->assertOk()
+            ->assertJsonPath('data.replacement_for_payment.payment_number', $payment->payment_number);
+    }
+
+    public function test_payment_details_are_available_to_shop_roles_and_foreign_shop_payments_are_hidden(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Shop-scoped Payment details Sale', 'batch-7a-role-payment-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Shop-scoped Payment details', 'batch-7a-role-payment-details',
+        );
+
+        [$foreignShop, $foreignOwner, $foreignCustomer] = $this->context();
+        $this->createPolicy($foreignShop, $foreignOwner);
+        app(SalePostingService::class)->post(
+            $foreignOwner, $foreignCustomer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '75.00', 'Foreign Shop Payment details Sale', 'batch-7a-foreign-payment-sale',
+        );
+        $foreignPayment = app(PaymentPostingService::class)->post(
+            $foreignOwner, $foreignCustomer, '15.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Foreign Shop Payment details', 'batch-7a-foreign-payment-details',
+        );
+
+        foreach ([User::ROLE_OWNER, User::ROLE_MANAGER, User::ROLE_STAFF] as $role) {
+            $actor = $role === User::ROLE_OWNER ? $owner : User::factory()->create([
+                'shop_id' => $shop->getKey(), 'role' => $role, 'is_active' => true,
+            ]);
+            Sanctum::actingAs($actor, ['app']);
+            $this->getJson('/api/v1/payments/'.$payment->getKey())->assertOk()
+                ->assertJsonPath('data.id', $payment->getKey());
+        }
+
+        Sanctum::actingAs($owner, ['app']);
+        $this->getJson('/api/v1/payments/'.$foreignPayment->getKey())->assertNotFound();
+    }
+
     private function context(): array
     {
         $shop = Shop::factory()->create(['timezone' => 'Asia/Kolkata']);
