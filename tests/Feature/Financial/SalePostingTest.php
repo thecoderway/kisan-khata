@@ -8,8 +8,10 @@ use App\Models\FinancialTransaction;
 use App\Models\IdempotencyKey;
 use App\Models\Payment;
 use App\Models\Sale;
+use App\Models\SaleRevision;
 use App\Models\Shop;
 use App\Models\User;
+use App\Modules\Financial\Application\FinancialAuditService;
 use App\Modules\Financial\Application\FinancialTransactionService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Modules\Financial\Application\SaleRevisionService;
@@ -19,6 +21,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use LogicException;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
@@ -267,6 +271,110 @@ class SalePostingTest extends TestCase
             'status' => IdempotencyKey::STATUS_COMPLETED,
             'response_code' => 200,
         ]);
+    }
+
+    public function test_bulk_eloquent_mutations_cannot_change_posted_sales_or_revision_history(): void
+    {
+        [, $owner, $customer] = $this->makeCustomerContext();
+        $sale = $this->postUnpaidSale($owner, $customer);
+
+        try {
+            Sale::query()->whereKey($sale->getKey())->update(['amount' => '1.00']);
+            $this->fail('Bulk Sale updates must be rejected.');
+        } catch (LogicException) {
+            $this->assertDatabaseHas('sales', ['id' => $sale->getKey(), 'amount' => '1250.00']);
+        }
+
+        try {
+            Sale::query()->whereKey($sale->getKey())->delete();
+            $this->fail('Bulk Sale deletion must be rejected.');
+        } catch (LogicException) {
+            $this->assertDatabaseHas('sales', ['id' => $sale->getKey(), 'amount' => '1250.00']);
+        }
+
+        $revision = app(SaleRevisionService::class)->reviseDescription(
+            $owner, $sale, 'Corrected goods description', 'Correction reason',
+            'sale-revision-builder-guard',
+        );
+
+        try {
+            SaleRevision::query()->whereKey($revision->getKey())->update(['correction_reason' => 'Tampered']);
+            $this->fail('Bulk Sale revision updates must be rejected.');
+        } catch (LogicException) {
+            $this->assertDatabaseHas('sale_revisions', [
+                'id' => $revision->getKey(), 'correction_reason' => 'Correction reason',
+            ]);
+        }
+
+        try {
+            SaleRevision::query()->whereKey($revision->getKey())->delete();
+            $this->fail('Bulk Sale revision deletion must be rejected.');
+        } catch (LogicException) {
+            $this->assertDatabaseHas('sale_revisions', [
+                'id' => $revision->getKey(), 'correction_reason' => 'Correction reason',
+            ]);
+        }
+    }
+
+    public function test_sale_revision_rolls_back_sale_history_audit_and_idempotency_when_audit_fails(): void
+    {
+        [, $owner, $customer] = $this->makeCustomerContext();
+        $sale = $this->postUnpaidSale($owner, $customer);
+        $idempotencyCount = DB::table('idempotency_keys')->count();
+
+        $audit = \\Mockery::mock(FinancialAuditService::class);
+        $audit->shouldReceive('recordSaleRevision')->once()
+            ->andThrow(new RuntimeException('Simulated audit write failure.'));
+        $this->app->instance(FinancialAuditService::class, $audit);
+
+        try {
+            app(SaleRevisionService::class)->reviseDescription(
+                $owner, $sale, 'Must roll back', 'Rollback verification',
+                'sale-revision-audit-rollback',
+            );
+            $this->fail('The simulated audit failure must abort the revision transaction.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Simulated audit write failure.', $exception->getMessage());
+        }
+
+        $this->assertSame('Credit sale', Sale::query()->findOrFail($sale->getKey())->description);
+        $this->assertDatabaseCount('sale_revisions', 0);
+        $this->assertDatabaseCount('idempotency_keys', $idempotencyCount);
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'financial.sale_revised']);
+    }
+
+    public function test_inactive_owner_cannot_revise_a_sale_through_the_application_service(): void
+    {
+        [, $owner, $customer] = $this->makeCustomerContext();
+        $sale = $this->postUnpaidSale($owner, $customer);
+        DB::table('users')->where('id', $owner->getKey())->update(['is_active' => false]);
+        $owner->refresh();
+
+        $this->expectException(AuthorizationException::class);
+
+        app(SaleRevisionService::class)->reviseDescription(
+            $owner, $sale, 'Inactive Owner edit', 'Must be denied',
+            'sale-revision-inactive-owner',
+        );
+    }
+
+    public function test_reusing_sale_revision_idempotency_key_with_different_payload_conflicts(): void
+    {
+        [, $owner, $customer] = $this->makeCustomerContext();
+        $sale = $this->postUnpaidSale($owner, $customer);
+        $service = app(SaleRevisionService::class);
+
+        $service->reviseDescription(
+            $owner, $sale, 'First correction', 'First reason',
+            'sale-revision-payload-conflict',
+        );
+
+        $this->expectException(ConflictHttpException::class);
+
+        $service->reviseDescription(
+            $owner, $sale, 'Different correction', 'Different reason',
+            'sale-revision-payload-conflict',
+        );
     }
 
     public function test_sale_revision_is_rejected_after_a_later_posted_normal_payment(): void
