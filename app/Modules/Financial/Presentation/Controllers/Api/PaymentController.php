@@ -99,8 +99,18 @@ class PaymentController extends Controller
 
     public function show(int $payment): JsonResponse
     {
-        $payment = Payment::query()->with(['customer:id,name_original,name_hi,name_en', 'allocation.items'])
-            ->findOrFail($payment);
+        $payment = Payment::query()->with([
+            'customer:id,name_original,name_hi,name_en,status,deleted_at',
+            'allocation.items.sale:id,sale_number,sale_date,amount,payment_status',
+            'allocation.items.reversedItem:id,payment_id,sale_id,component_type,amount',
+            'ledgerEntries',
+            'financialTransaction',
+            'revisions.actor:id,name',
+            'revisions.reversalPayment:id,payment_number,payment_type,payment_date,amount',
+            'revisions.replacementPayment:id,payment_number,payment_type,payment_date,amount',
+            'reversedPayment:id,payment_number,payment_type,payment_date,amount',
+            'replacementForPayment:id,payment_number,payment_type,payment_date,amount',
+        ])->findOrFail($payment);
         Gate::authorize('view', $payment);
 
         return response()->json(['data' => $payment]);
