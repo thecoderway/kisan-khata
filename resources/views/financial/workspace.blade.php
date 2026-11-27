@@ -94,7 +94,7 @@
         <x-ui.action-drawer id="shop-interest-policy-drawer" title="नई Shop Interest Policy">
             <form id="shop-policy-form" class="financial-form-grid" method="POST" action="{{ url('/api/v1/interest-policy') }}" data-drawer-ajax>
                 @csrf
-                <div><label class="form-label" for="shop-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="shop-policy-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
+                <div><label class="form-label" for="shop-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="shop-policy-effective-from" type="date" name="effective_from" min="{{ now()->toDateString() }}" required></div>
                 <div><label class="form-label" for="shop-policy-rate">मासिक ब्याज दर (%)</label><input class="form-control" id="shop-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" required></div>
                 <div><label class="form-label" for="shop-policy-grace">Grace days</label><input class="form-control" id="shop-policy-grace" type="number" name="grace_days" min="0" max="365" value="30" required></div>
                 <div><label class="form-label" for="shop-policy-waterfall">Payment waterfall</label><select class="form-select" id="shop-policy-waterfall" name="payment_waterfall"><option value="PRINCIPAL_FIRST">Principal first</option><option value="INTEREST_FIRST">Interest first</option></select></div>
