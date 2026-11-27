@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ProtectedFinancialRecordBuilder;
 use App\Models\Concerns\BelongsToCurrentShop;
 use App\Models\Concerns\SetsCreatedAt;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +32,11 @@ class InterestCalculationItem extends Model
             'unrounded_interest' => 'decimal:8', 'posted_interest' => 'decimal:2',
             'capitalization_enabled' => 'boolean', 'created_at' => 'immutable_datetime',
         ];
+    }
+
+    public function newEloquentBuilder($query): ProtectedFinancialRecordBuilder
+    {
+        return new ProtectedFinancialRecordBuilder($query);
     }
 
     protected static function booted(): void

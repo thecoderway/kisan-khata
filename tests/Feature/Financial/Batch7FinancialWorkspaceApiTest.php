@@ -4,16 +4,35 @@ namespace Tests\Feature\Financial;
 
 use App\Models\AuditLog;
 use App\Models\Customer;
+use App\Models\FinancialTransaction;
+use App\Models\InterestCalculationItem;
+use App\Models\InterestCalculationRun;
+use App\Models\InterestLot;
+use App\Models\InterestLotEvent;
+use App\Models\InterestSettlementItem;
+use App\Models\InterestSettlementRun;
+use App\Models\LedgerEntry;
+use App\Models\Payment;
+use App\Models\PaymentAllocation;
+use App\Models\PaymentAllocationItem;
+use App\Models\PaymentRevision;
 use App\Models\Shop;
 use App\Models\User;
+use App\Modules\Financial\Application\FinancialAuditService;
 use App\Modules\Financial\Application\PaymentPostingService;
+use App\Modules\Financial\Application\PaymentReversalService;
 use App\Modules\Financial\Application\ReconciliationService;
 use App\Modules\Financial\Application\SalePostingService;
 use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
+use LogicException;
+use Mockery;
+use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
 class Batch7FinancialWorkspaceApiTest extends TestCase
@@ -363,12 +382,12 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
                         'user_agent' => 'Batch 8.5 regression',
                     ]);
 
-                    throw new \RuntimeException('Simulated audit persistence failure.');
+                    throw new RuntimeException('Simulated audit persistence failure.');
                 },
             );
 
             $this->fail('The simulated audit failure should abort the repair transaction.');
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $this->assertSame('Simulated audit persistence failure.', $exception->getMessage());
         }
 
@@ -686,6 +705,215 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
 
         Sanctum::actingAs($owner, ['app']);
         $this->getJson('/api/v1/sales/'.$foreignSale->getKey())->assertNotFound();
+    }
+
+    public function test_bulk_eloquent_mutations_are_blocked_for_payment_lifecycle_records(): void
+    {
+        $this->context();
+        $models = [
+            Payment::class,
+            PaymentRevision::class,
+            PaymentAllocation::class,
+            PaymentAllocationItem::class,
+            LedgerEntry::class,
+            InterestLotEvent::class,
+            FinancialTransaction::class,
+            InterestCalculationRun::class,
+            InterestCalculationItem::class,
+            InterestLot::class,
+            InterestSettlementRun::class,
+            InterestSettlementItem::class,
+        ];
+
+        foreach ($models as $modelClass) {
+            $mutations = [
+                'insert' => fn () => $modelClass::query()->insert([]),
+                'insertOrIgnore' => fn () => $modelClass::query()->insertOrIgnore([]),
+                'update' => fn () => $modelClass::query()->update([]),
+                'delete' => fn () => $modelClass::query()->delete(),
+                'upsert' => fn () => $modelClass::query()->upsert([], ['id']),
+                'increment' => fn () => $modelClass::query()->increment('id'),
+                'decrement' => fn () => $modelClass::query()->decrement('id'),
+                'incrementEach' => fn () => $modelClass::query()->incrementEach(['id' => 1]),
+                'decrementEach' => fn () => $modelClass::query()->decrementEach(['id' => 1]),
+                'updateOrInsert' => fn () => $modelClass::query()->updateOrInsert([], []),
+                'touch' => fn () => $modelClass::query()->touch('created_at'),
+                'truncate' => fn () => $modelClass::query()->truncate(),
+            ];
+
+            foreach ($mutations as $operation => $mutation) {
+                try {
+                    $mutation();
+                    $this->fail($modelClass.' must reject bulk '.$operation.'.');
+                } catch (LogicException $exception) {
+                    $this->assertStringContainsString('Bulk Eloquent mutations are disabled', $exception->getMessage());
+                }
+            }
+        }
+    }
+
+    public function test_payment_reversal_rolls_back_all_financial_records_when_audit_write_fails(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Payment reversal rollback Sale', 'batch-7b-rollback-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '25.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Payment reversal rollback', 'batch-7b-rollback-payment',
+        );
+        $counts = [
+            'payments' => DB::table('payments')->count(),
+            'payment_allocations' => DB::table('payment_allocations')->count(),
+            'payment_allocation_items' => DB::table('payment_allocation_items')->count(),
+            'ledger_entries' => DB::table('ledger_entries')->count(),
+            'payment_revisions' => DB::table('payment_revisions')->count(),
+            'financial_transactions' => DB::table('financial_transactions')->count(),
+            'idempotency_keys' => DB::table('idempotency_keys')->count(),
+        ];
+
+        $audit = Mockery::mock(FinancialAuditService::class);
+        $audit->shouldReceive('recordTransaction')->once()
+            ->andThrow(new RuntimeException('Simulated Payment reversal audit failure.'));
+        $this->app->instance(FinancialAuditService::class, $audit);
+
+        try {
+            app(PaymentReversalService::class)->correct(
+                $owner, $customer, $payment, 'Rollback audit regression', 'batch-7b-rollback-correction',
+            );
+            $this->fail('A failed audit write must roll back the entire Payment reversal.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Simulated Payment reversal audit failure.', $exception->getMessage());
+        }
+
+        foreach ($counts as $table => $count) {
+            $this->assertSame($count, DB::table($table)->count(), $table.' must roll back with the reversal.');
+        }
+        $this->assertDatabaseHas('payments', ['id' => $payment->getKey(), 'payment_type' => 'NORMAL']);
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'financial.payment_reversed']);
+    }
+
+    public function test_payment_reversal_service_rejects_inactive_owner_and_later_payment_dependency(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Payment correction guard Sale', 'batch-7b-guard-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Payment correction guard', 'batch-7b-guard-payment',
+        );
+
+        DB::table('users')->where('id', $owner->getKey())->update(['is_active' => false]);
+        $owner->refresh();
+        try {
+            app(PaymentReversalService::class)->correct(
+                $owner, $customer, $payment, 'Inactive Owner must be denied', 'batch-7b-inactive-owner',
+            );
+            $this->fail('An inactive Owner must not reverse a Payment.');
+        } catch (AuthorizationException) {
+            $this->assertDatabaseCount('payment_revisions', 0);
+        }
+
+        DB::table('users')->where('id', $owner->getKey())->update(['is_active' => true]);
+        $owner->refresh();
+        app(PaymentPostingService::class)->post(
+            $owner, $customer, '10.00', CarbonImmutable::parse('2026-11-22'),
+            'CASH', null, 'Later Payment dependency', 'batch-7b-later-payment',
+        );
+
+        try {
+            app(PaymentReversalService::class)->correct(
+                $owner, $customer, $payment, 'Later Payment dependency', 'batch-7b-later-dependency',
+            );
+            $this->fail('A Payment must not be reversed after a later normal Payment.');
+        } catch (ConflictHttpException) {
+            $this->assertDatabaseCount('payment_revisions', 0);
+            $this->assertDatabaseCount('payments', 2);
+        }
+    }
+
+    public function test_completed_annual_interest_settlement_blocks_historical_payment_reversal(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Settlement restriction Sale', 'batch-7b-settlement-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Settlement restriction Payment', 'batch-7b-settlement-payment',
+        );
+
+        $transaction = DB::table('financial_transactions')->where('id', $payment->financial_transaction_id)->first();
+        $policyVersionId = DB::table('interest_policy_versions')
+            ->where('shop_id', $shop->getKey())->value('id');
+        DB::table('interest_settlement_runs')->insert([
+            'shop_id' => $shop->getKey(),
+            'customer_id' => $customer->getKey(),
+            'settlement_date' => '2026-11-30',
+            'cutoff_date_exclusive' => '2026-11-30',
+            'shop_policy_version_id' => $policyVersionId,
+            'status' => 'COMPLETED',
+            'idempotency_key_id' => $transaction->idempotency_key_id,
+            'started_at' => now(),
+            'completed_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        try {
+            app(PaymentReversalService::class)->correct(
+                $owner, $customer, $payment, 'Historical settlement restriction', 'batch-7b-settlement-reversal',
+            );
+            $this->fail('A completed annual settlement must block reversal of an earlier Payment.');
+        } catch (ConflictHttpException $exception) {
+            $this->assertStringContainsString('annual interest settlement', $exception->getMessage());
+            $this->assertDatabaseCount('payment_revisions', 0);
+            $this->assertDatabaseCount('payments', 1);
+        }
+    }
+
+    public function test_payment_reversal_idempotency_replays_and_rejects_changed_payload(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        app(SalePostingService::class)->post(
+            $owner, $customer, 'UNPAID', CarbonImmutable::parse('2026-11-20'),
+            '100.00', 'Payment idempotency Sale', 'batch-7b-idempotency-sale',
+        );
+        $payment = app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-21'),
+            'CASH', null, 'Payment idempotency', 'batch-7b-idempotency-payment',
+        );
+        $service = app(PaymentReversalService::class);
+
+        $first = $service->correct(
+            $owner, $customer, $payment, 'Idempotent correction', 'batch-7b-reversal-idempotency',
+        );
+        $replayed = $service->correct(
+            $owner, $customer, $payment, 'Idempotent correction', 'batch-7b-reversal-idempotency',
+        );
+
+        $this->assertSame($first['reversal']->getKey(), $replayed['reversal']->getKey());
+        $this->assertNull($first['replacement']);
+        $this->assertNull($replayed['replacement']);
+        $this->assertDatabaseCount('payment_revisions', 1);
+        $this->assertDatabaseCount('payments', 2);
+
+        try {
+            $service->correct(
+                $owner, $customer, $payment, 'Different correction payload', 'batch-7b-reversal-idempotency',
+            );
+            $this->fail('Reusing a Payment correction key with a changed payload must conflict.');
+        } catch (ConflictHttpException) {
+            $this->assertDatabaseCount('payment_revisions', 1);
+            $this->assertDatabaseCount('payments', 2);
+        }
     }
 
     public function test_payment_details_api_returns_allocation_ledger_transaction_and_correction_history(): void
