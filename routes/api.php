@@ -47,10 +47,10 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
 
         Route::prefix('v1')->group(function (): void {
             Route::get('/reports/outstanding', [FinancialReportController::class, 'outstanding']);
-        Route::get('/reports/sales', [FinancialReportController::class, 'sales']);
-        Route::get('/reports/payments', [FinancialReportController::class, 'payments']);
-        Route::get('/reports/interest', [FinancialReportController::class, 'interest']);
-        Route::get('/sales', [SaleController::class, 'index']);
+            Route::get('/reports/sales', [FinancialReportController::class, 'sales']);
+            Route::get('/reports/payments', [FinancialReportController::class, 'payments']);
+            Route::get('/reports/interest', [FinancialReportController::class, 'interest']);
+            Route::get('/sales', [SaleController::class, 'index']);
             Route::post('/sales', [SaleController::class, 'store'])->middleware('throttle:60,1');
             Route::get('/sales/{sale}', [SaleController::class, 'show']);
             Route::post('/sales/{sale}/revision', [SaleController::class, 'revise'])->middleware('throttle:10,1');
