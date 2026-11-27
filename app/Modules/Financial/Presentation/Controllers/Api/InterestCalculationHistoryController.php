@@ -129,6 +129,8 @@ class InterestCalculationHistoryController extends Controller
                         'version' => (int) $item->shopPolicyVersion->version_number,
                         'effective_from' => $item->shopPolicyVersion->effective_from?->toDateString(),
                         'effective_to' => $item->shopPolicyVersion->effective_to?->toDateString(),
+                        'monthly_rate_percent' => (string) $item->shopPolicyVersion->monthly_rate_percent,
+                        'capitalization_enabled' => (bool) $item->shopPolicyVersion->capitalization_enabled,
                         'grace_days' => (int) $item->shopPolicyVersion->grace_days,
                         'payment_waterfall' => $item->shopPolicyVersion->payment_waterfall,
                     ] : null,
@@ -136,6 +138,8 @@ class InterestCalculationHistoryController extends Controller
                         'version' => (int) $item->customerPolicyVersion->version_number,
                         'effective_from' => $item->customerPolicyVersion->effective_from?->toDateString(),
                         'effective_to' => $item->customerPolicyVersion->effective_to?->toDateString(),
+                        'monthly_rate_percent' => $item->customerPolicyVersion->monthly_rate_percent === null ? null : (string) $item->customerPolicyVersion->monthly_rate_percent,
+                        'capitalization_enabled' => $item->customerPolicyVersion->capitalization_enabled === null ? null : (bool) $item->customerPolicyVersion->capitalization_enabled,
                     ] : null,
                     'ledger_entry' => $item->ledgerEntry ? [
                         'id' => (int) $item->ledgerEntry->getKey(),
