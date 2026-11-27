@@ -759,7 +759,14 @@ The Product Owner approved all three Batch 11A decisions on 2026-11-27:
 - **Interest API authorization gap found:** web Financial Workspace blocks non-Owner users from the Interest section, but both Interest Calculation History API actions use `viewCustomerLedger`; CustomerLedgerPolicy permits Owner, Manager and Staff. UI restrictions do not secure the API. A dedicated Owner-only API authorization check and Owner/Manager/Staff regression tests are mandatory before exposing reports.
 - Tenant scopes, immutable ledger/interest models and existing Payment correction/reconciliation tests were inspected. No code, migrations or database records were changed.
 
-**Remaining 11A gates:** finalize actual-collection evidence rule, verify report-specific reconciliation queries/equations against MySQL fixtures, and approve sample layouts/response schemas. Batch 11A remains IN PROGRESS; Batch 11B has not started. Detailed evidence is in `docs/phase-11-batch-11a-report-definitions.md`.
+**Interest History API security correction committed on the Batch 11A branch:**
+- Added dedicated `viewInterestCalculationHistory` authorization requiring an active Owner in the same Shop.
+- Both existing Interest History API actions (`index` and `show`) now use that Gate before querying detailed calculation history.
+- Added regression coverage for Owner allow, Manager/Staff 403 on both endpoints, and inactive Owner 403 on both endpoints.
+- Existing `viewCustomerLedger` Gate and Manager/Staff Customer Ledger access remain unchanged.
+- This closes the previously identified existing-history API authorization gap at source level. Pint, targeted test execution and exact-head CI verification are pending.
+
+**Remaining 11A gates:** finalize the auditable actual-collection evidence mechanism for replacement Payments; verify report-specific reconciliation equations against MySQL fixtures (including all/zero/negative Outstanding, NORMAL receipt/reversal pairs, replacement inclusion/exclusion, SALE_DAY_AUTO separation and interest ledger links); approve sample layouts and response schemas. Batch 11A remains IN PROGRESS; Batch 11B has not started. Detailed evidence is in `docs/phase-11-batch-11a-report-definitions.md`.
 
 No production operation, deployment or release is authorized.
 
