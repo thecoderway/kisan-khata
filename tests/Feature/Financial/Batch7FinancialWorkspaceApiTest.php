@@ -188,6 +188,9 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             'description' => 'Inactive Owner edit', 'reason' => 'Inactive Owner is not authorized',
         ], ['Idempotency-Key' => 'batch-6b-inactive-owner-revision'])->assertForbidden();
 
+        DB::table('users')->where('id', $owner->getKey())->update(['is_active' => true]);
+        $owner->refresh();
+
         [$foreignShop, $foreignOwner, $foreignCustomer] = $this->context();
         $this->createPolicy($foreignShop, $foreignOwner);
         $foreignSale = app(SalePostingService::class)->post(
