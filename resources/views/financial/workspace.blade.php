@@ -144,7 +144,7 @@ window.KKFinancialWorkspace = {
     role: @json(auth()->user()->role),
     api: @json(url('/api/v1')),
     csrf: @json(csrf_token()),
-    shopName: @json(app(\\App\\Tenancy\\CurrentShop::class)->require()->name),
+    shopName: @json(app(\App\Tenancy\CurrentShop::class)->require()->name),
 };
 </script>
 
