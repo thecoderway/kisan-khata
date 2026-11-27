@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\Shop;
 use App\Models\User;
