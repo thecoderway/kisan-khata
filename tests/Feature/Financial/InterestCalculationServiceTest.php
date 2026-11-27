@@ -4,6 +4,7 @@ namespace Tests\Feature\Financial;
 
 use App\Models\Customer;
 use App\Models\CustomerAccount;
+use App\Models\InterestCalculationItem;
 use App\Models\InterestSettlementRun;
 use App\Models\Sale;
 use App\Models\Shop;
@@ -14,6 +15,7 @@ use App\Tenancy\CurrentShop;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class InterestCalculationServiceTest extends TestCase
