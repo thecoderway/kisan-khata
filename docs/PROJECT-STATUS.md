@@ -1,7 +1,7 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `62419de9872f84a38a6d8d422e11dbadca73a1ca` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
+**Status Snapshot Base:** `main` at `6506a4a01526cc54959712721b8f9d30465a88cd` (2026-11-27), including PRs #53–#56 financial UI follow-ups.  
 **Project Status:** Phase 2–4 are merged and accepted for their recorded scopes. Phase 5 financial implementation and automated acceptance through Batch 8.8 are merged. PRs #53–#56 subsequently completed Sales/Payments customer dropdowns, approved table/filter/drawer behavior, pagination layout/navigation and sidebar usability. The Product Owner has manually confirmed the Sales/Payments listing, drawer layout, pagination navigation and sidebar behavior. Phase 5 remains OPEN pending fresh-Shop registration and tenant-isolation/role-based browser acceptance, plus complete workflow smoke checks across Sales, Payments, Customer Ledger, Interest Settings and Reconciliation; production-readiness and repository-admin checks remain separate later-stage gates. See [Batch 8 financial integrity and release gate](phase-5-batch-8-financial-integrity-fixes.md). No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
