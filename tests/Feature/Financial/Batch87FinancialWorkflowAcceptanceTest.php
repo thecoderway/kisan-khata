@@ -303,41 +303,60 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
         [$shop, $owner, $customer] = $this->context();
         $this->createPolicy($shop, $owner, '0.00000000', 30);
 
-        $sale = app(SalePostingService::class)->post(
+        $firstSale = app(SalePostingService::class)->post(
             $owner,
             $customer,
             Sale::PAYMENT_CHOICE_UNPAID,
             CarbonImmutable::parse('2026-11-01'),
-            '10000.00',
-            'Batch 7C combined lifecycle Sale',
-            'batch-7c-combined-sale',
+            '5000.00',
+            'Batch 7C first Sale',
+            'batch-7c-first-sale',
+        );
+        $secondSale = app(SalePostingService::class)->post(
+            $owner,
+            $customer,
+            Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-02'),
+            '5000.00',
+            'Batch 7C second Sale',
+            'batch-7c-second-sale',
         );
 
         $firstPayment = app(PaymentPostingService::class)->post(
             $owner,
             $customer,
             '4000.00',
-            CarbonImmutable::parse('2026-11-02'),
+            CarbonImmutable::parse('2026-11-03'),
             'CASH',
             'BATCH-7C-001',
             'First partial Payment',
             'batch-7c-first-payment',
         );
-
         $secondPayment = app(PaymentPostingService::class)->post(
             $owner,
             $customer,
             '2000.00',
-            CarbonImmutable::parse('2026-11-03'),
+            CarbonImmutable::parse('2026-11-04'),
             'CASH',
             'BATCH-7C-002',
             'Second partial Payment',
             'batch-7c-second-payment',
         );
 
-        $this->assertSame('10000.00', $sale->fresh()->amount);
-        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $sale->fresh()->payment_status);
-        $this->assertSame('4000.00', CustomerAccount::query()->where('customer_id', $customer->getKey())->value('total_payable'));
+        $secondAllocationSaleIds = PaymentAllocationItem::query()
+            ->where('payment_id', $secondPayment->getKey())
+            ->orderBy('sale_fifo_sequence')
+            ->pluck('sale_id')
+            ->unique()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+        $this->assertSame([$firstSale->getKey(), $secondSale->getKey()], $secondAllocationSaleIds);
+        $this->assertSame(Sale::PAYMENT_STATUS_PAID, $firstSale->fresh()->payment_status);
+        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $secondSale->fresh()->payment_status);
+        $this->assertSame('4000.00', CustomerAccount::query()
+            ->where('customer_id', $customer->getKey())
+            ->value('total_payable'));
 
         $correction = app(PaymentReversalService::class)->correct(
             $owner,
@@ -365,7 +384,8 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
         $this->assertSame('4000.00', $account->fresh()->principal_balance);
         $this->assertSame('0.00', $account->fresh()->interest_balance);
         $this->assertSame('4000.00', $account->fresh()->total_payable);
-        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $sale->fresh()->payment_status);
+        $this->assertSame(Sale::PAYMENT_STATUS_PAID, $firstSale->fresh()->payment_status);
+        $this->assertSame(Sale::PAYMENT_STATUS_PARTIALLY_PAID, $secondSale->fresh()->payment_status);
 
         $debits = (string) DB::table('ledger_entries')->where('customer_id', $customer->getKey())->sum('debit_amount');
         $credits = (string) DB::table('ledger_entries')->where('customer_id', $customer->getKey())->sum('credit_amount');
@@ -389,7 +409,7 @@ class Batch87FinancialWorkflowAcceptanceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.revisions.0.revision_type', 'REVERSAL')
             ->assertJsonPath('data.revisions.0.correction_reason', 'Batch 7C controlled correction with replacement')
-            ->assertJsonPath('data.revisions.1.revision_type', 'REPLACEMENT')
+            ->assertJsonPath('data.revisions.1.revision_type', 'REPLACEMENT');
 
         $this->assertSame('4000.00', $firstPayment->fresh()->amount);
     }
