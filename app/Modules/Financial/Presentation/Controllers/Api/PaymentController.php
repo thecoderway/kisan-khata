@@ -18,6 +18,9 @@ class PaymentController extends Controller
 
         $filters = $request->validate([
             'customer_id' => ['nullable', 'integer'],
+            'q' => ['nullable', 'string', 'max:100'],
+            'payment_method' => ['nullable', 'string', 'max:32'],
+            'sort' => ['nullable', \\Illuminate\\Validation\\Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
@@ -28,7 +31,23 @@ class PaymentController extends Controller
             ->when(isset($filters['customer_id']), fn ($q) => $q->where('customer_id', $filters['customer_id']))
             ->when(isset($filters['from']), fn ($q) => $q->whereDate('payment_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn ($q) => $q->whereDate('payment_date', '<=', $filters['to']))
-            ->orderByDesc('payment_date')->orderByDesc('id');
+            ->when(isset($filters['payment_method']), fn ($q) => $q->where('payment_method', $filters['payment_method']))
+            ->when(isset($filters['q']), function ($query) use ($filters): void {
+                $term = '%'.trim($filters['q']).'%';
+                $query->where(function ($nested) use ($term): void {
+                    $nested->where('payment_number', 'like', $term)
+                        ->orWhere('reference_number', 'like', $term)
+                        ->orWhereHas('customer', fn ($customer) => $customer->where('name_original', 'like', $term)
+                            ->orWhere('name_hi', 'like', $term)->orWhere('name_en', 'like', $term)->orWhere('mobile', 'like', $term));
+                });
+            });
+
+        match ($filters['sort'] ?? 'date_desc') {
+            'date_asc' => $query->orderBy('payment_date')->orderBy('id'),
+            'amount_desc' => $query->orderByDesc('amount')->orderByDesc('id'),
+            'amount_asc' => $query->orderBy('amount')->orderBy('id'),
+            default => $query->orderByDesc('payment_date')->orderByDesc('id'),
+        };
 
         return response()->json($query->paginate((int) ($filters['per_page'] ?? 20)));
     }
@@ -63,7 +82,7 @@ class PaymentController extends Controller
             $key,
         );
 
-        return response()->json(['data' => $payment->fresh()], 201);
+        return response()->json(['success' => true, 'message' => 'भुगतान सफलतापूर्वक पोस्ट हुआ।', 'data' => $payment->fresh()], 201);
     }
 
     public function show(int $payment): JsonResponse
