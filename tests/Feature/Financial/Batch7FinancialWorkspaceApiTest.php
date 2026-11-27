@@ -158,7 +158,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             ->assertOk()
             ->assertExactJson(['data' => []]);
 
-        $effectiveFrom = now()->addDays(5)->toDateString();
+        $effectiveFrom = now()->toDateString();
         $this->postJson('/api/v1/interest-policy', [
             'effective_from' => $effectiveFrom,
             'reason' => 'Initial policy setup for legacy shop',
