@@ -229,8 +229,18 @@ const loadLedger = async (signal) => {
 };
 const loadInterest = async (signal) => {
     const payload = await request('/interest-policy', { signal });
+    const versions = payload.data || [];
+    const overrideButton = document.getElementById('open-customer-policy-drawer');
+    if (overrideButton) {
+        overrideButton.disabled = versions.length === 0;
+        overrideButton.title = versions.length === 0 ? 'पहले Shop Interest Policy configure करें।' : '';
+    }
+    if (versions.length === 0) {
+        root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>Shop Interest Policy अभी configure नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई Shop Interest Policy” से पहली policy बनाएँ। कोई ब्याज दर अपने-आप लागू नहीं की जाएगी।</p></div>';
+        return;
+    }
     renderTable(['Version', 'लागू तारीख', 'मासिक दर', 'Grace', 'Capitalization', 'Waterfall', 'Settlement dates'],
-        (payload.data || []).map((version) => [
+        versions.map((version) => [
             esc(version.version_number), date(version.effective_from), esc(version.monthly_rate_percent) + '%',
             esc(version.grace_days) + ' दिन', version.capitalization_enabled ? 'चालू' : 'बंद',
             esc(version.payment_waterfall),
@@ -424,33 +434,28 @@ document.getElementById('financial-customer')?.addEventListener('change', () => 
 window.addEventListener('popstate', () => { readUrlState(); refresh(); });
 window.addEventListener('kk-drawer:success', () => refresh());
 
-document.getElementById('shop-policy-form')?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
-    data.capitalization_enabled = data.capitalization_enabled === '1';
-    try {
-        await request('/interest-policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        showMessage('नई Shop policy version सेव हो गई।');
-        event.currentTarget.reset();
-        await refresh();
-    } catch (error) { showMessage(error.message, 'error'); }
+const openInterestDrawer = (drawerId, title) => {
+    const drawer = document.getElementById(drawerId)?.closest('.kk-drawer-root');
+    if (!drawer) return;
+    drawer.dispatchEvent(new CustomEvent('kk-drawer:open', {
+        bubbles: true,
+        detail: { title },
+    }));
+};
+document.getElementById('open-shop-policy-drawer')?.addEventListener('click', () => {
+    openInterestDrawer('shop-interest-policy-drawer', 'नई Shop Interest Policy');
 });
-document.getElementById('customer-policy-form')?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
-    const id = data.customer_id;
-    delete data.customer_id;
-    if (data.capitalization_enabled === '') delete data.capitalization_enabled;
-    else data.capitalization_enabled = data.capitalization_enabled === '1';
-    if (data.monthly_rate_percent === '') delete data.monthly_rate_percent;
-    try {
-        await request('/customers/' + id + '/interest-policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        showMessage('Customer interest override सेव हो गया।');
-        event.currentTarget.reset();
-    } catch (error) { showMessage(error.message, 'error'); }
+document.getElementById('open-customer-policy-drawer')?.addEventListener('click', () => {
+    const button = document.getElementById('open-customer-policy-drawer');
+    if (button?.disabled) return;
+    const form = document.getElementById('customer-policy-form');
+    if (form) form.action = api + '/customers/0/interest-policy';
+    openInterestDrawer('customer-interest-override-drawer', 'Customer Interest Override');
 });
 document.getElementById('interest-customer')?.addEventListener('change', async (event) => {
     const id = event.target.value;
+    const form = document.getElementById('customer-policy-form');
+    if (form && id) form.action = api + '/customers/' + encodeURIComponent(id) + '/interest-policy';
     const target = document.getElementById('customer-policy-history');
     if (!id || !target) { if (target) target.innerHTML = ''; return; }
     target.innerHTML = '<div class="text-secondary small">Overrides लोड हो रहे हैं…</div>';
