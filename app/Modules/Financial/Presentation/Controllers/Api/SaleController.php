@@ -104,9 +104,11 @@ class SaleController extends Controller
         $sale = Sale::query()->findOrFail($sale);
         Gate::authorize('revise', $sale);
 
+        $request->merge(['reason' => trim((string) $request->input('reason', ''))]);
+
         $data = $request->validate([
             'description' => ['nullable', 'string', 'max:5000'],
-            'reason' => ['required', 'string', 'min:1', 'max:500'],
+            'reason' => ['required', 'string', 'max:500'],
         ]);
         $key = trim((string) $request->header('Idempotency-Key'));
         abort_if($key === '' || mb_strlen($key) > 255, 422, 'A valid Idempotency-Key header is required.');
