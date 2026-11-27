@@ -9,6 +9,7 @@ use App\Modules\Financial\Application\PaymentPostingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
@@ -20,7 +21,7 @@ class PaymentController extends Controller
             'customer_id' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:100'],
             'payment_method' => ['nullable', 'string', 'max:32'],
-            'sort' => ['nullable', \Illuminate\Validation\Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
+            'sort' => ['nullable', Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'per_page' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 20, 50, 100])],
