@@ -370,7 +370,11 @@ The approved financial rules remain unchanged: consolidated customer-facing paym
 
 No production deployment, production data change, migration execution or release is claimed. Database migrations and deployment require separate explicit Product Owner approval.
 
-## 29. Customer lifecycle financial visibility policy and implementation (2026-11-27)\n\nADR-0016 is accepted and the customer lifecycle visibility policy is added to `docs/02-business-rules.md`. The policy separates active-only transaction selectors from historical financial lookups, preserves legacy soft-deleted customer identity in posted Sale/Payment relations, restricts ordinary deleted-customer directory browsing to Owner/Manager, and retains tenant and role authorization. Implementation and automated regression coverage are in progress on `fix/customer-lifecycle-financial-visibility`; no CI or browser acceptance is claimed until observed. Phase 5 remains OPEN. No migrations, data backfills, production operations or deployment are included.\n\n## Phase 5 — Historical Batch 5 and Batch 6 delivery note (superseded)
+## 29. Customer lifecycle financial visibility policy and implementation (2026-11-27)
+
+ADR-0016 is accepted and the customer lifecycle visibility policy is added to `docs/02-business-rules.md`. The policy separates active-only transaction selectors from historical financial lookups, preserves legacy soft-deleted customer identity in posted Sale/Payment relations, restricts ordinary deleted-customer directory browsing to Owner/Manager, and retains tenant and role authorization. Implementation and automated regression coverage are in progress on `fix/customer-lifecycle-financial-visibility`; no CI or browser acceptance is claimed until observed. Phase 5 remains OPEN. No migrations, data backfills, production operations or deployment are included.
+
+## Phase 5 — Historical Batch 5 and Batch 6 delivery note (superseded)
 
 The original in-progress delivery notes below were superseded by the merged delivery baseline in Section 13. Batch 5 (PR #40) and Batch 6 (PR #41) are both merged into `main`; neither remains open. The current Phase 5 state and release gate are recorded in Section 13 and the current roadmap release-gate section.
 
