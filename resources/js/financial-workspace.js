@@ -14,6 +14,7 @@ let pageSize = 20;
 let activeController = null;
 let debounceTimer = null;
 let composing = false;
+let lastLoadedQuery = null;
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -201,7 +202,12 @@ const loadAudit = async (signal) => {
 };
 const loaders = { sales: loadSales, payments: loadPayments, ledger: loadLedger, interest: loadInterest, reconciliation: loadReconciliation, audit: loadAudit };
 
-const refresh = async ({ history = 'none' } = {}) => {
+const refresh = async ({ history = 'none', skipUnchanged = false } = {}) => {
+    const queryKey = buildQuery();
+    if (skipUnchanged && queryKey === lastLoadedQuery) {
+        if (history !== 'none') syncUrl(history);
+        return;
+    }
     activeController?.abort();
     const controller = new AbortController();
     activeController = controller;
@@ -212,6 +218,7 @@ const refresh = async ({ history = 'none' } = {}) => {
     feedback.textContent = '';
     try {
         await loaders[section](controller.signal);
+        lastLoadedQuery = queryKey;
         if (history !== 'none') syncUrl(history);
     } catch (error) {
         if (error.name !== 'AbortError' && activeController === controller) {
@@ -309,7 +316,7 @@ root.addEventListener('change', (event) => {
 });
 const applyFilters = () => {
     currentPage = 1;
-    refresh({ history: 'replace' });
+    refresh({ history: 'replace', skipUnchanged: true });
 };
 if (filtersForm) {
     const search = filtersForm.elements.namedItem('q');
@@ -335,7 +342,7 @@ if (filtersForm) {
     ['from', 'to'].forEach((name) => {
         document.getElementById('financial-' + name)?.addEventListener('change', () => {
             currentPage = 1;
-            refresh({ history: 'replace' });
+            refresh({ history: 'replace', skipUnchanged: true });
         });
     });
     const actionFilter = document.getElementById('financial-action');
@@ -343,7 +350,7 @@ if (filtersForm) {
         window.clearTimeout(debounceTimer);
         debounceTimer = window.setTimeout(() => {
             currentPage = 1;
-            refresh({ history: 'replace' });
+            refresh({ history: 'replace', skipUnchanged: true });
         }, 375);
     });
 }
