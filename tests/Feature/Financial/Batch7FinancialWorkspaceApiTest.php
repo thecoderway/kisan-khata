@@ -138,6 +138,12 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             ->assertJsonValidationErrors('reason');
 
         $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
+            'description' => 'Invalid reason type should fail', 'reason' => ['not', 'a', 'string'],
+        ], ['Idempotency-Key' => 'batch-6b-invalid-reason-type'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reason');
+
+        $this->postJson('/api/v1/sales/'.$sale->getKey().'/revision', [
             'description' => 'Original description', 'reason' => 'No actual change',
         ], ['Idempotency-Key' => 'batch-6b-unchanged-description'])
             ->assertStatus(409);
