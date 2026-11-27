@@ -345,7 +345,7 @@ const detailRow = (label, value) => '<div class="d-flex justify-content-between 
 const renderSaleDetails = (sale) => {
     const customer = sale.customer || {};
     const automaticPayment = sale.sale_day_payment;
-    const allocations = sale.allocation_items || [];
+    const allocations = (sale.allocation_items || []).filter((item) => item.payment?.payment_type !== 'SALE_DAY_AUTO');
     const ledgerEntries = sale.ledger_entries || [];
     const revisions = sale.revisions || [];
     const transaction = sale.financial_transaction;
