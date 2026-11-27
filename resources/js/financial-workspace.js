@@ -11,6 +11,7 @@ const drawerRoot = document.querySelector('#financial-action-drawer')?.closest('
 let customers = [];
 let currentPage = 1;
 let pageSize = 20;
+let lastPage = 1;
 let activeController = null;
 let debounceTimer = null;
 let composing = false;
@@ -115,13 +116,19 @@ const renderPagination = (meta = {}) => {
     const page = Number(meta.current_page || 1);
     const perPage = Number(meta.per_page || pageSize);
     const total = Number(meta.total || 0);
-    const lastPage = Math.max(1, Number(meta.last_page || Math.ceil(total / perPage)));
+    lastPage = Math.max(1, Number(meta.last_page || Math.ceil(total / perPage)));
     const first = total === 0 ? 0 : ((page - 1) * perPage) + 1;
     const last = total === 0 ? 0 : Math.min(page * perPage, total);
     const pageItems = [];
+    const pageHref = (number) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', String(number));
+        url.searchParams.set('per_page', String(perPage));
+        return esc(url.pathname + url.search);
+    };
     const addPage = (number) => pageItems.push(
         '<li class="page-item' + (number === page ? ' active' : '') + '">' +
-        '<a class="page-link" href="#" data-financial-page="' + number + '"' +
+        '<a class="page-link" href="' + pageHref(number) + '" data-financial-page="' + number + '"' +
         (number === page ? ' aria-current="page"' : '') + '>' + number + '</a></li>'
     );
     const addEllipsis = () => pageItems.push(
@@ -147,9 +154,9 @@ const renderPagination = (meta = {}) => {
         '<label class="customer-page-size d-flex align-items-center gap-2 text-secondary small"><span>Rows per page</span><select class="form-select form-select-sm" data-financial-page-size aria-label="Rows per page">' +
         [10, 20, 50, 100].map((size) => '<option value="' + size + '"' + (size === perPage ? ' selected' : '') + '>' + size + '</option>').join('') +
         '</select></label><nav aria-label="Financial records pagination"><ul class="pagination">' +
-        '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="#" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '') + '>Previous</a></li>' +
+        '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="' + (page <= 1 ? '#' : pageHref(page - 1)) + '" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '') + ' aria-label="Previous page"><i class="ti ti-chevron-left" aria-hidden="true"></i></a></li>' +
         pageItems.join('') +
-        '<li class="page-item' + (page >= lastPage ? ' disabled' : '') + '"><a class="page-link" href="#" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' aria-disabled="true" tabindex="-1"' : '') + '>Next</a></li>' +
+        '<li class="page-item' + (page >= lastPage ? ' disabled' : '') + '"><a class="page-link" href="' + (page >= lastPage ? '#' : pageHref(page + 1)) + '" data-financial-page="' + (page + 1) + '"' + (page >= lastPage ? ' aria-disabled="true" tabindex="-1"' : '') + ' aria-label="Next page"><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>' +
         '</ul></nav></div></div>');
 };
 const loadCustomers = async () => {
@@ -327,6 +334,18 @@ const openDrawer = (kind, data = {}) => {
 };
 
 document.getElementById('financial-create')?.addEventListener('click', () => openDrawer(section === 'sales' ? 'sale' : 'payment'));
+document.addEventListener('click', (event) => {
+    const pageButton = event.target.closest('#financial-results [data-financial-page]');
+    if (!pageButton) return;
+
+    event.preventDefault();
+    const requestedPage = Number(pageButton.dataset.financialPage);
+    if (!Number.isInteger(requestedPage) || requestedPage < 1 || requestedPage > lastPage || requestedPage === currentPage) return;
+
+    currentPage = requestedPage;
+    refresh({ history: 'push' });
+});
+
 root.addEventListener('click', (event) => {
     const action = event.target.closest('[data-financial-action]');
     if (action) {
@@ -338,12 +357,6 @@ root.addEventListener('click', (event) => {
             paymentAmount: action.dataset.paymentAmount,
             customerName: action.dataset.customerName,
         });
-        return;
-    }
-    const pageButton = event.target.closest('[data-financial-page]');
-    if (pageButton && !pageButton.disabled) {
-        currentPage = Number(pageButton.dataset.financialPage);
-        refresh({ history: 'push' });
         return;
     }
     if (event.target.closest('[data-financial-retry]')) refresh();

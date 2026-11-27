@@ -34,7 +34,6 @@
             <a href="{{ route('financial.workspace', ['section' => 'payments']) }}" class="{{ request()->route('section') === 'payments' ? 'active' : '' }}"><i class="ti ti-cash"></i><span>जमा / भुगतान</span></a>
             <a href="{{ route('financial.workspace', ['section' => 'ledger']) }}" class="{{ request()->route('section') === 'ledger' ? 'active' : '' }}"><i class="ti ti-book-2"></i><span>ग्राहक खाता-बही</span></a>
             @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
-                <a href="{{ route('financial.workspace', ['section' => 'interest']) }}" class="{{ request()->route('section') === 'interest' ? 'active' : '' }}"><i class="ti ti-percentage"></i><span>ब्याज सेटिंग्स</span></a>
                 <a href="{{ route('financial.workspace', ['section' => 'reconciliation']) }}" class="{{ request()->route('section') === 'reconciliation' ? 'active' : '' }}"><i class="ti ti-scale"></i><span>लेखा मिलान</span></a>
                 <a href="{{ route('financial.workspace', ['section' => 'audit']) }}" class="{{ request()->route('section') === 'audit' ? 'active' : '' }}"><i class="ti ti-history"></i><span>वित्तीय ऑडिट</span></a>
             @endif
@@ -61,6 +60,9 @@
                         <div class="sidebar-settings-menu" x-cloak x-show="settingsOpen" x-transition.origin.bottom.right @click.outside="settingsOpen = false" @keydown.escape.window="settingsOpen = false">
                             <a href="{{ route('shop-profile.edit') }}" @click="settingsOpen = false; sidebarOpen = false">
                                 <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>
+                            </a>
+                            <a href="{{ route('financial.workspace', ['section' => 'interest']) }}" @click="settingsOpen = false; sidebarOpen = false" class="{{ request()->route('section') === 'interest' ? 'active' : '' }}">
+                                <i class="ti ti-percentage"></i><span>ब्याज सेटिंग</span>
                             </a>
                         </div>
                     @endif
