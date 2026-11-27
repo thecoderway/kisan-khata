@@ -656,7 +656,7 @@ Phase 10 is explicitly deferred by the Product Owner and will not be developed i
 - Settlement history and audit history.
 - Settlement services, ledger entries, API, UI and automated tests.
 
-Acceptance must establish that full settlement closes only the eligible balance; partial settlement retains the correct residual; carry-forward preserves outstanding and prior financial history; interest follows approved rules; duplicate settlement is prevented; and all settlement actions are auditable.
+On future reactivation, acceptance must establish that full settlement closes only the eligible balance; partial settlement retains the correct residual; carry-forward preserves outstanding and prior financial history; interest follows approved rules; duplicate settlement is prevented; and all settlement actions are auditable.
 
 ### Phase 10 reactivation gate (future, only if explicitly requested)
 
@@ -675,7 +675,7 @@ Only after explicit reactivation, perform a fresh read-only audit and business-r
 
 - Do not invent crop-season dates, crop eligibility, settlement allocation order, carry-forward semantics, interest treatment or correction rules.
 - If a required business rule is absent or conflicts with ADR-0012 or another accepted ADR, stop and request Product Owner clarification; update approved documentation before coding.
-- No code changes, migrations, database writes, financial postings, production operations, deployment or release are authorized by this read-only audit.
+- This deferral record authorizes no code changes, migrations, database writes, financial postings, production operations, deployment or release.
 - Any implementation proposal must identify schema changes, transaction/locking/idempotency strategy, tenant/role authorization, audit requirements, regression tests and migration/data-safety implications before implementation approval.
 
 
