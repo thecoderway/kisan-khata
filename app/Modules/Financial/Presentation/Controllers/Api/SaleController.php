@@ -33,7 +33,7 @@ class SaleController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $query = Sale::query()->with('customer:id,name_original,name_hi,name_en')
+        $query = Sale::query()->with('customer:id,name_original,name_hi,name_en,status,deleted_at')
             ->whereNotNull('posted_at')
             ->when(isset($filters['customer_id']), fn ($q) => $q->where('customer_id', $filters['customer_id']))
             ->when(isset($filters['from']), fn ($q) => $q->whereDate('sale_date', '>=', $filters['from']))
