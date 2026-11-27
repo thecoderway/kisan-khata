@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Modules\\Customers\\Application;
+namespace App\Modules\Customers\Application;
 
-use App\\Models\\Customer;
-use Illuminate\\Contracts\\Pagination\\LengthAwarePaginator;
-use Illuminate\\Http\\Request;
+use App\Models\Customer;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 
 class CustomerDirectoryQuery
 {
