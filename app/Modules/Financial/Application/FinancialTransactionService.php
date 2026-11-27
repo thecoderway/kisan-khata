@@ -46,7 +46,14 @@ class FinancialTransactionService
             $requestPayload,
             $operation,
         ): FinancialTransaction {
-            $account = $this->customerAccountLock->lockForCustomer($customer);
+            // Use the same Customer -> CustomerAccount lock order as Customer lifecycle
+            // operations so posting cannot race with deactivation or soft deletion.
+            $lockedCustomer = Customer::query()
+                ->whereKey($customer->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $account = $this->customerAccountLock->lockForCustomer($lockedCustomer);
 
             $fingerprint = [
                 'actor_id' => (int) $actor->getKey(),
