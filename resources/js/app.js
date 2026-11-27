@@ -242,9 +242,16 @@ Alpine.data('actionDrawer', () => ({
         });
 
         try {
+            const formData = new FormData(form);
+            const optionalNestedAmount = form.dataset.optionalNestedAmount;
+            if (optionalNestedAmount && !String(formData.get(optionalNestedAmount) || '').trim()) {
+                const group = optionalNestedAmount.split('[')[0] + '[';
+                Array.from(formData.keys()).filter((name) => name.startsWith(group)).forEach((name) => formData.delete(name));
+            }
+
             const response = await fetch(form.action, {
                 method: (form.method || 'POST').toUpperCase(),
-                body: new FormData(form),
+                body: formData,
                 headers: {
                     Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
