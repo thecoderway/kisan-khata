@@ -443,13 +443,19 @@ const openInterestDrawer = (drawerId, title) => {
     }));
 };
 document.getElementById('open-shop-policy-drawer')?.addEventListener('click', () => {
+    document.getElementById('shop-policy-form')?.reset();
     openInterestDrawer('shop-interest-policy-drawer', 'नई Shop Interest Policy');
 });
 document.getElementById('open-customer-policy-drawer')?.addEventListener('click', () => {
     const button = document.getElementById('open-customer-policy-drawer');
     if (button?.disabled) return;
     const form = document.getElementById('customer-policy-form');
-    if (form) form.action = api + '/customers/0/interest-policy';
+    if (form) {
+        form.reset();
+        form.action = api + '/customers/0/interest-policy';
+    }
+    const history = document.getElementById('customer-policy-history');
+    if (history) history.innerHTML = '';
     openInterestDrawer('customer-interest-override-drawer', 'Customer Interest Override');
 });
 document.getElementById('interest-customer')?.addEventListener('change', async (event) => {
