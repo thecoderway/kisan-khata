@@ -299,6 +299,13 @@ class SalePostingTest extends TestCase
             $this->assertDatabaseHas('sales', ['id' => $sale->getKey(), 'amount' => '1250.00']);
         }
 
+        try {
+            Sale::query()->whereKey($sale->getKey())->increment('amount', 1);
+            $this->fail('Bulk Sale increments must be rejected.');
+        } catch (LogicException) {
+            $this->assertDatabaseHas('sales', ['id' => $sale->getKey(), 'amount' => '1250.00']);
+        }
+
         $revision = app(SaleRevisionService::class)->reviseDescription(
             $owner, $sale, 'Corrected goods description', 'Correction reason',
             'sale-revision-builder-guard',
