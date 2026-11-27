@@ -74,7 +74,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. |
 | Phase 9 | Interest Engine | **COMPLETE / ACCEPTED — 2026-11-27.** PR #73 merged as `6a9146c496b82143a7813683ed32a178eb60efb3`; exact-head CI passed. Product Owner confirmed UI, calculation breakdown, filters and pagination. Browser before/after DB comparison was not independently performed; automated read-only regression tests passed. |
 | Phase 10 | Crop-Season Settlement | **DEFERRED TO FUTURE RELEASE — NOT STARTED.** Product Owner explicitly deferred this phase on 2026-11-27. Do not schedule or resume without explicit reactivation. |
-| Phase 11 | Reports, Printing and Exports | **REVIEWED / PLANNED — NOT STARTED.** Existing list APIs, ledger print/PDF and interest history are reusable foundations; aggregate report APIs/UI and general CSV/XLSX exports are not present in inspected scope. Requires Product Owner authorization to begin. |
+| Phase 11 | Reports, Printing and Exports | **AUTHORIZED — Batch 11A IN PROGRESS.** First-pass report definitions and read-only source contracts are documented; 11A Product Owner decisions and acceptance remain open. Batches 11B–11E have not started. |
 | Phase 12 | Subscription System | Not started |
 | Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
 | Phase 14 | Production Readiness | Not started |
@@ -241,7 +241,7 @@ Phase 4 implementation and merged-scope verification are recorded as complete. T
 5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/corrections, filters and printable Hindi/English ledger.
 6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
 7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention. **Deferred to a future release by Product Owner instruction; do not start.**
-8. **Phase 11 — Reports, Printing and Exports:** reviewed/planned but not started; tenant-scoped reports, PDF and CSV/Excel-compatible exports, totals reconciled to authoritative records. Requires explicit start authorization.
+8. **Phase 11 — Reports, Printing and Exports:** authorized; Batch 11A report definitions/read-only data contracts in progress; 11B–11E not started. Reports, PDF and CSV/Excel-compatible exports must reconcile to authoritative records.
 9. **Phase 12 — Subscription System:** shop-level plans, trial, monthly/annual billing, renewal/expiry, three-day grace period, read-only enforcement and Owner data export. Do not invent pricing/entitlements.
 10. **Phase 13 — API Finalization and Android Readiness:** complete approved versioned REST API, auth/customer/sales/payment/ledger/interest/settlement/file endpoints, documentation and integration tests. Current auth routes are under `/api`; approved architecture specifies `/api/v1`, so versioning remains outstanding.
 11. **Phase 14 — Production Readiness:** hosting, HTTPS, secure configuration, encrypted off-site backup, restore tests, monitoring, logging, security/performance review and deployment/recovery procedures.
@@ -718,8 +718,8 @@ Inspected current `main` routes, financial controllers, workspace Blade view, le
 5. 11E — Financial reconciliation, tenant/role authorization, export parity, no-write verification, full regression and Product Owner browser acceptance.
 
 **Phase 11 approval and safety gates:**
-- This is a review and proposal only. Phase 11 has not started.
-- Do not create code, migrations, export packages, endpoints, UI or branches for implementation until explicitly authorized.
+- This section records the original review/proposal before authorization. The Product Owner subsequently authorized Phase 11; see Section 34 and the current Batch 11A status.
+- No code, migrations, export packages, endpoints or UI are authorized by the review itself; Phase 11 authorization is recorded in Section 34. Each later batch remains subject to its acceptance/approval gate.
 - Do not introduce new ledger entries, payments, interest postings, projection repairs or other financial writes.
 - Reuse existing financial source records and policies; do not duplicate accounting calculations.
 - Any report metric without an authoritative, documented source or date-boundary definition must be clarified before coding.
