@@ -104,7 +104,10 @@ class SaleController extends Controller
         $sale = Sale::query()->findOrFail($sale);
         Gate::authorize('revise', $sale);
 
-        $request->merge(['reason' => trim((string) $request->input('reason', ''))]);
+        $reason = $request->input('reason');
+        if (is_string($reason)) {
+            $request->merge(['reason' => trim($reason)]);
+        }
 
         $data = $request->validate([
             'description' => ['nullable', 'string', 'max:5000'],
