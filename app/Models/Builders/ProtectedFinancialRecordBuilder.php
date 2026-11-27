@@ -2,6 +2,7 @@
 
 namespace App\Models\Builders;
 
+use Illuminate\Database\Eloquent\Model;
 use LogicException;
 
 /**
@@ -34,7 +35,7 @@ class ProtectedFinancialRecordBuilder extends TenantOwnedBuilder
         $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
 
         if (($caller['function'] ?? null) === 'performUpdate'
-            && is_a($caller['class'] ?? '', IlluminateDatabaseEloquentModel::class, true)) {
+            && is_a($caller['class'] ?? '', Model::class, true)) {
             return parent::update($values);
         }
 
