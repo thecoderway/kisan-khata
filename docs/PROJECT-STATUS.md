@@ -1,8 +1,8 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `340f74302605899719514d2a6d1d39fe76db41b5` (2026-11-27), including PRs #53–#56 financial UI follow-ups, PR #58 customer lifecycle visibility, PR #59 documentation synchronization and PR #60 legacy Interest Policy setup/drawer UI.  
-**Project Status:** Phase 2–4 remain merged and accepted for their recorded scopes. Phase 5 implementation and automated financial acceptance through Batch 8.8 are merged; PRs #53–#56 and #60 provide subsequent UI and legacy-policy follow-ups. The Product Owner reports that the remaining manual browser tests they performed are passing. The controlled Projection Mismatch/Repair scenario has now passed in the local Demo Shop; formal Phase 5 sign-off remains open pending explicit Product Owner acceptance. Production readiness and repository-admin governance checks remain separate later-stage gates. No production deployment or release is claimed.  
+**Status Snapshot Base:** `main` at `2651776c0698d14bb3c51743f4c541ac110ab114` (2026-11-27), including PR #66 Batch 7B Payment reversal/replacement safeguards.  
+**Project Status:** Phase 2–4 remain merged and accepted for their recorded scopes. Phase 5 implementation and automated financial acceptance through Batch 8.8 are merged; PR #66 adds Batch 7B Payment reversal/replacement safeguards. Batch 7C combined lifecycle acceptance is now in progress on a dedicated feature branch. The Product Owner reports that the remaining manual browser tests they performed are passing. The controlled Projection Mismatch/Repair scenario has now passed in the local Demo Shop; formal Phase 5 sign-off remains open pending explicit Product Owner acceptance. Production readiness and repository-admin governance checks remain separate later-stage gates. No production deployment or release is claimed.  
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -472,3 +472,23 @@ This is local development evidence only. It does not constitute production verif
 **Remaining Phase 5 gate:** explicit Product Owner final acceptance/sign-off. Do not start Phase 6 implementation until that sign-off is given.
 
 **Git branch policy:** main is the sole permanent integration branch. Other branches are temporary PR branches and should be deleted after their PRs are merged. Do not create a parallel master branch or retain long-lived feature/documentation branches.
+
+## 26. Phase 5 — Batch 7B merged and Batch 7C combined acceptance (2026-11-27)
+
+### Batch 7B — Payment reversal/replacement safeguards
+
+- PR [#66](https://github.com/thecoderway/kisan-khata/pull/66) merged into `main`.
+- Merge commit: `2651776c0698d14bb3c51743f4c541ac110ab114`.
+- Exact PR head `3245b2a730221da0372f211b2c16b60a1dd7534d` passed GitHub Actions CI, including Pint, frontend tests/build, MySQL row-lock integration and the remaining Laravel suite.
+- Protected builder safeguards cover 12 immutable/append-only financial record models. Reversal rollback, inactive Owner, later-Payment dependency, completed annual settlement restriction, idempotency and Payment Details history regression tests are included.
+- No migration/schema or production changes.
+
+### Batch 7C — Combined financial lifecycle acceptance
+
+- Dedicated branch: `test/batch-7c-combined-financial-acceptance`.
+- Acceptance specification: [Batch 7C Combined Financial Lifecycle Acceptance](phase-5-batch-7c-combined-financial-lifecycle-acceptance.md).
+- Added a combined multi-Sale lifecycle acceptance test to `Batch87FinancialWorkflowAcceptanceTest`: two ₹5,000 unpaid Sales; ₹4,000 and ₹2,000 normal Payments; FIFO allocation across both Sales; reverse the latest Payment and post an equal replacement; verify Sale statuses, ₹4,000 final payable, ledger net, audit actor/reason, Payment Details revision history and reconciliation.
+- Existing Batch 6, 7B, 8.7 and 8.8 tests are reused for projection repair, authorization/tenant isolation, rollback/idempotency, interest and MySQL 8.4 concurrency rather than reimplementing those engines.
+- **Current state:** implementation branch prepared; exact-head CI and Product Owner manual UI acceptance are pending. Batch 7C is not yet marked complete.
+- No migrations, schema changes, production DB operations, deployment or release. Permanent exclusions remain Crop/Season tagging, Sale Bill Attachment and Payment Receipt Attachment; no advance balances or physical deletion.
+
