@@ -94,3 +94,8 @@ Do not present stale results as if they were current after a failed refresh. Pre
 - [ ] Action dropdowns are not clipped and remain in the viewport.
 - [ ] Loading, empty, error and populated states are handled.
 - [ ] Desktop, tablet and mobile viewports are checked.
+
+
+## Financial listing API parameter convention
+
+The Sales and Payments APIs use Laravel paginator query parameters consistently: `page` and `per_page`. The accepted page sizes are 10, 20, 50 and 100; the default is 20 and the server enforces the 100-row maximum. Sales additionally supports `q`, `from`, `to`, `payment_status` and `sort`. Payments supports `q`, `from`, `to`, `payment_method` and `sort`. Search and filters are applied by the tenant-scoped backend query before pagination.
