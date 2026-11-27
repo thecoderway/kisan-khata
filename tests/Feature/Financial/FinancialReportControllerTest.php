@@ -80,6 +80,63 @@ class FinancialReportControllerTest extends TestCase
             ->assertJsonPath('data.0.principal', '100.00');
     }
 
+    public function test_customer_id_filter_distinguishes_customers_with_identical_names(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+
+        $duplicateId = DB::table('customers')->insertGetId([
+            'shop_id' => $shop->getKey(),
+            'name_original' => $customer->name_original,
+            'name_original_language' => $customer->name_original_language,
+            'name_hi' => $customer->name_hi,
+            'name_en' => $customer->name_en,
+            'status' => Customer::STATUS_ACTIVE,
+            'created_by' => $owner->getKey(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $duplicate = Customer::query()->findOrFail($duplicateId);
+
+        app(SalePostingService::class)->post(
+            $owner, $customer, Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-01'), '100.00', 'First same-name customer sale', 'report-same-name-first',
+        );
+        app(SalePostingService::class)->post(
+            $owner, $duplicate, Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-01'), '250.00', 'Second same-name customer sale', 'report-same-name-second',
+        );
+        app(PaymentPostingService::class)->post(
+            $owner, $customer, '30.00', CarbonImmutable::parse('2026-11-02'),
+            'CASH', null, 'First customer payment', 'report-same-name-payment',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->getJson('/api/v1/reports/outstanding?as_of=2026-11-02&customer_id='.$customer->getKey())
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.customer_id', $customer->getKey())
+            ->assertJsonPath('data.0.principal', '70.00');
+
+        $this->getJson('/api/v1/reports/sales?customer_id='.$customer->getKey())
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.customer_id', $customer->getKey())
+            ->assertJsonPath('summary.gross_sales', '100.00');
+
+        $this->getJson('/api/v1/reports/payments?customer_id='.$customer->getKey())
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.customer_id', $customer->getKey());
+
+        $this->getJson('/api/v1/reports/sales?customer_id='.$duplicate->getKey())
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.customer_id', $duplicate->getKey())
+            ->assertJsonPath('summary.gross_sales', '250.00');
+    }
+
     public function test_payment_report_separates_replacement_and_sale_day_auto_from_cash_collection(): void
     {
         [$shop, $owner, $customer] = $this->context();
@@ -162,11 +219,12 @@ class FinancialReportControllerTest extends TestCase
 
         Sanctum::actingAs($owner, ['app']);
 
-        $this->getJson('/api/v1/reports/interest')
+        $this->getJson('/api/v1/reports/interest?customer_id='.$customer->getKey())
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('summary.item_count', 1)
             ->assertJsonPath('summary.posted_interest_total', $item->posted_interest)
+            ->assertJsonPath('data.0.customer_id', $customer->getKey())
             ->assertJsonPath('data.0.ledger_entry_id', $item->ledger_entry_id);
 
         DB::table('interest_calculation_items')->where('id', $item->getKey())
