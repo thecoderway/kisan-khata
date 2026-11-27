@@ -4,6 +4,18 @@ namespace Tests\Feature\Financial;
 
 use App\Models\AuditLog;
 use App\Models\Customer;
+use App\Models\FinancialTransaction;
+use App\Models\InterestCalculationItem;
+use App\Models\InterestCalculationRun;
+use App\Models\InterestLot;
+use App\Models\InterestLotEvent;
+use App\Models\InterestSettlementItem;
+use App\Models\InterestSettlementRun;
+use App\Models\LedgerEntry;
+use App\Models\Payment;
+use App\Models\PaymentAllocation;
+use App\Models\PaymentAllocationItem;
+use App\Models\PaymentRevision;
 use App\Models\Shop;
 use App\Models\User;
 use App\Modules\Financial\Application\FinancialAuditService;
@@ -17,6 +29,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -698,18 +711,18 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
     {
         $this->context();
         $models = [
-            \App\Models\Payment::class,
-            \App\Models\PaymentRevision::class,
-            \App\Models\PaymentAllocation::class,
-            \App\Models\PaymentAllocationItem::class,
-            \App\Models\LedgerEntry::class,
-            \App\Models\InterestLotEvent::class,
-            \App\Models\FinancialTransaction::class,
-            \App\Models\InterestCalculationRun::class,
-            \App\Models\InterestCalculationItem::class,
-            \App\Models\InterestLot::class,
-            \App\Models\InterestSettlementRun::class,
-            \App\Models\InterestSettlementItem::class,
+            Payment::class,
+            PaymentRevision::class,
+            PaymentAllocation::class,
+            PaymentAllocationItem::class,
+            LedgerEntry::class,
+            InterestLotEvent::class,
+            FinancialTransaction::class,
+            InterestCalculationRun::class,
+            InterestCalculationItem::class,
+            InterestLot::class,
+            InterestSettlementRun::class,
+            InterestSettlementItem::class,
         ];
 
         foreach ($models as $modelClass) {
@@ -761,7 +774,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             'idempotency_keys' => DB::table('idempotency_keys')->count(),
         ];
 
-        $audit = \Mockery::mock(FinancialAuditService::class);
+        $audit = Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')->once()
             ->andThrow(new RuntimeException('Simulated Payment reversal audit failure.'));
         $this->app->instance(FinancialAuditService::class, $audit);
