@@ -202,7 +202,9 @@ const refresh = async ({ history = 'none' } = {}) => {
     const controller = new AbortController();
     activeController = controller;
     root.setAttribute('aria-busy', 'true');
-    root.insertAdjacentHTML('afterbegin', '<div class="financial-loading-indicator" data-financial-loading role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> परिणाम अपडेट हो रहे हैं…</div>');
+    if (!root.querySelector('[data-financial-loading]')) {
+        root.insertAdjacentHTML('afterbegin', '<div class="financial-loading-indicator" data-financial-loading role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> परिणाम अपडेट हो रहे हैं…</div>');
+    }
     feedback.textContent = '';
     try {
         await loaders[section](controller.signal);
