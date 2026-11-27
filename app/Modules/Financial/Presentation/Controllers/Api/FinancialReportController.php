@@ -62,7 +62,7 @@ class FinancialReportController extends Controller
                         ->orWhere('c.mobile', 'like', $term);
                 });
             })
-            ->when(($filters['positive_only'] ?? false) === true, fn (Builder $builder) => $builder->whereRaw('(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)) > 0'))
+            ->when(filter_var($filters['positive_only'] ?? false, FILTER_VALIDATE_BOOLEAN), fn (Builder $builder) => $builder->whereRaw('(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)) > 0'))
             ->orderBy('c.name_original')->orderBy('c.id');
 
         $summary = (clone $query)->reorder()->selectRaw('COUNT(*) AS customer_count')
@@ -193,6 +193,7 @@ class FinancialReportController extends Controller
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('p.payment_date', '<=', $filters['to']))
             ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('p.customer_id', $filters['customer_id']))
             ->when(isset($filters['payment_method']), fn (Builder $builder) => $builder->where('p.payment_method', $filters['payment_method']))
+            ->when(isset($filters['payment_type']), fn (Builder $builder) => $builder->where('p.payment_type', $filters['payment_type']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
                 $term = '%'.trim($filters['q']).'%';
                 $builder->whereExists(function (Builder $sub) use ($term): void {
