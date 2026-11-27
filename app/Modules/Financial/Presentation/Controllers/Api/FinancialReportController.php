@@ -213,7 +213,17 @@ class FinancialReportController extends Controller
         $summaryRows = (clone $totals)->selectRaw("
             COALESCE(SUM(CASE WHEN p.payment_type = 'NORMAL' AND p.replacement_for_payment_id IS NULL THEN p.amount ELSE 0 END), 0) AS normal_receipts,
             COALESCE(SUM(CASE WHEN p.payment_type = 'NORMAL' AND p.replacement_for_payment_id IS NOT NULL THEN p.amount ELSE 0 END), 0) AS unverified_replacements,
-            COALESCE(SUM(CASE WHEN p.payment_type = 'REVERSAL' THEN p.amount ELSE 0 END), 0) AS reversals,
+            COALESCE(SUM(CASE
+                WHEN p.payment_type = 'REVERSAL'
+                    AND EXISTS (
+                        SELECT 1
+                        FROM payments AS reversed_original
+                        WHERE reversed_original.id = p.reversal_of_payment_id
+                            AND reversed_original.shop_id = p.shop_id
+                            AND reversed_original.payment_type = 'NORMAL'
+                            AND reversed_original.replacement_for_payment_id IS NULL
+                    )
+                THEN p.amount ELSE 0 END), 0) AS reversals,
             COALESCE(SUM(CASE WHEN p.payment_type = 'SALE_DAY_AUTO' THEN p.amount ELSE 0 END), 0) AS auto_settlements
         ")->first();
 
@@ -253,7 +263,18 @@ class FinancialReportController extends Controller
             })
             ->leftJoin('ledger_entries as le', function ($join): void {
                 $join->on('le.id', '=', 'i.ledger_entry_id')->on('le.shop_id', '=', 'i.shop_id')
-                    ->on('le.customer_id', '=', 'i.customer_id');
+                    ->on('le.customer_id', '=', 'i.customer_id')
+                    ->where('le.debit_amount', '=', DB::raw('i.posted_interest'))
+                    ->where('le.credit_amount', '=', '0')
+                    ->where(function ($entry): void {
+                        $entry->where(function ($interest): void {
+                            $interest->where('le.entry_kind', 'INTEREST')
+                                ->where('le.component', 'INTEREST');
+                        })->orWhere(function ($capitalization): void {
+                            $capitalization->where('le.entry_kind', 'CAPITALIZATION')
+                                ->where('le.component', 'PRINCIPAL');
+                        });
+                    });
             })
             ->leftJoin('sales as s', function ($join): void {
                 $join->on('s.id', '=', 'i.sale_id')->on('s.shop_id', '=', 'i.shop_id')
@@ -278,7 +299,7 @@ class FinancialReportController extends Controller
 
         $summaryQuery = (clone $query)->reorder();
         $summary = $summaryQuery->selectRaw('COUNT(*) AS item_count')
-            ->selectRaw('COALESCE(SUM(CASE WHEN i.ledger_entry_id IS NOT NULL THEN i.posted_interest ELSE 0 END), 0) AS posted_interest_total')
+            ->selectRaw('COALESCE(SUM(CASE WHEN le.id IS NOT NULL THEN i.posted_interest ELSE 0 END), 0) AS posted_interest_total')
             ->first();
 
         $paginator = $query->paginate((int) ($filters['per_page'] ?? 20));
