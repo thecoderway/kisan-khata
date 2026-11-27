@@ -763,8 +763,3 @@ The Product Owner approved all three Batch 11A decisions on 2026-11-27:
 
 No production operation, deployment or release is authorized.
 
-- First-pass definitions cover Customer Outstanding as-of snapshot, Sales Register/Summary, Payment Register/Collection Summary, and Interest Calculation/Posted Interest.
-- No source-of-truth change, code, migration, dependency, API, UI, export, PDF or database mutation was made in this audit/specification update.
-- Product Owner decisions still required before 11B: (1) whether zero/negative-balance customers appear by default in Outstanding; (2) confirm the cash collection equation and treatment of sale-day automatic/reversal/replacement Payments; (3) confirm whether Interest report access remains Owner-only or expands to Manager.
-- 11A acceptance remains open until decisions, sample layouts and source-to-report reconciliation checks are approved.
-- No production operation, deployment or release is authorized.
