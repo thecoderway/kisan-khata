@@ -1,8 +1,9 @@
 # Phase 5 — Batch 7: Authorization, APIs & Financial UI
 
-**Status:** Proposed implementation plan; no Batch 7 application implementation authorized by this document  
+**Status:** Historical planning specification; Batch 7 implementation was subsequently merged through PR #43. This document preserves the intended authorization/API/UI contract and is retained for traceability, not as a claim that Batch 7 remains unimplemented. Current delivery and acceptance state is recorded in `docs/PROJECT-STATUS.md` and `docs/phase-5-batch-8-financial-integrity-fixes.md`.  
 **Base branch:** `main`  
-**Planning baseline:** Batch 6 merged at `d73c8c103889b6aa777f3701f280945afdc8227e`  
+**Original planning baseline:** Batch 6 merged at `d73c8c103889b6aa777f3701f280945afdc8227e`  
+**Current documentation baseline:** `main` at `62419de9872f84a38a6d8d422e11dbadca73a1ca` (2026-11-27)  
 **Controlling decisions:** ADR-0010, ADR-0012, ADR-0013, ADR-0014  
 **Stack:** Laravel 13, PHP 8.3, MySQL 8.4, Blade, Tabler, Alpine.js, Vite, Sanctum
 
@@ -31,7 +32,11 @@ The current `main` branch already contains:
 - role policies for Customer, User Management and User Audit Log;
 - shared Action Drawer component and its approved UI standards.
 
-The current financial presentation layer is incomplete: no dedicated Sales, Payments, Customer Ledger, Interest Settings or Reconciliation web pages/controllers were found in the audited route/view inventory. The financial API currently exposes Payment correction only. Existing services must be inspected for exact method signatures and invariants before wiring controllers.
+**Historical statement at the time this plan was drafted:** the financial presentation/API layer was incomplete. That statement is superseded by subsequent merged work. On the current `main` branch, PR #43 delivered the Batch 7 financial authorization, API and web workspace foundation. `routes/web.php` exposes the shared `/financial/{section}` workspace for Sales, Payments, Customer Ledger, Interest Settings, Reconciliation and financial audit. `routes/api.php` exposes tenant-scoped `/api/v1` Sales, Payments, Customer Ledger, Reconciliation/repair, Interest Policy and financial-audit endpoints, alongside Payment correction. The controllers/services are under `app/Modules/Financial`; the principal web workspace is `FinancialWorkspaceController` and `resources/views/financial/workspace.blade.php`.
+
+Subsequent PRs #53–#56 completed customer dropdown loading, brought Sales/Payments tables and drawers into the approved UI contract, corrected drawer layout/pagination presentation, and fixed pagination navigation/sidebar behavior. The Product Owner has manually confirmed the Sales/Payments listing, drawer layout, pagination navigation and sidebar behavior. This does not constitute full Phase 5 browser acceptance: new-Shop registration, tenant isolation, role-based allowed/denied paths and complete financial workflows remain part of the outstanding acceptance gate.
+
+Accordingly, Sections 3–12 below are the original Batch 7 target contract and traceability checklist. They must not be treated as proof that every listed item has passed end-to-end browser acceptance. For current implementation gaps and acceptance evidence, consult the live Project Status and Batch 8 release-gate documents.
 
 No Batch 7 migration is assumed. Reuse the existing schema unless the implementation audit proves a specific missing persisted requirement.
 
