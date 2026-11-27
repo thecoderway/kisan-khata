@@ -698,18 +698,18 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
     {
         $this->context();
         $models = [
-            \\App\\Models\\Payment::class,
-            \\App\\Models\\PaymentRevision::class,
-            \\App\\Models\\PaymentAllocation::class,
-            \\App\\Models\\PaymentAllocationItem::class,
-            \\App\\Models\\LedgerEntry::class,
-            \\App\\Models\\InterestLotEvent::class,
-            \\App\\Models\\FinancialTransaction::class,
-            \\App\\Models\\InterestCalculationRun::class,
-            \\App\\Models\\InterestCalculationItem::class,
-            \\App\\Models\\InterestLot::class,
-            \\App\\Models\\InterestSettlementRun::class,
-            \\App\\Models\\InterestSettlementItem::class,
+            \App\Models\Payment::class,
+            \App\Models\PaymentRevision::class,
+            \App\Models\PaymentAllocation::class,
+            \App\Models\PaymentAllocationItem::class,
+            \App\Models\LedgerEntry::class,
+            \App\Models\InterestLotEvent::class,
+            \App\Models\FinancialTransaction::class,
+            \App\Models\InterestCalculationRun::class,
+            \App\Models\InterestCalculationItem::class,
+            \App\Models\InterestLot::class,
+            \App\Models\InterestSettlementRun::class,
+            \App\Models\InterestSettlementItem::class,
         ];
 
         foreach ($models as $modelClass) {
@@ -761,7 +761,7 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             'idempotency_keys' => DB::table('idempotency_keys')->count(),
         ];
 
-        $audit = \\Mockery::mock(FinancialAuditService::class);
+        $audit = \Mockery::mock(FinancialAuditService::class);
         $audit->shouldReceive('recordTransaction')->once()
             ->andThrow(new RuntimeException('Simulated Payment reversal audit failure.'));
         $this->app->instance(FinancialAuditService::class, $audit);
