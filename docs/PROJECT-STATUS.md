@@ -1,9 +1,9 @@
 # Kisan Khata — Project Status
 
 **Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `d1d36622c866ccb2b4113d254f62d7dcdec65a56` (2026-11-27), including merged PR #73 Phase 9 Interest History and Transparency.  
-**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Phase 11 has been reviewed and planned but not started. This documentation update is delivered through a dedicated PR.
-**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports has been reviewed and planned but has not started and requires explicit authorization. No production deployment or release is claimed.
+**Status Snapshot Base:** `main` at `29a2c0f5eec868a2a581a493e681098fe7de1df7` (2026-11-27), including merged PR #75 Phase 10 deferral / Phase 11 plan.  
+**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Product Owner authorized Phase 11 and approved all three Batch 11A report decisions on 2026-11-27. Batch 11A source verification found a replacement-cash evidence gap and an Owner-only Interest API authorization gap; both remain 11A/11B gates.
+**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports is authorized and Batch 11A (report definitions/read-only data contracts) is in progress; 11B–11E have not started. No production deployment or release is claimed.
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -74,7 +74,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. |
 | Phase 9 | Interest Engine | **COMPLETE / ACCEPTED — 2026-11-27.** PR #73 merged as `6a9146c496b82143a7813683ed32a178eb60efb3`; exact-head CI passed. Product Owner confirmed UI, calculation breakdown, filters and pagination. Browser before/after DB comparison was not independently performed; automated read-only regression tests passed. |
 | Phase 10 | Crop-Season Settlement | **DEFERRED TO FUTURE RELEASE — NOT STARTED.** Product Owner explicitly deferred this phase on 2026-11-27. Do not schedule or resume without explicit reactivation. |
-| Phase 11 | Reports, Printing and Exports | **REVIEWED / PLANNED — NOT STARTED.** Existing list APIs, ledger print/PDF and interest history are reusable foundations; aggregate report APIs/UI and general CSV/XLSX exports are not present in inspected scope. Requires Product Owner authorization to begin. |
+| Phase 11 | Reports, Printing and Exports | **AUTHORIZED — Batch 11A IN PROGRESS.** First-pass report definitions and read-only source contracts are documented; 11A Product Owner decisions and acceptance remain open. Batches 11B–11E have not started. |
 | Phase 12 | Subscription System | Not started |
 | Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
 | Phase 14 | Production Readiness | Not started |
@@ -241,7 +241,7 @@ Phase 4 implementation and merged-scope verification are recorded as complete. T
 5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/corrections, filters and printable Hindi/English ledger.
 6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
 7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention. **Deferred to a future release by Product Owner instruction; do not start.**
-8. **Phase 11 — Reports, Printing and Exports:** reviewed/planned but not started; tenant-scoped reports, PDF and CSV/Excel-compatible exports, totals reconciled to authoritative records. Requires explicit start authorization.
+8. **Phase 11 — Reports, Printing and Exports:** authorized; Batch 11A report definitions/read-only data contracts in progress; 11B–11E not started. Reports, PDF and CSV/Excel-compatible exports must reconcile to authoritative records.
 9. **Phase 12 — Subscription System:** shop-level plans, trial, monthly/annual billing, renewal/expiry, three-day grace period, read-only enforcement and Owner data export. Do not invent pricing/entitlements.
 10. **Phase 13 — API Finalization and Android Readiness:** complete approved versioned REST API, auth/customer/sales/payment/ledger/interest/settlement/file endpoints, documentation and integration tests. Current auth routes are under `/api`; approved architecture specifies `/api/v1`, so versioning remains outstanding.
 11. **Phase 14 — Production Readiness:** hosting, HTTPS, secure configuration, encrypted off-site backup, restore tests, monitoring, logging, security/performance review and deployment/recovery procedures.
@@ -718,9 +718,55 @@ Inspected current `main` routes, financial controllers, workspace Blade view, le
 5. 11E — Financial reconciliation, tenant/role authorization, export parity, no-write verification, full regression and Product Owner browser acceptance.
 
 **Phase 11 approval and safety gates:**
-- This is a review and proposal only. Phase 11 has not started.
-- Do not create code, migrations, export packages, endpoints, UI or branches for implementation until explicitly authorized.
+- This section records the original review/proposal before authorization. The Product Owner subsequently authorized Phase 11; see Section 34 and the current Batch 11A status.
+- No code, migrations, export packages, endpoints or UI are authorized by the review itself; Phase 11 authorization is recorded in Section 34. Each later batch remains subject to its acceptance/approval gate.
 - Do not introduce new ledger entries, payments, interest postings, projection repairs or other financial writes.
 - Reuse existing financial source records and policies; do not duplicate accounting calculations.
 - Any report metric without an authoritative, documented source or date-boundary definition must be clarified before coding.
 - Settlement reporting is excluded while Phase 10 is deferred.
+
+
+## 34. Phase 11 authorization and Batch 11A start (2026-11-27)
+
+### Product Owner direction
+
+- Product Owner explicitly authorized Phase 11 Reports, Printing and Exports to start.
+- Phase 10 Crop-Season Settlement remains deferred to a future release. It is not part of Phase 11 and must not be audited, designed or implemented unless separately reactivated.
+- Batch 11A is active on branch `feature/phase-11-batch-11a-report-contracts`, created from `main` commit `29a2c0f5eec868a2a581a493e681098fe7de1df7`.
+- The detailed first-pass contract is in `docs/phase-11-batch-11a-report-definitions.md`.
+
+### Read-only source audit completed
+
+- Reviewed routes in `routes/api.php` and `routes/web.php`; existing Shop tenant middleware wraps financial APIs and workspace routes.
+- Reviewed `SaleController::index` and `PaymentController::index`: both list only posted records, apply inclusive `from`/`to` filters on their business dates, support Customer/search filters and deterministic date/ID or amount/ID sorting.
+- Reviewed `CustomerLedgerController::show`: reads append-only `ledger_entries`, consolidates allocation-level Payment/Reversal entries for customer display, orders by `effective_date → sequence_number → id`, and uses Brick Math for separate principal/interest running balances and opening balances.
+- Reviewed `Sale`, `Payment`, `LedgerEntry`, `InterestCalculationRun` and `InterestCalculationItem` models and the ledger/interest migrations. Posted Sales/Payments and completed interest history are protected from ordinary mutation; ledger entries and interest items are append-only.
+- Reviewed ADR-0010, ADR-0012, ADR-0015 and ADR-0016 for role access, financial immutability, payment/reversal, interest and customer lifecycle rules.
+- Existing Interest workspace is Owner-only. Staff Shop-wide read permission for Sales, Payments and Customer Ledger does not automatically grant access to detailed interest policy/run metadata.
+
+### Batch 11A approved decisions and source verification
+
+The Product Owner approved all three Batch 11A decisions on 2026-11-27:
+
+1. **Customer Outstanding — Option A:** include all customers with financial history by default, including zero and negative balances. Positive-only is an explicit optional filter.
+2. **Payment Collection — Option A:** NORMAL receipts less linked NORMAL reversals; SALE_DAY_AUTO is separate and excluded from cash collection. A replacement is counted only after an audit confirms actual receipt; posting/linkage alone is not proof.
+3. **Interest Access — Option A:** detailed Interest Calculation and Posted Interest reports are Owner-only. Manager and Staff remain denied; existing Staff ledger visibility is unchanged.
+
+**Source-level findings (read-only):**
+- Payment reversal source supports only original NORMAL Payments, writes a separately linked REVERSAL Payment, reversing ledger entries, immutable PaymentRevision and audit event. Optional replacement is a separate NORMAL Payment with `replacement_for_payment_id` and a REPLACEMENT revision.
+- Existing source does not persist a dedicated actual-cash-confirmation/evidence field. Replacement-linked amount must remain outside confirmed cash collection until an auditable evidence mechanism is defined.
+- SALE_DAY_AUTO is a distinct payment type and is not supported as an original Payment by the current reversal service; it remains separately reported and excluded from cash collection.
+- **Interest API authorization gap found:** web Financial Workspace blocks non-Owner users from the Interest section, but both Interest Calculation History API actions use `viewCustomerLedger`; CustomerLedgerPolicy permits Owner, Manager and Staff. UI restrictions do not secure the API. A dedicated Owner-only API authorization check and Owner/Manager/Staff regression tests are mandatory before exposing reports.
+- Tenant scopes, immutable ledger/interest models and existing Payment correction/reconciliation tests were inspected. No code, migrations or database records were changed.
+
+**Interest History API security correction committed on the Batch 11A branch:**
+- Added dedicated `viewInterestCalculationHistory` authorization requiring an active Owner in the same Shop.
+- Both existing Interest History API actions (`index` and `show`) now use that Gate before querying detailed calculation history.
+- Added regression coverage for Owner allow, Manager/Staff 403 on both endpoints, and inactive Owner 403 on both endpoints.
+- Existing `viewCustomerLedger` Gate and Manager/Staff Customer Ledger access remain unchanged.
+- This closes the previously identified existing-history API authorization gap at source level. Pint, targeted test execution and exact-head CI verification are pending.
+
+**Remaining 11A gates:** finalize the auditable actual-collection evidence mechanism for replacement Payments; verify report-specific reconciliation equations against MySQL fixtures (including all/zero/negative Outstanding, NORMAL receipt/reversal pairs, replacement inclusion/exclusion, SALE_DAY_AUTO separation and interest ledger links); approve sample layouts and response schemas. Batch 11A remains IN PROGRESS; Batch 11B has not started. Detailed evidence is in `docs/phase-11-batch-11a-report-definitions.md`.
+
+No production operation, deployment or release is authorized.
+

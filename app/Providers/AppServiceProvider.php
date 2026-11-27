@@ -51,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('viewCustomerLedger', fn (User $actor, Customer $customer): bool => app(CustomerLedgerPolicy::class)->view($actor, $customer));
 
+        Gate::define('viewInterestCalculationHistory', fn (User $actor, Customer $customer): bool => (bool) $actor->is_active && $actor->role === User::ROLE_OWNER && $actor->shop_id !== null && (string) $actor->shop_id === (string) $customer->shop_id);
+
         Gate::define('viewFinancialAudit', fn (User $actor): bool => app(FinancialAuditPolicy::class)->viewAny($actor));
         Gate::define('viewReconciliation', fn (User $actor): bool => app(ReconciliationPolicy::class)->viewAny($actor));
         Gate::define('viewCustomerReconciliation', fn (User $actor, Customer $customer): bool => app(ReconciliationPolicy::class)->viewCustomer($actor, $customer));

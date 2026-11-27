@@ -15,7 +15,7 @@ class InterestCalculationHistoryController extends Controller
     public function index(Request $request, int $customer): JsonResponse
     {
         $customer = Customer::withTrashed()->findOrFail($customer);
-        Gate::authorize('viewCustomerLedger', $customer);
+        Gate::authorize('viewInterestCalculationHistory', $customer);
 
         $filters = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
@@ -74,7 +74,7 @@ class InterestCalculationHistoryController extends Controller
     public function show(Request $request, int $customer, int $run): JsonResponse
     {
         $customer = Customer::withTrashed()->findOrFail($customer);
-        Gate::authorize('viewCustomerLedger', $customer);
+        Gate::authorize('viewInterestCalculationHistory', $customer);
 
         $calculationRun = InterestCalculationRun::query()
             ->where('customer_id', $customer->getKey())

@@ -568,7 +568,7 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 
 ## 14. Phase 11 — Reports, Printing and Exports
 
-**Status: REVIEWED AND PLANNED — NOT STARTED.** Phase 11 is the next candidate phase only after the Product Owner authorizes it. Phase 10 remains deferred and is not a prerequisite for the non-settlement reports below. A Crop-Season Settlement Report is explicitly excluded until Phase 10 is reactivated and delivered.
+**Status: IN PROGRESS — Batch 11A report definitions and read-only data contracts.** Phase 11 implementation was explicitly authorized by the Product Owner on 2026-11-27. Batch 11A is active; later batches remain gated by their defined acceptance and approval criteria. Phase 10 remains deferred and is not a prerequisite for the non-settlement reports below. A Crop-Season Settlement Report is explicitly excluded until Phase 10 is reactivated and delivered.
 
 ### Objectives
 
@@ -593,7 +593,7 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 
 ### Proposed delivery plan (subject to Product Owner approval)
 
-**11A — Report definitions and read-only data contracts**
+**11A — Report definitions and read-only data contracts (IN PROGRESS)**
 - Confirm report columns, date semantics, status treatment, totals, grouping and role visibility.
 - Map each metric to existing posted financial records / immutable ledger data and existing policy-calculation records.
 - Define as-of outstanding semantics and treatment of reversals/replacements before coding.

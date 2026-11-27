@@ -132,7 +132,7 @@ class InterestCalculationServiceTest extends TestCase
         $this->assertDatabaseCount('ledger_entries', 5);
     }
 
-    public function test_customer_interest_history_api_is_read_only_scoped_and_explains_calculation_items(): void
+    public function test_owner_interest_history_api_is_read_only_scoped_and_explains_calculation_items(): void
     {
         [$shop, $owner, $customer] = $this->makeCustomerContext();
         $sale = app(SalePostingService::class)->post(
@@ -173,10 +173,7 @@ class InterestCalculationServiceTest extends TestCase
         ]);
         $run = app(InterestCalculationService::class)->calculateForSettlement($owner, $customer, $settlement);
 
-        $staff = User::factory()->create([
-            'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
-        ]);
-        Sanctum::actingAs($staff, ['app']);
+        Sanctum::actingAs($owner, ['app']);
 
         $runCount = DB::table('interest_calculation_runs')->where('shop_id', $shop->getKey())->count();
         $itemCount = DB::table('interest_calculation_items')->where('shop_id', $shop->getKey())->count();
