@@ -29,11 +29,6 @@ class ProtectedFinancialRecordBuilder extends TenantOwnedBuilder
         $this->rejectBulkMutation();
     }
 
-    public function insertGetId(array $values, $sequence = null)
-    {
-        $this->rejectBulkMutation();
-    }
-
     public function update(array $values)
     {
         $this->rejectBulkMutation();
