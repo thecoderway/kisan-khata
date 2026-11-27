@@ -312,7 +312,7 @@ Alpine.start();
 document.addEventListener('click', async (event) => {
     const closeButton = event.target.closest('[data-drawer-close]');
     if (closeButton) {
-        document.querySelector('.kk-drawer-root')?.dispatchEvent(new CustomEvent('kk-drawer:close', { bubbles: true }));
+        closeButton.closest('.kk-drawer-root')?.dispatchEvent(new CustomEvent('kk-drawer:close', { bubbles: true }));
         return;
     }
 
