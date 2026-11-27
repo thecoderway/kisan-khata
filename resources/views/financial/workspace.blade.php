@@ -26,23 +26,40 @@
 </div>
 
 <div class="content-card mb-3">
-    <div class="financial-toolbar">
-        <div class="financial-filter-grid">
-            @if (in_array($section, ['ledger', 'reconciliation'], true))
-                <div><label class="form-label" for="financial-customer">ग्राहक</label><select class="form-select" id="financial-customer"><option value="">ग्राहक चुनें</option></select></div>
-            @endif
-            @if (in_array($section, ['sales', 'payments', 'ledger', 'audit'], true))
-                <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from"></div>
-                <div><label class="form-label" for="financial-to">तक तारीख</label><input class="form-control" type="date" id="financial-to"></div>
-            @endif
-            @if ($section === 'audit')
-                <div><label class="form-label" for="financial-action">Action</label><input class="form-control" id="financial-action" placeholder="financial.*"></div>
-            @endif
-            <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="financial-refresh" type="button"><i class="ti ti-refresh me-1"></i> रिफ्रेश</button></div>
+    @if (in_array($section, ['sales', 'payments'], true))
+        <form id="financial-filters" class="financial-toolbar" role="search">
+            <div class="financial-filter-grid">
+                <div class="financial-search-field"><label class="form-label" for="financial-search">खोजें</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span><input class="form-control" type="search" id="financial-search" name="q" maxlength="100" placeholder="नंबर, ग्राहक या मोबाइल…" autocomplete="off"></div></div>
+                <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from" name="from"></div>
+                <div><label class="form-label" for="financial-to">तक तारीख</label><input class="form-control" type="date" id="financial-to" name="to"></div>
+                @if ($section === 'sales')
+                    <div><label class="form-label" for="financial-status">भुगतान स्थिति</label><select class="form-select" id="financial-status" name="payment_status"><option value="">सभी स्थितियाँ</option><option value="UNPAID">उधार</option><option value="PARTIALLY_PAID">आंशिक जमा</option><option value="PAID">जमा पूर्ण</option></select></div>
+                @else
+                    <div><label class="form-label" for="financial-method">भुगतान माध्यम</label><select class="form-select" id="financial-method" name="payment_method"><option value="">सभी माध्यम</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select></div>
+                @endif
+                <div><label class="form-label" for="financial-sort">क्रम</label><select class="form-select" id="financial-sort" name="sort"><option value="date_desc">नई तारीख पहले</option><option value="date_asc">पुरानी तारीख पहले</option><option value="amount_desc">बड़ी राशि पहले</option><option value="amount_asc">छोटी राशि पहले</option></select></div>
+                <div class="financial-filter-action"><button class="btn btn-outline-secondary" type="button" data-financial-reset><i class="ti ti-x me-1"></i> साफ़ करें</button></div>
+            </div>
+        </form>
+    @else
+        <div class="financial-toolbar">
+            <div class="financial-filter-grid">
+                @if (in_array($section, ['ledger', 'reconciliation'], true))
+                    <div><label class="form-label" for="financial-customer">ग्राहक</label><select class="form-select" id="financial-customer"><option value="">ग्राहक चुनें</option></select></div>
+                @endif
+                @if (in_array($section, ['ledger', 'audit'], true))
+                    <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from"></div>
+                    <div><label class="form-label" for="financial-to">तक तारीख</label><input class="form-control" type="date" id="financial-to"></div>
+                @endif
+                @if ($section === 'audit')
+                    <div><label class="form-label" for="financial-action">Action</label><input class="form-control" id="financial-action" placeholder="financial.*"></div>
+                @endif
+                <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="financial-refresh" type="button"><i class="ti ti-refresh me-1"></i> रिफ्रेश</button></div>
+            </div>
         </div>
-    </div>
+    @endif
     <div id="financial-feedback" class="px-3 pt-3" aria-live="polite"></div>
-    <div id="financial-results" class="table-responsive">
+    <div id="financial-results" aria-live="polite" aria-busy="true">
         <div class="empty-state"><i class="ti ti-loader-2"></i><h3>डेटा लोड हो रहा है…</h3></div>
     </div>
 </div>
@@ -84,6 +101,17 @@
     </div>
 @endif
 @endsection
+
+@push('drawers')
+    @if (in_array($section, ['sales', 'payments'], true))
+        <x-ui.action-drawer id="financial-action-drawer" title="वित्तीय कार्रवाई" width="wide">
+            <x-slot:footer>
+                <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+                <button type="submit" form="financial-drawer-form" class="btn btn-primary kk-primary" data-financial-drawer-submit>सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
+            </x-slot:footer>
+        </x-ui.action-drawer>
+    @endif
+@endpush
 
 @push('scripts')
 <script>

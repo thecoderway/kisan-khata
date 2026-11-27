@@ -20,6 +20,8 @@ class SaleController extends Controller
 
         $filters = $request->validate([
             'customer_id' => ['nullable', 'integer'],
+            'q' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'payment_status' => ['nullable', Rule::in([
@@ -27,7 +29,8 @@ class SaleController extends Controller
                 Sale::PAYMENT_STATUS_PARTIALLY_PAID,
                 Sale::PAYMENT_STATUS_PAID,
             ])],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
+            'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $query = Sale::query()->with('customer:id,name_original,name_hi,name_en')
@@ -36,9 +39,33 @@ class SaleController extends Controller
             ->when(isset($filters['from']), fn ($q) => $q->whereDate('sale_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn ($q) => $q->whereDate('sale_date', '<=', $filters['to']))
             ->when(isset($filters['payment_status']), fn ($q) => $q->where('payment_status', $filters['payment_status']))
-            ->orderByDesc('sale_date')->orderByDesc('id');
+            ->when(isset($filters['q']), function ($query) use ($filters): void {
+                $term = '%'.trim($filters['q']).'%';
+                $query->where(function ($nested) use ($term): void {
+                    $nested->where('sale_number', 'like', $term)
+                        ->orWhereHas('customer', fn ($customer) => $customer->where('name_original', 'like', $term)
+                            ->orWhere('name_hi', 'like', $term)->orWhere('name_en', 'like', $term)->orWhere('mobile', 'like', $term));
+                });
+            });
 
-        return response()->json($query->paginate((int) ($filters['per_page'] ?? 20)));
+        match ($filters['sort'] ?? 'date_desc') {
+            'date_asc' => $query->orderBy('sale_date')->orderBy('id'),
+            'amount_desc' => $query->orderByDesc('amount')->orderByDesc('id'),
+            'amount_asc' => $query->orderBy('amount')->orderBy('id'),
+            default => $query->orderByDesc('sale_date')->orderByDesc('id'),
+        };
+
+        $paginator = $query->paginate((int) ($filters['per_page'] ?? 20));
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
     }
 
     public function store(Request $request, SalePostingService $posting): JsonResponse
@@ -69,7 +96,7 @@ class SaleController extends Controller
             $key,
         );
 
-        return response()->json(['data' => $sale->fresh()], 201);
+        return response()->json(['success' => true, 'message' => 'बिक्री सफलतापूर्वक पोस्ट हुई।', 'data' => $sale->fresh()], 201);
     }
 
     public function revise(Request $request, int $sale, SaleRevisionService $revisions): JsonResponse
@@ -92,7 +119,7 @@ class SaleController extends Controller
             $key,
         );
 
-        return response()->json(['data' => $revision->fresh()], 201);
+        return response()->json(['success' => true, 'message' => 'बिक्री विवरण संशोधित हो गया है।', 'data' => $revision->fresh()], 201);
     }
 
     public function show(int $sale): JsonResponse

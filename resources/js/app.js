@@ -123,6 +123,22 @@ Alpine.data('actionDrawer', () => ({
         event.preventDefault();
 
         if (form.dataset.submitting === 'true') return;
+        if (form.dataset.confirm) {
+            const customer = form.elements.namedItem('customer_id')?.selectedOptions?.[0]?.textContent?.trim();
+            const amount = form.elements.namedItem('amount')?.value;
+            const date = form.elements.namedItem('sale_date')?.value || form.elements.namedItem('payment_date')?.value;
+            const method = form.elements.namedItem('payment_method')?.selectedOptions?.[0]?.textContent?.trim();
+            const paymentChoice = form.elements.namedItem('payment_choice')?.selectedOptions?.[0]?.textContent?.trim();
+            const summary = [
+                customer ? 'ग्राहक: ' + customer : null,
+                amount ? 'राशि: ₹' + amount : null,
+                date ? 'तारीख: ' + date : null,
+                method ? 'माध्यम: ' + method : null,
+                paymentChoice ? 'भुगतान स्थिति: ' + paymentChoice : null,
+            ].filter(Boolean);
+            const message = [form.dataset.confirm, ...summary].join('\n');
+            if (!window.confirm(message)) return;
+        }
 
         this.submitDrawerForm(form);
     },
@@ -173,7 +189,9 @@ Alpine.data('actionDrawer', () => ({
         form.prepend(summary);
 
         Object.entries(errors).forEach(([name, fieldMessages]) => {
-            const field = Array.from(form.elements).find((element) => element.name === name);
+            const field = Array.from(form.elements).find((element) =>
+                element.name === name || element.name.replace(/\]/g, '').replace(/\[/g, '.') === name
+            );
             if (!field || field.type === 'hidden' || !fieldMessages?.length) return;
 
             field.classList.add('is-invalid');
@@ -204,6 +222,10 @@ Alpine.data('actionDrawer', () => ({
         form.setAttribute('aria-busy', 'true');
         this.clearDrawerErrors(form);
 
+        if (form.hasAttribute('data-idempotency') && !form.dataset.idempotencyKey) {
+            form.dataset.idempotencyKey = crypto.randomUUID();
+        }
+
         submitButtons.forEach((button) => {
             button.disabled = true;
             button.setAttribute('aria-disabled', 'true');
@@ -222,12 +244,20 @@ Alpine.data('actionDrawer', () => ({
         });
 
         try {
+            const formData = new FormData(form);
+            const optionalNestedAmount = form.dataset.optionalNestedAmount;
+            if (optionalNestedAmount && !String(formData.get(optionalNestedAmount) || '').trim()) {
+                const group = optionalNestedAmount.split('[')[0] + '[';
+                Array.from(formData.keys()).filter((name) => name.startsWith(group)).forEach((name) => formData.delete(name));
+            }
+
             const response = await fetch(form.action, {
                 method: (form.method || 'POST').toUpperCase(),
-                body: new FormData(form),
+                body: formData,
                 headers: {
                     Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
+                    ...(form.dataset.idempotencyKey ? { 'Idempotency-Key': form.dataset.idempotencyKey } : {}),
                 },
                 credentials: 'same-origin',
             });
@@ -250,6 +280,7 @@ Alpine.data('actionDrawer', () => ({
             }
 
             delete form.dataset.submitting;
+            delete form.dataset.idempotencyKey;
             this.close();
             window.dispatchEvent(new CustomEvent('kk-toast:show', {
                 detail: {

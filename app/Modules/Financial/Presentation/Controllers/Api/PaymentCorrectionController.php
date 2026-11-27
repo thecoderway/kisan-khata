@@ -44,6 +44,7 @@ class PaymentCorrectionController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'भुगतान सुधार audit के साथ दर्ज हुआ।',
             'data' => [
                 'reversal' => [
                     'id' => $result['reversal']->getKey(),

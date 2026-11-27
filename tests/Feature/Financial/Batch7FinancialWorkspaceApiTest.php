@@ -153,6 +153,11 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
     {
         [$shop, $owner] = $this->context();
         $this->createPolicy($shop, $owner);
+        Sanctum::actingAs($owner, ['app']);
+        $this->getJson('/api/v1/financial-audit?per_page=10')
+            ->assertOk()->assertJsonPath('meta.per_page', 10);
+        $this->getJson('/api/v1/financial-audit?per_page=15')->assertUnprocessable();
+
         $staff = User::factory()->create([
             'shop_id' => $shop->getKey(), 'role' => User::ROLE_STAFF, 'is_active' => true,
         ]);
@@ -305,6 +310,63 @@ class Batch7FinancialWorkspaceApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.annual_settlement_month_1', 2)
             ->assertJsonPath('data.annual_settlement_day_1', 29);
+    }
+
+    public function test_sales_and_payments_listings_support_server_side_search_filters_and_page_sizes(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        Sanctum::actingAs($owner, ['app']);
+
+        for ($index = 1; $index <= 11; $index++) {
+            app(SalePostingService::class)->post(
+                $owner,
+                $customer,
+                'UNPAID',
+                CarbonImmutable::parse('2026-11-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT)),
+                '100.00',
+                'Searchable financial listing sale '.$index,
+                'financial-ui-sale-'.$index,
+            );
+        }
+
+        $firstPage = $this->getJson('/api/v1/sales?per_page=10&page=1')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 10)
+            ->assertJsonPath('meta.total', 11);
+        $this->assertCount(10, $firstPage->json('data'));
+
+        $secondPage = $this->getJson('/api/v1/sales?per_page=10&page=2')
+            ->assertOk()
+            ->assertJsonPath('meta.current_page', 2);
+        $this->assertCount(1, $secondPage->json('data'));
+
+        $this->getJson('/api/v1/sales?q=Batch%20Seven%20Customer&per_page=20')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 11);
+
+        $this->getJson('/api/v1/sales?per_page=101')->assertUnprocessable();
+        $this->getJson('/api/v1/sales?page=0')->assertUnprocessable();
+
+        // API middleware clears the request-scoped tenant context after each request.
+        // Restore the explicit shop context before invoking the posting service directly.
+        app(CurrentShop::class)->set($shop);
+
+        app(PaymentPostingService::class)->post(
+            $owner,
+            $customer,
+            '25.00',
+            CarbonImmutable::parse('2026-11-25'),
+            'UPI',
+            'FIN-SEARCH-REF',
+            'Searchable payment listing',
+            'financial-ui-payment-search',
+        );
+
+        $this->getJson('/api/v1/payments?q=FIN-SEARCH-REF&payment_method=UPI&per_page=10')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonFragment(['reference_number' => 'FIN-SEARCH-REF']);
     }
 
     private function context(): array

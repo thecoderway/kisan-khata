@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class FinancialAdministrationController extends Controller
@@ -206,7 +207,8 @@ class FinancialAdministrationController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'action' => ['nullable', 'string', 'max:100'],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
+            'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $query = AuditLog::query()->where('action', 'like', 'financial.%')
@@ -215,7 +217,17 @@ class FinancialAdministrationController extends Controller
             ->when(isset($filters['action']), fn ($q) => $q->where('action', $filters['action']))
             ->with('user:id,name')->orderByDesc('created_at')->orderByDesc('id');
 
-        return response()->json($query->paginate((int) ($filters['per_page'] ?? 20)));
+        $paginator = $query->paginate((int) ($filters['per_page'] ?? 20));
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
     }
 
     public function repairCustomer(Request $request, int $customer, ReconciliationService $reconciliation): JsonResponse
