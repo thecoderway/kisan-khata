@@ -164,9 +164,27 @@ class InterestCalculationServiceTest extends TestCase
             'status' => 'COMPLETED', 'resource_type' => null, 'resource_id' => null,
             'response_code' => null, 'created_at' => now(), 'updated_at' => now(),
         ]);
+        $settlementKeyId = DB::table('idempotency_keys')->insertGetId([
+            'shop_id' => $shop->getKey(), 'operation_type' => 'ANNUAL_AUTO_SETTLEMENT',
+            'key_hash' => hash('sha256', 'interest-history-settlement-key'),
+            'request_hash' => hash('sha256', 'interest-history-settlement-payload'),
+            'status' => 'COMPLETED', 'resource_type' => null, 'resource_id' => null,
+            'response_code' => null, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $settlement = InterestSettlementRun::query()->create([
+            'customer_id' => $customer->getKey(),
+            'settlement_date' => '2026-11-01',
+            'cutoff_date_exclusive' => '2026-11-01',
+            'shop_policy_version_id' => $policyVersionId,
+            'status' => 'COMPLETED',
+            'idempotency_key_id' => $settlementKeyId,
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
         $run = InterestCalculationRun::query()->create([
             'customer_id' => $customer->getKey(),
             'trigger_type' => InterestCalculationService::TRIGGER_ANNUAL_AUTO_SETTLEMENT,
+            'settlement_run_id' => $settlement->getKey(),
             'cutoff_date_exclusive' => '2026-11-01',
             'event_key_hash' => hash('sha256', 'interest-history-event'),
             'started_at' => now(), 'completed_at' => now(),
@@ -206,6 +224,7 @@ class InterestCalculationServiceTest extends TestCase
             ->assertJsonPath('data.items.0.eligible_principal_basis', '1000.00000000')
             ->assertJsonPath('data.items.0.unrounded_interest', '6.66666667')
             ->assertJsonPath('data.items.0.posted_interest', '6.67')
+            ->assertJsonPath('data.settlement.id', $settlement->getKey())
             ->assertJsonPath('data.items.0.shop_policy.version', 1)
             ->assertJsonPath('data.items.0.sale.id', $sale->getKey());
 
