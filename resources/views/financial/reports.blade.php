@@ -288,7 +288,7 @@
                 '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '">' +
                 '<a class="page-link" href="#" data-report-page="' + (page - 1) + '"' +
                 (page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '') +
-                ' aria-label="Previous page"><i class="ti ti-chevron-left" aria-hidden="true"></i></a></li>'
+                ' aria-label="पिछला पृष्ठ"><i class="ti ti-chevron-left" aria-hidden="true"></i></a></li>'
             );
 
             if (lastPage <= 7) {
@@ -307,12 +307,11 @@
                 '<li class="page-item' + (page >= lastPage ? ' disabled' : '') + '">' +
                 '<a class="page-link" href="#" data-report-page="' + (page + 1) + '"' +
                 (page >= lastPage ? ' aria-disabled="true" tabindex="-1"' : '') +
-                ' aria-label="Next page"><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>'
+                ' aria-label="अगला पृष्ठ"><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>'
             );
         }
 
-        $('report-page-info').innerHTML = 'Showing <strong>' + first + '–' + last +
-            '</strong> of <strong>' + total + '</strong> रिकॉर्ड';
+        $('report-page-info').innerHTML = 'कुल ' + total + ' में से ' + first + '–' + last + ' रिकॉर्ड';
         $('report-page-size').value = String(perPage);
         $('report-page-links').innerHTML = links.join('');
     }

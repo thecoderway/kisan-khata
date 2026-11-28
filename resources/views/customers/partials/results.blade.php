@@ -61,7 +61,7 @@
                                     @endcan
                                     @if ($customer->trashed())
                                         @can('restore', $customer)
-                                            <button type="button" class="dropdown-item" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'restore', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक Restore करें">पुनः बहाल करें</button>
+                                            <button type="button" class="dropdown-item" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'restore', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक पुनः बहाल करें">पुनः बहाल करें</button>
                                         @endcan
                                     @else
                                         @if ($customer->status === 'active')
@@ -74,7 +74,7 @@
                                             @endcan
                                         @endif
                                         @can('softDelete', $customer)
-                                            <button type="button" class="dropdown-item text-danger" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'soft-delete', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक Soft Delete करें">हटाएँ</button>
+                                            <button type="button" class="dropdown-item text-danger" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'soft-delete', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक हटाएँ">हटाएँ</button>
                                         @endcan
                                     @endif
                                 </div>

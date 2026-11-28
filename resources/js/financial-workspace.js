@@ -538,7 +538,7 @@ const renderSaleDetails = (sale) => {
         detailRow('बिक्री तारीख', date(sale.sale_date)) +
         detailRow('राशि', money(sale.amount)) +
         detailRow('भुगतान स्थिति', saleStatusLabel(sale.payment_status)) +
-        detailRow('लेट फीस settlement', sale.interest_settlement_status) +
+        detailRow('लेट फीस का वार्षिक हिसाब', sale.interest_settlement_status) +
         detailRow('विवरण', sale.description) +
         detailRow('दर्ज होने का समय', sale.posted_at ? new Date(sale.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">स्वतः बिक्री-दिवस भुगतान</h3>' +
@@ -567,7 +567,7 @@ const renderPaymentDetails = (payment) => {
         const sale = item.sale || {};
         return '<tr><td>' + detailValue(sale.sale_number) + '</td><td>' + date(sale.sale_date) + '</td><td>' + detailValue(sale.payment_status ? saleStatusLabel(sale.payment_status) : '—') + '</td><td>' + detailValue(item.component_type) + '</td><td>' + money(item.amount) + '</td><td>' + detailValue(item.reverses_allocation_item_id || '—') + '</td></tr>';
     }).join('');
-    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(entry.component === 'INTEREST' ? 'लेट फीस' : (entry.component === 'PRINCIPAL' ? 'मूलधन' : entry.component)) + '</td><td>' + detailValue(entryKindLabel(entry.entry_kind)) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
+    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(financialComponentLabel(entry.component)) + '</td><td>' + detailValue(entryKindLabel(entry.entry_kind)) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
     const revisionRows = revisions.map((revision) => {
         const reversal = revision.reversal_payment || {};
         const replacement = revision.replacement_payment || {};
