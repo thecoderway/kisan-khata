@@ -824,7 +824,7 @@ document.getElementById('interest-customer')?.addEventListener('change', async (
         const payload = await request('/customers/' + id + '/interest-policy');
         const versions = payload.data || [];
         target.innerHTML = versions.length
-            ? '<h3 class="h4 mb-3">ग्राहक की विशेष दर history</h3><div class="kk-data-table-wrap" role="region" aria-label="Customer override history" tabindex="0"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>मूलधन में जोड़ना</th></tr></thead><tbody>' +
+            ? '<h3 class="h4 mb-3">ग्राहक की विशेष दर history</h3><div class="kk-data-table-wrap" role="region" aria-label="ग्राहक की विशेष दर history" tabindex="0"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>मूलधन में जोड़ना</th></tr></thead><tbody>' +
                 versions.map((version) => '<tr><td>' + esc(version.version_number) + '</td><td>' + date(version.effective_from) + '</td><td>' + date(version.effective_to) + '</td><td>' + esc(version.monthly_rate_percent ?? 'Shop default') + '</td><td>' + (version.capitalization_enabled === null ? 'Shop default' : (version.capitalization_enabled ? 'चालू' : 'बंद')) + '</td></tr>').join('') +
                 '</tbody></table></div>'
             : '<p class="text-secondary small mb-0">इस Customer पर कोई override नहीं है।</p>';

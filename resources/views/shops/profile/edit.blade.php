@@ -6,7 +6,7 @@
 @section('content')
     <div class="page-heading">
         <div>
-            <span class="eyebrow">SHOP SETTINGS</span>
+            <span class="eyebrow">दुकान की सेटिंग</span>
             <h1>दुकान की जानकारी</h1>
             <p>दुकान की सामान्य जानकारी और आधिकारिक गाँव-स्थान अपडेट करें।</p>
         </div>
