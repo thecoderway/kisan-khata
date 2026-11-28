@@ -63,6 +63,7 @@ const readFilters = (report) => {
         : { from: value('report-from'), to: value('report-to') };
 
     filters.customer_id = value('report-customer');
+    filters.village_code = value('report-village');
     if (report !== 'outstanding') filters.q = value('report-search');
     if (report === 'sales') filters.payment_status = value('report-status');
     if (report === 'payments') {
