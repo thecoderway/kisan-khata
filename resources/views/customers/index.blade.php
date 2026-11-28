@@ -40,7 +40,7 @@
                 <select id="customer-village" name="village_code" class="form-select">
                     <option value="">सभी गाँव</option>
                     @foreach ($villageOptions as $village)
-                        <option value="{{ $village->villageCode }}" @selected($villageCode === (string) $village->villageCode)>{{ $village->villageNameLocal ?: $village->villageNameEnglish }}{{ $village->villageNameLocal && $village->villageNameEnglish ? ' · '.$village->villageNameEnglish : '' }}</option>
+                        <option value="{{ $village->villageCode }}" @selected($villageCode === (string) $village->villageCode)>{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
                     @endforeach
                 </select>
             </div>

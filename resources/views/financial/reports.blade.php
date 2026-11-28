@@ -18,7 +18,7 @@
             <div class="col-md-2">
                 <label class="form-label" for="report-type">रिपोर्ट</label>
                 <select class="form-select" id="report-type">
-                    <option value="outstanding">ग्राहक बकाया (As of)</option>
+                    <option value="outstanding">ग्राहक बकाया (इस तारीख तक)</option>
                     <option value="sales">बिक्री रजिस्टर</option>
                     <option value="payments">जमा रजिस्टर</option>
                     @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
@@ -54,7 +54,7 @@
                 <select class="form-select" id="report-village">
                     <option value="">सभी गाँव</option>
                     @foreach ($villages as $village)
-                        <option value="{{ $village->villageCode }}">{{ $village->villageNameLocal ?: $village->villageNameEnglish }}{{ $village->villageNameLocal && $village->villageNameEnglish ? ' · '.$village->villageNameEnglish : '' }}</option>
+                        <option value="{{ $village->villageCode }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
                     @endforeach
                 </select>
             </div>
@@ -77,7 +77,7 @@
                 <select class="form-select" id="report-method">
                     <option value="">सभी माध्यम</option>
                     <option value="CASH">नकद</option>
-                    <option value="UPI">यूपीआई</option>
+                    <option value="यूपीआई">यूपीआई</option>
                     <option value="BANK">बैंक</option>
                     <option value="CHEQUE">चेक</option>
                 </select>
@@ -96,11 +96,11 @@
     <div class="d-flex justify-content-end gap-2 p-3 border-bottom">
         <button class="btn btn-outline-success" id="report-export" type="button"
             data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" data-user-role="{{ auth()->user()->role }}" disabled>
-            <i class="ti ti-file-spreadsheet me-1" aria-hidden="true"></i> CSV / Excel
+            <i class="ti ti-file-spreadsheet me-1" aria-hidden="true"></i> तालिका डाउनलोड
         </button>
         <button class="btn btn-outline-secondary" id="report-print" type="button"
             data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" disabled>
-            <i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / PDF
+            <i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / पीडीएफ
         </button>
     </div>
     <div id="report-summary" class="p-3 border-bottom" aria-live="polite"></div>
@@ -144,7 +144,7 @@
     const cell = (value) => '<td>' + safe(value).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch])) + '</td>';
     const show = (id, yes) => $(id).classList.toggle('d-none', !yes);
     const saleStatusLabel = (value) => ({ UNPAID: 'उधार', PARTIALLY_PAID: 'आंशिक जमा', PAID: 'जमा पूर्ण' }[value] || value || '—');
-    const paymentMethodLabel = (value) => ({ CASH: 'नकद', UPI: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[value] || value || '—');
+    const paymentMethodLabel = (value) => ({ CASH: 'नकद', यूपीआई: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[value] || value || '—');
     const paymentTypeLabel = (value) => ({ NORMAL: 'सामान्य जमा', REVERSAL: 'जमा वापसी', SALE_DAY_AUTO: 'बिक्री के दिन स्वतः जमा' }[value] || value || '—');
     const reportStatusLabel = (value) => ({ active: 'सक्रिय', inactive: 'निष्क्रिय', ACTIVE: 'सक्रिय', INACTIVE: 'निष्क्रिय', COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल' }[value] || value || '—');
 
@@ -312,7 +312,7 @@
         }
 
         $('report-page-info').innerHTML = 'Showing <strong>' + first + '–' + last +
-            '</strong> of <strong>' + total + '</strong> records';
+            '</strong> of <strong>' + total + '</strong> रिकॉर्ड';
         $('report-page-size').value = String(perPage);
         $('report-page-links').innerHTML = links.join('');
     }

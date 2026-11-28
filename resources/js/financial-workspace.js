@@ -161,7 +161,7 @@ const renderPagination = (meta = {}) => {
         '<div class="financial-pagination customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">' +
         '<span class="customer-pagination-summary text-secondary small" aria-live="polite">कुल ' + total + ' में से ' + first + '–' + last + ' रिकॉर्ड</span>' +
         '<div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">' +
-        '<label class="customer-page-size d-flex align-items-center gap-2 text-secondary small"><span>प्रति पृष्ठ पंक्तियाँ</span><select class="form-select form-select-sm" data-financial-page-size aria-label="Rows per page">' +
+        '<label class="customer-page-size d-flex align-items-center gap-2 text-secondary small"><span>प्रति पृष्ठ पंक्तियाँ</span><select class="form-select form-select-sm" data-financial-page-size aria-label="प्रति पृष्ठ पंक्तियाँ">' +
         [10, 20, 50, 100].map((size) => '<option value="' + size + '"' + (size === perPage ? ' selected' : '') + '>' + size + '</option>').join('') +
         '</select></label><nav aria-label="वित्तीय रिकॉर्ड के पृष्ठ"><ul class="pagination">' +
         '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="' + (page <= 1 ? '#' : pageHref(page - 1)) + '" data-financial-page="' + (page - 1) + '"' + (page <= 1 ? ' aria-disabled="true" tabindex="-1"' : '') + ' aria-label="पिछला पृष्ठ"><i class="ti ti-chevron-left" aria-hidden="true"></i></a></li>' +
@@ -530,7 +530,7 @@ const renderSaleDetails = (sale) => {
         const payment = item.payment || {};
         return '<tr><td>' + detailValue(payment.payment_number) + '</td><td>' + date(payment.payment_date) + '</td><td>' + money(payment.amount) + '</td><td>' + detailValue(paymentMethodLabel(payment.payment_method)) + '</td><td>' + detailValue(item.component_type) + '</td><td>' + money(item.amount) + '</td></tr>';
     }).join('');
-    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(entry.component) + '</td><td>' + detailValue(entry.entry_kind) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
+    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(entry.component === 'INTEREST' ? 'लेट फीस' : (entry.component === 'PRINCIPAL' ? 'मूलधन' : entry.component)) + '</td><td>' + detailValue(entryKindLabel(entry.entry_kind)) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
     const revisionRows = revisions.map((revision) => '<tr><td>' + detailValue(revision.revision_number) + '</td><td>' + date(revision.changed_at) + '</td><td>' + detailValue(revision.actor?.name || revision.changed_by) + '</td><td>' + detailValue(revision.correction_reason) + '</td><td>' + detailValue(revision.new_values?.description) + '</td></tr>').join('');
     return '<div class="financial-sale-details">' +
         '<section class="mb-4"><h3 class="h4 mb-2">बिक्री जानकारी</h3>' +
@@ -540,7 +540,7 @@ const renderSaleDetails = (sale) => {
         detailRow('बिक्री तारीख', date(sale.sale_date)) +
         detailRow('राशि', money(sale.amount)) +
         detailRow('भुगतान स्थिति', saleStatusLabel(sale.payment_status)) +
-        detailRow('Late Fee settlement', sale.interest_settlement_status) +
+        detailRow('लेट फीस settlement', sale.interest_settlement_status) +
         detailRow('विवरण', sale.description) +
         detailRow('दर्ज होने का समय', sale.posted_at ? new Date(sale.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">स्वतः बिक्री-दिवस भुगतान</h3>' +
@@ -602,7 +602,7 @@ const renderPaymentDetails = (payment) => {
         '<section class="mb-4"><h3 class="h4 mb-2">वित्तीय लेन-देन</h3>' +
         (transaction ? detailRow('Transaction ID', transaction.id) + detailRow('प्रकार', transaction.transaction_type) + detailRow('Effective date', date(transaction.effective_date)) + detailRow('दर्ज होने का समय', transaction.posted_at ? new Date(transaction.posted_at).toLocaleString('en-IN') : '—') : '<p class="text-secondary small">Financial transaction उपलब्ध नहीं है।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">खाता-बही संदर्भ</h3>' +
-        (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>ID</th><th>तारीख</th><th>Component</th><th>प्रविष्टि</th><th>जमा (डेबिट)</th><th>प्राप्ति (क्रेडिट)</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
+        (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>ID</th><th>तारीख</th><th>मद</th><th>प्रविष्टि</th><th>जमा (डेबिट)</th><th>प्राप्ति (क्रेडिट)</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">सुधार का इतिहास</h3>' +
         (revisionRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Version</th><th>Type</th><th>तारीख</th><th>किसने किया</th><th>कारण</th><th>पहले</th><th>बाद में</th><th>Reversal</th><th>Replacement</th></tr></thead><tbody>' + revisionRows + '</tbody></table></div>' : '<p class="text-secondary small">कोई correction दर्ज नहीं है।</p>') + '</section>' +
         (relatedPayment ? '<section><h3 class="h4 mb-2">संबंधित मूल भुगतान</h3>' + detailRow('जमा क्रमांक', relatedPayment.payment_number) + detailRow('प्रकार', paymentTypeLabel(relatedPayment.payment_type)) + detailRow('तारीख / राशि', date(relatedPayment.payment_date) + ' · ' + money(relatedPayment.amount)) + '</section>' : '') +
