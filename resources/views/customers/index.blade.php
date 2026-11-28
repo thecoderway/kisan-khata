@@ -30,7 +30,7 @@
     @endif
 
     <section class="content-card">
-        <form method="GET" action="{{ route('customers.index') }}" class="content-card-header d-flex flex-wrap gap-2 align-items-center" data-customer-filters>
+        <form method="GET" action="{{ route('customers.index') }}" class="content-card-header d-flex flex-wrap gap-2 align-items-center" data-customer-filters data-village-options-url="{{ route('customers.villages') }}">
             <div class="flex-grow-1">
                 <label for="customer-search" class="visually-hidden">ग्राहक खोजें</label>
                 <input id="customer-search" name="q" value="{{ $search }}" class="form-control" placeholder="नाम या मोबाइल नंबर से खोजें" maxlength="100" autocomplete="off">
