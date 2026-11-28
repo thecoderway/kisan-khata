@@ -801,4 +801,20 @@ class CustomerManagementTest extends TestCase
             ->assertSessionHasErrors('village_code');
     }
 
+
+    public function test_customer_detail_places_lifecycle_actions_in_the_shared_side_drawer(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = Customer::query()->where('shop_id', $owner->shop_id)->firstOrFail();
+
+        $this->get(route('customers.show', $customer))->assertOk()
+            ->assertSee('data-customer-detail', false)
+            ->assertSee('data-customer-lifecycle-action="deactivate"', false)
+            ->assertSee('data-customer-lifecycle-action="soft-delete"', false)
+            ->assertSee('customer-detail-lifecycle-drawer', false)
+            ->assertDontSee('id="deactivate-reason"', false)
+            ->assertDontSee('id="delete-reason"', false);
+    }
+
 }
