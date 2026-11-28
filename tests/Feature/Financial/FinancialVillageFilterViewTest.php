@@ -72,7 +72,7 @@ class FinancialVillageFilterViewTest extends TestCase
                 ->assertSee('नरसिंहगढ़, नरसिंहगढ़, राजगढ़')
                 ->assertSeeInOrder([
                     'for="financial-search"',
-                    "@include('financial.partials.village-filter'",
+                    'for="financial-village-search">गाँव',
                     'for="financial-from">तारीख से',
                     'for="financial-to">तारीख तक',
                 ], false);
