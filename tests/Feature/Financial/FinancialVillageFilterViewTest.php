@@ -81,7 +81,20 @@ class FinancialVillageFilterViewTest extends TestCase
         }
 
         $ledgerResponse = $this->get(route('financial.workspace', ['section' => 'ledger']));
-        $ledgerResponse->assertOk();
+        $ledgerResponse->assertOk()
+            ->assertSee('data-customer-filter-search', false)
+            ->assertSee('data-customer-select="financial-customer"', false);
+
+        $reconciliationResponse = $this->get(route('financial.workspace', ['section' => 'reconciliation']));
+        $reconciliationResponse->assertOk()
+            ->assertSee('data-customer-filter-search', false)
+            ->assertSee('data-customer-select="financial-customer"', false);
+
+        $interestResponse = $this->get(route('financial.workspace', ['section' => 'interest']));
+        $interestResponse->assertOk()
+            ->assertSee('data-customer-filter-search', false)
+            ->assertSee('data-customer-select="interest-history-customer"', false)
+            ->assertSee('id="interest-customer"', false);
         $this->assertSame(1, substr_count($ledgerResponse->getContent(), 'id="financial-ledger-print"'));
 
         $this->get(route('financial.workspace', ['section' => 'reports']))
@@ -90,6 +103,8 @@ class FinancialVillageFilterViewTest extends TestCase
             ->assertSee('data-village-select="report-village"', false)
             ->assertSee('लोटिया, सारंगपुर, राजगढ़')
             ->assertSee('ब्यावरा, ब्यावरा, राजगढ़')
-            ->assertSee('नरसिंहगढ़, नरसिंहगढ़, राजगढ़');
+            ->assertSee('नरसिंहगढ़, नरसिंहगढ़, राजगढ़')
+            ->assertSee('data-customer-filter-search', false)
+            ->assertSee('data-customer-select="report-customer"', false);
     }
 }

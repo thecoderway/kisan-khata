@@ -6,10 +6,16 @@ import { registerCustomerDirectory } from './customer-directory';
 import { registerUserDirectory } from './user-directory';
 import { registerUserAuditHistory } from './user-audit-history';
 import { initialiseVillageFilter } from './village-filter';
+import { initialiseCustomerFilter } from './customer-filter.js';
 
 document.querySelectorAll('[data-village-filter-search]').forEach((input) => {
     const select = document.getElementById(input.dataset.villageSelect || '');
     initialiseVillageFilter(input, select);
+});
+
+document.querySelectorAll('[data-customer-filter-search]').forEach((input) => {
+    const select = document.getElementById(input.dataset.customerSelect || '');
+    initialiseCustomerFilter(input, select);
 });
 
 

@@ -44,7 +44,7 @@
     @if ($section === 'interest')
         <div class="financial-toolbar">
             <div class="financial-filter-grid">
-                <div><label class="form-label" for="interest-history-customer">लेट फीस गणना का इतिहास देखने के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="interest-history-customer-search">लेट फीस गणना का इतिहास देखने के लिए ग्राहक</label><input class="form-control" type="search" id="interest-history-customer-search" data-customer-filter-search data-customer-select="interest-history-customer" placeholder="ग्राहक खोजें या चुनें…" autocomplete="off"><select class="visually-hidden" id="interest-history-customer" data-customer-filter-select aria-hidden="true" tabindex="-1"><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="financial-from">से cutoff तारीख</label><input class="form-control" type="date" id="financial-from"></div>
                 <div><label class="form-label" for="financial-to">तक cutoff तारीख</label><input class="form-control" type="date" id="financial-to"></div>
                 <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> इतिहास ताज़ा करें</button></div>
@@ -85,7 +85,7 @@
         <div class="financial-toolbar">
             <div class="financial-filter-grid">
                 @if (in_array($section, ['ledger', 'reconciliation'], true))
-                    <div><label class="form-label" for="financial-customer">ग्राहक</label><select class="form-select" id="financial-customer"><option value="">ग्राहक चुनें</option></select></div>
+                    <div><label class="form-label" for="financial-customer-search">ग्राहक</label><input class="form-control" type="search" id="financial-customer-search" data-customer-filter-search data-customer-select="financial-customer" placeholder="ग्राहक खोजें या चुनें…" autocomplete="off"><select class="visually-hidden" id="financial-customer" data-customer-filter-select aria-hidden="true" tabindex="-1"><option value="">ग्राहक चुनें</option></select></div>
                 @endif
                 @if (in_array($section, ['ledger', 'audit'], true))
                     <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from"></div>

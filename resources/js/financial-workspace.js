@@ -190,7 +190,7 @@ const loadCustomers = async () => {
         const select = document.getElementById(selectId);
         if (select) {
             select.innerHTML = '<option value="">ग्राहक चुनें</option>' + customers.map((customer, index) =>
-                '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>'
+                '<option value="' + esc(customer.id) + '" data-search="' + esc([customer.mobile, customer.customer_code, customer.id].filter(Boolean).join(' ')) + '">' + esc(labels[index]) + '</option>'
             ).join('');
         }
     });
