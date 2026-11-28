@@ -784,18 +784,25 @@ class CustomerManagementTest extends TestCase
 
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
             'name_original' => 'Lotiya Customer',
+            'name_original_language' => 'en',
+            'name_hi' => 'लोटिया ग्राहक',
+            'name_en' => 'Lotiya Customer',
             'village_code' => '1001',
             'state_code' => '23',
             'district_code' => '301',
             'subdistrict_code' => '201',
-        ]))->assertRedirect();
+        ]))->assertRedirect()->assertSessionHasNoErrors();
 
         $this->post(route('customers.store'), $this->customerPayload([
             'name_original' => 'Unknown Village Customer',
-        ]))->assertRedirect();
+            'name_original_language' => 'en',
+            'name_hi' => 'अन्य गाँव ग्राहक',
+            'name_en' => 'Unknown Village Customer',
+            'mobile' => '9123456789',
+        ]))->assertRedirect()->assertSessionHasNoErrors();
 
         $this->get(route('customers.index', ['village_code' => '1001']))
-            ->assertOk()->assertSee('Lotiya Customer')->assertDontSee('Unknown Village Customer');
+            ->assertOk()->assertSee('लोटिया ग्राहक')->assertDontSee('अन्य गाँव ग्राहक');
 
         $this->get(route('customers.index', ['village_code' => '9999']))
             ->assertSessionHasErrors('village_code');
