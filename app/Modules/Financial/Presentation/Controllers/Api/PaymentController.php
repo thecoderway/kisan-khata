@@ -19,6 +19,7 @@ class PaymentController extends Controller
 
         $filters = $request->validate([
             'customer_id' => ['nullable', 'integer'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'q' => ['nullable', 'string', 'max:100'],
             'payment_method' => ['nullable', 'string', 'max:32'],
             'sort' => ['nullable', Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
@@ -31,6 +32,7 @@ class PaymentController extends Controller
         $query = Payment::query()->with('customer:id,name_original,name_hi,name_en,status,deleted_at')
             ->whereNotNull('posted_at')
             ->when(isset($filters['customer_id']), fn ($q) => $q->where('customer_id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn ($q) => $q->whereHas('customer', fn ($customer) => $customer->where('village_code', $filters['village_code'])))
             ->when(isset($filters['from']), fn ($q) => $q->whereDate('payment_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn ($q) => $q->whereDate('payment_date', '<=', $filters['to']))
             ->when(isset($filters['payment_method']), fn ($q) => $q->where('payment_method', $filters['payment_method']))
