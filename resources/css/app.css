@@ -694,47 +694,31 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
 }
 
 
-/* Consistent Tabler-style calendar control for every native date field. */
-.kk-datepicker {
-    width: 100%;
-}
-
-.kk-datepicker .kk-datepicker-input {
-    width: 100%;
-    padding-right: 2.75rem;
-}
-
-.kk-datepicker .kk-datepicker-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    min-width: 2.75rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--tblr-secondary, #667382);
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-.kk-datepicker .kk-datepicker-trigger:hover,
-.kk-datepicker .kk-datepicker-trigger:focus-visible {
-    color: var(--tblr-primary, #206bc4);
-}
-
-.kk-datepicker .kk-datepicker-trigger:focus-visible {
-    outline: 2px solid var(--tblr-primary, #206bc4);
-    outline-offset: -4px;
-    border-radius: .375rem;
-}
-
-.kk-datepicker .kk-datepicker-trigger:disabled {
-    color: var(--tblr-disabled-color, #9ca3af);
-    cursor: not-allowed;
-}
-
-.kk-datepicker .kk-datepicker-input::-webkit-calendar-picker-indicator {
-    opacity: 0;
-    cursor: pointer;
-}
+/* Kisan Khata custom Tabler-style datepicker. */
+.kk-datepicker { position:relative; display:block; width:100%; }
+.kk-datepicker-input { width:100%; min-height:calc(1.4285714286em + 1.5rem + 2px); padding-right:2.75rem; cursor:pointer; background-color:var(--tblr-bg-forms,#fff)!important; }
+.kk-datepicker-input:disabled { cursor:not-allowed; }
+.kk-datepicker-trigger { position:absolute; top:0; right:0; display:flex; align-items:center; justify-content:center; width:2.75rem; height:100%; padding:0; border:0; border-radius:0 .375rem .375rem 0; background:transparent; color:var(--kk-green); cursor:pointer; }
+.kk-datepicker-trigger:hover,.kk-datepicker-trigger:focus-visible { color:var(--kk-green-strong); background:var(--kk-green-soft); }
+.kk-datepicker-trigger:focus-visible,.kk-calendar-nav:focus-visible,.kk-calendar-day:focus-visible,.kk-calendar-action:focus-visible { outline:2px solid var(--kk-green-strong); outline-offset:2px; }
+.kk-datepicker-trigger:disabled { color:#9ca3af; cursor:not-allowed; }
+.kk-datepicker [aria-hidden="true"] { display:none!important; }
+.kk-calendar-popover { position:absolute; z-index:1400; top:calc(100% + 6px); right:0; width:min(19rem,calc(100vw - 24px)); padding:12px; border:1px solid var(--tblr-border-color,#e6e7e9); border-radius:10px; background:var(--tblr-bg-surface,#fff); color:var(--tblr-body-color,#182433); box-shadow:0 12px 32px rgb(24 36 51 / 16%); }
+.kk-calendar-popover[hidden] { display:none!important; }
+.kk-calendar-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.kk-calendar-header strong { font-size:14px; font-weight:700; }
+.kk-calendar-nav { display:grid; place-items:center; width:32px; height:32px; border:0; border-radius:7px; background:var(--kk-green-soft); color:var(--kk-green); }
+.kk-calendar-nav:hover { background:var(--kk-green); color:#fff; }
+.kk-calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; }
+.kk-calendar-weekday { display:grid; place-items:center; min-height:30px; color:var(--kk-muted); font-size:10px; font-weight:700; }
+.kk-calendar-blank { min-height:34px; }
+.kk-calendar-day { display:grid; place-items:center; min-width:0; min-height:34px; padding:0; border:1px solid transparent; border-radius:7px; background:transparent; color:var(--tblr-body-color,#182433); font-size:12px; }
+.kk-calendar-day:hover:not(:disabled) { border-color:var(--kk-green); background:var(--kk-green-soft); color:var(--kk-green); }
+.kk-calendar-day.is-selected { border-color:var(--kk-green); background:var(--kk-green); color:#fff; font-weight:700; }
+.kk-calendar-day.is-today:not(.is-selected) { border-color:var(--kk-green); color:var(--kk-green); font-weight:700; }
+.kk-calendar-day:disabled { opacity:.35; cursor:not-allowed; }
+.kk-calendar-footer { display:flex; justify-content:space-between; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--tblr-border-color,#e6e7e9); }
+.kk-calendar-action { padding:5px 9px; border:0; border-radius:6px; background:transparent; color:var(--kk-muted); font-size:12px; }
+.kk-calendar-action:hover:not(:disabled) { background:var(--kk-green-soft); color:var(--kk-green); }
+.kk-calendar-action:disabled { opacity:.4; cursor:not-allowed; }
+.kk-calendar-today { color:var(--kk-green); font-weight:700; }
