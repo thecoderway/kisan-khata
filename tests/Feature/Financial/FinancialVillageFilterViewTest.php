@@ -61,8 +61,9 @@ class FinancialVillageFilterViewTest extends TestCase
         $this->actingAs($owner);
 
         foreach (['sales', 'payments'] as $section) {
-            $this->get(route('financial.workspace', ['section' => $section]))
-                ->assertOk()
+            $response = $this->get(route('financial.workspace', ['section' => $section]));
+
+            $response->assertOk()
                 ->assertSee('data-village-filter-search', false)
                 ->assertSee('data-village-select="financial-village"', false)
                 ->assertSee('data-search="Lotia, Sarangpur, Rajgarh"', false)
@@ -70,11 +71,18 @@ class FinancialVillageFilterViewTest extends TestCase
                 ->assertSee('ब्यावरा, ब्यावरा, राजगढ़')
                 ->assertSee('नरसिंहगढ़, नरसिंहगढ़, राजगढ़')
                 ->assertSeeInOrder([
+                    'for="financial-search"',
                     'for="financial-village-search"',
                     'for="financial-from">तारीख से',
                     'for="financial-to">तारीख तक',
                 ], false);
+
+            $this->assertSame(1, substr_count($response->getContent(), 'id="financial-create"'));
         }
+
+        $ledgerResponse = $this->get(route('financial.workspace', ['section' => 'ledger']));
+        $ledgerResponse->assertOk();
+        $this->assertSame(1, substr_count($ledgerResponse->getContent(), 'id="financial-ledger-print"'));
 
         $this->get(route('financial.workspace', ['section' => 'reports']))
             ->assertOk()
