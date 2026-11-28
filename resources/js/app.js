@@ -5,6 +5,12 @@ import { registerCustomerLocation } from './customer-location';
 import { registerCustomerDirectory } from './customer-directory';
 import { registerUserDirectory } from './user-directory';
 import { registerUserAuditHistory } from './user-audit-history';
+import { initialiseVillageFilter } from './village-filter';
+
+document.querySelectorAll('[data-village-filter-search]').forEach((input) => {
+    const select = document.getElementById(input.dataset.villageSelect || '');
+    initialiseVillageFilter(input, select);
+});
 
 
 if (document.getElementById('financial-results')) import('./financial-workspace');
