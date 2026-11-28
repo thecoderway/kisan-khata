@@ -62,7 +62,7 @@
                     <input class="form-control" type="search" id="financial-village-search" list="financial-village-options" data-village-filter-search data-village-select="financial-village" placeholder="गाँव खोजें या चुनें…" autocomplete="off">
                     <datalist id="financial-village-options">
                         @foreach ($villages as $village)
-                            <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
+                            <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
                         @endforeach
                     </datalist>
                     <select class="visually-hidden" id="financial-village" name="village_code" aria-hidden="true" tabindex="-1">
