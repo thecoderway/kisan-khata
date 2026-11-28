@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() === 'hi' ? 'hi' : 'en' }}">
+<html lang="hi">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -40,12 +40,12 @@
             @endif
             @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
                 <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index', 'users.create') ? 'active' : '' }}">
-                    <i class="ti ti-users"></i><span>{{ auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन' }}</span>
+                    <i class="ti ti-users"></i><span>{{ auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'उपयोगकर्ता प्रबंधन' }}</span>
                 </a>
             @endif
             @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                 <a href="{{ route('users.audit') }}" class="{{ request()->routeIs('users.audit') ? 'active' : '' }}">
-                    <i class="ti ti-history"></i><span>यूज़र ऑडिट हिस्ट्री</span>
+                    <i class="ti ti-history"></i><span>उपयोगकर्ता गतिविधि इतिहास</span>
                 </a>
             @endif
         </nav>
@@ -53,7 +53,7 @@
             <div class="sidebar-user-settings" x-data="{ settingsOpen: false }">
                 <div class="sidebar-user">
                     <span class="user-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
-                    <span class="sidebar-user-details"><strong>{{ auth()->user()->name }}</strong><small>{{ ucfirst(auth()->user()->role) }}</small></span>
+                    <span class="sidebar-user-details"><strong>{{ auth()->user()->name }}</strong><small>{{ auth()->user()->role === \App\Models\User::ROLE_OWNER ? 'दुकान मालिक' : (auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'प्रबंधक' : 'कर्मचारी') }}</small></span>
                     @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                         <button type="button" class="sidebar-settings-button" aria-label="सेटिंग्स खोलें" :aria-expanded="settingsOpen.toString()" @click.stop="settingsOpen = !settingsOpen">
                             <i class="ti ti-settings"></i>
@@ -63,7 +63,7 @@
                                 <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>
                             </a>
                             <a href="{{ route('financial.workspace', ['section' => 'interest']) }}" @click="settingsOpen = false; sidebarOpen = false" class="{{ request()->route('section') === 'interest' ? 'active' : '' }}">
-                                <i class="ti ti-percentage"></i><span>Late Fee सेटिंग</span>
+                                <i class="ti ti-percentage"></i><span>लेट फीस की सेटिंग</span>
                             </a>
                         </div>
                     @endif

@@ -8,21 +8,21 @@
     @csrf
     @if ($action === 'role') @method('PATCH') @endif
     <input type="hidden" name="drawer_context" value="1">
-    <div class="mb-3"><div class="text-secondary small mb-1">यूज़र</div><strong>{{ $member->name }}</strong><div class="text-secondary small">{{ ucfirst($member->role) }} · {{ $member->is_active ? 'Active' : 'Deactivated' }}</div></div>
+    <div class="mb-3"><div class="text-secondary small mb-1">उपयोगकर्ता</div><strong>{{ $member->name }}</strong><div class="text-secondary small">{{ ucfirst($member->role) }} · {{ $member->is_active ? 'सक्रिय' : 'निष्क्रिय' }}</div></div>
     @if ($action === 'role')
         <div class="mb-3">
             <label for="user-new-role" class="form-label">नई भूमिका <span class="text-danger">*</span></label>
             <select id="user-new-role" name="role" class="form-select" required>
-                <option value="manager" @selected($member->role === 'manager')>Manager</option>
-                <option value="staff" @selected($member->role === 'staff')>Staff</option>
+                <option value="manager" @selected($member->role === 'manager')>प्रबंधक</option>
+                <option value="staff" @selected($member->role === 'staff')>कर्मचारी</option>
             </select>
         </div>
     @else
-        <p>{{ $action === 'deactivate' ? 'इस account की सभी mobile tokens और database sessions revoke कर दी जाएँगी।' : 'यह account फिर से active हो जाएगा और capacity limits लागू रहेंगी।' }}</p>
+        <p>{{ $action === 'deactivate' ? 'इस खाता की सभी मोबाइल टोकन और डेटाबेस सत्र revoke कर दी जाएँगी।' : 'यह account फिर से active हो जाएगा और capacity limits लागू रहेंगी।' }}</p>
     @endif
     <div class="mb-3">
         <label for="user-lifecycle-reason" class="form-label">कारण (वैकल्पिक)</label>
         <textarea id="user-lifecycle-reason" name="reason" class="form-control" rows="3" maxlength="500" placeholder="इस बदलाव का कारण दर्ज करें">{{ old('reason') }}</textarea>
     </div>
-    <div class="alert alert-warning py-2 mb-0" role="note">कार्रवाई server-side authorization, shop isolation और capacity checks के अधीन होगी। Audit record append-only रहेगा।</div>
+    <div class="alert alert-warning py-2 mb-0" role="note">कार्रवाई सर्वर की अनुमति जाँच, दुकान का डेटा अलगाव और क्षमता जाँच के अधीन होगी। लेखा-जाँच रिकॉर्ड केवल जोड़ा जा सकने वाला रहेगा।</div>
 </form>

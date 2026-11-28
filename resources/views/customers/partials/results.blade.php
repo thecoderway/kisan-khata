@@ -38,7 +38,7 @@
                         <td>{{ $customer->village_name_local ?: $customer->village_name_english ?: '—' }}</td>
                         <td>
                             @if ($customer->trashed())
-                                <span class="badge bg-secondary-lt">Soft Deleted</span>
+                                <span class="badge bg-secondary-lt">हटाया गया</span>
                             @elseif ($customer->status === 'inactive')
                                 <span class="badge bg-warning-lt">निष्क्रिय</span>
                             @else
@@ -61,7 +61,7 @@
                                     @endcan
                                     @if ($customer->trashed())
                                         @can('restore', $customer)
-                                            <button type="button" class="dropdown-item" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'restore', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक Restore करें">Restore</button>
+                                            <button type="button" class="dropdown-item" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'restore', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक Restore करें">पुनः बहाल करें</button>
                                         @endcan
                                     @else
                                         @if ($customer->status === 'active')
@@ -74,7 +74,7 @@
                                             @endcan
                                         @endif
                                         @can('softDelete', $customer)
-                                            <button type="button" class="dropdown-item text-danger" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'soft-delete', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक Soft Delete करें">Soft Delete</button>
+                                            <button type="button" class="dropdown-item text-danger" data-customer-drawer data-url="{{ route('customers.index', ['drawer_action' => 'soft-delete', 'drawer_customer_id' => $customer->id]) }}" data-title="ग्राहक Soft Delete करें">हटाएँ</button>
                                         @endcan
                                     @endif
                                 </div>
@@ -90,17 +90,16 @@
 <div class="customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
     <div class="customer-pagination-summary text-secondary small" aria-live="polite">
         @if ($customers->total() > 0)
-            Showing <strong>{{ $customers->firstItem() }}–{{ $customers->lastItem() }}</strong> of
-            <strong>{{ $customers->total() }}</strong> customers
+            कुल {{ $customers->total() }} में से <strong>{{ $customers->firstItem() }}–{{ $customers->lastItem() }}</strong> ग्राहक
         @else
-            Showing <strong>0–0</strong> of <strong>0</strong> customers
+            कुल 0 में से <strong>0–0</strong> ग्राहक
         @endif
     </div>
 
     <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
         <label class="customer-page-size d-flex align-items-center gap-2 small text-secondary">
-            <span>Rows per page</span>
-            <select class="form-select form-select-sm" data-customer-page-size aria-label="Rows per page">
+            <span>प्रति पृष्ठ पंक्तियाँ</span>
+            <select class="form-select form-select-sm" data-customer-page-size aria-label="प्रति पृष्ठ पंक्तियाँ">
                 @foreach ([10, 20, 50, 100] as $size)
                     <option value="{{ $size }}" @selected($customers->perPage() === $size)>{{ $size }}</option>
                 @endforeach

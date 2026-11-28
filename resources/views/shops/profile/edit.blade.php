@@ -10,7 +10,7 @@
             <h1>दुकान की जानकारी</h1>
             <p>दुकान की सामान्य जानकारी और आधिकारिक गाँव-स्थान अपडेट करें।</p>
         </div>
-        <span class="status-pill"><i class="ti ti-shield-check"></i> Owner access</span>
+        <span class="status-pill"><i class="ti ti-shield-check"></i> दुकान मालिक की पहुँच</span>
     </div>
 
     @if (session('status'))
@@ -82,7 +82,7 @@
                 baseUrl: @js(url('/shop-profile/locations/states')),
                 async getOptions(url) {
                     const response = await fetch(url, { headers: { Accept: 'application/json' } });
-                    if (!response.ok) throw new Error('Location options could not be loaded.');
+                    if (!response.ok) throw new Error('स्थान के विकल्प लोड नहीं हो सके।');
                     const payload = await response.json();
                     return payload.data;
                 },
@@ -130,7 +130,7 @@
                 <i class="ti ti-map-pin"></i>
                 <div>
                     <h2>दुकान का स्थान</h2>
-                    <p>State → District → Tehsil → Village चुनें। हर स्तर पर विकल्प पिछले चयन के अनुसार आएँगे।</p>
+                    <p>राज्य → जिला → तहसील → गाँव चुनें। हर स्तर पर विकल्प पिछले चयन के अनुसार आएँगे।</p>
                 </div>
             </div>
             <div class="alert alert-info py-2">
@@ -180,7 +180,7 @@
             <div class="alert alert-secondary mt-4 mb-0">
                 <strong>पुराना स्थान विवरण (केवल संदर्भ के लिए):</strong>
                 {{ collect([$shop->village, $shop->tehsil, $shop->district, $shop->state])->filter()->implode(', ') }}
-                <div class="small mt-1">यह legacy जानकारी सुरक्षित रखी गई है; नए LGD चयन से इसे overwrite नहीं किया जाएगा।</div>
+                <div class="small mt-1">यह पुरानी जानकारी सुरक्षित रखी गई है; नए LGD चयन से इसे बदलना नहीं किया जाएगा।</div>
             </div>
         @endif
 

@@ -1,7 +1,7 @@
 @extends('layouts.auth')
 @section('title', 'नया पासवर्ड')
 @section('content')
-<div class="auth-heading"><span class="eyebrow">NEW PASSWORD</span><h1>नया पासवर्ड सेट करें</h1><p>अपने खाते के लिए नया सुरक्षित पासवर्ड बनाएं।</p></div>
+<div class="auth-heading"><span class="eyebrow">नया पासवर्ड</span><h1>नया पासवर्ड सेट करें</h1><p>अपने खाते के लिए नया सुरक्षित पासवर्ड बनाएं।</p></div>
 @if ($errors->any()) <div class="alert alert-danger">{{ $errors->first() }}</div> @endif
 <form method="POST" action="{{ route('password.store') }}" class="auth-form">
     @csrf

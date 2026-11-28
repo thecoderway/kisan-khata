@@ -23,7 +23,7 @@
                     <label for="name_original_language" class="form-label">नाम किस भाषा में लिखा है? <span class="text-danger">*</span></label>
                     <select id="name_original_language" name="name_original_language" class="form-select" required>
                         <option value="hi" @selected(old('name_original_language', $customer?->name_original_language ?? 'hi') === 'hi')>हिंदी</option>
-                        <option value="en" @selected(old('name_original_language', $customer?->name_original_language) === 'en')>English</option>
+                        <option value="en" @selected(old('name_original_language', $customer?->name_original_language) === 'en')>अंग्रेज़ी</option>
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -43,7 +43,7 @@
             <div class="form-section-heading"><i class="ti ti-language"></i><div><h2>अनुवाद</h2><p>मूल नाम सुरक्षित रहता है। हिंदी और अंग्रेज़ी रूप अलग से संपादित कर सकते हैं।</p></div></div>
             <div class="row g-3">
                 <div class="col-md-6"><label for="name_hi" class="form-label">हिंदी नाम</label><input id="name_hi" name="name_hi" value="{{ old('name_hi', $customer?->name_hi) }}" class="form-control" maxlength="255"></div>
-                <div class="col-md-6"><label for="name_en" class="form-label">English name</label><input id="name_en" name="name_en" value="{{ old('name_en', $customer?->name_en) }}" class="form-control" maxlength="255"></div>
+                <div class="col-md-6"><label for="name_en" class="form-label">अंग्रेज़ी नाम</label><input id="name_en" name="name_en" value="{{ old('name_en', $customer?->name_en) }}" class="form-control" maxlength="255"></div>
             </div>
             <div class="form-hint mt-2">अनुवाद अपने-आप नहीं बनाया जाता। मूल नाम को बदलने के लिए ऊपर का मूल नाम field संपादित करें।</div>
         </section>
@@ -101,7 +101,7 @@
                 <div class="col-md-6"><label for="address_original_language" class="form-label">पते की मूल भाषा</label><select id="address_original_language" name="address_original_language" class="form-select"><option value="">चुनें</option><option value="hi" @selected(old('address_original_language', $customer?->address_original_language) === 'hi')>हिंदी</option><option value="en" @selected(old('address_original_language', $customer?->address_original_language) === 'en')>English</option></select></div>
                 <div class="col-md-6"><label for="notes" class="form-label">नोट्स</label><textarea id="notes" name="notes" class="form-control" rows="2" maxlength="5000">{{ old('notes', $customer?->notes) }}</textarea></div>
                 <div class="col-md-6"><label for="address_hi" class="form-label">हिंदी पता</label><textarea id="address_hi" name="address_hi" class="form-control" rows="2" maxlength="2000">{{ old('address_hi', $customer?->address_hi) }}</textarea></div>
-                <div class="col-md-6"><label for="address_en" class="form-label">English address</label><textarea id="address_en" name="address_en" class="form-control" rows="2" maxlength="2000">{{ old('address_en', $customer?->address_en) }}</textarea></div>
+                <div class="col-md-6"><label for="address_en" class="form-label">अंग्रेज़ी पता</label><textarea id="address_en" name="address_en" class="form-control" rows="2" maxlength="2000">{{ old('address_en', $customer?->address_en) }}</textarea></div>
             </div>
         </section>
 

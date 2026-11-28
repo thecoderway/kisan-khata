@@ -1,6 +1,6 @@
 @if ($logs->isEmpty())
-    <div class="empty-state"><i class="ti ti-history"></i><h3>कोई audit record नहीं मिला</h3>
-        <p>{{ request()->hasAny(['q', 'action']) ? 'खोज या filter बदलकर दोबारा प्रयास करें।' : 'यूज़र create, deactivate, reactivate या role change होने पर record यहाँ दिखाई देगा।' }}</p></div>
+    <div class="empty-state"><i class="ti ti-history"></i><h3>कोई लेखा-जाँच रिकॉर्ड नहीं मिला</h3>
+        <p>{{ request()->hasAny(['q', 'action']) ? 'खोज या छँटाई बदलकर दोबारा प्रयास करें।' : 'उपयोगकर्ता बनाने, निष्क्रिय करने, पुनः सक्रिय करने या भूमिका बदलने होने पर record यहाँ दिखाई देगा।' }}</p></div>
 @else
     <div class="table-responsive kk-data-table-wrap">
         <table class="table table-vcenter audit-table">
@@ -15,7 +15,7 @@
                         @if (isset($log->old_values['role']) || isset($log->new_values['role']))
                             {{ ucfirst($log->old_values['role'] ?? '—') }} → {{ ucfirst($log->new_values['role'] ?? '—') }}
                         @elseif (isset($log->old_values['is_active']) || isset($log->new_values['is_active']))
-                            {{ ($log->old_values['is_active'] ?? false) ? 'Active' : 'Deactivated' }} → {{ ($log->new_values['is_active'] ?? false) ? 'Active' : 'Deactivated' }}
+                            {{ ($log->old_values['is_active'] ?? false) ? 'सक्रिय' : 'निष्क्रिय' }} → {{ ($log->new_values['is_active'] ?? false) ? 'Active' : 'Deactivated' }}
                         @else —
                         @endif
                     </td>
@@ -30,15 +30,15 @@
 <div class="customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3 p-3">
     <div class="customer-pagination-summary text-secondary small" aria-live="polite">
         @if ($logs->total() > 0)
-            Showing <strong>{{ $logs->firstItem() }}–{{ $logs->lastItem() }}</strong> of <strong>{{ $logs->total() }}</strong> records
+            कुल {{ $logs->total() }} में से <strong>{{ $logs->firstItem() }}–{{ $logs->lastItem() }}</strong> रिकॉर्ड
         @else
-            Showing <strong>0–0</strong> of <strong>0</strong> records
+            कुल 0 में से <strong>0–0</strong> रिकॉर्ड
         @endif
     </div>
     <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
         <label class="customer-page-size d-flex align-items-center gap-2 small text-secondary">
-            <span>Rows per page</span>
-            <select class="form-select form-select-sm" aria-label="Rows per page" data-audit-page-size>
+            <span>प्रति पृष्ठ पंक्तियाँ</span>
+            <select class="form-select form-select-sm" aria-label="प्रति पृष्ठ पंक्तियाँ" data-audit-page-size>
                 @foreach ([10, 20, 50, 100] as $size)
                     <option value="{{ $size }}" @selected($logs->perPage() === $size)>{{ $size }}</option>
                 @endforeach

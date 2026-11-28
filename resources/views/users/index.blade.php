@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
-@section('page-title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'Staff सूची' : 'यूज़र प्रबंधन')
+@section('title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'यूज़र प्रबंधन')
+@section('page-title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'यूज़र प्रबंधन')
 
 @section('content')
     @php($isOwner = auth()->user()->role === \App\Models\User::ROLE_OWNER)
     <div class="page-heading">
         <div>
-            <span class="eyebrow">TEAM & ACCESS</span>
-            <h1>{{ $isOwner ? 'दुकान के यूज़र' : 'आपकी दुकान के Staff' }}</h1>
-            <p>{{ $isOwner ? 'Manager और Staff accounts तथा उनकी access स्थिति प्रबंधित करें।' : 'आप Staff सदस्यों का नाम और account status देख सकते हैं।' }}</p>
+            <span class="eyebrow">टीम और पहुँच</span>
+            <h1>{{ $isOwner ? 'दुकान के उपयोगकर्ता' : 'आपकी दुकान के कर्मचारी' }}</h1>
+            <p>{{ $isOwner ? 'प्रबंधक और Staff खाते तथा उनकी पहुँच की स्थिति प्रबंधित करें।' : 'आप Staff सदस्यों का नाम और खाते की स्थिति देख सकते हैं।' }}</p>
         </div>
         @if ($isOwner)
             <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया यूज़र" data-width="wide"><i class="ti ti-user-plus me-1"></i> नया यूज़र</button>
@@ -27,20 +27,20 @@
     @endif
 
     @if ($capacity)
-        <section class="capacity-grid" aria-label="Active user capacity">
+        <section class="capacity-grid" aria-label="सक्रिय उपयोगकर्ता सीमा">
             @foreach ($capacity['roles'] as $roleName => $usage)
                 <article class="capacity-card">
                     <span>{{ ucfirst($roleName) }}</span>
                     <strong>{{ $usage['active'] }} <small>/ {{ $usage['limit'] }}</small></strong>
                     <div class="capacity-track"><span style="width: {{ min(100, ($usage['active'] / $usage['limit']) * 100) }}%"></span></div>
-                    <small>Active accounts</small>
+                    <small>सक्रिय खाते</small>
                 </article>
             @endforeach
             <article class="capacity-card capacity-total">
-                <span>कुल active users</span>
+                <span>कुल सक्रिय उपयोगकर्ता</span>
                 <strong>{{ $capacity['active_total'] }} <small>/ {{ $capacity['total_limit'] }}</small></strong>
                 <div class="capacity-track"><span style="width: {{ min(100, ($capacity['active_total'] / $capacity['total_limit']) * 100) }}%"></span></div>
-                <small>Shop capacity</small>
+                <small>दुकान की क्षमता</small>
             </article>
         </section>
     @endif
@@ -69,12 +69,12 @@
                 <label for="user-status-filter" class="form-label small">स्थिति</label>
                 <select id="user-status-filter" name="status" class="form-select">
                     <option value="all" @selected(request('status', 'all') === 'all')>सभी स्थितियाँ</option>
-                    <option value="active" @selected(request('status') === 'active')>Active</option>
-                    <option value="inactive" @selected(request('status') === 'inactive')>Deactivated</option>
+                    <option value="active" @selected(request('status') === 'active')>सक्रिय</option>
+                    <option value="inactive" @selected(request('status') === 'inactive')>निष्क्रिय</option>
                 </select>
             </div>
             <input type="hidden" name="pageSize" value="{{ $users->perPage() }}">
-            <a href="{{ route('users.index') }}" class="btn btn-outline-secondary" data-user-filter-reset @if (!request('q') && request('role', 'all') === 'all' && request('status', 'all') === 'all') hidden @endif>Reset</a>
+            <a href="{{ route('users.index') }}" class="btn btn-outline-secondary" data-user-filter-reset @if (!request('q') && request('role', 'all') === 'all' && request('status', 'all') === 'all') hidden @endif>साफ़ करें</a>
         </form>
 
         <div class="visually-hidden" data-user-filter-status role="status" aria-live="polite"></div>
