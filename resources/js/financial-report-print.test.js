@@ -64,7 +64,7 @@ test('renders all report types with their own columns and escapes untrusted valu
             shopName: 'Test Shop',
         });
 
-        assert.match(html, new RegExp(expectedColumn.replace(/[.*+?^${}()|[\]\\]/g, '\\assert.match(html, new RegExp(expectedColumn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));')));
+        assert.ok(html.includes(expectedColumn));
         assert.doesNotMatch(html, /Late Fee|Interest|ब्याज/);
         assert.match(html, /₹/);
         assert.match(html, /&lt;script&gt;/);
