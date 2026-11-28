@@ -5,7 +5,13 @@ export function attachVillageDropdown(input, menu) {
     menu.classList.remove('position-absolute', 'start-0', 'top-100', 'mt-1', 'w-100');
     menu.hidden = true;
     menu.style.position = 'fixed';
-    menu.style.zIndex = '1200';
+    menu.style.zIndex = '1300';
+    menu.style.display = 'none';
+    menu.style.boxSizing = 'border-box';
+    menu.style.background = '#fff';
+    menu.style.border = '1px solid #dbe3ec';
+    menu.style.borderRadius = '8px';
+    menu.style.boxShadow = '0 12px 28px rgb(15 23 42 / 18%)';
     menu.style.maxHeight = 'min(18rem, calc(100vh - 16px))';
     menu.style.overflowY = 'auto';
     menu.style.overflowX = 'hidden';
@@ -37,6 +43,7 @@ export function attachVillageDropdown(input, menu) {
 
     const setOpen = (open) => {
         menu.hidden = !open;
+        menu.style.display = open ? 'block' : 'none';
         if (open) position();
     };
 
