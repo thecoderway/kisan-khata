@@ -8,7 +8,10 @@ import { registerUserAuditHistory } from './user-audit-history';
 
 
 if (document.getElementById('financial-results')) import('./financial-workspace');
-if (document.getElementById('report-type')) import('./financial-report-print').then(({ initialiseFinancialReportPrint }) => initialiseFinancialReportPrint());
+if (document.getElementById('report-type')) {
+    import('./financial-report-print').then(({ initialiseFinancialReportPrint }) => initialiseFinancialReportPrint());
+    import('./financial-report-export').then(({ initialiseFinancialReportExport }) => initialiseFinancialReportExport());
+}
 
 window.Alpine = Alpine;
 

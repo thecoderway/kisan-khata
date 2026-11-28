@@ -83,7 +83,11 @@
             </div>
         </div>
     </div>
-    <div class="d-flex justify-content-end p-3 border-bottom">
+    <div class="d-flex justify-content-end gap-2 p-3 border-bottom">
+        <button class="btn btn-outline-success" id="report-export" type="button"
+            data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" data-user-role="{{ auth()->user()->role }}" disabled>
+            <i class="ti ti-file-spreadsheet me-1" aria-hidden="true"></i> CSV / Excel
+        </button>
         <button class="btn btn-outline-secondary" id="report-print" type="button"
             data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" disabled>
             <i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / PDF
@@ -242,6 +246,7 @@
         state.lastPage = Number(payload.meta?.last_page || 1);
         renderPagination(Number(payload.meta?.total || 0));
         $('report-print').disabled = false;
+        $('report-export').disabled = false;
     }
 
     function renderPagination(total) {
@@ -317,6 +322,7 @@
             $('report-page-links').innerHTML = '';
             $('report-page-info').textContent = 'Showing 0–0 of 0 records';
             $('report-print').disabled = true;
+            $('report-export').disabled = true;
         } finally {
             $('report-load').disabled = false;
         }
