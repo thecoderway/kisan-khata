@@ -27,7 +27,6 @@ class FinancialReportController extends Controller
             'as_of' => ['required', 'date_format:Y-m-d'],
             'customer_id' => ['nullable', 'integer', 'min:1'],
             'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
-            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'positive_only' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
