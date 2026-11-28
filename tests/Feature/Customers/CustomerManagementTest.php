@@ -801,7 +801,6 @@ class CustomerManagementTest extends TestCase
             ->assertSessionHasErrors('village_code');
     }
 
-
     public function test_customer_detail_places_lifecycle_actions_in_the_shared_side_drawer(): void
     {
         $owner = $this->makeUser();
