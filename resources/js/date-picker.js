@@ -57,7 +57,7 @@ const enhanceDateInput = (input) => {
         footer.append(clear,todayBtn);pop.append(head,grid,footer);
     };
     const open=()=>{if(input.disabled||input.readOnly)return;view=parseDate(input.value)||new Date();view=new Date(view.getFullYear(),view.getMonth(),1);render();opened=true;pop.hidden=false;sync();};
-    display.addEventListener('click',open);trigger.addEventListener('click',open); display.addEventListener('change',()=>{const m=display.value.trim().match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/);if(!m){display.setCustomValidity('तारीख DD/MM/YYYY प्रारूप में दर्ज करें।');return;}const value=m[3]+'-'+m[2]+'-'+m[1];const date=parseDate(value);if(!date||(input.min&&value<input.min)||(input.max&&value>input.max)){display.setCustomValidity('कृपया मान्य तारीख चुनें।');return;}display.setCustomValidity('');input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));});
+    display.addEventListener('click',open);trigger.addEventListener('click',open);});
     display.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
     document.addEventListener('click',e=>{if(opened&&!wrapper.contains(e.target))close();});
     document.addEventListener('keydown',e=>{if(opened&&e.key==='Escape'){close();display.focus();}});
