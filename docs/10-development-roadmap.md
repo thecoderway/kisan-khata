@@ -568,7 +568,7 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 
 ## 14. Phase 11 — Reports, Printing and Exports
 
-**Status: IN PROGRESS — Batch 11A report definitions and read-only data contracts.** Phase 11 implementation was explicitly authorized by the Product Owner on 2026-11-27. Batch 11A is active; later batches remain gated by their defined acceptance and approval criteria. Phase 10 remains deferred and is not a prerequisite for the non-settlement reports below. A Crop-Season Settlement Report is explicitly excluded until Phase 10 is reactivated and delivered.
+**Status: COMPLETE / ACCEPTED — 2026-11-28.** Batches 11A–11E are implemented, merged and accepted by the Product Owner. All exact-head CI checks and user-confirmed browser, print/PDF, CSV, security and reconciliation acceptance checks passed. Phase 10 remains deferred and is not a prerequisite for these non-settlement reports. A Crop-Season Settlement Report remains excluded until Phase 10 is explicitly reactivated and delivered.
 
 ### Objectives
 
@@ -591,30 +591,30 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 - No dedicated shop-wide reporting module, aggregate report endpoints, general report centre, CSV/XLSX export workflow or server-generated PDF reporting service was found in the inspected current-main routes/controllers/views/assets.
 - `composer.json` currently requires Laravel, Sanctum and Brick Math; no dedicated PDF or Excel/XLSX export package is currently declared. Do not add a package until format, security, operational and maintenance needs are evaluated and approved.
 
-### Proposed delivery plan (subject to Product Owner approval)
+### Delivered batch record (all batches accepted 2026-11-28)
 
-**11A — Report definitions and read-only data contracts (IN PROGRESS)**
+**11A — Report definitions and read-only data contracts (COMPLETE; PR #76 merged)**
 - Confirm report columns, date semantics, status treatment, totals, grouping and role visibility.
 - Map each metric to existing posted financial records / immutable ledger data and existing policy-calculation records.
 - Define as-of outstanding semantics and treatment of reversals/replacements before coding.
 - Produce sample report layouts and reconciliation equations; no writes or new accounting calculations.
 
-**11B — Core financial report APIs and report centre UI**
+**11B — Core financial report APIs and report centre UI (COMPLETE; PR #77 merged)**
 - Implement read-only, tenant-scoped endpoints and UI for Customer Outstanding, Sales, Payments and Interest reports.
 - Reuse existing policies, tenant context, financial records and calculation history; do not duplicate posting or interest engines.
 - Add filters, deterministic sorting, pagination, empty states and totals/summary metadata.
 
-**11C — Print and PDF output**
+**11C — Print and PDF output (COMPLETE; PR #78 merged)**
 - Provide Hindi/English print layouts with shop/customer/date context, generated-at metadata and page numbering.
 - Reuse the existing customer-ledger print conventions where appropriate.
 - Decide browser-print-to-PDF versus server-generated PDF only after reviewing fidelity, page breaks, fonts, large reports and deployment constraints. No PDF library is pre-approved.
 
-**11D — CSV and Excel-compatible export**
+**11D — CSV and Excel-compatible export (COMPLETE; PR #79 merged)**
 - Add authorized exports using the same validated filters and report definitions as on-screen results.
 - Stream or chunk large datasets; enforce export limits/rate controls and prevent formula injection in CSV-compatible output.
 - Evaluate native CSV plus XLSX library options; record the package/dependency decision before adding dependencies.
 
-**11E — Reconciliation, security and acceptance**
+**11E — Reconciliation, security and acceptance (COMPLETE; PR #80 merged)**
 - Verify tenant isolation, Owner/Manager/Staff visibility, date boundaries, reversals/replacements, zero/empty datasets and large-data behavior.
 - Reconcile report totals to authoritative ledger/account records and persisted interest calculation/posting records.
 - Verify exports match on-screen filters and totals, Hindi/English rendering, stable ordering and no financial writes.
@@ -640,6 +640,18 @@ It must not be repeatedly posted by an ordinary daily/monthly background interes
 - Large datasets are streamed/chunked safely with deterministic ordering and explicit limits.
 - Read-only report viewing/export does not create or mutate financial records.
 - Existing Sales, Payments, Ledger, Interest and reconciliation workflows continue to pass regression tests.
+
+### Phase 11 final acceptance record
+
+- PR #76 (11A) merge commit: `c8a2d67de0860bea7c00fb46d7bda7b9e7534327`.
+- PR #77 (11B) merge commit: `cdcb371c8277c9000af150289a5ded4b130cd6fa`.
+- PR #78 (11C) merge commit: `a2c208652cf178e9e8c171e427b53d97362dd5db`.
+- PR #79 (11D) merge commit: `45297d6aeec6d25c6c4e58054cb5492adba0f56c`.
+- PR #80 (11E) merge commit: `05d8ac8b0a11ba5591de77f4792ba85cbbbfb715`.
+- Product Owner confirmed report UI, pagination, PDF/print, CSV export, formula-injection protection, negative decimal preservation, tenant/role security, ledger/report reconciliation and read-only behavior.
+- Phase 11 introduces no new financial transaction types, ledger/interest postings, projection repairs or schema changes.
+- Phase 10 Crop-Season Settlement remains deferred; do not start without explicit reactivation.
+- Phase 11 acceptance does not imply production migration, deployment or release.
 
 ## 15. Phase 12 — Subscription System
 
