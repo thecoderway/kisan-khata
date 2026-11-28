@@ -9,7 +9,7 @@
         'sales' => ['बिक्री रजिस्टर', 'दुकान की सभी पोस्ट की गई बिक्री देखें और नई बिक्री दर्ज करें।'],
         'payments' => ['जमा रजिस्टर', 'ग्राहकों से प्राप्त भुगतान और उनकी स्थिति देखें।'],
         'ledger' => ['ग्राहक खाता-बही', 'ग्राहक चुनकर मूलधन और Late Fee (लेट फीस) का running balance देखें।'],
-        'interest' => ['Late Fee नीति', 'दुकान की effective-dated ब्याज नीति और ग्राहक overrides नियंत्रित करें।'],
+        'interest' => ['Late Fee नीति', 'दुकान की effective-dated Late Fee नीति और ग्राहक overrides नियंत्रित करें।'],
         'reconciliation' => ['लेखा मिलान', 'Ledger और account projection में अंतर जाँचें; repair केवल Owner कर सकता है।'],
         'audit' => ['वित्तीय ऑडिट', 'वित्तीय नीतियों, corrections और projection repairs का immutable इतिहास।'],
     ];
@@ -50,7 +50,7 @@
                 <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> History रिफ्रेश</button></div>
             </div>
         </div>
-        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">Calculation history देखने के लिए ग्राहक चुनें।</div></div>
+        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">Late Fee calculation history देखने के लिए ग्राहक चुनें।</div></div>
     @endif
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
