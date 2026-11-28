@@ -502,7 +502,7 @@ const formMarkup = (kind, data = {}) => {
     }
     if (kind === 'payment') {
         return formStart + esc(api + '/payments') + '" data-confirm="क्या आप यह भुगतान पोस्ट करना चाहते हैं?">' + token +
-            formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
+            formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required data-customer-searchable><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
             formField('भुगतान तारीख', 'payment_date', '<input id="FIELD_ID" class="form-control" type="date" name="payment_date" value="' + new Date().toLocaleDateString('en-CA') + '" required>') +
             formField('राशि (₹)', 'amount', '<input id="FIELD_ID" class="form-control" type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>') +
             formField('माध्यम', 'payment_method', '<select id="FIELD_ID" class="form-select" name="payment_method"><option value="">चुनें</option><option value="CASH">नकद</option><option value="UPI">यूपीआई</option><option value="BANK">बैंक</option><option value="CHEQUE">चेक</option></select>') +

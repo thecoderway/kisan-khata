@@ -210,21 +210,24 @@ Alpine.data('actionDrawer', () => ({
             const field = Array.from(form.elements).find((element) =>
                 element.name === name || element.name.replace(/\]/g, '').replace(/\[/g, '.') === name
             );
-            if (!field || field.type === 'hidden' || !fieldMessages?.length) return;
+            const visibleField = field?.dataset.customerSearchReady === 'true'
+                ? document.getElementById(field.id + '-search')
+                : field;
+            if (!visibleField || visibleField.type === 'hidden' || !fieldMessages?.length) return;
 
-            field.classList.add('is-invalid');
-            field.setAttribute('aria-invalid', 'true');
+            visibleField.classList.add('is-invalid');
+            visibleField.setAttribute('aria-invalid', 'true');
 
             const feedback = document.createElement('div');
             feedback.className = 'invalid-feedback d-block';
             feedback.setAttribute('data-server-error', '');
             feedback.textContent = fieldMessages[0];
-            field.insertAdjacentElement('afterend', feedback);
+            visibleField.insertAdjacentElement('afterend', feedback);
 
-            if (field.id) {
-                const describedBy = (field.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
-                describedBy.push(feedback.id || (feedback.id = field.id + '-server-error'));
-                field.setAttribute('aria-describedby', [...new Set(describedBy)].join(' '));
+            if (visibleField.id) {
+                const describedBy = (visibleField.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+                describedBy.push(feedback.id || (feedback.id = visibleField.id + '-server-error'));
+                visibleField.setAttribute('aria-describedby', [...new Set(describedBy)].join(' '));
             }
         });
 
