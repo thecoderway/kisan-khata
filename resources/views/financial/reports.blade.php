@@ -44,6 +44,15 @@
                     <option value="">सभी ग्राहक</option>
                 </select>
             </div>
+            <div class="col-md-3">
+                <label class="form-label" for="report-village">गाँव</label>
+                <select class="form-select" id="report-village">
+                    <option value="">सभी गाँव</option>
+                    @foreach ($villages as $village)
+                        <option value="{{ $village->villageCode }}">{{ $village->villageNameLocal ?: $village->villageNameEnglish }}{{ $village->villageNameLocal && $village->villageNameEnglish ? ' · '.$village->villageNameEnglish : '' }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-1">
                 <button class="btn btn-primary w-100" id="report-load" type="button">देखें</button>
             </div>
@@ -157,6 +166,7 @@
             if ($('report-to').value) query.set('to', $('report-to').value);
         }
         if ($('report-customer').value) query.set('customer_id', $('report-customer').value);
+        if ($('report-village').value) query.set('village_code', $('report-village').value);
         if ($('report-search').value.trim() && report !== 'outstanding') query.set('q', $('report-search').value.trim());
         if (report === 'sales' && $('report-status').value) query.set('payment_status', $('report-status').value);
         if (report === 'payments') {
@@ -329,6 +339,7 @@
     }
 
     $('report-customer').addEventListener('change', () => { state.page = 1; });
+    $('report-village').addEventListener('change', () => { state.page = 1; });
     $('report-type').addEventListener('change', () => { state.page = 1; configure(); });
     $('report-load').addEventListener('click', () => { state.page = 1; load(); });
     $('report-page-links').addEventListener('click', (event) => {
