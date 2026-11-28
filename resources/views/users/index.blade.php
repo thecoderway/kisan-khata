@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'यूज़र प्रबंधन')
-@section('page-title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'यूज़र प्रबंधन')
+@section('title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'उपयोगकर्ता प्रबंधन')
+@section('page-title', auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'उपयोगकर्ता प्रबंधन')
 
 @section('content')
     @php($isOwner = auth()->user()->role === \App\Models\User::ROLE_OWNER)
     <div class="page-heading">
         <div>
             <span class="eyebrow">टीम और पहुँच</span>
-            <h1>{{ $isOwner ? 'दुकान के स्टाफ' : 'आपकी दुकान के कर्मचारी' }}</h1>
-            <p>{{ $isOwner ? 'प्रबंधक और Staff खाते तथा उनकी पहुँच की स्थिति प्रबंधित करें।' : 'आप Staff सदस्यों का नाम और खाते की स्थिति देख सकते हैं।' }}</p>
+            <h1>{{ $isOwner ? 'दुकान के उपयोगकर्ता' : 'आपकी दुकान के कर्मचारी' }}</h1>
+            <p>{{ $isOwner ? 'प्रबंधक और कर्मचारी खाते तथा उनकी पहुँच की स्थिति प्रबंधित करें।' : 'आप कर्मचारी सदस्यों का नाम और खाते की स्थिति देख सकते हैं।' }}</p>
         </div>
         @if ($isOwner)
-            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया यूज़र" data-width="wide"><i class="ti ti-user-plus me-1"></i> नया यूज़र</button>
+            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया उपयोगकर्ता" data-width="wide"><i class="ti ti-user-plus me-1"></i> नया उपयोगकर्ता</button>
         @endif
     </div>
 
@@ -27,7 +27,7 @@
     @endif
 
     @if ($capacity)
-        <section class="capacity-grid" aria-label="सक्रिय स्टाफ सीमा">
+        <section class="capacity-grid" aria-label="सक्रिय कर्मचारी सीमा">
             @foreach ($capacity['roles'] as $roleName => $usage)
                 <article class="capacity-card">
                     <span>{{ ucfirst($roleName) }}</span>
@@ -37,7 +37,7 @@
                 </article>
             @endforeach
             <article class="capacity-card capacity-total">
-                <span>कुल सक्रिय स्टाफ</span>
+                <span>कुल सक्रिय कर्मचारी</span>
                 <strong>{{ $capacity['active_total'] }} <small>/ {{ $capacity['total_limit'] }}</small></strong>
                 <div class="capacity-track"><span style="width: {{ min(100, ($capacity['active_total'] / $capacity['total_limit']) * 100) }}%"></span></div>
                 <small>दुकान की क्षमता</small>
@@ -47,21 +47,21 @@
 
     <section class="content-card" data-user-directory>
         <div class="content-card-header">
-            <div><h2>{{ $isOwner ? 'प्रबंधक और कर्मचारी' : 'Staff सदस्य' }}</h2><p>{{ $users->total() }} खाते</p></div>
+            <div><h2>{{ $isOwner ? 'प्रबंधक और कर्मचारी' : 'कर्मचारी सदस्य' }}</h2><p>{{ $users->total() }} खाते</p></div>
         </div>
 
         <form method="GET" action="{{ route('users.index') }}" class="d-flex flex-wrap align-items-end gap-2 p-3 border-bottom" role="search" data-user-filters>
             <div class="flex-grow-1" style="min-width:min(100%,220px)">
                 <label for="user-search" class="form-label small">नाम से खोजें</label>
-                <input id="user-search" type="search" name="q" value="{{ request('q') }}" class="form-control" maxlength="100" placeholder="यूज़र का नाम" autocomplete="off">
+                <input id="user-search" type="search" name="q" value="{{ request('q') }}" class="form-control" maxlength="100" placeholder="उपयोगकर्ता का नाम" autocomplete="off">
             </div>
             @if ($isOwner)
                 <div>
                     <label for="user-role-filter" class="form-label small">भूमिका</label>
                     <select id="user-role-filter" name="role" class="form-select">
                         <option value="all" @selected(request('role', 'all') === 'all')>सभी भूमिकाएँ</option>
-                        <option value="manager" @selected(request('role') === 'manager')>Manager</option>
-                        <option value="staff" @selected(request('role') === 'staff')>Staff</option>
+                        <option value="manager" @selected(request('role') === 'manager')>प्रबंधक</option>
+                        <option value="staff" @selected(request('role') === 'staff')>कर्मचारी</option>
                     </select>
                 </div>
             @endif
@@ -86,7 +86,7 @@
 
 @if ($isOwner)
     @push('drawers')
-        <x-ui.action-drawer id="user-action-drawer" title="नया यूज़र" width="wide">
+        <x-ui.action-drawer id="user-action-drawer" title="नया उपयोगकर्ता" width="wide">
             <x-slot:footer>
                 <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
                 <button type="submit" form="user-drawer-form" class="btn btn-primary kk-primary">जारी रखें <i class="ti ti-check ms-1"></i></button>
