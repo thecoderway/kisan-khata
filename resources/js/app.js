@@ -7,6 +7,7 @@ import { registerUserDirectory } from './user-directory';
 import { registerUserAuditHistory } from './user-audit-history';
 import { initialiseVillageFilter } from './village-filter';
 import { initialiseCustomerFilter, observeCustomerSelects } from './customer-filter.js';
+import { initialiseDatepickers } from './date-picker.js';
 
 document.querySelectorAll('[data-village-filter-search]').forEach((input) => {
     const select = document.getElementById(input.dataset.villageSelect || '');
@@ -19,6 +20,7 @@ document.querySelectorAll('[data-customer-filter-search]').forEach((input) => {
 });
 
 observeCustomerSelects(document);
+initialiseDatepickers(document);
 
 
 if (document.getElementById('financial-results')) import('./financial-workspace');

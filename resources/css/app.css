@@ -692,3 +692,49 @@ body.app-shell { min-height:100vh; margin:0; background:var(--kk-bg); color:var(
     .interest-policy-actions { display:grid; grid-template-columns:1fr; width:100%; }
     .interest-policy-actions .btn { width:100%; }
 }
+
+
+/* Consistent Tabler-style calendar control for every native date field. */
+.kk-datepicker {
+    width: 100%;
+}
+
+.kk-datepicker .kk-datepicker-input {
+    width: 100%;
+    padding-right: 2.75rem;
+}
+
+.kk-datepicker .kk-datepicker-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--tblr-secondary, #667382);
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.kk-datepicker .kk-datepicker-trigger:hover,
+.kk-datepicker .kk-datepicker-trigger:focus-visible {
+    color: var(--tblr-primary, #206bc4);
+}
+
+.kk-datepicker .kk-datepicker-trigger:focus-visible {
+    outline: 2px solid var(--tblr-primary, #206bc4);
+    outline-offset: -4px;
+    border-radius: .375rem;
+}
+
+.kk-datepicker .kk-datepicker-trigger:disabled {
+    color: var(--tblr-disabled-color, #9ca3af);
+    cursor: not-allowed;
+}
+
+.kk-datepicker .kk-datepicker-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    cursor: pointer;
+}
