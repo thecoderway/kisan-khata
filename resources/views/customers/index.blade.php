@@ -30,19 +30,36 @@
     @endif
 
     <section class="content-card">
-        <form method="GET" action="{{ route('customers.index') }}" class="content-card-header d-flex flex-wrap gap-2 align-items-center" data-customer-filters>
+        <form method="GET" action="{{ route('customers.index') }}" class="content-card-header d-flex flex-wrap gap-2 align-items-center" data-customer-filters data-village-options-url="{{ route('customers.villages') }}">
             <div class="flex-grow-1">
                 <label for="customer-search" class="visually-hidden">ग्राहक खोजें</label>
                 <input id="customer-search" name="q" value="{{ $search }}" class="form-control" placeholder="नाम या मोबाइल नंबर से खोजें" maxlength="100" autocomplete="off">
             </div>
-            <div>
-                <label for="customer-village" class="visually-hidden">गाँव</label>
-                <select id="customer-village" name="village_code" class="form-select">
-                    <option value="">सभी गाँव</option>
-                    @foreach ($villageOptions as $village)
-                        <option value="{{ $village->villageCode }}" @selected($villageCode === (string) $village->villageCode)>{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
-                    @endforeach
-                </select>
+            <div class="position-relative" data-village-filter>
+                <label for="customer-village-search" class="visually-hidden">गाँव खोजें</label>
+                <input
+                    id="customer-village-search"
+                    type="search"
+                    class="form-control"
+                    placeholder="गाँव खोजें…"
+                    autocomplete="off"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-controls="customer-village-options"
+                    data-village-search
+                    value="{{ $selectedVillage ? collect([$selectedVillage->villageNameLocal ?: $selectedVillage->villageNameEnglish, $selectedVillage->subdistrictNameLocal ?: $selectedVillage->subdistrictNameEnglish, $selectedVillage->districtNameLocal ?: $selectedVillage->districtNameEnglish])->filter()->implode(', ') : '' }}"
+                >
+                <input type="hidden" name="village_code" value="{{ $villageCode }}">
+                <div
+                    id="customer-village-options"
+                    class="list-group position-absolute start-0 top-100 mt-1 w-100 shadow"
+                    style="z-index: 1050; max-height: 18rem; overflow-y: auto;"
+                    role="listbox"
+                    data-village-options
+                    hidden
+                ></div>
             </div>
             <div>
                 <label for="customer-status" class="visually-hidden">ग्राहक स्थिति</label>
