@@ -8,7 +8,7 @@
     <div>
         <span class="eyebrow">KISAN KHATA · FINANCIAL REPORTS</span>
         <h1>वित्तीय रिपोर्ट सेंटर</h1>
-        <p>दुकान की बिक्री, जमा, ग्राहक बकाया और ब्याज का read-only सारांश।</p>
+        <p>दुकान की बिक्री, जमा, ग्राहक बकाया और Late Fee का read-only सारांश।</p>
     </div>
 </div>
 
@@ -22,7 +22,7 @@
                     <option value="sales">बिक्री रजिस्टर</option>
                     <option value="payments">जमा रजिस्टर</option>
                     @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
-                        <option value="interest">ब्याज रिपोर्ट (Owner)</option>
+                        <option value="interest">Late Fee रिपोर्ट (Owner)</option>
                     @endif
                 </select>
             </div>
@@ -225,7 +225,7 @@
         let columns = [];
         let rows = payload.data || [];
         if (report === 'outstanding') {
-            columns = ['ग्राहक', 'स्थिति', 'Principal', 'Interest', 'कुल'];
+            columns = ['ग्राहक', 'स्थिति', 'मूलधन', 'Late Fee', 'कुल'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' +
                 cell(r.name_hi || r.name_original || r.name_en) + cell(r.deleted_at ? 'हटाया गया' : r.status) +
@@ -242,7 +242,7 @@
                 cell(r.customer_name_hi || r.customer_name || r.customer_name_en) + cell(r.payment_type) +
                 cell(r.payment_method) + cell(money(r.amount)) + cell(r.reversed_payment_number || r.replacement_for_payment_number) + '</tr>').join('') || '<tr><td colspan="7" class="p-4 text-secondary">कोई जमा रिकॉर्ड नहीं मिला।</td></tr>';
         } else {
-            columns = ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted interest', 'Ledger ID'];
+            columns = ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted Late Fee', 'Ledger ID'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' + cell(r.customer_name_hi || r.customer_name || r.customer_name_en) +
                 cell(r.sale_number) + cell(r.trigger_type) + cell(r.run_status) + cell(r.cutoff_date_exclusive) +
