@@ -24,8 +24,8 @@ class FinancialWorkspaceController extends Controller
 
         $villages = DB::table('customers as c')->join('villages as v', 'v.villageCode', '=', 'c.village_code')
             ->where('c.shop_id', auth()->user()->shop_id)->whereNotNull('c.village_code')
-            ->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish', 'v.subdistrictNameLocal', 'v.subdistrictNameEnglish', 'v.districtNameLocal', 'v.districtNameEnglish')->distinct()
-            ->orderBy('v.districtNameLocal')->orderBy('v.subdistrictNameLocal')->orderBy('v.villageNameLocal')->get();
+            ->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish')->distinct()
+            ->orderBy('v.villageNameEnglish')->get();
 
         if ($section === 'reports') {
             Gate::authorize('viewAny', Sale::class);

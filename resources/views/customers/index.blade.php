@@ -40,7 +40,7 @@
                 <select id="customer-village" name="village_code" class="form-select">
                     <option value="">सभी गाँव</option>
                     @foreach ($villageOptions as $village)
-                        <option value="{{ $village->villageCode }}" @selected($villageCode === (string) $village->villageCode)>{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
+                        <option value="{{ $village->villageCode }}" @selected($villageCode === (string) $village->villageCode)>{{ $village->villageNameLocal ?: $village->villageNameEnglish }}{{ $village->villageNameLocal && $village->villageNameEnglish ? ' · '.$village->villageNameEnglish : '' }}</option>
                     @endforeach
                 </select>
             </div>
@@ -49,7 +49,7 @@
                 <select id="customer-status" name="status" class="form-select">
                     <option value="active" @selected($status === 'active')>सक्रिय ग्राहक</option>
                     <option value="inactive" @selected($status === 'inactive')>निष्क्रिय ग्राहक</option>
-                    <option value="deleted" @selected($status === 'deleted')>हटाए गए ग्राहक</option>
+                    <option value="deleted" @selected($status === 'deleted')>Soft Deleted ग्राहक</option>
                 </select>
             </div>
             <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary" data-customer-filter-reset @if ($search === '' && $status === 'active' && $villageCode === '') hidden @endif>साफ़ करें</a>

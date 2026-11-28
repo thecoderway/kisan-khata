@@ -43,6 +43,7 @@ const customerLifecycleLabel = (customer) => {
     if (customer.status === 'inactive') return ' <span class="badge bg-warning-lt">निष्क्रिय</span>';
     return '';
 };
+const entryKindLabel = (value) => ({ SALE: 'उधार बिक्री', PAYMENT: 'जमा', PAYMENT_REVERSAL: 'जमा वापसी', REVERSAL: 'जमा वापसी', INTEREST: 'लेट फीस', INTEREST_CALCULATION: 'लेट फीस', INTEREST_ADJUSTMENT: 'लेट फीस में सुधार', INTEREST_SETTLEMENT: 'लेट फीस का वार्षिक हिसाब', OPENING_BALANCE: 'प्रारंभिक शेष' }[value] || (String(value || '').startsWith('INTEREST') ? 'लेट फीस' : String(value || '—').replaceAll('_', ' ')));
 const paymentTypeLabel = (value) => ({
     NORMAL: 'सामान्य जमा',
     SALE_DAY_AUTO: 'बिक्री के साथ स्वतः जमा',
@@ -225,20 +226,20 @@ const loadLedger = async (signal) => {
     const rows = (payload.data || []).map((entry) => {
         const transactionLabel = entry.payment_number
             ? (entry.payment_type === 'REVERSAL' ? 'भुगतान रिवर्सल' : 'भुगतान') + ' · ' + esc(entry.payment_number)
-            : esc(entry.entry_kind);
+            : esc(entryKindLabel(entry.entry_kind));
         const componentLabel = entry.component === 'MIXED'
-            ? 'मूलधन + Late Fee'
-            : (entry.component === 'PRINCIPAL' ? 'मूलधन' : (entry.component === 'INTEREST' ? 'Late Fee' : esc(entry.component)));
+            ? 'मूलधन + लेट फीस'
+            : (entry.component === 'PRINCIPAL' ? 'मूलधन' : (entry.component === 'INTEREST' ? 'लेट फीस' : esc(entry.component)));
         return [
             date(entry.effective_date), transactionLabel, componentLabel,
             money(entry.debit), money(entry.credit), money(entry.total_balance),
         ];
     });
-    renderTable(['तारीख', 'लेन-देन', 'खाता', 'Debit', 'Credit', 'बाकी'], rows);
+    renderTable(['तारीख', 'लेन-देन', 'खाते का भाग', 'जमा (डेबिट)', 'प्राप्ति (क्रेडिट)', 'बाकी'], rows);
     const opening = payload.meta?.opening_balance;
     if (opening) {
-        root.insertAdjacentHTML('afterbegin', '<div class="alert alert-info mx-3 mt-3 mb-0" role="status">Opening balance — Principal: <strong>' +
-            money(opening.principal) + '</strong> · Late Fee: <strong>' + money(opening.interest) + '</strong> · Total: <strong>' + money(opening.total) + '</strong></div>');
+        root.insertAdjacentHTML('afterbegin', '<div class="alert alert-info mx-3 mt-3 mb-0" role="status">प्रारंभिक शेष — मूलधन: <strong>' +
+            money(opening.principal) + '</strong> · लेट फीस: <strong>' + money(opening.interest) + '</strong> · कुल: <strong>' + money(opening.total) + '</strong></div>');
     }
     renderPagination(payload.meta);
 };
@@ -287,12 +288,12 @@ const printCustomerLedger = async () => {
                     || entry.payment_type === 'REVERSAL';
                 return (reversal ? 'भुगतान रिवर्सल' : 'भुगतान') + ' · ' + entry.payment_number;
             }
-            return entry.entry_kind || '—';
+            return entryKindLabel(entry.entry_kind);
         };
         const componentLabel = (entry) => entry.component === 'MIXED'
             ? 'मूलधन + Late Fee'
             : entry.component === 'PRINCIPAL' ? 'मूलधन'
-                : entry.component === 'INTEREST' ? 'Late Fee' : (entry.component || '—');
+                : entry.component === 'INTEREST' ? 'लेट फीस' : (entry.component || '—');
         const tableRows = rows.map((entry) => '<tr>' +
             '<td>' + esc(date(entry.effective_date)) + '</td>' +
             '<td>' + esc(transactionLabel(entry)) + '</td>' +
@@ -324,12 +325,12 @@ const printCustomerLedger = async () => {
             '<header class="header"><div><div class="muted">' + esc(config.shopName || 'Kisan Khata') + '</div><h1>ग्राहक खाता-बही</h1><div>' + esc(customerName) + '</div></div>' +
             '<div class="muted">प्रिंट दिनांक: ' + esc(new Date().toLocaleString('en-IN')) + '</div></header>' +
             '<section class="meta"><div>ग्राहक<strong>' + esc(customerName) + '</strong></div><div>अवधि<strong>' + esc(rangeLabel) + '</strong></div><div>कुल लेन-देन<strong>' + rows.length + '</strong></div></section>' +
-            '<section class="balances"><div class="balance">प्रारंभिक मूलधन<strong>' + esc(money(opening.principal)) + '</strong></div><div class="balance">प्रारंभिक Late Fee<strong>' + esc(money(opening.interest)) + '</strong></div><div class="balance">प्रारंभिक कुल<strong>' + esc(money(opening.total)) + '</strong></div></section>' +
-            '<table><thead><tr><th>तारीख</th><th>लेन-देन</th><th>खाता</th><th class="number">Debit</th><th class="number">Credit</th><th class="number">मूलधन बाकी</th><th class="number">Late Fee बाकी</th><th class="number">कुल बाकी</th></tr></thead>' +
+            '<section class="balances"><div class="balance">प्रारंभिक मूलधन<strong>' + esc(money(opening.principal)) + '</strong></div><div class="balance">प्रारंभिक लेट फीस<strong>' + esc(money(opening.interest)) + '</strong></div><div class="balance">प्रारंभिक कुल<strong>' + esc(money(opening.total)) + '</strong></div></section>' +
+            '<table><thead><tr><th>तारीख</th><th>लेन-देन</th><th>खाता</th><th class="number">जमा (डेबिट)</th><th class="number">प्राप्ति (क्रेडिट)</th><th class="number">मूलधन बाकी</th><th class="number">लेट फीस बाकी</th><th class="number">कुल बाकी</th></tr></thead>' +
             '<tbody>' + (tableRows || '<tr><td colspan="8" style="text-align:center;padding:18px">इस अवधि में कोई लेन-देन नहीं है।</td></tr>') + '</tbody>' +
             '<tfoot><tr><td colspan="3">कुल</td><td class="number">' + esc(moneyFromCents(totalDebit)) + '</td><td class="number">' + esc(moneyFromCents(totalCredit)) + '</td><td colspan="3">समापन शेष: ' + esc(money(closing.total)) + '</td></tr></tfoot></table>' +
             '<section class="balances" style="margin-top:14px"><div class="balance">समापन मूलधन<strong>' + esc(money(closing.principal)) + '</strong></div><div class="balance">समापन Late Fee<strong>' + esc(money(closing.interest)) + '</strong></div><div class="balance">समापन कुल<strong>' + esc(money(closing.total)) + '</strong></div></section>' +
-            '<div class="footer"><span>यह विवरण Kisan Khata के ग्राहक ledger से तैयार किया गया है।</span><span>पृष्ठ डेटा: ' + rows.length + ' रिकॉर्ड · ' + pages + ' पेज लोड</span></div>' +
+            '<div class="footer"><span>यह विवरण Kisan Khata के ग्राहक खाता-बही से तैयार किया गया है।</span><span>पृष्ठ डेटा: ' + rows.length + ' रिकॉर्ड · ' + pages + ' पेज लोड</span></div>' +
             '</body></html>';
 
         printWindow.document.open();
@@ -356,14 +357,14 @@ const loadInterest = async (signal) => {
     const overrideButton = document.getElementById('open-customer-policy-drawer');
     if (overrideButton) {
         overrideButton.disabled = versions.length === 0;
-        overrideButton.title = versions.length === 0 ? 'पहले Shop Late Fee Policy configure करें।' : '';
+        overrideButton.title = versions.length === 0 ? 'पहले दुकान की लेट फीस नीति configure करें।' : '';
     }
     if (versions.length === 0) {
-        root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>Shop Late Fee Policy अभी configure नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई Shop Late Fee Policy” से पहली policy बनाएँ। कोई Late Fee दर अपने-आप लागू नहीं की जाएगी।</p></div>';
+        root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>दुकान की लेट फीस नीति अभी निर्धारित नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई दुकान की लेट फीस नीति” से पहली नीति बनाएँ। कोई लेट फीस दर अपने-आप लागू नहीं की जाएगी।</p></div>';
         await loadInterestHistory(signal);
         return;
     }
-    renderTable(['Version', 'लागू तारीख', 'मासिक दर', 'Grace', 'Capitalization', 'Waterfall', 'Settlement dates'],
+    renderTable(['संस्करण', 'लागू तारीख', 'मासिक दर', 'छूट अवधि', 'मूलधन में जोड़ना', 'जमा समायोजन क्रम', 'वार्षिक हिसाब की तारीखें'],
         versions.map((version) => [
             esc(version.version_number), date(version.effective_from), esc(version.monthly_rate_percent) + '%',
             esc(version.grace_days) + ' दिन', version.capitalization_enabled ? 'चालू' : 'बंद',
@@ -377,7 +378,7 @@ const loadInterestHistory = async (signal) => {
     const customerId = document.getElementById('interest-history-customer')?.value;
     if (!target) return;
     if (!customerId) {
-        target.innerHTML = '<div class="text-secondary">Calculation history देखने के लिए ग्राहक चुनें।</div>';
+        target.innerHTML = '<div class="text-secondary">गणना का इतिहास देखने के लिए ग्राहक चुनें।</div>';
         return;
     }
     const params = new URLSearchParams({ page: String(interestHistoryPage), per_page: '20' });
@@ -390,14 +391,14 @@ const loadInterestHistory = async (signal) => {
         const rows = payload.data || [];
         const meta = payload.meta || {};
         const table = rows.map((run) => '<tr>' +
-            '<td>' + esc(run.id) + '</td><td>' + esc(run.trigger_type === 'CUSTOMER_PAYMENT' ? 'भुगतान पर' : 'वार्षिक settlement') + '</td>' +
+            '<td>' + esc(run.id) + '</td><td>' + esc(run.trigger_type === 'CUSTOMER_PAYMENT' ? 'भुगतान पर' : 'वार्षिक हिसाब') + '</td>' +
             '<td>' + date(run.cutoff_date_exclusive) + '</td><td>' + esc(run.status) + '</td>' +
             '<td class="text-end">' + money(run.posted_interest_total) + '</td><td>' + esc(run.items_count) + '</td>' +
             '<td><button type="button" class="btn btn-sm btn-outline-primary" data-interest-run="' + esc(run.id) + '">पूरा विवरण</button></td></tr>').join('');
         target.innerHTML = (rows.length
-            ? '<div class="kk-data-table-wrap"><table class="table table-vcenter financial-table"><thead><tr><th>Run</th><th>कारण</th><th>Cutoff (exclusive)</th><th>स्थिति</th><th class="text-end">Posted Late Fee</th><th>Items</th><th>विवरण</th></tr></thead><tbody>' + table + '</tbody></table></div>'
-            : '<div class="empty-state"><h3>Calculation history उपलब्ध नहीं है</h3><p>इस ग्राहक के लिए चुनी गई अवधि में कोई calculation run नहीं मिला।</p></div>') +
-            '<div class="d-flex align-items-center justify-content-between gap-2 mt-3"><span class="text-secondary small">कुल ' + esc(meta.total || 0) + ' runs · Page ' + esc(meta.current_page || 1) + ' / ' + esc(meta.last_page || 1) + '</span><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.max(1, Number(meta.current_page || 1) - 1) + '"' + (Number(meta.current_page || 1) <= 1 ? ' disabled' : '') + '>पिछला</button><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.min(Number(meta.last_page || 1), Number(meta.current_page || 1) + 1) + '"' + (Number(meta.current_page || 1) >= Number(meta.last_page || 1) ? ' disabled' : '') + '>अगला</button></div></div>' +
+            ? '<div class="kk-data-table-wrap"><table class="table table-vcenter financial-table"><thead><tr><th>गणना</th><th>कारण</th><th>अंतिम तिथि (शामिल नहीं)</th><th>स्थिति</th><th class="text-end">Posted Late Fee</th><th>मदें</th><th>विवरण</th></tr></thead><tbody>' + table + '</tbody></table></div>'
+            : '<div class="empty-state"><h3>गणना का इतिहास उपलब्ध नहीं है</h3><p>इस ग्राहक के लिए चुनी गई अवधि में कोई गणना दर्ज नहीं है।</p></div>') +
+            '<div class="d-flex align-items-center justify-content-between gap-2 mt-3"><span class="text-secondary small">कुल ' + esc(meta.total || 0) + ' गणनाएँ · पृष्ठ ' + esc(meta.current_page || 1) + ' / ' + esc(meta.last_page || 1) + '</span><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.max(1, Number(meta.current_page || 1) - 1) + '"' + (Number(meta.current_page || 1) <= 1 ? ' disabled' : '') + '>पिछला</button><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.min(Number(meta.last_page || 1), Number(meta.current_page || 1) + 1) + '"' + (Number(meta.current_page || 1) >= Number(meta.last_page || 1) ? ' disabled' : '') + '>अगला</button></div></div>' +
             '<div id="interest-run-detail" class="mt-3"></div>';
     } catch (error) {
         if (error.name !== 'AbortError') target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'Late Fee history लोड नहीं हो सकी।') + '</div>';
@@ -407,7 +408,7 @@ const loadInterestRunDetail = async (runId) => {
     const target = document.getElementById('interest-run-detail');
     const customerId = document.getElementById('interest-history-customer')?.value;
     if (!target || !customerId) return;
-    target.innerHTML = '<div class="text-secondary" role="status">Calculation breakdown लोड हो रहा है…</div>';
+    target.innerHTML = '<div class="text-secondary" role="status">गणना का विवरण लोड हो रहा है…</div>';
     try {
         const payload = await request('/customers/' + encodeURIComponent(customerId) + '/interest-history/' + encodeURIComponent(runId));
         const run = payload.data || {};
@@ -419,28 +420,28 @@ const loadInterestRunDetail = async (runId) => {
             '<td class="text-end">' + money(item.unrounded_interest) + '</td><td class="text-end"><strong>' + money(item.posted_interest) + '</strong></td>' +
             '<td>' + (item.capitalization_enabled ? 'चालू' : 'बंद') + '</td></tr>').join('');
         target.innerHTML = '<section class="content-card p-3"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h3 class="h4 mb-1">Calculation Run #' + esc(run.id) + '</h3><p class="text-secondary small mb-0">' + esc(run.trigger_type) + ' · Exclusive cutoff: ' + date(run.cutoff_date_exclusive) + ' · ' + esc(run.status) + '</p></div></div>' +
-            '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Sale</th><th>Calculation interval</th><th class="text-end">Actual days</th><th class="text-end">Grace days</th><th class="text-end">Monthly rate</th><th class="text-end">Eligible principal</th><th class="text-end">Unrounded</th><th class="text-end">Posted</th><th>Capitalization</th></tr></thead><tbody>' + (rows || '<tr><td colspan="9">इस run में कोई calculation item नहीं है।</td></tr>') + '</tbody></table></div>' +
-            (run.items || []).map((item) => '<div class="border rounded p-2 mt-2"><strong>Sale #' + esc(item.sale?.number || item.sale?.id || '—') + '</strong><div class="small text-secondary">Shop policy v' + esc(item.shop_policy?.version ?? '—') + ' · Customer override v' + esc(item.customer_policy?.version ?? '—') + ' · Payment waterfall: ' + esc(item.shop_policy?.payment_waterfall || '—') + '</div><div class="small">Ledger: ' + (item.ledger_entry ? '#' + esc(item.ledger_entry.id) + ' · ' + esc(item.ledger_entry.component) + ' · ' + money(item.ledger_entry.debit) + ' / ' + money(item.ledger_entry.credit) : 'कोई ledger entry link नहीं') + '</div></div>').join('') +
+            '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>बिक्री</th><th>गणना अवधि</th><th class="text-end">वास्तविक दिन</th><th class="text-end">छूट अवधि (दिन)</th><th class="text-end">मासिक दर</th><th class="text-end">योग्य मूलधन</th><th class="text-end">बिना पूर्णांक राशि</th><th class="text-end">दर्ज राशि</th><th>मूलधन में जोड़ना</th></tr></thead><tbody>' + (rows || '<tr><td colspan="9">इस run में कोई calculation item नहीं है।</td></tr>') + '</tbody></table></div>' +
+            (run.items || []).map((item) => '<div class="border rounded p-2 mt-2"><strong>Sale #' + esc(item.sale?.number || item.sale?.id || '—') + '</strong><div class="small text-secondary">दुकान नीति संस्करण ' + esc(item.shop_policy?.version ?? '—') + ' · ग्राहक विशेष दर संस्करण ' + esc(item.customer_policy?.version ?? '—') + ' · जमा समायोजन क्रम: ' + esc(item.shop_policy?.payment_waterfall || '—') + '</div><div class="small">खाता-बही: ' + (item.ledger_entry ? '#' + esc(item.ledger_entry.id) + ' · ' + esc(item.ledger_entry.component) + ' · ' + money(item.ledger_entry.debit) + ' / ' + money(item.ledger_entry.credit) : 'खाता-बही प्रविष्टि उपलब्ध नहीं') + '</div></div>').join('') +
             '</section>';
     } catch (error) {
-        target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'Calculation detail लोड नहीं हो सका।') + '</div>';
+        target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'गणना का विवरण लोड नहीं हो सका।') + '</div>';
     }
 };
 const loadReconciliation = async (signal) => {
     const id = document.getElementById('financial-customer')?.value;
-    if (!id) { root.innerHTML = '<div class="empty-state"><i class="ti ti-user-search"></i><h3>ग्राहक चुनें</h3><p>Projection reconciliation के लिए Customer चुनें।</p></div>'; return; }
+    if (!id) { root.innerHTML = '<div class="empty-state"><i class="ti ti-user-search"></i><h3>ग्राहक चुनें</h3><p>खाते के शेष का मिलान देखने के लिए ग्राहक चुनें।</p></div>'; return; }
     const payload = await request('/reconciliation/customers/' + id, { signal });
     const result = payload.data;
-    renderTable(['स्थिति', 'Field / तारीख', 'Expected', 'Actual'], (result.discrepancies || []).map((item) => [
+    renderTable(['स्थिति', 'फ़ील्ड / तारीख', 'अपेक्षित', 'वास्तविक'], (result.discrepancies || []).map((item) => [
         '<span class="badge bg-secondary-lt">' + esc(item.type) + '</span>',
         esc(item.field || item.as_of_date || item.sale_id || item.payment_id || '—'),
         esc(JSON.stringify(item.expected ?? '—')), esc(JSON.stringify(item.actual ?? '—')),
     ]));
-    showMessage(result.consistent ? 'Ledger और projection में कोई अंतर नहीं मिला।' : result.discrepancies.length + ' discrepancy मिली।', result.consistent ? 'success' : 'error');
+    showMessage(result.consistent ? 'खाता-बही और खाते के शेष में कोई अंतर नहीं मिला।' : result.discrepancies.length + ' discrepancy मिली।', result.consistent ? 'success' : 'error');
 };
 const loadAudit = async (signal) => {
     const payload = await request('/financial-audit?' + buildQuery(), { signal });
-    renderTable(['समय', 'User', 'Action', 'Entity', 'Reason'], (payload.data || []).map((audit) => [
+    renderTable(['समय', 'उपयोगकर्ता', 'कार्रवाई', 'रिकॉर्ड', 'कारण'], (payload.data || []).map((audit) => [
         date(audit.created_at), esc(audit.user?.name || 'System'), esc(audit.action),
         esc(audit.entity_type + ' #' + audit.entity_id), esc(audit.reason || '—'),
     ]));
@@ -501,8 +502,8 @@ const formMarkup = (kind, data = {}) => {
             formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
             formField('भुगतान तारीख', 'payment_date', '<input id="FIELD_ID" class="form-control" type="date" name="payment_date" value="' + new Date().toLocaleDateString('en-CA') + '" required>') +
             formField('राशि (₹)', 'amount', '<input id="FIELD_ID" class="form-control" type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>') +
-            formField('माध्यम', 'payment_method', '<select id="FIELD_ID" class="form-select" name="payment_method"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>') +
-            formField('Reference number', 'reference_number', '<input id="FIELD_ID" class="form-control" name="reference_number" maxlength="128">') +
+            formField('माध्यम', 'payment_method', '<select id="FIELD_ID" class="form-select" name="payment_method"><option value="">चुनें</option><option value="CASH">नकद</option><option value="UPI">यूपीआई</option><option value="BANK">बैंक</option><option value="CHEQUE">चेक</option></select>') +
+            formField('संदर्भ क्रमांक', 'reference_number', '<input id="FIELD_ID" class="form-control" name="reference_number" maxlength="128">') +
             formField('विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000"></textarea>', true) + '</form>';
     }
     if (kind === 'revise-sale') {
@@ -513,8 +514,8 @@ const formMarkup = (kind, data = {}) => {
     return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान #' + esc(data.paymentNumber || data.id) + ' (₹' + esc(data.paymentAmount || '') + ') reverse होगा। क्या आप आगे बढ़ना चाहते हैं?" data-optional-nested-amount="replacement[amount]">' + token +
         '<div class="alert alert-warning financial-form-wide" role="note">मूल भुगतान <strong>#' + esc(data.paymentNumber || data.id) + '</strong> · ग्राहक <strong>' + esc(data.customerName || '—') + '</strong> · राशि <strong>' + money(data.paymentAmount || 0) + '</strong></div>' +
         formField('कारण', 'reason', '<textarea id="FIELD_ID" class="form-control" name="reason" rows="2" minlength="1" maxlength="500" required></textarea>', true) +
-        formField('Replacement राशि (₹) — वैकल्पिक', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
-        formField('Replacement माध्यम', 'replacement.payment_method', '<select id="FIELD_ID" class="form-select" name="replacement[payment_method]"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>');
+        formField('वैकल्पिक नई जमा राशि (₹)', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
+        formField('नई जमा का माध्यम', 'replacement.payment_method', '<select id="FIELD_ID" class="form-select" name="replacement[payment_method]"><option value="">चुनें</option><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="BANK">Bank</option><option value="CHEQUE">Cheque</option></select>');
 };
 const detailValue = (value) => value === null || value === undefined || value === '' ? '—' : esc(value);
 const detailRow = (label, value) => '<div class="d-flex justify-content-between gap-3 py-2 border-bottom"><span class="text-secondary">' + esc(label) + '</span><strong class="text-end">' + detailValue(value) + '</strong></div>';
@@ -533,7 +534,7 @@ const renderSaleDetails = (sale) => {
     const revisionRows = revisions.map((revision) => '<tr><td>' + detailValue(revision.revision_number) + '</td><td>' + date(revision.changed_at) + '</td><td>' + detailValue(revision.actor?.name || revision.changed_by) + '</td><td>' + detailValue(revision.correction_reason) + '</td><td>' + detailValue(revision.new_values?.description) + '</td></tr>').join('');
     return '<div class="financial-sale-details">' +
         '<section class="mb-4"><h3 class="h4 mb-2">बिक्री जानकारी</h3>' +
-        detailRow('Sale Number', sale.sale_number) +
+        detailRow('बिक्री क्रमांक', sale.sale_number) +
         detailRow('ग्राहक', customer.name_hi || customer.name_original || customer.name_en) +
         detailRow('ग्राहक स्थिति', customer.deleted_at ? 'हटाया गया' : customer.status) +
         detailRow('बिक्री तारीख', date(sale.sale_date)) +
@@ -541,19 +542,19 @@ const renderSaleDetails = (sale) => {
         detailRow('भुगतान स्थिति', saleStatusLabel(sale.payment_status)) +
         detailRow('Late Fee settlement', sale.interest_settlement_status) +
         detailRow('विवरण', sale.description) +
-        detailRow('Posted at', sale.posted_at ? new Date(sale.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
+        detailRow('दर्ज होने का समय', sale.posted_at ? new Date(sale.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">स्वतः बिक्री-दिवस भुगतान</h3>' +
-        (automaticPayment ? detailRow('Payment Number', automaticPayment.payment_number) +
+        (automaticPayment ? detailRow('जमा क्रमांक', automaticPayment.payment_number) +
             detailRow('तारीख / राशि', date(automaticPayment.payment_date) + ' · ' + money(automaticPayment.amount)) +
             detailRow('माध्यम', paymentMethodLabel(automaticPayment.payment_method)) +
             detailRow('प्रकार', paymentTypeLabel(automaticPayment.payment_type)) : '<p class="text-secondary small">इस बिक्री के साथ स्वतः भुगतान दर्ज नहीं हुआ।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">अन्य भुगतानों का Sale-wise Allocation</h3>' +
-        (paymentRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Payment</th><th>तारीख</th><th>कुल राशि</th><th>माध्यम</th><th>Component</th><th>Allocated</th></tr></thead><tbody>' + paymentRows + '</tbody></table></div>' : '<p class="text-secondary small">इस बिक्री पर अन्य भुगतान allocation उपलब्ध नहीं है।</p>') + '</section>' +
-        '<section class="mb-4"><h3 class="h4 mb-2">Financial Transaction</h3>' +
-        (transaction ? detailRow('Transaction ID', transaction.id) + detailRow('प्रकार', transaction.transaction_type) + detailRow('Effective date', date(transaction.effective_date)) + detailRow('Posted at', transaction.posted_at ? new Date(transaction.posted_at).toLocaleString('en-IN') : '—') : '<p class="text-secondary small">Financial transaction उपलब्ध नहीं है।</p>') + '</section>' +
-        '<section class="mb-4"><h3 class="h4 mb-2">Ledger References</h3>' +
-        (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>ID</th><th>तारीख</th><th>Component</th><th>Entry</th><th>Debit</th><th>Credit</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
-        '<section><h3 class="h4 mb-2">Revision History</h3>' +
+        (paymentRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Payment</th><th>तारीख</th><th>कुल राशि</th><th>माध्यम</th><th>मद</th><th>समायोजित राशि</th></tr></thead><tbody>' + paymentRows + '</tbody></table></div>' : '<p class="text-secondary small">इस बिक्री पर अन्य भुगतान allocation उपलब्ध नहीं है।</p>') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">वित्तीय लेन-देन</h3>' +
+        (transaction ? detailRow('लेन-देन क्रमांक', transaction.id) + detailRow('प्रकार', transaction.transaction_type) + detailRow('लागू तारीख', date(transaction.effective_date)) + detailRow('दर्ज होने का समय', transaction.posted_at ? new Date(transaction.posted_at).toLocaleString('en-IN') : '—') : '<p class="text-secondary small">Financial transaction उपलब्ध नहीं है।</p>') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">खाता-बही संदर्भ</h3>' +
+        (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>क्रमांक</th><th>तारीख</th><th>मद</th><th>प्रविष्टि</th><th>जमा (डेबिट)</th><th>प्राप्ति (क्रेडिट)</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
+        '<section><h3 class="h4 mb-2">संशोधन का इतिहास</h3>' +
         (revisionRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Version</th><th>तारीख</th><th>किसने बदला</th><th>कारण</th><th>नया विवरण</th></tr></thead><tbody>' + revisionRows + '</tbody></table></div>' : '<p class="text-secondary small">कोई revision दर्ज नहीं है।</p>') + '</section></div>';
 };
 const renderPaymentDetails = (payment) => {
@@ -581,30 +582,30 @@ const renderPaymentDetails = (payment) => {
     }).join('');
     return '<div class="financial-payment-details">' +
         '<section class="mb-4"><h3 class="h4 mb-2">भुगतान जानकारी</h3>' +
-        detailRow('Payment Number', payment.payment_number) +
+        detailRow('जमा क्रमांक', payment.payment_number) +
         detailRow('ग्राहक', customer.name_hi || customer.name_original || customer.name_en) +
         detailRow('ग्राहक स्थिति', customer.deleted_at ? 'हटाया गया' : customer.status) +
         detailRow('भुगतान तारीख', date(payment.payment_date)) +
         detailRow('राशि', money(payment.amount)) +
         detailRow('माध्यम', paymentMethodLabel(payment.payment_method)) +
-        detailRow('Reference Number', payment.reference_number) +
+        detailRow('संदर्भ क्रमांक', payment.reference_number) +
         detailRow('प्रकार', paymentTypeLabel(payment.payment_type)) +
         detailRow('विवरण', payment.description) +
         detailRow('Posted at', payment.posted_at ? new Date(payment.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
-        (payment.source_sale ? '<section class="mb-4"><h3 class="h4 mb-2">संबंधित Sale</h3>' + detailRow('Sale Number', payment.source_sale.sale_number) + detailRow('Sale Date / Amount', date(payment.source_sale.sale_date) + ' · ' + money(payment.source_sale.amount)) + detailRow('स्थिति', saleStatusLabel(payment.source_sale.payment_status)) + '</section>' : '') +
-        '<section class="mb-4"><h3 class="h4 mb-2">FIFO Allocation</h3>' +
-        detailRow('Allocation ID', allocation.id) +
-        detailRow('Allocation Type', allocation.allocation_type) +
-        detailRow('Allocation Date', allocation.allocation_effective_at ? new Date(allocation.allocation_effective_at).toLocaleString('en-IN') : '—') +
-        detailRow('Total Allocated', allocation.total_allocated === null || allocation.total_allocated === undefined ? '—' : money(allocation.total_allocated)) +
-        (allocationRows ? '<div class="kk-data-table-wrap mt-2"><table class="table table-sm financial-table"><thead><tr><th>Sale</th><th>Sale Date</th><th>स्थिति</th><th>Component</th><th>Allocated</th><th>Reversed Item</th></tr></thead><tbody>' + allocationRows + '</tbody></table></div>' : '<p class="text-secondary small">इस भुगतान के लिए allocation item उपलब्ध नहीं है।</p>') + '</section>' +
+        (payment.source_sale ? '<section class="mb-4"><h3 class="h4 mb-2">संबंधित Sale</h3>' + detailRow('Sale Number', payment.source_sale.sale_number) + detailRow('बिक्री तारीख / राशि', date(payment.source_sale.sale_date) + ' · ' + money(payment.source_sale.amount)) + detailRow('स्थिति', saleStatusLabel(payment.source_sale.payment_status)) + '</section>' : '') +
+        '<section class="mb-4"><h3 class="h4 mb-2">पहले आए भुगतान का पहले समायोजन</h3>' +
+        detailRow('समायोजन क्रमांक', allocation.id) +
+        detailRow('समायोजन प्रकार', allocation.allocation_type) +
+        detailRow('समायोजन तारीख', allocation.allocation_effective_at ? new Date(allocation.allocation_effective_at).toLocaleString('en-IN') : '—') +
+        detailRow('कुल समायोजित राशि', allocation.total_allocated === null || allocation.total_allocated === undefined ? '—' : money(allocation.total_allocated)) +
+        (allocationRows ? '<div class="kk-data-table-wrap mt-2"><table class="table table-sm financial-table"><thead><tr><th>बिक्री</th><th>बिक्री तारीख</th><th>स्थिति</th><th>Component</th><th>Allocated</th><th>Reversed Item</th></tr></thead><tbody>' + allocationRows + '</tbody></table></div>' : '<p class="text-secondary small">इस भुगतान के लिए allocation item उपलब्ध नहीं है।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">Financial Transaction</h3>' +
         (transaction ? detailRow('Transaction ID', transaction.id) + detailRow('प्रकार', transaction.transaction_type) + detailRow('Effective date', date(transaction.effective_date)) + detailRow('Posted at', transaction.posted_at ? new Date(transaction.posted_at).toLocaleString('en-IN') : '—') : '<p class="text-secondary small">Financial transaction उपलब्ध नहीं है।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">Ledger References</h3>' +
         (ledgerRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>ID</th><th>तारीख</th><th>Component</th><th>Entry</th><th>Debit</th><th>Credit</th></tr></thead><tbody>' + ledgerRows + '</tbody></table></div>' : '<p class="text-secondary small">Ledger entries उपलब्ध नहीं हैं।</p>') + '</section>' +
-        '<section class="mb-4"><h3 class="h4 mb-2">Correction History</h3>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">सुधार का इतिहास</h3>' +
         (revisionRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Version</th><th>Type</th><th>तारीख</th><th>किसने किया</th><th>कारण</th><th>पहले</th><th>बाद में</th><th>Reversal</th><th>Replacement</th></tr></thead><tbody>' + revisionRows + '</tbody></table></div>' : '<p class="text-secondary small">कोई correction दर्ज नहीं है।</p>') + '</section>' +
-        (relatedPayment ? '<section><h3 class="h4 mb-2">संबंधित मूल भुगतान</h3>' + detailRow('Payment Number', relatedPayment.payment_number) + detailRow('प्रकार', paymentTypeLabel(relatedPayment.payment_type)) + detailRow('तारीख / राशि', date(relatedPayment.payment_date) + ' · ' + money(relatedPayment.amount)) + '</section>' : '') +
+        (relatedPayment ? '<section><h3 class="h4 mb-2">संबंधित मूल भुगतान</h3>' + detailRow('जमा क्रमांक', relatedPayment.payment_number) + detailRow('प्रकार', paymentTypeLabel(relatedPayment.payment_type)) + detailRow('तारीख / राशि', date(relatedPayment.payment_date) + ' · ' + money(relatedPayment.amount)) + '</section>' : '') +
         '</div>';
 };
 const openPaymentDetails = async (paymentId) => {
@@ -808,7 +809,7 @@ document.getElementById('open-customer-policy-drawer')?.addEventListener('click'
     }
     const history = document.getElementById('customer-policy-history');
     if (history) history.innerHTML = '';
-    openInterestDrawer('customer-interest-override-drawer', 'Customer Late Fee Override');
+    openInterestDrawer('customer-interest-override-drawer', 'ग्राहक की लेट फीस की विशेष दर');
 });
 document.getElementById('interest-customer')?.addEventListener('change', async (event) => {
     const id = event.target.value;
