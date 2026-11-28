@@ -805,9 +805,9 @@ class CustomerManagementTest extends TestCase
     {
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
-        $customer = Customer::query()->where('shop_id', $owner->shop_id)->firstOrFail();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->first();
 
-        $this->get(route('customers.show', $customer))->assertOk()
+        $this->get(route('customers.show', $customer->id))->assertOk()
             ->assertSee('data-customer-detail', false)
             ->assertSee('data-customer-lifecycle-action="deactivate"', false)
             ->assertSee('data-customer-lifecycle-action="soft-delete"', false)
