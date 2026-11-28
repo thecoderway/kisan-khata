@@ -36,6 +36,15 @@
                 <input id="customer-search" name="q" value="{{ $search }}" class="form-control" placeholder="नाम या मोबाइल नंबर से खोजें" maxlength="100" autocomplete="off">
             </div>
             <div>
+                <label for="customer-village" class="visually-hidden">गाँव</label>
+                <select id="customer-village" name="village_code" class="form-select">
+                    <option value="">सभी गाँव</option>
+                    @foreach ($villageOptions as $village)
+                        <option value="{{ $village->villageCode }}" @selected($villageCode === (string) $village->villageCode)>{{ $village->villageNameLocal ?: $village->villageNameEnglish }}{{ $village->villageNameLocal && $village->villageNameEnglish ? ' · '.$village->villageNameEnglish : '' }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
                 <label for="customer-status" class="visually-hidden">ग्राहक स्थिति</label>
                 <select id="customer-status" name="status" class="form-select">
                     <option value="active" @selected($status === 'active')>सक्रिय ग्राहक</option>
