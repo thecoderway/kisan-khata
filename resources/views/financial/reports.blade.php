@@ -248,7 +248,7 @@
                 cell(r.sale_number) + cell(r.trigger_type) + cell(r.run_status) + cell(r.cutoff_date_exclusive) +
                 cell(r.interval_start_date + ' – ' + r.interval_end_date_exclusive) + cell(r.actual_days) +
                 cell(r.monthly_rate_percent) + cell(money(r.eligible_principal_basis)) + cell(money(r.posted_interest)) + cell(r.ledger_entry_id) + '</tr>').join('') ||
-                '<tr><td colspan="11" class="p-4 text-secondary">कोई completed interest calculation नहीं मिली।</td></tr>';
+                '<tr><td colspan="11" class="p-4 text-secondary">कोई completed Late Fee calculation नहीं मिली।</td></tr>';
         }
         summaryCards(payload.summary);
         state.page = Number(payload.meta?.current_page || state.page);
