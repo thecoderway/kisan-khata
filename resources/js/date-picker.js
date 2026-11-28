@@ -45,9 +45,9 @@ const enhanceDateInput = (input) => {
         const y=view.getFullYear(),m=view.getMonth(),first=new Date(y,m,1).getDay(),count=new Date(y,m+1,0).getDate();
         const selected=parseDate(input.value),today=new Date();pop.innerHTML='';
         const head=document.createElement('div');head.className='kk-calendar-header';
-        const prev=document.createElement('button');prev.type='button';prev.className='kk-calendar-nav';prev.setAttribute('aria-label','पिछला महीना');prev.textContent='‹';prev.addEventListener('click',()=>{view=new Date(y,m-1,1);render();});
+        const prev=document.createElement('button');prev.type='button';prev.className='kk-calendar-nav';prev.setAttribute('aria-label','पिछला महीना');prev.textContent='‹';prev.addEventListener('click',()=>{view=new Date(y,m-1,1);render();positionPopup();});
         const title=document.createElement('strong');title.textContent=MONTHS[m]+' '+y;
-        const next=document.createElement('button');next.type='button';next.className='kk-calendar-nav';next.setAttribute('aria-label','अगला महीना');next.textContent='›';next.addEventListener('click',()=>{view=new Date(y,m+1,1);render();});
+        const next=document.createElement('button');next.type='button';next.className='kk-calendar-nav';next.setAttribute('aria-label','अगला महीना');next.textContent='›';next.addEventListener('click',()=>{view=new Date(y,m+1,1);render();positionPopup();});
         head.append(prev,title,next);
         const grid=document.createElement('div');grid.className='kk-calendar-grid';
         WEEKDAYS.forEach(day=>{const el=document.createElement('span');el.className='kk-calendar-weekday';el.textContent=day;grid.append(el);});
