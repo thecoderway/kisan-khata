@@ -74,7 +74,7 @@ export const buildFinancialReportPrintHtml = ({ report, rows, summary, filters, 
         const display = typeof value === 'string' && /^-?\d+\.\d{2}$/.test(value)
             ? formatMoney(value)
             : escapeHtml(value);
-        return '<div class="summary-item"><span>' + escapeHtml(key.replaceAll('_', ' ')) +
+        return '<div class="summary-item"><span>' + escapeHtml(key.replaceAll('_', ' ').replace(/interest/gi, 'Late Fee')) +
             '</span><strong>' + display + '</strong></div>';
     }).join('');
 
