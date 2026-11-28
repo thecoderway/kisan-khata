@@ -8,6 +8,7 @@ import { registerUserAuditHistory } from './user-audit-history';
 
 
 if (document.getElementById('financial-results')) import('./financial-workspace');
+if (document.getElementById('report-type')) import('./financial-report-print').then(({ initialiseFinancialReportPrint }) => initialiseFinancialReportPrint());
 
 window.Alpine = Alpine;
 
