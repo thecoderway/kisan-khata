@@ -50,9 +50,10 @@ test('exports all interest audit fields and rejects unknown report types', () =>
         filters: {},
     });
 
-    for (const field of ['Grace days', 'Unrounded Late Fee', 'Shop policy version', 'Customer policy version', '99']) {
+    for (const field of ['छूट अवधि (दिन)', 'बिना पूर्णांक की राशि लेट फीस', 'दुकान नीति संस्करण', 'ग्राहक नीति संस्करण', '99']) {
         assert.ok(csv.includes(field));
     }
+    assert.doesNotMatch(csv, /Late Fee|Interest|ब्याज/);
     assert.throws(() => buildFinancialReportCsv({ report: 'unknown', rows: [], summary: {}, filters: {} }));
 });
 

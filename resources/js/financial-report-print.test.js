@@ -49,10 +49,10 @@ test('stops and reports a failed page instead of printing incomplete data', asyn
 
 test('renders all report types with their own columns and escapes untrusted values', () => {
     const cases = [
-        ['outstanding', [{ name_hi: '<ग्राहक>', principal: '10.00', interest: '2.00', total: '12.00' }], 'Late Fee'],
+        ['outstanding', [{ name_hi: '<ग्राहक>', principal: '10.00', interest: '2.00', total: '12.00' }], 'लेट फीस'],
         ['sales', [{ sale_number: 'S-1', customer_name: '<script>alert(1)</script>', amount: '10.00' }], 'बिक्री नंबर'],
         ['payments', [{ payment_number: 'P-1', payment_type: 'NORMAL', amount: '10.00' }], 'जमा नंबर'],
-        ['interest', [{ sale_number: 'S-1', posted_interest: '2.00', eligible_principal_basis: '10.00' }], 'Posted Late Fee'],
+        ['interest', [{ sale_number: 'S-1', posted_interest: '2.00', eligible_principal_basis: '10.00' }], 'दर्ज राशि लेट फीस'],
     ];
 
     for (const [report, rows, expectedColumn] of cases) {
@@ -64,7 +64,8 @@ test('renders all report types with their own columns and escapes untrusted valu
             shopName: 'Test Shop',
         });
 
-        assert.match(html, new RegExp(expectedColumn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+        assert.match(html, new RegExp(expectedColumn.replace(/[.*+?^${}()|[\]\\]/g, '\\assert.match(html, new RegExp(expectedColumn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));')));
+        assert.doesNotMatch(html, /Late Fee|Interest|ब्याज/);
         assert.match(html, /₹/);
         assert.match(html, /&lt;script&gt;/);
         assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
