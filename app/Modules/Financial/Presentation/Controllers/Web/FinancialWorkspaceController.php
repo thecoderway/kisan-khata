@@ -21,12 +21,17 @@ class FinancialWorkspaceController extends Controller
             abort_unless(auth()->user()->role === User::ROLE_OWNER, 403);
         }
 
+        $villages = DB::table('customers as c')->join('villages as v', 'v.villageCode', '=', 'c.village_code')
+            ->where('c.shop_id', auth()->user()->shop_id)->whereNotNull('c.village_code')
+            ->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish')->distinct()
+            ->orderBy('v.villageNameEnglish')->get();
+
         if ($section === 'reports') {
             Gate::authorize('viewAny', Sale::class);
             Gate::authorize('viewAny', Payment::class);
             Gate::authorize('viewAny', Customer::class);
 
-            return view('financial.reports');
+            return view('financial.reports', compact('villages'));
         }
 
         if ($section === 'sales') {
@@ -43,6 +48,6 @@ class FinancialWorkspaceController extends Controller
             Gate::authorize('viewFinancialAudit');
         }
 
-        return view('financial.workspace', ['section' => $section]);
+        return view('financial.workspace', compact('section', 'villages'));
     }
 }
