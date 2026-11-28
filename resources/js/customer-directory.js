@@ -1,3 +1,5 @@
+import { attachVillageDropdown } from './village-dropdown';
+
 export function registerCustomerDirectory() {
     const form = document.querySelector('[data-customer-filters]');
     const results = document.querySelector('[data-customer-results]');
@@ -18,6 +20,7 @@ export function registerCustomerDirectory() {
     let villageSearchController = null;
     let composing = false;
     let activeVillageIndex = -1;
+    const setVillageMenuOpen = attachVillageDropdown(villageSearchInput, villageOptions);
     const selectedVillageLabels = new Map();
 
     if (villageInput?.value && villageSearchInput?.value) {
@@ -31,7 +34,7 @@ export function registerCustomerDirectory() {
 
     const setVillageOptionsOpen = (open) => {
         if (!villageOptions || !villageSearchInput) return;
-        villageOptions.hidden = !open;
+        setVillageMenuOpen(open);
         villageSearchInput.setAttribute('aria-expanded', open ? 'true' : 'false');
     };
 
@@ -291,7 +294,7 @@ export function registerCustomerDirectory() {
     });
 
     document.addEventListener('click', (event) => {
-        if (event.target.closest('[data-village-filter]')) return;
+        if (event.target.closest('[data-village-filter]') || villageOptions?.contains(event.target)) return;
         setVillageOptionsOpen(false);
     });
 
