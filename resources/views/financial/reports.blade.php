@@ -44,6 +44,11 @@
                     <option value="">सभी ग्राहक</option>
                 </select>
             </div>
+            <div class="col-md-1">
+                <button class="btn btn-primary w-100" id="report-load" type="button">देखें</button>
+            </div>
+        </div>
+        <div class="row g-3 mt-1" id="report-extra-filters">
             <div class="col-md-3">
                 <label class="form-label" for="report-village">गाँव</label>
                 <select class="form-select" id="report-village">
@@ -53,11 +58,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-1">
-                <button class="btn btn-primary w-100" id="report-load" type="button">देखें</button>
-            </div>
-        </div>
-        <div class="row g-3 mt-1" id="report-extra-filters">
+
             <div class="col-md-3" id="report-search-wrap">
                 <label class="form-label" for="report-search">रिकॉर्ड नंबर / Reference</label>
                 <input class="form-control" id="report-search" maxlength="100" placeholder="बिक्री या जमा नंबर">
