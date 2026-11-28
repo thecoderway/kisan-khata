@@ -94,7 +94,7 @@ export const initialiseFinancialReportExport = () => {
 
         try {
             if (report === 'outstanding' && !filters.as_of) throw new Error('कृपया As-of तारीख चुनें।');
-            if (report === 'interest' && document.body.dataset.userRole !== 'owner') throw new Error('ब्याज रिपोर्ट केवल Owner के लिए उपलब्ध है।');
+            if (report === 'interest' && button.dataset.userRole !== 'owner') throw new Error('ब्याज रिपोर्ट केवल Owner के लिए उपलब्ध है।');
 
             const { rows, summary } = await fetchAllReportPages((url) => fetch(url, {
                 headers: { Accept: 'application/json' },
@@ -113,7 +113,7 @@ export const initialiseFinancialReportExport = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
-            URL.revokeObjectURL(url);
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
             feedback.textContent = '';
         } catch (error) {
             feedback.textContent = error.message;
