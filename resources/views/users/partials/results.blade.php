@@ -24,7 +24,7 @@
                     <td><div class="member-cell"><span class="member-avatar">{{ mb_substr($member->name, 0, 1) }}</span><strong>{{ $member->name }}</strong></div></td>
                     @if ($isOwner)
                         <td>{{ $member->email ?: '—' }}</td><td>{{ $member->mobile ?: '—' }}</td>
-                        <td><span class="role-pill">{{ ucfirst($member->role) }}</span></td>
+                        <td><span class="role-pill">{{ $member->role === \\App\\Models\\User::ROLE_MANAGER ? 'प्रबंधक' : 'कर्मचारी' }}</span></td>
                     @endif
                     <td><span class="account-status {{ $member->is_active ? 'is-active' : 'is-inactive' }}"><i class="ti ti-circle-filled"></i>{{ $member->is_active ? 'Active' : 'Deactivated' }}</span></td>
                     @if ($isOwner)

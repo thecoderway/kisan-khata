@@ -4,24 +4,24 @@ const definitions = {
     outstanding: {
         title: 'ग्राहक बकाया रिपोर्ट',
         columns: ['ग्राहक', 'स्थिति', 'मूलधन', 'लेट फीस', 'कुल'],
-        values: (row) => [row.name_hi || row.name_original || row.name_en, row.deleted_at ? 'हटाया गया' : ({ active: 'सक्रिय', inactive: 'निष्क्रिय' }[row.status] || row.status), row.principal, row.interest, row.total],
+        values: (row) => [row.name_hi || row.name_original || row.name_en, row.deleted_at ? 'हटाया गया' : row.status, row.principal, row.interest, row.total],
     },
     sales: {
         title: 'बिक्री रजिस्टर',
         columns: ['बिक्री नंबर', 'तारीख', 'ग्राहक', 'स्थिति', 'राशि'],
-        values: (row) => [row.sale_number, row.sale_date, row.customer_name_hi || row.customer_name || row.customer_name_en, ({ UNPAID: 'उधार', PARTIALLY_PAID: 'आंशिक जमा', PAID: 'जमा पूर्ण' }[row.payment_status] || row.payment_status), row.amount],
+        values: (row) => [row.sale_number, row.sale_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_status, row.amount],
     },
     payments: {
         title: 'जमा रजिस्टर',
         columns: ['जमा नंबर', 'तारीख', 'ग्राहक', 'प्रकार', 'माध्यम', 'राशि', 'लिंक'],
-        values: (row) => [row.payment_number, row.payment_date, row.customer_name_hi || row.customer_name || row.customer_name_en, ({ NORMAL: 'सामान्य जमा', REVERSAL: 'जमा वापसी', SALE_DAY_AUTO: 'बिक्री के दिन स्वतः जमा' }[row.payment_type] || row.payment_type), ({ CASH: 'नकद', UPI: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[row.payment_method] || row.payment_method), row.amount, row.reversed_payment_number || row.replacement_for_payment_number],
+        values: (row) => [row.payment_number, row.payment_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_type, row.payment_method, row.amount, row.reversed_payment_number || row.replacement_for_payment_number],
     },
     interest: {
         title: 'लेट फीस रिपोर्ट',
         columns: ['ग्राहक', 'बिक्री', 'कारण', 'गणना', 'अंतिम तिथि (शामिल नहीं)', 'अवधि प्रारंभ', 'अवधि समाप्ति (शामिल नहीं)', 'दिन', 'छूट अवधि (दिन)', 'दर %', 'मूलधन आधार', 'बिना पूर्णांक की राशि लेट फीस', 'दर्ज राशि लेट फीस', 'मूलधन में जोड़ा गया', 'दुकान नीति संस्करण', 'ग्राहक नीति संस्करण', 'खाता-बही क्रमांक'],
         values: (row) => [
-            row.customer_name_hi || row.customer_name || row.customer_name_en, row.sale_number, (row.trigger_type === 'CUSTOMER_PAYMENT' ? 'जमा मिलने पर' : 'वार्षिक हिसाब'),
-            ({ COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल' }[row.run_status] || row.run_status), row.cutoff_date_exclusive, row.interval_start_date, row.interval_end_date_exclusive,
+            row.customer_name_hi || row.customer_name || row.customer_name_en, row.sale_number, row.trigger_type,
+            row.run_status, row.cutoff_date_exclusive, row.interval_start_date, row.interval_end_date_exclusive,
             row.actual_days, row.grace_days_applied, row.monthly_rate_percent, row.eligible_principal_basis,
             row.unrounded_interest, row.posted_interest, row.capitalization_enabled, row.shop_policy_version_id,
             row.customer_policy_version_id, row.ledger_entry_id,
@@ -99,7 +99,7 @@ export const initialiseFinancialReportExport = () => {
 
         try {
             if (report === 'outstanding' && !filters.as_of) throw new Error('कृपया As-of तारीख चुनें।');
-            if (report === 'interest' && button.dataset.userRole !== 'owner') throw new Error('लेट फीस रिपोर्ट केवल दुकान मालिक के लिए उपलब्ध है।');
+            if (report === 'interest' && button.dataset.userRole !== 'owner') throw new Error('लेट फीस रिपोर्ट केवल Owner के लिए उपलब्ध है।');
 
             const { rows, summary } = await fetchAllReportPages((url) => fetch(url, {
                 headers: { Accept: 'application/json' },

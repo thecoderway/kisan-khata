@@ -496,7 +496,7 @@ const formMarkup = (kind, data = {}) => {
             formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
             formField('बिक्री तारीख', 'sale_date', '<input id="FIELD_ID" class="form-control" type="date" name="sale_date" value="' + new Date().toLocaleDateString('en-CA') + '" required>') +
             formField('राशि (₹)', 'amount', '<input id="FIELD_ID" class="form-control" type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>') +
-            formField('भुगतान स्थिति', 'payment_choice', '<select id="FIELD_ID" class="form-select" name="payment_choice" required><option value="UNPAID">उधार</option><option value="PAID">नकद / Paid</option></select>') +
+            formField('भुगतान स्थिति', 'payment_choice', '<select id="FIELD_ID" class="form-select" name="payment_choice" required><option value="UNPAID">उधार</option><option value="PAID">नकद</option></select>') +
             formField('विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000"></textarea>', true) + '</form>';
     }
     if (kind === 'payment') {
@@ -513,7 +513,7 @@ const formMarkup = (kind, data = {}) => {
             formField('नया विवरण', 'description', '<textarea id="FIELD_ID" class="form-control" name="description" rows="3" maxlength="5000">' + esc(data.description || '') + '</textarea>', true) +
             formField('संशोधन का कारण', 'reason', '<input id="FIELD_ID" class="form-control" name="reason" minlength="1" maxlength="500" required>', true) + '</form>';
     }
-    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान #' + esc(data.paymentNumber || data.id) + ' (₹' + esc(data.paymentAmount || '') + ') reverse होगा। क्या आप आगे बढ़ना चाहते हैं?" data-optional-nested-amount="replacement[amount]">' + token +
+    return formStart + esc(api + '/customers/' + data.customerId + '/payments/' + data.id + '/correction') + '" data-confirm="मूल भुगतान #' + esc(data.paymentNumber || data.id) + ' (₹' + esc(data.paymentAmount || '') + ') वापस किया जाएगा। क्या आप आगे बढ़ना चाहते हैं?" data-optional-nested-amount="replacement[amount]">' + token +
         '<div class="alert alert-warning financial-form-wide" role="note">मूल भुगतान <strong>#' + esc(data.paymentNumber || data.id) + '</strong> · ग्राहक <strong>' + esc(data.customerName || '—') + '</strong> · राशि <strong>' + money(data.paymentAmount || 0) + '</strong></div>' +
         formField('कारण', 'reason', '<textarea id="FIELD_ID" class="form-control" name="reason" rows="2" minlength="1" maxlength="500" required></textarea>', true) +
         formField('वैकल्पिक नई जमा राशि (₹)', 'replacement.amount', '<input id="FIELD_ID" class="form-control" type="number" name="replacement[amount]" min="0.01" step="0.01">') +
@@ -550,8 +550,8 @@ const renderSaleDetails = (sale) => {
             detailRow('तारीख / राशि', date(automaticPayment.payment_date) + ' · ' + money(automaticPayment.amount)) +
             detailRow('माध्यम', paymentMethodLabel(automaticPayment.payment_method)) +
             detailRow('प्रकार', paymentTypeLabel(automaticPayment.payment_type)) : '<p class="text-secondary small">इस बिक्री के साथ स्वतः भुगतान दर्ज नहीं हुआ।</p>') + '</section>' +
-        '<section class="mb-4"><h3 class="h4 mb-2">अन्य भुगतानों का Sale-wise Allocation</h3>' +
-        (paymentRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>Payment</th><th>तारीख</th><th>कुल राशि</th><th>माध्यम</th><th>मद</th><th>समायोजित राशि</th></tr></thead><tbody>' + paymentRows + '</tbody></table></div>' : '<p class="text-secondary small">इस बिक्री पर अन्य भुगतान allocation उपलब्ध नहीं है।</p>') + '</section>' +
+        '<section class="mb-4"><h3 class="h4 mb-2">अन्य भुगतानों का बिक्री के अनुसार समायोजन</h3>' +
+        (paymentRows ? '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>जमा</th><th>तारीख</th><th>कुल राशि</th><th>माध्यम</th><th>मद</th><th>समायोजित राशि</th></tr></thead><tbody>' + paymentRows + '</tbody></table></div>' : '<p class="text-secondary small">इस बिक्री पर अन्य भुगतान allocation उपलब्ध नहीं है।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">वित्तीय लेन-देन</h3>' +
         (transaction ? detailRow('लेन-देन क्रमांक', transaction.id) + detailRow('प्रकार', transaction.transaction_type) + detailRow('लागू तारीख', date(transaction.effective_date)) + detailRow('दर्ज होने का समय', transaction.posted_at ? new Date(transaction.posted_at).toLocaleString('en-IN') : '—') : '<p class="text-secondary small">Financial transaction उपलब्ध नहीं है।</p>') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">खाता-बही संदर्भ</h3>' +
@@ -824,7 +824,7 @@ document.getElementById('interest-customer')?.addEventListener('change', async (
         const payload = await request('/customers/' + id + '/interest-policy');
         const versions = payload.data || [];
         target.innerHTML = versions.length
-            ? '<h3 class="h4 mb-3">Customer override history</h3><div class="kk-data-table-wrap" role="region" aria-label="Customer override history" tabindex="0"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>मूलधन में जोड़ना</th></tr></thead><tbody>' +
+            ? '<h3 class="h4 mb-3">ग्राहक की विशेष दर history</h3><div class="kk-data-table-wrap" role="region" aria-label="Customer override history" tabindex="0"><table class="table table-vcenter financial-table"><thead><tr><th>Version</th><th>Effective from</th><th>Effective to</th><th>Rate</th><th>मूलधन में जोड़ना</th></tr></thead><tbody>' +
                 versions.map((version) => '<tr><td>' + esc(version.version_number) + '</td><td>' + date(version.effective_from) + '</td><td>' + date(version.effective_to) + '</td><td>' + esc(version.monthly_rate_percent ?? 'Shop default') + '</td><td>' + (version.capitalization_enabled === null ? 'Shop default' : (version.capitalization_enabled ? 'चालू' : 'बंद')) + '</td></tr>').join('') +
                 '</tbody></table></div>'
             : '<p class="text-secondary small mb-0">इस Customer पर कोई override नहीं है।</p>';

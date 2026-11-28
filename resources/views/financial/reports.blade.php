@@ -144,7 +144,7 @@
     const cell = (value) => '<td>' + safe(value).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch])) + '</td>';
     const show = (id, yes) => $(id).classList.toggle('d-none', !yes);
     const saleStatusLabel = (value) => ({ UNPAID: 'उधार', PARTIALLY_PAID: 'आंशिक जमा', PAID: 'जमा पूर्ण' }[value] || value || '—');
-    const paymentMethodLabel = (value) => ({ CASH: 'नकद', यूपीआई: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[value] || value || '—');
+    const paymentMethodLabel = (value) => ({ CASH: 'नकद', UPI: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[value] || value || '—');
     const paymentTypeLabel = (value) => ({ NORMAL: 'सामान्य जमा', REVERSAL: 'जमा वापसी', SALE_DAY_AUTO: 'बिक्री के दिन स्वतः जमा' }[value] || value || '—');
     const reportStatusLabel = (value) => ({ active: 'सक्रिय', inactive: 'निष्क्रिय', ACTIVE: 'सक्रिय', INACTIVE: 'निष्क्रिय', COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल' }[value] || value || '—');
 

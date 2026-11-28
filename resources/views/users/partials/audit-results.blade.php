@@ -13,9 +13,9 @@
                     <td>{{ $log->actor?->name ?? '—' }}</td><td>{{ $log->target?->name ?? '—' }}</td>
                     <td>
                         @if (isset($log->old_values['role']) || isset($log->new_values['role']))
-                            {{ ucfirst($log->old_values['role'] ?? '—') }} → {{ ucfirst($log->new_values['role'] ?? '—') }}
+                            {{ ($log->old_values['role'] ?? null) === 'manager' ? 'प्रबंधक' : (($log->old_values['role'] ?? null) === 'staff' ? 'कर्मचारी' : '—') }} → {{ ($log->new_values['role'] ?? null) === 'manager' ? 'प्रबंधक' : (($log->new_values['role'] ?? null) === 'staff' ? 'कर्मचारी' : '—') }}
                         @elseif (isset($log->old_values['is_active']) || isset($log->new_values['is_active']))
-                            {{ ($log->old_values['is_active'] ?? false) ? 'सक्रिय' : 'निष्क्रिय' }} → {{ ($log->new_values['is_active'] ?? false) ? 'Active' : 'Deactivated' }}
+                            {{ ($log->old_values['is_active'] ?? false) ? 'सक्रिय' : 'निष्क्रिय' }} → {{ ($log->new_values['is_active'] ?? false) ? 'सक्रिय' : 'निष्क्रिय' }}
                         @else —
                         @endif
                     </td>

@@ -8,7 +8,7 @@
     @csrf
     @if ($action === 'role') @method('PATCH') @endif
     <input type="hidden" name="drawer_context" value="1">
-    <div class="mb-3"><div class="text-secondary small mb-1">उपयोगकर्ता</div><strong>{{ $member->name }}</strong><div class="text-secondary small">{{ ucfirst($member->role) }} · {{ $member->is_active ? 'सक्रिय' : 'निष्क्रिय' }}</div></div>
+    <div class="mb-3"><div class="text-secondary small mb-1">उपयोगकर्ता</div><strong>{{ $member->name }}</strong><div class="text-secondary small">{{ $member->role === \\App\\Models\\User::ROLE_MANAGER ? 'प्रबंधक' : 'कर्मचारी' }} · {{ $member->is_active ? 'सक्रिय' : 'निष्क्रिय' }}</div></div>
     @if ($action === 'role')
         <div class="mb-3">
             <label for="user-new-role" class="form-label">नई भूमिका <span class="text-danger">*</span></label>
@@ -18,7 +18,7 @@
             </select>
         </div>
     @else
-        <p>{{ $action === 'deactivate' ? 'इस खाता की सभी मोबाइल टोकन और डेटाबेस सत्र revoke कर दी जाएँगी।' : 'यह account फिर से active हो जाएगा और capacity limits लागू रहेंगी।' }}</p>
+        <p>{{ $action === 'deactivate' ? 'इस खाता की सभी मोबाइल टोकन और डेटाबेस सत्र revoke कर दी जाएँगी।' : 'यह खाता फिर से active हो जाएगा और capacity limits लागू रहेंगी।' }}</p>
     @endif
     <div class="mb-3">
         <label for="user-lifecycle-reason" class="form-label">कारण (वैकल्पिक)</label>

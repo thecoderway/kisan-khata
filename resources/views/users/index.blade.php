@@ -47,7 +47,7 @@
 
     <section class="content-card" data-user-directory>
         <div class="content-card-header">
-            <div><h2>{{ $isOwner ? 'Manager और Staff' : 'Staff सदस्य' }}</h2><p>{{ $users->total() }} accounts</p></div>
+            <div><h2>{{ $isOwner ? 'प्रबंधक और कर्मचारी' : 'Staff सदस्य' }}</h2><p>{{ $users->total() }} खाते</p></div>
         </div>
 
         <form method="GET" action="{{ route('users.index') }}" class="d-flex flex-wrap align-items-end gap-2 p-3 border-bottom" role="search" data-user-filters>

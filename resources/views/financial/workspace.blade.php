@@ -8,9 +8,9 @@
     $labels = [
         'sales' => ['बिक्री रजिस्टर', 'दुकान की सभी पोस्ट की गई बिक्री देखें और नई बिक्री दर्ज करें।'],
         'payments' => ['जमा रजिस्टर', 'ग्राहकों से प्राप्त भुगतान और उनकी स्थिति देखें।'],
-        'ledger' => ['ग्राहक खाता-बही', 'ग्राहक चुनकर मूलधन और लेट फीस का चलता शेष देखें।'],
+        'ledger' => ['ग्राहक खाता-बही', 'ग्राहक चुनकर मूलधन और लेट फीस की बाकी राशि देखें।'],
         'interest' => ['लेट फीस नीति', 'दुकान की प्रभावी तिथि से लागू लेट फीस नीति और ग्राहक विशेष दरें नियंत्रित करें।'],
-        'reconciliation' => ['लेखा मिलान', 'खाता-बही और खाते का शेष में अंतर जाँचें; सुधार केवल दुकान मालिक कर सकता है।'],
+        'reconciliation' => ['लेखा मिलान', 'खाता-बही और खाते के शेष में अंतर जाँचें; सुधार केवल दुकान मालिक कर सकता है।'],
         'audit' => ['वित्तीय ऑडिट', 'वित्तीय नीतियों, सुधारों और खाते के शेष में बदलाव का अपरिवर्तनीय इतिहास।'],
     ];
 @endphp
@@ -30,27 +30,27 @@
 
 <div class="content-card mb-3">
     @if ($section === 'interest')
-        <div class="content-card-header interest-policy-header">
+        <div class="content-card-header interest-नीति-header">
             <div>
                 <h2>लेट फीस नीति</h2>
                 <p>दुकान की वर्तमान लेट फीस नीति और ग्राहक-विशिष्ट बदलाव नियंत्रित करें।</p>
             </div>
-            <div class="interest-policy-actions">
-                <button type="button" class="btn btn-outline-success" id="open-shop-policy-drawer"><i class="ti ti-settings me-1" aria-hidden="true"></i> नई दुकान की लेट फीस नीति</button>
-                <button type="button" class="btn btn-primary kk-primary" id="open-customer-policy-drawer"><i class="ti ti-user-cog me-1" aria-hidden="true"></i> ग्राहक की लेट फीस की विशेष दर</button>
+            <div class="interest-नीति-actions">
+                <button type="button" class="btn btn-outline-success" id="open-shop-नीति-drawer"><i class="ti ti-settings me-1" aria-hidden="true"></i> नई दुकान की लेट फीस नीति</button>
+                <button type="button" class="btn btn-primary kk-primary" id="open-customer-नीति-drawer"><i class="ti ti-user-cog me-1" aria-hidden="true"></i> ग्राहक की लेट फीस की विशेष दर</button>
             </div>
         </div>
     @endif
     @if ($section === 'interest')
         <div class="financial-toolbar">
             <div class="financial-filter-grid">
-                <div><label class="form-label" for="interest-history-customer">लेट फीस Calculation History के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="interest-history-customer">लेट फीस गणना का इतिहास के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="financial-from">से अंतिम तिथि</label><input class="form-control" type="date" id="financial-from"></div>
                 <div><label class="form-label" for="financial-to">तक अंतिम तिथि</label><input class="form-control" type="date" id="financial-to"></div>
                 <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> इतिहास ताज़ा करें</button></div>
             </div>
         </div>
-        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">लेट फीस calculation history देखने के लिए ग्राहक चुनें।</div></div>
+        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">लेट फीस गणना का इतिहास देखने के लिए ग्राहक चुनें।</div></div>
     @endif
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
@@ -106,36 +106,36 @@
 
 @push('drawers')
     @if ($section === 'interest')
-        <x-ui.action-drawer id="shop-interest-policy-drawer" title="नई दुकान की लेट फीस नीति">
-            <form id="shop-policy-form" class="financial-form-grid" method="POST" action="{{ url('/api/v1/interest-policy') }}" data-drawer-ajax>
+        <x-ui.action-drawer id="shop-interest-नीति-drawer" title="नई दुकान की लेट फीस नीति">
+            <form id="shop-नीति-form" class="financial-form-grid" method="POST" action="{{ url('/api/v1/interest-नीति') }}" data-drawer-ajax>
                 @csrf
-                <div><label class="form-label" for="shop-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="shop-policy-effective-from" type="date" name="effective_from" min="{{ now()->toDateString() }}" required></div>
-                <div><label class="form-label" for="shop-policy-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="shop-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" required></div>
-                <div><label class="form-label" for="shop-policy-grace">छूट अवधि (दिन)</label><input class="form-control" id="shop-policy-grace" type="number" name="grace_days" min="0" max="365" value="30" required></div>
-                <div><label class="form-label" for="shop-policy-waterfall">जमा समायोजन क्रम</label><select class="form-select" id="shop-policy-waterfall" name="payment_waterfall"><option value="PRINCIPAL_FIRST">पहले मूलधन</option><option value="INTEREST_FIRST">लेट फीस पहले</option></select></div>
-                <div><label class="form-label" for="shop-policy-capitalization">मूलधन में जोड़ना</label><select class="form-select" id="shop-policy-capitalization" name="capitalization_enabled"><option value="0">बंद</option><option value="1">चालू</option></select></div>
-                <div><label class="form-label">वार्षिक हिसाब की तारीख 1 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_1" min="1" max="12" value="3" aria-label="Settlement month 1" required><input class="form-control" type="number" name="annual_settlement_day_1" min="1" max="31" value="30" aria-label="Settlement day 1" required></div></div>
-                <div><label class="form-label">वार्षिक हिसाब की तारीख 2 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_2" min="1" max="12" value="10" aria-label="Settlement month 2" required><input class="form-control" type="number" name="annual_settlement_day_2" min="1" max="31" value="30" aria-label="Settlement day 2" required></div></div>
-                <div class="financial-form-wide"><label class="form-label" for="shop-policy-reason">बदलाव का कारण</label><input class="form-control" id="shop-policy-reason" name="reason" minlength="10" maxlength="500" required></div>
+                <div><label class="form-label" for="shop-नीति-effective-from">लागू होने की तारीख</label><input class="form-control" id="shop-नीति-effective-from" type="date" name="effective_from" min="{{ now()->toDateString() }}" required></div>
+                <div><label class="form-label" for="shop-नीति-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="shop-नीति-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" required></div>
+                <div><label class="form-label" for="shop-नीति-grace">छूट अवधि (दिन)</label><input class="form-control" id="shop-नीति-grace" type="number" name="grace_days" min="0" max="365" value="30" required></div>
+                <div><label class="form-label" for="shop-नीति-waterfall">जमा समायोजन क्रम</label><select class="form-select" id="shop-नीति-waterfall" name="payment_waterfall"><option value="PRINCIPAL_FIRST">पहले मूलधन</option><option value="INTEREST_FIRST">लेट फीस पहले</option></select></div>
+                <div><label class="form-label" for="shop-नीति-capitalization">मूलधन में जोड़ना</label><select class="form-select" id="shop-नीति-capitalization" name="capitalization_enabled"><option value="0">बंद</option><option value="1">चालू</option></select></div>
+                <div><label class="form-label">वार्षिक हिसाब की तारीख 1 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_1" min="1" max="12" value="3" aria-label="वार्षिक हिसाब का महीना 1" required><input class="form-control" type="number" name="annual_settlement_day_1" min="1" max="31" value="30" aria-label="वार्षिक हिसाब का दिन 1" required></div></div>
+                <div><label class="form-label">वार्षिक हिसाब की तारीख 2 (महीना / दिन)</label><div class="d-flex gap-2"><input class="form-control" type="number" name="annual_settlement_month_2" min="1" max="12" value="10" aria-label="वार्षिक हिसाब का महीना 2" required><input class="form-control" type="number" name="annual_settlement_day_2" min="1" max="31" value="30" aria-label="वार्षिक हिसाब का दिन 2" required></div></div>
+                <div class="financial-form-wide"><label class="form-label" for="shop-नीति-reason">बदलाव का कारण</label><input class="form-control" id="shop-नीति-reason" name="reason" minlength="10" maxlength="500" required></div>
             </form>
             <x-slot:footer>
                 <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
-                <button type="submit" form="shop-policy-form" class="btn btn-primary kk-primary">नीति सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
+                <button type="submit" form="shop-नीति-form" class="btn btn-primary kk-primary">नीति सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
             </x-slot:footer>
         </x-ui.action-drawer>
-        <x-ui.action-drawer id="customer-interest-override-drawer" title="ग्राहक की लेट फीस की विशेष दर">
-            <form id="customer-policy-form" class="financial-form-grid" method="POST" data-drawer-ajax>
+        <x-ui.action-drawer id="customer-interest-विशेष नियम-drawer" title="ग्राहक की लेट फीस की विशेष दर">
+            <form id="customer-नीति-form" class="financial-form-grid" method="POST" data-drawer-ajax>
                 @csrf
                 <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
-                <div><label class="form-label" for="customer-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="customer-policy-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
-                <div><label class="form-label" for="customer-policy-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="customer-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="Shop लेट फीस policy से inherit"></div>
-                <div class="financial-form-wide"><label class="form-label" for="customer-policy-capitalization">मूलधन में जोड़ना override</label><select class="form-select" id="customer-policy-capitalization" name="capitalization_enabled"><option value="">दुकान की नीति से स्वतः लागू</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
-                <div class="financial-form-wide"><label class="form-label" for="customer-policy-reason">बदलाव का कारण</label><input class="form-control" id="customer-policy-reason" name="reason" minlength="10" maxlength="500" required></div>
+                <div><label class="form-label" for="customer-नीति-effective-from">लागू होने की तारीख</label><input class="form-control" id="customer-नीति-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
+                <div><label class="form-label" for="customer-नीति-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="customer-नीति-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="दुकान लेट फीस नीति से स्वतः लागू"></div>
+                <div class="financial-form-wide"><label class="form-label" for="customer-नीति-capitalization">मूलधन में जोड़ने का विशेष नियम</label><select class="form-select" id="customer-नीति-capitalization" name="capitalization_enabled"><option value="">दुकान की नीति से स्वतः लागू</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
+                <div class="financial-form-wide"><label class="form-label" for="customer-नीति-reason">बदलाव का कारण</label><input class="form-control" id="customer-नीति-reason" name="reason" minlength="10" maxlength="500" required></div>
             </form>
-            <div id="customer-policy-history" class="pt-3"></div>
+            <div id="customer-नीति-history" class="pt-3"></div>
             <x-slot:footer>
                 <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
-                <button type="submit" form="customer-policy-form" class="btn btn-primary kk-primary">विशेष दर सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
+                <button type="submit" form="customer-नीति-form" class="btn btn-primary kk-primary">विशेष दर सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
             </x-slot:footer>
         </x-ui.action-drawer>
     @endif
@@ -156,7 +156,7 @@ window.KKFinancialWorkspace = {
     role: @json(auth()->user()->role),
     api: @json(url('/api/v1')),
     csrf: @json(csrf_token()),
-    shopName: @json(app(\App\Tenancy\CurrentShop::class)->require()->name),
+    shopName: @json(app(\App\Tenancy\Currentदुकान::class)->require()->name),
 };
 </script>
 
