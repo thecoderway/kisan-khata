@@ -106,7 +106,7 @@
 
 @push('drawers')
     @if ($section === 'interest')
-        <x-ui.action-drawer id="shop-interest-policy-drawer" title="नई Shop लेट फीस Policy">
+        <x-ui.action-drawer id="shop-interest-policy-drawer" title="नई दुकान की लेट फीस नीति">
             <form id="shop-policy-form" class="financial-form-grid" method="POST" action="{{ url('/api/v1/interest-policy') }}" data-drawer-ajax>
                 @csrf
                 <div><label class="form-label" for="shop-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="shop-policy-effective-from" type="date" name="effective_from" min="{{ now()->toDateString() }}" required></div>
@@ -123,7 +123,7 @@
                 <button type="submit" form="shop-policy-form" class="btn btn-primary kk-primary">नीति सेव करें <i class="ti ti-check ms-1" aria-hidden="true"></i></button>
             </x-slot:footer>
         </x-ui.action-drawer>
-        <x-ui.action-drawer id="customer-interest-override-drawer" title="Customer लेट फीस Override">
+        <x-ui.action-drawer id="customer-interest-override-drawer" title="ग्राहक की लेट फीस की विशेष दर">
             <form id="customer-policy-form" class="financial-form-grid" method="POST" data-drawer-ajax>
                 @csrf
                 <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
