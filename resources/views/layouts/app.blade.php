@@ -40,12 +40,12 @@
             @endif
             @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
                 <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index', 'users.create') ? 'active' : '' }}">
-                    <i class="ti ti-users"></i><span>{{ auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'उपयोगकर्ता प्रबंधन' }}</span>
+                    <i class="ti ti-users"></i><span>{{ auth()->user()->role === \App\Models\User::ROLE_MANAGER ? 'कर्मचारी सूची' : 'स्टाफ प्रबंधन' }}</span>
                 </a>
             @endif
             @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
                 <a href="{{ route('users.audit') }}" class="{{ request()->routeIs('users.audit') ? 'active' : '' }}">
-                    <i class="ti ti-history"></i><span>उपयोगकर्ता गतिविधि इतिहास</span>
+                    <i class="ti ti-history"></i><span>स्टाफ गतिविधि इतिहास</span>
                 </a>
             @endif
         </nav>

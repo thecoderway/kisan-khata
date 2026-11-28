@@ -88,8 +88,8 @@
                     <div><label class="form-label" for="financial-customer-search">ग्राहक</label><input class="form-control" type="search" id="financial-customer-search" data-customer-filter-search data-customer-select="financial-customer" placeholder="ग्राहक खोजें या चुनें…" autocomplete="off"><select class="visually-hidden" id="financial-customer" data-customer-filter-select aria-hidden="true" tabindex="-1"><option value="">ग्राहक चुनें</option></select></div>
                 @endif
                 @if (in_array($section, ['ledger', 'audit'], true))
-                    <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from"></div>
-                    <div><label class="form-label" for="financial-to">तक तारीख</label><input class="form-control" type="date" id="financial-to"></div>
+                    <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from"></div>
+                    <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to"></div>
                 @endif
                 @if ($section === 'audit')
                     <div><label class="form-label" for="financial-action">कार्रवाई</label><input class="form-control" id="financial-action" placeholder="कार्रवाई का नाम"></div>

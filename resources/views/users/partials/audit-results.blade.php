@@ -1,6 +1,6 @@
 @if ($logs->isEmpty())
     <div class="empty-state"><i class="ti ti-history"></i><h3>कोई लेखा-जाँच रिकॉर्ड नहीं मिला</h3>
-        <p>{{ request()->hasAny(['q', 'action']) ? 'खोज या छँटाई बदलकर दोबारा प्रयास करें।' : 'उपयोगकर्ता बनाने, निष्क्रिय करने, पुनः सक्रिय करने या भूमिका बदलने होने पर record यहाँ दिखाई देगा।' }}</p></div>
+        <p>{{ request()->hasAny(['q', 'action']) ? 'खोज या छँटाई बदलकर दोबारा प्रयास करें।' : 'स्टाफ बनाने, निष्क्रिय करने, पुनः सक्रिय करने या भूमिका बदलने होने पर record यहाँ दिखाई देगा।' }}</p></div>
 @else
     <div class="table-responsive kk-data-table-wrap">
         <table class="table table-vcenter audit-table">

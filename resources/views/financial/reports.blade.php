@@ -31,11 +31,11 @@
                 <input class="form-control" type="date" id="report-as-of">
             </div>
             <div class="col-md-2 d-none" id="report-from-wrap">
-                <label class="form-label" for="report-from">से तारीख</label>
+                <label class="form-label" for="report-from">तारीख से</label>
                 <input class="form-control" type="date" id="report-from">
             </div>
             <div class="col-md-2 d-none" id="report-to-wrap">
-                <label class="form-label" for="report-to">तक तारीख</label>
+                <label class="form-label" for="report-to">तारीख तक</label>
                 <input class="form-control" type="date" id="report-to">
             </div>
             <div class="col-md-3">

@@ -444,7 +444,7 @@ const loadReconciliation = async (signal) => {
 };
 const loadAudit = async (signal) => {
     const payload = await request('/financial-audit?' + buildQuery(), { signal });
-    renderTable(['समय', 'उपयोगकर्ता', 'कार्रवाई', 'रिकॉर्ड', 'कारण'], (payload.data || []).map((audit) => [
+    renderTable(['समय', 'स्टाफ', 'कार्रवाई', 'रिकॉर्ड', 'कारण'], (payload.data || []).map((audit) => [
         date(audit.created_at), esc(audit.user?.name || 'प्रणाली'), esc(String(audit.action || '').replace(/interest/gi, 'लेट फीस').replaceAll('_', ' ')),
         esc(audit.entity_type + ' #' + audit.entity_id), esc(audit.reason || '—'),
     ]));
