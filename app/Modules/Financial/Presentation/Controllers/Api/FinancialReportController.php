@@ -26,6 +26,7 @@ class FinancialReportController extends Controller
         $filters = $request->validate([
             'as_of' => ['required', 'date_format:Y-m-d'],
             'customer_id' => ['nullable', 'integer', 'min:1'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'positive_only' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -54,6 +55,7 @@ class FinancialReportController extends Controller
             ->selectRaw('CAST(COALESCE(balances.interest_balance, 0) AS DECIMAL(20,2)) AS interest')
             ->selectRaw('CAST(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0) AS DECIMAL(20,2)) AS total')
             ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('c.id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn (Builder $builder) => $builder->where('c.village_code', $filters['village_code']))
             ->when(filter_var($filters['positive_only'] ?? false, FILTER_VALIDATE_BOOLEAN), fn (Builder $builder) => $builder->whereRaw('(COALESCE(balances.principal_balance, 0) + COALESCE(balances.interest_balance, 0)) > 0'))
             ->orderBy('c.name_original')->orderBy('c.id');
 
@@ -103,6 +105,7 @@ class FinancialReportController extends Controller
             ->when(isset($filters['from']), fn (Builder $builder) => $builder->whereDate('s.sale_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('s.sale_date', '<=', $filters['to']))
             ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('s.customer_id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn (Builder $builder) => $builder->where('c.village_code', $filters['village_code']))
             ->when(isset($filters['payment_status']), fn (Builder $builder) => $builder->where('s.payment_status', $filters['payment_status']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
                 $term = '%'.trim($filters['q']).'%';
@@ -160,6 +163,7 @@ class FinancialReportController extends Controller
             ->when(isset($filters['from']), fn (Builder $builder) => $builder->whereDate('p.payment_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('p.payment_date', '<=', $filters['to']))
             ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('p.customer_id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn (Builder $builder) => $builder->where('c.village_code', $filters['village_code']))
             ->when(isset($filters['payment_method']), fn (Builder $builder) => $builder->where('p.payment_method', $filters['payment_method']))
             ->when(isset($filters['payment_type']), fn (Builder $builder) => $builder->where('p.payment_type', $filters['payment_type']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
@@ -278,6 +282,7 @@ class FinancialReportController extends Controller
             ->when(isset($filters['from']), fn (Builder $builder) => $builder->whereDate('le.effective_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('le.effective_date', '<=', $filters['to']))
             ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('i.customer_id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn (Builder $builder) => $builder->where('c.village_code', $filters['village_code']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
                 $term = '%'.trim($filters['q']).'%';
                 $builder->where('s.sale_number', 'like', $term);
