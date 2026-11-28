@@ -20,6 +20,7 @@ class SaleController extends Controller
 
         $filters = $request->validate([
             'customer_id' => ['nullable', 'integer'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'q' => ['nullable', 'string', 'max:100'],
             'sort' => ['nullable', Rule::in(['date_desc', 'date_asc', 'amount_desc', 'amount_asc'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
@@ -36,6 +37,7 @@ class SaleController extends Controller
         $query = Sale::query()->with('customer:id,name_original,name_hi,name_en,status,deleted_at')
             ->whereNotNull('posted_at')
             ->when(isset($filters['customer_id']), fn ($q) => $q->where('customer_id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn ($q) => $q->whereHas('customer', fn ($customer) => $customer->where('village_code', $filters['village_code'])))
             ->when(isset($filters['from']), fn ($q) => $q->whereDate('sale_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn ($q) => $q->whereDate('sale_date', '<=', $filters['to']))
             ->when(isset($filters['payment_status']), fn ($q) => $q->where('payment_status', $filters['payment_status']))
