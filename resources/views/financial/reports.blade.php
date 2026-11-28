@@ -83,7 +83,11 @@
             </div>
         </div>
     </div>
-    <div class="d-flex justify-content-end p-3 border-bottom">
+    <div class="d-flex justify-content-end gap-2 p-3 border-bottom">
+        <button class="btn btn-outline-success" id="report-export" type="button"
+            data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" disabled>
+            <i class="ti ti-file-spreadsheet me-1" aria-hidden="true"></i> CSV / Excel
+        </button>
         <button class="btn btn-outline-secondary" id="report-print" type="button"
             data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" disabled>
             <i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / PDF
