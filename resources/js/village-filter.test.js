@@ -1,73 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findVillageOption, initialiseVillageFilter, syncVillageFilterLabel } from './village-filter.js';
+import { filterVillageOptions, findVillageOption, syncVillageFilterLabel } from './village-filter.js';
 
-class FakeControl extends EventTarget {
-    constructor() {
-        super();
-        this.value = '';
-        this.dataset = {};
-    }
-}
+const makeOptions = () => [
+    { value: '', textContent: 'सभी गाँव' },
+    { value: '480058', textContent: 'लोटिया, सारंगपुर, राजगढ़' },
+    { value: '480059', textContent: 'ब्यावरा, ब्यावरा, राजगढ़' },
+    { value: '480060', textContent: 'नरसिंहगढ़, नरसिंहगढ़, राजगढ़' },
+];
 
-const makeSelect = () => {
-    const select = new FakeControl();
-    select.options = [
-        { value: '', textContent: 'सभी गाँव' },
-        { value: '480058', textContent: 'लोटिया, सारंगपुर, राजगढ़' },
-        { value: '480059', textContent: 'ब्यावरा, ब्यावरा, राजगढ़' },
-    ];
-    return select;
-};
+test('filters village options by partial Hindi and English labels', () => {
+    const options = makeOptions();
 
-test('finds a village by its complete Hindi-first label', () => {
-    const select = makeSelect();
-
-    assert.equal(findVillageOption(select.options, 'लोटिया, सारंगपुर, राजगढ़')?.value, '480058');
-    assert.equal(findVillageOption(select.options, 'लोटिया') , null);
-    assert.equal(findVillageOption(select.options, '  '), null);
+    assert.deepEqual(filterVillageOptions(options, 'लोट'), [options[1]]);
+    assert.deepEqual(filterVillageOptions(options, 'Lot'), []);
+    assert.deepEqual(filterVillageOptions(options, 'सारंगपुर'), [options[1]]);
+    assert.deepEqual(filterVillageOptions(options, 'राजगढ़'), options.slice(1));
 });
 
-test('typing an exact datalist label selects its village code and dispatches change', () => {
-    const input = new FakeControl();
-    const select = makeSelect();
-    let changes = 0;
-    select.addEventListener('change', () => { changes += 1; });
+test('returns all villages for an empty search and excludes the all-villages option', () => {
+    const options = makeOptions();
 
-    initialiseVillageFilter(input, select);
-    input.value = 'लोटिया, सारंगपुर, राजगढ़';
-    input.dispatchEvent(new Event('input'));
-
-    assert.equal(select.value, '480058');
-    assert.equal(changes, 1);
+    assert.deepEqual(filterVillageOptions(options, ''), options.slice(1));
 });
 
-test('typing a non-matching label clears the selected village code', () => {
-    const input = new FakeControl();
-    const select = makeSelect();
-    select.value = '480058';
-    let changes = 0;
-    select.addEventListener('change', () => { changes += 1; });
+test('finds an exact label without treating partial text as a selection', () => {
+    const options = makeOptions();
 
-    initialiseVillageFilter(input, select);
-    input.value = 'अनजान गाँव';
-    input.dispatchEvent(new Event('input'));
-
-    assert.equal(select.value, '');
-    assert.equal(changes, 1);
-    assert.equal(input.value, 'अनजान गाँव');
+    assert.equal(findVillageOption(options, 'लोटिया, सारंगपुर, राजगढ़')?.value, '480058');
+    assert.equal(findVillageOption(options, 'लोटिया'), null);
 });
 
-test('restores the visible label when the village code changes externally', () => {
-    const input = new FakeControl();
-    const select = makeSelect();
+test('syncs the visible label from the selected village code', () => {
+    const input = { value: '' };
+    const select = { value: '480058', options: makeOptions() };
 
-    initialiseVillageFilter(input, select);
-    select.value = '480059';
-    select.dispatchEvent(new Event('change'));
-
-    assert.equal(input.value, 'ब्यावरा, ब्यावरा, राजगढ़');
     syncVillageFilterLabel(input, select);
+    assert.equal(input.value, 'लोटिया, सारंगपुर, राजगढ़');
+
     select.value = '';
     syncVillageFilterLabel(input, select);
     assert.equal(input.value, '');
