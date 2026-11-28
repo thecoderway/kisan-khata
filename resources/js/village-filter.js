@@ -1,3 +1,5 @@
+import { attachVillageDropdown } from './village-dropdown';
+
 const normalizeLabel = (value) => String(value ?? '').normalize('NFC').trim().toLocaleLowerCase();
 
 export const filterVillageOptions = (options, query) => {
@@ -41,24 +43,20 @@ export const initialiseVillageFilter = (input, select) => {
     input.setAttribute('aria-expanded', 'false');
 
     const wrapper = input.parentElement;
-    wrapper?.classList.add('position-relative');
 
     const menu = input.ownerDocument.createElement('div');
     menu.id = input.id ? input.id + '-options' : 'village-filter-options';
-    menu.className = 'list-group position-absolute start-0 top-100 mt-1 w-100 shadow';
-    menu.style.zIndex = '1050';
-    menu.style.maxHeight = '18rem';
-    menu.style.overflowY = 'auto';
+    menu.className = 'list-group shadow';
     menu.setAttribute('role', 'listbox');
     menu.hidden = true;
-    input.insertAdjacentElement('afterend', menu);
+    const setMenuOpen = attachVillageDropdown(input, menu);
     input.setAttribute('aria-controls', menu.id);
 
     let activeIndex = -1;
     let updatingFromInput = false;
 
     const closeMenu = () => {
-        menu.hidden = true;
+        setMenuOpen(false);
         activeIndex = -1;
         input.setAttribute('aria-expanded', 'false');
         input.removeAttribute('aria-activedescendant');
@@ -100,7 +98,7 @@ export const initialiseVillageFilter = (input, select) => {
             });
         }
 
-        menu.hidden = false;
+        setMenuOpen(true);
         input.setAttribute('aria-expanded', 'true');
     };
 
@@ -157,7 +155,7 @@ export const initialiseVillageFilter = (input, select) => {
     });
 
     input.ownerDocument.addEventListener('click', (event) => {
-        if (!wrapper?.contains(event.target)) closeMenu();
+        if (!input.contains(event.target) && !menu.contains(event.target)) closeMenu();
     });
 
     syncVillageFilterLabel(input, select);
