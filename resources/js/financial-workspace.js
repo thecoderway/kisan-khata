@@ -716,7 +716,7 @@ if (filtersForm) {
         window.clearTimeout(debounceTimer);
         debounceTimer = window.setTimeout(applyFilters, 375);
     });
-    filtersForm.querySelectorAll('select, input[type="date"]').forEach((input) => {
+    filtersForm.querySelectorAll('select, input[type="date"], input[data-kk-datepicker-ready]').forEach((input) => {
         input.addEventListener('change', applyFilters);
     });
     filtersForm.addEventListener('submit', (event) => { event.preventDefault(); applyFilters(); });
