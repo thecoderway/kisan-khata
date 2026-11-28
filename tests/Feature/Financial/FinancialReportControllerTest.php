@@ -388,5 +388,4 @@ class FinancialReportControllerTest extends TestCase
         $this->getJson('/api/v1/reports/outstanding?as_of=2026-11-02&village_code=1001')->assertOk()
             ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.customer_id', $customer->getKey());
     }
-
 }
