@@ -197,7 +197,7 @@ const loadCustomers = async () => {
 };
 const customerOptions = () => {
     const labels = customerDisplayLabels(customers);
-    return customers.map((customer, index) => '<option value="' + esc(customer.id) + '">' + esc(labels[index]) + '</option>').join('');
+    return customers.map((customer, index) => '<option value="' + esc(customer.id) + '" data-search="' + esc([customer.mobile, customer.customer_code, customer.id].filter(Boolean).join(' ')) + '">' + esc(labels[index]) + '</option>').join('');
 };
 
 const loadSales = async (signal) => {
@@ -494,7 +494,7 @@ const formMarkup = (kind, data = {}) => {
     const token = '<input type="hidden" name="_token" value="' + esc(csrf) + '">';
     if (kind === 'sale') {
         return formStart + esc(api + '/sales') + '" data-confirm="क्या आप इस बिक्री को पोस्ट करना चाहते हैं?">' + token +
-            formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
+            formField('ग्राहक', 'customer_id', '<select id="FIELD_ID" class="form-select" name="customer_id" required data-customer-searchable><option value="">ग्राहक चुनें</option>' + customerOptions() + '</select>') +
             formField('बिक्री तारीख', 'sale_date', '<input id="FIELD_ID" class="form-control" type="date" name="sale_date" value="' + new Date().toLocaleDateString('en-CA') + '" required>') +
             formField('राशि (₹)', 'amount', '<input id="FIELD_ID" class="form-control" type="number" name="amount" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>') +
             formField('भुगतान स्थिति', 'payment_choice', '<select id="FIELD_ID" class="form-select" name="payment_choice" required><option value="UNPAID">उधार</option><option value="PAID">नकद</option></select>') +

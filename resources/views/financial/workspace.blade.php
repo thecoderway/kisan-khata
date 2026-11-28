@@ -139,7 +139,7 @@
         <x-ui.action-drawer id="customer-interest-override-drawer" title="ग्राहक की लेट फीस की विशेष दर">
             <form id="customer-policy-form" class="financial-form-grid" method="POST" data-drawer-ajax>
                 @csrf
-                <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer" data-customer-searchable><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="customer-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="customer-policy-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
                 <div><label class="form-label" for="customer-policy-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="customer-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="दुकान की लेट फीस नीति से स्वतः लागू"></div>
                 <div class="financial-form-wide"><label class="form-label" for="customer-policy-capitalization">मूलधन में जोड़ने का विशेष नियम</label><select class="form-select" id="customer-policy-capitalization" name="capitalization_enabled"><option value="">दुकान की नीति से स्वतः लागू</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
