@@ -60,7 +60,7 @@
                 <select class="visually-hidden" id="report-village" aria-hidden="true" tabindex="-1">
                     <option value="">सभी गाँव</option>
                     @foreach ($villages as $village)
-                        <option value="{{ $village->villageCode }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
+                        <option value="{{ $village->villageCode }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
                     @endforeach
                 </select>
             </div>
