@@ -13,5 +13,5 @@
     <div class="form-group"><label for="password_confirmation">पासवर्ड दोबारा लिखें</label><input id="password_confirmation" name="password_confirmation" type="password" class="form-control" autocomplete="new-password" required></div>
     <button class="btn btn-primary w-100 auth-submit" type="submit">दुकान और खाता बनाएं <i class="ti ti-arrow-right"></i></button>
 </form>
-<div class="auth-switch">पहले से खाता है? <a href="{{ route('लॉगिन') }}">लॉगिन करें</a></div>
+<div class="auth-switch">पहले से खाता है? <a href="{{ route('login') }}">लॉगिन करें</a></div>
 @endsection
