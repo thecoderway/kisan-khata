@@ -1,5 +1,6 @@
 import { customerDisplayLabels, fetchFinancialCustomers } from './financial-customer-directory';
 import { fetchAllLedgerPages } from './financial-ledger-print';
+import { syncVillageFilterLabel } from './village-filter';
 
 const config = window.KKFinancialWorkspace;
 const root = document.getElementById('financial-results');
@@ -85,6 +86,10 @@ const readUrlState = () => {
             const input = filtersForm.elements.namedItem(name);
             if (input) input.value = url.searchParams.get(name) || (name === 'sort' ? 'date_desc' : '');
         }
+        syncVillageFilterLabel(
+            document.querySelector('[data-village-select="financial-village"]'),
+            filtersForm.elements.namedItem('village_code'),
+        );
     } else {
         for (const name of ['from', 'to', 'action']) {
             const input = document.getElementById('financial-' + name);
