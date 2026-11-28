@@ -16,7 +16,15 @@
             @endif
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('customers.edit', $customer) }}" class="btn btn-primary kk-primary"><i class="ti ti-edit me-1"></i> जानकारी बदलें</a>
+            @can('update', $customer)
+                <button type="button" class="btn btn-primary kk-primary"
+                    data-customer-drawer
+                    data-url="{{ route('customers.edit', [$customer, 'drawer' => 1]) }}"
+                    data-title="ग्राहक संपादित करें"
+                    data-width="wide">
+                    <i class="ti ti-edit me-1"></i> संपादित करें
+                </button>
+            @endcan
             @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
                 @if ($customer->status === 'active')
                     @can('deactivate', $customer)
@@ -74,13 +82,10 @@
 @endsection
 
 @push('drawers')
-    @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
-        <x-ui.action-drawer id="customer-detail-lifecycle-drawer" title="ग्राहक स्थिति" width="default">
-            <div class="text-secondary small mb-3">ग्राहक की स्थिति बदलने से पहले विवरण और कारण जाँच लें।</div>
-            <x-slot:footer>
-                <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
-                <button type="submit" form="customer-form" class="btn btn-primary kk-primary">पुष्टि करें <i class="ti ti-check ms-1"></i></button>
-            </x-slot:footer>
-        </x-ui.action-drawer>
-    @endif
+    <x-ui.action-drawer id="customer-detail-action-drawer" title="ग्राहक कार्रवाई" width="wide">
+        <x-slot:footer>
+            <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+            <button type="submit" form="customer-form" class="btn btn-primary kk-primary">सेव करें <i class="ti ti-check ms-1"></i></button>
+        </x-slot:footer>
+    </x-ui.action-drawer>
 @endpush

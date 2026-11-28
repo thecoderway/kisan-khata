@@ -818,8 +818,45 @@ class CustomerManagementTest extends TestCase
             ->assertSee('data-customer-detail', false)
             ->assertSee('data-customer-lifecycle-action="deactivate"', false)
             ->assertSee('data-customer-lifecycle-action="soft-delete"', false)
-            ->assertSee('customer-detail-lifecycle-drawer', false)
+            ->assertSee('customer-detail-action-drawer', false)
             ->assertDontSee('id="deactivate-reason"', false)
             ->assertDontSee('id="delete-reason"', false);
+    }
+
+    public function test_customer_detail_edit_action_uses_the_same_wide_drawer_as_the_directory(): void
+    {
+        $owner = $this->makeUser();
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->firstOrFail();
+        $editUrl = route('customers.edit', [$customer->id, 'drawer' => 1]);
+
+        $this->get(route('customers.show', $customer->id))->assertOk()
+            ->assertSee('customer-detail-action-drawer', false)
+            ->assertSee('data-url="'.$editUrl.'"', false)
+            ->assertSee('data-title="ग्राहक संपादित करें"', false)
+            ->assertSee('> संपादित करें', false)
+            ->assertDontSee('जानकारी बदलें')
+            ->assertDontSee('href="'.route('customers.edit', $customer->id).'"', false);
+
+        $this->withHeader('X-Requested-With', 'XMLHttpRequest')->get($editUrl)
+            ->assertOk()
+            ->assertSee('id="customer-form"', false)
+            ->assertSee('name="drawer_context"', false)
+            ->assertSee('रामलाल')
+            ->assertDontSee('<!doctype html', false);
+    }
+
+    public function test_staff_customer_detail_edit_action_also_has_a_drawer_shell(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = $this->makeUser(User::ROLE_OWNER, $shop);
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->firstOrFail();
+
+        $staff = $this->makeUser(User::ROLE_STAFF, $shop);
+        $this->actingAs($staff)->get(route('customers.show', $customer->id))->assertOk()
+            ->assertSee('customer-detail-action-drawer', false)
+            ->assertSee('data-customer-drawer', false)
+            ->assertSee('संपादित करें');
     }
 }
