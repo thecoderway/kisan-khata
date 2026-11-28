@@ -1,7 +1,7 @@
 @extends('layouts.auth')
 @section('title', 'लॉगिन')
 @section('content')
-<div class="auth-heading"><span class="eyebrow">WELCOME BACK</span><h1>अपने खाते में लॉगिन करें</h1><p>अपनी दुकान का हिसाब-किताब आगे बढ़ाएं।</p></div>
+<div class="auth-heading"><span class="eyebrow">वापसी पर स्वागत है</span><h1>अपने खाते में लॉगिन करें</h1><p>अपनी दुकान का हिसाब-किताब आगे बढ़ाएं।</p></div>
 @if (session('status')) <div class="alert alert-success">{{ session('status') }}</div> @endif
 @if ($errors->any()) <div class="alert alert-danger">{{ $errors->first() }}</div> @endif
 <form method="POST" action="{{ route('login') }}" class="auth-form">

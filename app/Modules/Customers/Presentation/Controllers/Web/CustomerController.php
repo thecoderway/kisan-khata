@@ -85,8 +85,8 @@ class CustomerController extends Controller
         $customers = $directory->paginate($request);
         $villageOptions = DB::table('customers as c')->join('villages as v', 'v.villageCode', '=', 'c.village_code')
             ->where('c.shop_id', $currentShop->require()->getKey())
-            ->whereNotNull('c.village_code')->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish')
-            ->distinct()->orderBy('v.villageNameEnglish')->get();
+            ->whereNotNull('c.village_code')->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish', 'v.subdistrictNameLocal', 'v.subdistrictNameEnglish', 'v.districtNameLocal', 'v.districtNameEnglish')
+            ->distinct()->orderBy('v.districtNameLocal')->orderBy('v.subdistrictNameLocal')->orderBy('v.villageNameLocal')->get();
         $search = trim((string) $request->query('q', ''));
         $status = in_array($request->query('status'), ['active', 'inactive', 'deleted'], true)
             ? $request->query('status')

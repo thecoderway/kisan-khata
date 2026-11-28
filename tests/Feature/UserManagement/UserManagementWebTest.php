@@ -25,7 +25,7 @@ class UserManagementWebTest extends TestCase
             ->assertOk()
             ->assertSee('Directory Staff')
             ->assertSee('directory.staff@example.com')
-            ->assertSee('Active accounts')
+            ->assertSee('सक्रिय खाते')
             ->assertViewHas('capacity', fn (array $capacity): bool => $capacity['active_total'] === 2);
     }
 

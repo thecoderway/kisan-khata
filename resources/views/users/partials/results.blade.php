@@ -1,10 +1,10 @@
 @if ($users->isEmpty())
-    <div class="empty-state"><i class="ti ti-users"></i><h3>कोई यूज़र नहीं मिला</h3>
+    <div class="empty-state"><i class="ti ti-users"></i><h3>कोई उपयोगकर्ता नहीं मिला</h3>
         @if ($isOwner)
-            <p>फ़िल्टर बदलें या अपनी टीम का पहला Manager अथवा Staff account बनाएँ।</p>
-            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया यूज़र" data-width="wide">यूज़र बनाएँ</button>
+            <p>फ़िल्टर बदलें या अपनी टीम का पहला प्रबंधक अथवा कर्मचारी खाता बनाएँ।</p>
+            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया उपयोगकर्ता" data-width="wide">उपयोगकर्ता बनाएँ</button>
         @else
-            <p>आपकी खोज या स्थिति फ़िल्टर से मेल खाता Staff account उपलब्ध नहीं है।</p>
+            <p>आपकी खोज या स्थिति फ़िल्टर से मेल खाता कर्मचारी खाता उपलब्ध नहीं है।</p>
         @endif
     </div>
 @else
@@ -24,17 +24,17 @@
                     <td><div class="member-cell"><span class="member-avatar">{{ mb_substr($member->name, 0, 1) }}</span><strong>{{ $member->name }}</strong></div></td>
                     @if ($isOwner)
                         <td>{{ $member->email ?: '—' }}</td><td>{{ $member->mobile ?: '—' }}</td>
-                        <td><span class="role-pill">{{ ucfirst($member->role) }}</span></td>
+                        <td><span class="role-pill">{{ $member->role === 'manager' ? 'प्रबंधक' : 'कर्मचारी' }}</span></td>
                     @endif
-                    <td><span class="account-status {{ $member->is_active ? 'is-active' : 'is-inactive' }}"><i class="ti ti-circle-filled"></i>{{ $member->is_active ? 'Active' : 'Deactivated' }}</span></td>
+                    <td><span class="account-status {{ $member->is_active ? 'is-active' : 'is-inactive' }}"><i class="ti ti-circle-filled"></i>{{ $member->is_active ? 'सक्रिय' : 'निष्क्रिय' }}</span></td>
                     @if ($isOwner)
                         <td>
                             @if (in_array($member->role, [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_STAFF], true))
                                 <div class="user-actions">
                                     @if ($member->is_active)
-                                        <button type="button" class="btn btn-sm btn-outline-danger" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'deactivate']) }}" data-title="यूज़र Deactivate करें">Deactivate</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'deactivate']) }}" data-title="उपयोगकर्ता Deactivate करें">निष्क्रिय करें</button>
                                     @else
-                                        <button type="button" class="btn btn-sm btn-outline-success" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'reactivate']) }}" data-title="यूज़र Reactivate करें">Reactivate</button>
+                                        <button type="button" class="btn btn-sm btn-outline-success" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'reactivate']) }}" data-title="यूज़र Reactivate करें">पुनः सक्रिय करें</button>
                                     @endif
                                     <button type="button" class="btn btn-sm btn-outline-secondary" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'role']) }}" data-title="यूज़र की भूमिका बदलें">भूमिका बदलें</button>
                                 </div>
@@ -53,15 +53,15 @@
 <div class="customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
     <div class="customer-pagination-summary text-secondary small" aria-live="polite">
         @if ($users->total() > 0)
-            Showing <strong>{{ $users->firstItem() }}–{{ $users->lastItem() }}</strong> of <strong>{{ $users->total() }}</strong> users
+            कुल {{ $users->total() }} में से <strong>{{ $users->firstItem() }}–{{ $users->lastItem() }}</strong> उपयोगकर्ता
         @else
-            Showing <strong>0–0</strong> of <strong>0</strong> users
+            कुल 0 में से <strong>0–0</strong> उपयोगकर्ता
         @endif
     </div>
     <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
         <label class="customer-page-size d-flex align-items-center gap-2 small text-secondary">
-            <span>Rows per page</span>
-            <select class="form-select form-select-sm" aria-label="Rows per page" data-user-page-size>
+            <span>प्रति पृष्ठ पंक्तियाँ</span>
+            <select class="form-select form-select-sm" aria-label="प्रति पृष्ठ पंक्तियाँ" data-user-page-size>
                 @foreach ([10, 20, 50, 100] as $size)
                     <option value="{{ $size }}" @selected($users->perPage() === $size)>{{ $size }}</option>
                 @endforeach
