@@ -50,19 +50,11 @@
         </div>
         <div class="row g-3 mt-1" id="report-extra-filters">
             <div class="col-md-3">
-                <label class="form-label" for="report-village-search">गाँव</label>
-                <input class="form-control" type="search" id="report-village-search" list="report-village-options" data-village-filter-search data-village-select="report-village" placeholder="गाँव खोजें या चुनें…" autocomplete="off">
-                <datalist id="report-village-options">
-                    @foreach ($villages as $village)
-                        <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
-                    @endforeach
-                </datalist>
-                <select class="visually-hidden" id="report-village" aria-hidden="true" tabindex="-1">
-                    <option value="">सभी गाँव</option>
-                    @foreach ($villages as $village)
-                        <option value="{{ $village->villageCode }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
-                    @endforeach
-                </select>
+                @include('financial.partials.village-filter', [
+                    'inputId' => 'report-village-search',
+                    'selectId' => 'report-village',
+                    'villages' => $villages,
+                ])
             </div>
 
             <div class="col-md-3" id="report-search-wrap">
