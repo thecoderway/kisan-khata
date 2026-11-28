@@ -776,4 +776,29 @@ class CustomerManagementTest extends TestCase
             'deleted_at' => null,
         ]);
     }
+
+    public function test_customer_directory_filters_by_village_code(): void
+    {
+        $this->seedVillage();
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload([
+            'name_original' => 'Lotiya Customer',
+            'village_code' => '1001',
+            'state_code' => '23',
+            'district_code' => '301',
+            'subdistrict_code' => '201',
+        ]))->assertRedirect();
+
+        $this->post(route('customers.store'), $this->customerPayload([
+            'name_original' => 'Unknown Village Customer',
+        ]))->assertRedirect();
+
+        $this->get(route('customers.index', ['village_code' => '1001']))
+            ->assertOk()->assertSee('Lotiya Customer')->assertDontSee('Unknown Village Customer');
+
+        $this->get(route('customers.index', ['village_code' => '9999']))
+            ->assertSessionHasErrors('village_code');
+    }
+
 }
