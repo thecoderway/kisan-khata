@@ -1,8 +1,8 @@
 @if ($users->isEmpty())
-    <div class="empty-state"><i class="ti ti-users"></i><h3>कोई स्टाफ नहीं मिला</h3>
+    <div class="empty-state"><i class="ti ti-users"></i><h3>कोई उपयोगकर्ता नहीं मिला</h3>
         @if ($isOwner)
             <p>फ़िल्टर बदलें या अपनी टीम का पहला प्रबंधक अथवा कर्मचारी खाता बनाएँ।</p>
-            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया स्टाफ" data-width="wide">स्टाफ बनाएँ</button>
+            <button type="button" class="btn btn-primary kk-primary" data-user-drawer data-url="{{ route('users.create', ['drawer' => 1]) }}" data-title="नया उपयोगकर्ता" data-width="wide">उपयोगकर्ता बनाएँ</button>
         @else
             <p>आपकी खोज या स्थिति फ़िल्टर से मेल खाता कर्मचारी खाता उपलब्ध नहीं है।</p>
         @endif
@@ -32,11 +32,11 @@
                             @if (in_array($member->role, [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_STAFF], true))
                                 <div class="user-actions">
                                     @if ($member->is_active)
-                                        <button type="button" class="btn btn-sm btn-outline-danger" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'deactivate']) }}" data-title="स्टाफ Deactivate करें">निष्क्रिय करें</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'deactivate']) }}" data-title="उपयोगकर्ता निष्क्रिय करें">निष्क्रिय करें</button>
                                     @else
-                                        <button type="button" class="btn btn-sm btn-outline-success" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'reactivate']) }}" data-title="यूज़र Reactivate करें">पुनः सक्रिय करें</button>
+                                        <button type="button" class="btn btn-sm btn-outline-success" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'reactivate']) }}" data-title="उपयोगकर्ता पुनः सक्रिय करें">पुनः सक्रिय करें</button>
                                     @endif
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'role']) }}" data-title="यूज़र की भूमिका बदलें">भूमिका बदलें</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-user-drawer data-url="{{ route('users.lifecycle-form', [$member->id, 'role']) }}" data-title="उपयोगकर्ता की भूमिका बदलें">भूमिका बदलें</button>
                                 </div>
                             @else
                                 <span class="text-secondary">—</span>
@@ -53,9 +53,9 @@
 <div class="customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
     <div class="customer-pagination-summary text-secondary small" aria-live="polite">
         @if ($users->total() > 0)
-            कुल {{ $users->total() }} में से <strong>{{ $users->firstItem() }}–{{ $users->lastItem() }}</strong> स्टाफ
+            कुल {{ $users->total() }} में से <strong>{{ $users->firstItem() }}–{{ $users->lastItem() }}</strong> कर्मचारी
         @else
-            कुल 0 में से <strong>0–0</strong> स्टाफ
+            कुल 0 में से <strong>0–0</strong> कर्मचारी
         @endif
     </div>
     <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
