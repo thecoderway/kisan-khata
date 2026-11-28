@@ -214,7 +214,7 @@
         const entries = Object.entries(summary || {});
         $('report-summary').innerHTML = entries.map(([key, value]) =>
             '<div class="d-inline-block me-4 mb-2"><div class="text-secondary small">' +
-            key.replaceAll('_', ' ') + '</div><strong>' +
+            key.replaceAll('_', ' ').replace(/interest/gi, 'Late Fee') + '</div><strong>' +
             (typeof value === 'string' && /^-?\d+\.\d{2}$/.test(value) ? money(value) : safe(value)) +
             '</strong></div>'
         ).join('') || '<span class="text-secondary">कोई सारांश उपलब्ध नहीं।</span>';
