@@ -4,7 +4,7 @@
 @section('page-title', 'ग्राहक विवरण')
 
 @section('content')
-    <div class="page-heading">
+    <div class="page-heading" data-customer-detail data-customer-index-url="{{ route('customers.index') }}">
         <div>
             <span class="eyebrow">CUSTOMER PROFILE</span>
             <h1>{{ $customer->name_hi ?: $customer->name_original }}</h1>
@@ -15,7 +15,41 @@
                 <span class="badge bg-success-lt">सक्रिय ग्राहक</span>
             @endif
         </div>
-        <a href="{{ route('customers.edit', $customer) }}" class="btn btn-primary kk-primary"><i class="ti ti-edit me-1"></i> जानकारी बदलें</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('customers.edit', $customer) }}" class="btn btn-primary kk-primary"><i class="ti ti-edit me-1"></i> जानकारी बदलें</a>
+            @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
+                @if ($customer->status === 'active')
+                    @can('deactivate', $customer)
+                        <button type="button" class="btn btn-outline-warning"
+                            data-customer-drawer
+                            data-customer-lifecycle-action="deactivate"
+                            data-url="{{ route('customers.index', ['drawer_action' => 'deactivate', 'drawer_customer_id' => $customer->id]) }}"
+                            data-title="ग्राहक निष्क्रिय करें">
+                            <i class="ti ti-user-off me-1"></i> निष्क्रिय करें
+                        </button>
+                    @endcan
+                @else
+                    @can('reactivate', $customer)
+                        <button type="button" class="btn btn-outline-success"
+                            data-customer-drawer
+                            data-customer-lifecycle-action="reactivate"
+                            data-url="{{ route('customers.index', ['drawer_action' => 'reactivate', 'drawer_customer_id' => $customer->id]) }}"
+                            data-title="ग्राहक पुनः सक्रिय करें">
+                            <i class="ti ti-user-check me-1"></i> पुनः सक्रिय करें
+                        </button>
+                    @endcan
+                @endif
+                @can('softDelete', $customer)
+                    <button type="button" class="btn btn-outline-danger"
+                        data-customer-drawer
+                        data-customer-lifecycle-action="soft-delete"
+                        data-url="{{ route('customers.index', ['drawer_action' => 'soft-delete', 'drawer_customer_id' => $customer->id]) }}"
+                        data-title="ग्राहक Soft Delete करें">
+                        <i class="ti ti-trash me-1"></i> Soft Delete
+                    </button>
+                @endcan
+            @endif
+        </div>
     </div>
 
     @if (session('status')) <div class="alert alert-success" role="status">{{ session('status') }}</div> @endif
@@ -35,39 +69,18 @@
             <div class="col-md-6"><span class="text-secondary small">पता</span><div class="fw-semibold">{{ $customer->address_hi ?: $customer->address_original ?: '—' }}</div></div>
             <div class="col-12"><span class="text-secondary small">नोट्स</span><div class="fw-semibold">{{ $customer->notes ?: '—' }}</div></div>
         </div>
-
-        @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
-            <hr class="my-4">
-            <h2 class="h3 mb-3">ग्राहक स्थिति प्रबंधन</h2>
-            <div class="d-flex flex-wrap gap-3">
-                @if ($customer->status === 'active')
-                    @can('deactivate', $customer)
-                        <form method="POST" action="{{ route('customers.deactivate', $customer) }}" class="d-flex flex-wrap gap-2 align-items-end">
-                            @csrf
-                            <div><label for="deactivate-reason" class="form-label">निष्क्रिय करने का कारण</label><input id="deactivate-reason" name="reason" class="form-control" required maxlength="500"></div>
-                            <button type="submit" class="btn btn-outline-warning">निष्क्रिय करें</button>
-                        </form>
-                    @endcan
-                @else
-                    @can('reactivate', $customer)
-                        <form method="POST" action="{{ route('customers.reactivate', $customer) }}" class="d-flex flex-wrap gap-2 align-items-end">
-                            @csrf
-                            <div><label for="reactivate-reason" class="form-label">कारण (वैकल्पिक)</label><input id="reactivate-reason" name="reason" class="form-control" maxlength="500"></div>
-                            <button type="submit" class="btn btn-outline-success">पुनः सक्रिय करें</button>
-                        </form>
-                    @endcan
-                @endif
-
-                @can('softDelete', $customer)
-                    <form method="POST" action="{{ route('customers.soft-delete', $customer) }}" class="d-flex flex-wrap gap-2 align-items-end" onsubmit="return confirm('क्या आप इस ग्राहक को Soft Delete करना चाहते हैं?')">
-                        @csrf
-                        @method('DELETE')
-                        <div><label for="delete-reason" class="form-label">Soft Delete का कारण</label><input id="delete-reason" name="reason" class="form-control" required maxlength="500"></div>
-                        <button type="submit" class="btn btn-outline-danger">Soft Delete</button>
-                    </form>
-                @endcan
-            </div>
-        @endif
         <div class="form-actions"><a href="{{ route('customers.index') }}" class="btn btn-outline-secondary">ग्राहक सूची</a></div>
     </section>
 @endsection
+
+@push('drawers')
+    @if (in_array(auth()->user()->role, [\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_MANAGER], true))
+        <x-ui.action-drawer id="customer-detail-lifecycle-drawer" title="ग्राहक स्थिति" width="default">
+            <div class="text-secondary small mb-3">ग्राहक की स्थिति बदलने से पहले विवरण और कारण जाँच लें।</div>
+            <x-slot:footer>
+                <button type="button" class="btn btn-outline-secondary" data-drawer-close>रद्द करें</button>
+                <button type="submit" form="customer-form" class="btn btn-primary kk-primary">पुष्टि करें <i class="ti ti-check ms-1"></i></button>
+            </x-slot:footer>
+        </x-ui.action-drawer>
+    @endif
+@endpush
