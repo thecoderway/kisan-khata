@@ -61,7 +61,7 @@ const enhanceDateInput = (input) => {
     const open=()=>{if(input.disabled||input.readOnly)return;view=parseDate(input.value)||new Date();view=new Date(view.getFullYear(),view.getMonth(),1);render();document.body.appendChild(pop);opened=true;pop.hidden=false;sync();positionPopup();window.addEventListener('resize',positionPopup);document.addEventListener('scroll',positionPopup,true);};
     display.addEventListener('click',open);trigger.addEventListener('click',open);
     display.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
-    document.addEventListener('click',e=>{if(opened&&!wrapper.contains(e.target)&&!pop.contains(e.target))close();});
+    document.addEventListener('pointerdown',e=>{if(opened&&!wrapper.contains(e.target)&&!pop.contains(e.target))close();});
     document.addEventListener('keydown',e=>{if(opened&&e.key==='Escape'){close();display.focus();}});
     input.form?.addEventListener('reset',()=>requestAnimationFrame(sync));input.addEventListener('change',sync);sync();
 };
