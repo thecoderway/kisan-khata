@@ -4,16 +4,16 @@ import { filterVillageOptions, findVillageOption, syncVillageFilterLabel } from 
 
 const makeOptions = () => [
     { value: '', textContent: 'सभी गाँव' },
-    { value: '480058', textContent: 'लोटिया, सारंगपुर, राजगढ़' },
-    { value: '480059', textContent: 'ब्यावरा, ब्यावरा, राजगढ़' },
-    { value: '480060', textContent: 'नरसिंहगढ़, नरसिंहगढ़, राजगढ़' },
+    { value: '480058', textContent: 'लोटिया, सारंगपुर, राजगढ़', dataset: { search: 'Lotia, Sarangpur, Rajgarh' } },
+    { value: '480059', textContent: 'ब्यावरा, ब्यावरा, राजगढ़', dataset: { search: 'Biaora, Biaora, Rajgarh' } },
+    { value: '480060', textContent: 'नरसिंहगढ़, नरसिंहगढ़, राजगढ़', dataset: { search: 'Narsinghgarh, Narsinghgarh, Rajgarh' } },
 ];
 
 test('filters village options by partial Hindi and English labels', () => {
     const options = makeOptions();
 
     assert.deepEqual(filterVillageOptions(options, 'लोट'), [options[1]]);
-    assert.deepEqual(filterVillageOptions(options, 'Lot'), []);
+    assert.deepEqual(filterVillageOptions(options, 'Lot'), [options[1]]);
     assert.deepEqual(filterVillageOptions(options, 'सारंगपुर'), [options[1]]);
     assert.deepEqual(filterVillageOptions(options, 'राजगढ़'), options.slice(1));
 });
