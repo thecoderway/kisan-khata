@@ -818,7 +818,7 @@ class CustomerManagementTest extends TestCase
             ->assertSee('data-customer-detail', false)
             ->assertSee('data-customer-lifecycle-action="deactivate"', false)
             ->assertSee('data-customer-lifecycle-action="soft-delete"', false)
-            ->assertSee('customer-detail-lifecycle-drawer', false)
+            ->assertSee('customer-detail-action-drawer', false)
             ->assertDontSee('id="deactivate-reason"', false)
             ->assertDontSee('id="delete-reason"', false);
     }
@@ -827,7 +827,7 @@ class CustomerManagementTest extends TestCase
     {
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
-        $customer = Customer::query()->where('shop_id', $owner->shop_id)->firstOrFail();
+        $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->firstOrFail();
         $editUrl = route('customers.edit', [$customer, 'drawer' => 1]);
 
         $this->get(route('customers.show', $customer))->assertOk()
@@ -851,7 +851,7 @@ class CustomerManagementTest extends TestCase
         $shop = Shop::factory()->create();
         $owner = $this->makeUser(User::ROLE_OWNER, $shop);
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
-        $customer = Customer::query()->where('shop_id', $shop->id)->firstOrFail();
+        $customer = DB::table('customers')->where('shop_id', $shop->id)->firstOrFail();
 
         $staff = $this->makeUser(User::ROLE_STAFF, $shop);
         $this->actingAs($staff)->get(route('customers.show', $customer))->assertOk()
