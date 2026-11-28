@@ -9,6 +9,7 @@ use App\Modules\Customers\Presentation\Controllers\CustomerLifecycleController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerLedgerController;
 use App\Modules\Financial\Presentation\Controllers\Api\CustomerReconciliationController;
 use App\Modules\Financial\Presentation\Controllers\Api\FinancialAdministrationController;
+use App\Modules\Financial\Presentation\Controllers\Api\FinancialReportController;
 use App\Modules\Financial\Presentation\Controllers\Api\InterestCalculationHistoryController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentController;
 use App\Modules\Financial\Presentation\Controllers\Api\PaymentCorrectionController;
@@ -45,6 +46,10 @@ Route::middleware(['auth:sanctum', 'abilities:app'])->group(function (): void {
         });
 
         Route::prefix('v1')->group(function (): void {
+            Route::get('/reports/outstanding', [FinancialReportController::class, 'outstanding']);
+            Route::get('/reports/sales', [FinancialReportController::class, 'sales']);
+            Route::get('/reports/payments', [FinancialReportController::class, 'payments']);
+            Route::get('/reports/interest', [FinancialReportController::class, 'interest']);
             Route::get('/sales', [SaleController::class, 'index']);
             Route::post('/sales', [SaleController::class, 'store'])->middleware('throttle:60,1');
             Route::get('/sales/{sale}', [SaleController::class, 'show']);

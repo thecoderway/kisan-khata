@@ -15,10 +15,18 @@ class FinancialWorkspaceController extends Controller
 {
     public function __invoke(string $section): View
     {
-        abort_unless(in_array($section, ['sales', 'payments', 'ledger', 'interest', 'reconciliation', 'audit'], true), 404);
+        abort_unless(in_array($section, ['sales', 'payments', 'ledger', 'interest', 'reconciliation', 'audit', 'reports'], true), 404);
 
         if (in_array($section, ['interest', 'reconciliation', 'audit'], true)) {
             abort_unless(auth()->user()->role === User::ROLE_OWNER, 403);
+        }
+
+        if ($section === 'reports') {
+            Gate::authorize('viewAny', Sale::class);
+            Gate::authorize('viewAny', Payment::class);
+            Gate::authorize('viewAny', Customer::class);
+
+            return view('financial.reports');
         }
 
         if ($section === 'sales') {
