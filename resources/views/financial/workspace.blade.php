@@ -36,21 +36,21 @@
                 <p>दुकान की वर्तमान लेट फीस नीति और ग्राहक-विशिष्ट बदलाव नियंत्रित करें।</p>
             </div>
             <div class="interest-policy-actions">
-                <button type="button" class="btn btn-outline-success" id="open-shop-policy-drawer"><i class="ti ti-settings me-1" aria-hidden="true"></i> नई Shop लेट फीस Policy</button>
-                <button type="button" class="btn btn-primary kk-primary" id="open-customer-policy-drawer"><i class="ti ti-user-cog me-1" aria-hidden="true"></i> Customer लेट फीस Override</button>
+                <button type="button" class="btn btn-outline-success" id="open-shop-policy-drawer"><i class="ti ti-settings me-1" aria-hidden="true"></i> नई दुकान की लेट फीस नीति</button>
+                <button type="button" class="btn btn-primary kk-primary" id="open-customer-policy-drawer"><i class="ti ti-user-cog me-1" aria-hidden="true"></i> ग्राहक की लेट फीस की विशेष दर</button>
             </div>
         </div>
     @endif
     @if ($section === 'interest')
         <div class="financial-toolbar">
             <div class="financial-filter-grid">
-                <div><label class="form-label" for="interest-history-customer">लेट फीस Calculation History के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="interest-history-customer">लेट फीस गणना का इतिहास देखने के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="financial-from">से cutoff तारीख</label><input class="form-control" type="date" id="financial-from"></div>
                 <div><label class="form-label" for="financial-to">तक cutoff तारीख</label><input class="form-control" type="date" id="financial-to"></div>
                 <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> इतिहास ताज़ा करें</button></div>
             </div>
         </div>
-        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">लेट फीस calculation history देखने के लिए ग्राहक चुनें।</div></div>
+        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">लेट फीस की गणना का इतिहास देखने के लिए ग्राहक चुनें।</div></div>
     @endif
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
@@ -128,8 +128,8 @@
                 @csrf
                 <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="customer-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="customer-policy-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
-                <div><label class="form-label" for="customer-policy-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="customer-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="Shop लेट फीस policy से inherit"></div>
-                <div class="financial-form-wide"><label class="form-label" for="customer-policy-capitalization">मूलधन में जोड़ना override</label><select class="form-select" id="customer-policy-capitalization" name="capitalization_enabled"><option value="">दुकान की नीति से स्वतः लागू</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
+                <div><label class="form-label" for="customer-policy-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="customer-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="दुकान की लेट फीस नीति से स्वतः लागू"></div>
+                <div class="financial-form-wide"><label class="form-label" for="customer-policy-capitalization">मूलधन में जोड़ने का विशेष नियम</label><select class="form-select" id="customer-policy-capitalization" name="capitalization_enabled"><option value="">दुकान की नीति से स्वतः लागू</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
                 <div class="financial-form-wide"><label class="form-label" for="customer-policy-reason">बदलाव का कारण</label><input class="form-control" id="customer-policy-reason" name="reason" minlength="10" maxlength="500" required></div>
             </form>
             <div id="customer-policy-history" class="pt-3"></div>

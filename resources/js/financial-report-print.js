@@ -7,7 +7,7 @@ const reportDefinitions = {
     sales: {
         title: 'बिक्री रजिस्टर',
         columns: ['बिक्री नंबर', 'तारीख', 'ग्राहक', 'स्थिति', 'राशि'],
-        values: (row, money) => [row.sale_number, row.sale_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_status, money(row.amount)],
+        values: (row, money) => [row.sale_number, row.sale_date, row.customer_name_hi || row.customer_name || row.customer_name_en, ({ UNPAID: 'उधार', PARTIALLY_PAID: 'आंशिक जमा', PAID: 'जमा पूर्ण' }[row.payment_status] || row.payment_status), money(row.amount)],
     },
     payments: {
         title: 'जमा रजिस्टर',
