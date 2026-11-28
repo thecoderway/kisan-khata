@@ -30,6 +30,26 @@
 
 <div class="content-card mb-3">
     @if ($section === 'interest')
+        <div class="financial-toolbar">
+            <div class="financial-filter-grid">
+                <div><label class="form-label" for="interest-history-customer">लेट फीस गणना का इतिहास देखने के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="financial-from">से cutoff तारीख</label><input class="form-control" type="date" id="financial-from"></div>
+                <div><label class="form-label" for="financial-to">तक cutoff तारीख</label><input class="form-control" type="date" id="financial-to"></div>
+                <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> इतिहास ताज़ा करें</button></div>
+            </div>
+        </div>
+        <div id="interest-history-results" class="p-3" aria-live="polite"><div class="text-secondary">लेट फीस की गणना का इतिहास देखने के लिए ग्राहक चुनें।</div></div>
+    @endif
+    @if (in_array($section, ['sales', 'payments'], true))
+        <button class="btn btn-primary kk-primary" type="button" id="financial-create"><i class="ti ti-plus me-1"></i> नया {{ $section === 'sales' ? 'बिक्री रिकॉर्ड' : 'भुगतान' }}</button>
+    @endif
+    @if ($section === 'ledger')
+        <button class="btn btn-outline-primary" type="button" id="financial-ledger-print"><i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / PDF</button>
+    @endif
+</div>
+
+<div class="content-card mb-3">
+    @if ($section === 'interest')
         <div class="content-card-header interest-policy-header">
             <div>
                 <h2>लेट फीस नीति</h2>
@@ -70,9 +90,24 @@
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
             <div class="financial-filter-grid">
-                <div class="financial-search-field"><label class="form-label" for="financial-search">खोजें</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span><input class="form-control" type="search" id="financial-search" name="q" maxlength="100" placeholder="नंबर, ग्राहक या मोबाइल…" autocomplete="off"></div></div>
                 <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from" name="from"></div>
                 <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to" name="to"></div>
+                <div>
+                    <label class="form-label" for="financial-village-search">गाँव</label>
+                    <input class="form-control" type="search" id="financial-village-search" list="financial-village-options" data-village-filter-search data-village-select="financial-village" placeholder="गाँव खोजें या चुनें…" autocomplete="off">
+                    <datalist id="financial-village-options">
+                        @foreach ($villages as $village)
+                            <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
+                        @endforeach
+                    </datalist>
+                    <select class="visually-hidden" id="financial-village" name="village_code" aria-hidden="true" tabindex="-1">
+                        <option value="">सभी गाँव</option>
+                        @foreach ($villages as $village)
+                            <option value="{{ $village->villageCode }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="financial-search-field"><label class="form-label" for="financial-search">खोजें</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span><input class="form-control" type="search" id="financial-search" name="q" maxlength="100" placeholder="नंबर, ग्राहक या मोबाइल…" autocomplete="off"></div></div>
                 @if ($section === 'sales')
                     <div><label class="form-label" for="financial-status">भुगतान स्थिति</label><select class="form-select" id="financial-status" name="payment_status"><option value="">सभी स्थितियाँ</option><option value="UNPAID">उधार</option><option value="PARTIALLY_PAID">आंशिक जमा</option><option value="PAID">जमा पूर्ण</option></select></div>
                 @else
