@@ -114,7 +114,8 @@ export const initialiseFinancialReportExport = () => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'kisan-khata-' + report + '-' + filenameDate(new Date()) + '.csv';
+            const filenameReport = report === 'interest' ? 'late-fee' : report;
+            link.download = 'kisan-khata-' + filenameReport + '-' + filenameDate(new Date()) + '.csv';
             document.body.appendChild(link);
             link.click();
             link.remove();
