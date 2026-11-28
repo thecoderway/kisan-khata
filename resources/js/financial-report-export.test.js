@@ -50,7 +50,7 @@ test('exports all interest audit fields and rejects unknown report types', () =>
         filters: {},
     });
 
-    for (const field of ['Grace days', 'Unrounded interest', 'Shop policy version', 'Customer policy version', '99']) {
+    for (const field of ['Grace days', 'Unrounded Late Fee', 'Shop policy version', 'Customer policy version', '99']) {
         assert.ok(csv.includes(field));
     }
     assert.throws(() => buildFinancialReportCsv({ report: 'unknown', rows: [], summary: {}, filters: {} }));

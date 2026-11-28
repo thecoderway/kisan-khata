@@ -6,6 +6,7 @@ export function registerCustomerDirectory() {
 
     const searchInput = form.querySelector('[name="q"]');
     const statusInput = form.querySelector('[name="status"]');
+    const villageInput = form.querySelector('[name="village_code"]');
     const statusRegion = document.querySelector('[data-customer-filter-status]');
     const resetLink = form.querySelector('[data-customer-filter-reset]');
     let debounceTimer = null;
@@ -14,12 +15,13 @@ export function registerCustomerDirectory() {
 
     const updateResetVisibility = () => {
         if (!resetLink) return;
-        resetLink.hidden = !((searchInput?.value || '').trim() || (statusInput?.value && statusInput.value !== 'active'));
+        resetLink.hidden = !((searchInput?.value || '').trim() || (statusInput?.value && statusInput.value !== 'active') || (villageInput?.value || ''));
     };
 
     const syncFiltersFromUrl = (url) => {
         if (searchInput) searchInput.value = url.searchParams.get('q') || '';
         if (statusInput) statusInput.value = url.searchParams.get('status') || 'active';
+        if (villageInput) villageInput.value = url.searchParams.get('village_code') || '';
         const pageSizeInput = results.querySelector('[data-customer-page-size]');
         if (pageSizeInput) pageSizeInput.value = url.searchParams.get('pageSize') || '20';
         updateResetVisibility();
@@ -122,10 +124,10 @@ export function registerCustomerDirectory() {
         debounceTimer = window.setTimeout(() => applyFilters('replace'), 375);
     });
 
-    statusInput?.addEventListener('change', () => {
+    [statusInput, villageInput].forEach((input) => input?.addEventListener('change', () => {
         updateResetVisibility();
         applyFilters('replace');
-    });
+    }));
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -138,6 +140,7 @@ export function registerCustomerDirectory() {
             event.preventDefault();
             if (searchInput) searchInput.value = '';
             if (statusInput) statusInput.value = 'active';
+            if (villageInput) villageInput.value = '';
             updateResetVisibility();
             applyFilters('push');
             return;

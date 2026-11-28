@@ -43,6 +43,11 @@ class CustomerDirectoryQuery
             $query->where('customers.status', Customer::STATUS_ACTIVE);
         }
 
+        $villageCode = trim((string) $request->query('village_code', ''));
+        if ($villageCode !== '') {
+            $query->where('customers.village_code', $villageCode);
+        }
+
         if ($search !== '') {
             $query->where(function ($builder) use ($search): void {
                 $term = '%'.$search.'%';

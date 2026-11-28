@@ -63,7 +63,7 @@
                                 <i class="ti ti-building-store"></i><span>दुकान की जानकारी</span>
                             </a>
                             <a href="{{ route('financial.workspace', ['section' => 'interest']) }}" @click="settingsOpen = false; sidebarOpen = false" class="{{ request()->route('section') === 'interest' ? 'active' : '' }}">
-                                <i class="ti ti-percentage"></i><span>ब्याज सेटिंग</span>
+                                <i class="ti ti-percentage"></i><span>Late Fee सेटिंग</span>
                             </a>
                         </div>
                     @endif

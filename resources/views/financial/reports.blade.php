@@ -8,7 +8,7 @@
     <div>
         <span class="eyebrow">KISAN KHATA · FINANCIAL REPORTS</span>
         <h1>वित्तीय रिपोर्ट सेंटर</h1>
-        <p>दुकान की बिक्री, जमा, ग्राहक बकाया और ब्याज का read-only सारांश।</p>
+        <p>दुकान की बिक्री, जमा, ग्राहक बकाया और Late Fee का read-only सारांश।</p>
     </div>
 </div>
 
@@ -22,7 +22,7 @@
                     <option value="sales">बिक्री रजिस्टर</option>
                     <option value="payments">जमा रजिस्टर</option>
                     @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
-                        <option value="interest">ब्याज रिपोर्ट (Owner)</option>
+                        <option value="interest">Late Fee रिपोर्ट (Owner)</option>
                     @endif
                 </select>
             </div>
@@ -49,6 +49,16 @@
             </div>
         </div>
         <div class="row g-3 mt-1" id="report-extra-filters">
+            <div class="col-md-3">
+                <label class="form-label" for="report-village">गाँव</label>
+                <select class="form-select" id="report-village">
+                    <option value="">सभी गाँव</option>
+                    @foreach ($villages as $village)
+                        <option value="{{ $village->villageCode }}">{{ $village->villageNameLocal ?: $village->villageNameEnglish }}{{ $village->villageNameLocal && $village->villageNameEnglish ? ' · '.$village->villageNameEnglish : '' }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="col-md-3" id="report-search-wrap">
                 <label class="form-label" for="report-search">रिकॉर्ड नंबर / Reference</label>
                 <input class="form-control" id="report-search" maxlength="100" placeholder="बिक्री या जमा नंबर">
@@ -157,6 +167,7 @@
             if ($('report-to').value) query.set('to', $('report-to').value);
         }
         if ($('report-customer').value) query.set('customer_id', $('report-customer').value);
+        if ($('report-village').value) query.set('village_code', $('report-village').value);
         if ($('report-search').value.trim() && report !== 'outstanding') query.set('q', $('report-search').value.trim());
         if (report === 'sales' && $('report-status').value) query.set('payment_status', $('report-status').value);
         if (report === 'payments') {
@@ -204,7 +215,7 @@
         const entries = Object.entries(summary || {});
         $('report-summary').innerHTML = entries.map(([key, value]) =>
             '<div class="d-inline-block me-4 mb-2"><div class="text-secondary small">' +
-            key.replaceAll('_', ' ') + '</div><strong>' +
+            key.replaceAll('_', ' ').replace(/interest/gi, 'Late Fee') + '</div><strong>' +
             (typeof value === 'string' && /^-?\d+\.\d{2}$/.test(value) ? money(value) : safe(value)) +
             '</strong></div>'
         ).join('') || '<span class="text-secondary">कोई सारांश उपलब्ध नहीं।</span>';
@@ -215,7 +226,7 @@
         let columns = [];
         let rows = payload.data || [];
         if (report === 'outstanding') {
-            columns = ['ग्राहक', 'स्थिति', 'Principal', 'Interest', 'कुल'];
+            columns = ['ग्राहक', 'स्थिति', 'मूलधन', 'Late Fee', 'कुल'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' +
                 cell(r.name_hi || r.name_original || r.name_en) + cell(r.deleted_at ? 'हटाया गया' : r.status) +
@@ -232,13 +243,13 @@
                 cell(r.customer_name_hi || r.customer_name || r.customer_name_en) + cell(r.payment_type) +
                 cell(r.payment_method) + cell(money(r.amount)) + cell(r.reversed_payment_number || r.replacement_for_payment_number) + '</tr>').join('') || '<tr><td colspan="7" class="p-4 text-secondary">कोई जमा रिकॉर्ड नहीं मिला।</td></tr>';
         } else {
-            columns = ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted interest', 'Ledger ID'];
+            columns = ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted Late Fee', 'Ledger ID'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' + cell(r.customer_name_hi || r.customer_name || r.customer_name_en) +
                 cell(r.sale_number) + cell(r.trigger_type) + cell(r.run_status) + cell(r.cutoff_date_exclusive) +
                 cell(r.interval_start_date + ' – ' + r.interval_end_date_exclusive) + cell(r.actual_days) +
                 cell(r.monthly_rate_percent) + cell(money(r.eligible_principal_basis)) + cell(money(r.posted_interest)) + cell(r.ledger_entry_id) + '</tr>').join('') ||
-                '<tr><td colspan="11" class="p-4 text-secondary">कोई completed interest calculation नहीं मिली।</td></tr>';
+                '<tr><td colspan="11" class="p-4 text-secondary">कोई completed Late Fee calculation नहीं मिली।</td></tr>';
         }
         summaryCards(payload.summary);
         state.page = Number(payload.meta?.current_page || state.page);
@@ -329,6 +340,7 @@
     }
 
     $('report-customer').addEventListener('change', () => { state.page = 1; });
+    $('report-village').addEventListener('change', () => { state.page = 1; });
     $('report-type').addEventListener('change', () => { state.page = 1; configure(); });
     $('report-load').addEventListener('click', () => { state.page = 1; load(); });
     $('report-page-links').addEventListener('click', (event) => {

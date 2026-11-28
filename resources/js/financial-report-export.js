@@ -3,7 +3,7 @@ import { fetchAllReportPages } from './financial-report-print.js';
 const definitions = {
     outstanding: {
         title: 'ग्राहक बकाया रिपोर्ट',
-        columns: ['ग्राहक', 'स्थिति', 'Principal', 'Interest', 'कुल'],
+        columns: ['ग्राहक', 'स्थिति', 'मूलधन', 'Late Fee', 'कुल'],
         values: (row) => [row.name_hi || row.name_original || row.name_en, row.deleted_at ? 'हटाया गया' : row.status, row.principal, row.interest, row.total],
     },
     sales: {
@@ -17,8 +17,8 @@ const definitions = {
         values: (row) => [row.payment_number, row.payment_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_type, row.payment_method, row.amount, row.reversed_payment_number || row.replacement_for_payment_number],
     },
     interest: {
-        title: 'ब्याज रिपोर्ट',
-        columns: ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval start', 'Interval end (exclusive)', 'Days', 'Grace days', 'Rate %', 'Principal basis', 'Unrounded interest', 'Posted interest', 'Capitalized', 'Shop policy version', 'Customer policy version', 'Ledger ID'],
+        title: 'Late Fee रिपोर्ट',
+        columns: ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval start', 'Interval end (exclusive)', 'Days', 'Grace days', 'Rate %', 'Principal basis', 'Unrounded Late Fee', 'Posted Late Fee', 'Capitalized', 'Shop policy version', 'Customer policy version', 'Ledger ID'],
         values: (row) => [
             row.customer_name_hi || row.customer_name || row.customer_name_en, row.sale_number, row.trigger_type,
             row.run_status, row.cutoff_date_exclusive, row.interval_start_date, row.interval_end_date_exclusive,
@@ -47,7 +47,7 @@ export const buildFinancialReportCsv = ({ report, rows, summary, filters, shopNa
         ['तैयार किया गया', generatedAt.toISOString()],
         ['कुल रिकॉर्ड', rows.length],
         ...Object.entries(filters || {}).map(([key, value]) => ['फ़िल्टर: ' + key, value]),
-        ...Object.entries(summary || {}).map(([key, value]) => ['सारांश: ' + key, value]),
+        ...Object.entries(summary || {}).map(([key, value]) => ['सारांश: ' + key.replace(/interest/gi, 'Late Fee'), value]),
         [],
         definition.columns,
         ...rows.map(definition.values),
@@ -63,6 +63,7 @@ const readFilters = (report) => {
         : { from: value('report-from'), to: value('report-to') };
 
     filters.customer_id = value('report-customer');
+    filters.village_code = value('report-village');
     if (report !== 'outstanding') filters.q = value('report-search');
     if (report === 'sales') filters.payment_status = value('report-status');
     if (report === 'payments') {
@@ -77,7 +78,10 @@ const filterLabels = (filters) => {
     const labels = { ...filters };
     const customer = document.getElementById('report-customer');
     if (filters.customer_id && customer?.selectedOptions?.[0]) labels.customer = customer.selectedOptions[0].textContent.trim();
+    const village = document.getElementById('report-village');
+    if (filters.village_code && village?.selectedOptions?.[0]) labels.village = village.selectedOptions[0].textContent.trim();
     delete labels.customer_id;
+    delete labels.village_code;
     return labels;
 };
 
@@ -95,7 +99,7 @@ export const initialiseFinancialReportExport = () => {
 
         try {
             if (report === 'outstanding' && !filters.as_of) throw new Error('कृपया As-of तारीख चुनें।');
-            if (report === 'interest' && button.dataset.userRole !== 'owner') throw new Error('ब्याज रिपोर्ट केवल Owner के लिए उपलब्ध है।');
+            if (report === 'interest' && button.dataset.userRole !== 'owner') throw new Error('Late Fee रिपोर्ट केवल Owner के लिए उपलब्ध है।');
 
             const { rows, summary } = await fetchAllReportPages((url) => fetch(url, {
                 headers: { Accept: 'application/json' },
@@ -110,7 +114,8 @@ export const initialiseFinancialReportExport = () => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'kisan-khata-' + report + '-' + filenameDate(new Date()) + '.csv';
+            const filenameReport = report === 'interest' ? 'late-fee' : report;
+            link.download = 'kisan-khata-' + filenameReport + '-' + filenameDate(new Date()) + '.csv';
             document.body.appendChild(link);
             link.click();
             link.remove();

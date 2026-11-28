@@ -97,7 +97,7 @@ Use simple and familiar Hindi.
 | Credit Sale | उधार बिक्री |
 | Payment | जमा राशि |
 | Outstanding | कुल बकाया |
-| Interest | ब्याज |
+| Late Fee | Late Fee (लेट फीस) |
 | Ledger | खाता बही |
 | Settlement | हिसाब चुकता |
 | Village | गाँव |
@@ -289,7 +289,7 @@ After successful payment posting, show:
 - Amount received.
 - Payment date.
 - Previous payable amount.
-- Interest calculated through the payment date, where applicable.
+- Late Fee calculated through the payment date, where applicable.
 - New outstanding balance.
 - Advance amount, if payment exceeds total payable.
 
@@ -301,7 +301,7 @@ Do not ask users to select individual sales for payment allocation.
 
 Do not display oldest-sale or newest-sale allocation options.
 
-Multiple payments on the same date must not create duplicate interest for the same elapsed period.
+Multiple payments on the same date must not create duplicate Late Fee for the same elapsed period.
 
 The success screen must be displayed only after confirmation from the backend.
 
@@ -318,7 +318,7 @@ Show:
 - Customer information.
 - Current outstanding balance.
 - Customer advance, if any.
-- Applicable interest rate.
+- Applicable Late Fee rate.
 - Last financial activity date.
 
 ### Ledger Entries
@@ -328,8 +328,8 @@ Show relevant entries such as:
 - Opening balance.
 - Credit sales.
 - Payments.
-- Interest calculations.
-- Interest adjustments, where applicable.
+- Late Fee calculations.
+- Late Fee adjustments, where applicable.
 - Settlements.
 - Carry-forward entries.
 - Authorized transaction corrections.
@@ -348,19 +348,19 @@ The interface must not imply that payments are allocated to individual sale IDs.
 
 After a payment:
 
-1. Calculate eligible interest through the payment date.
-2. Add it to the amount payable according to the configured interest policy.
+1. Calculate eligible Late Fee through the payment date.
+2. Add it to the amount payable according to the configured Late Fee policy.
 3. Subtract the payment received.
 4. Display the resulting consolidated outstanding balance.
 5. Begin the next calculation cycle from the payment date for the carried-forward balance.
 
-New sales after that payment must retain their own sale dates for subsequent interest calculations.
+New sales after that payment must retain their own sale dates for subsequent Late Fee calculations.
 
 The ledger must make this behavior understandable without exposing unnecessary accounting complexity.
 
-## 12. Interest Display
+## 12. Late Fee Display
 
-Interest must be transparent and explainable.
+Late Fee must be transparent and explainable.
 
 Where applicable, show:
 
@@ -369,45 +369,45 @@ Where applicable, show:
 - Calculation end date.
 - Number of eligible days.
 - Calculation basis.
-- Interest amount.
+- Late Fee amount.
 - Relevant outstanding balance or sale basis.
-- Interest policy.
+- Late Fee policy.
 - Calculation date.
 
-### Interest Explanation
+### Late Fee Explanation
 
-Provide a simple explanation of how interest was calculated.
+Provide a simple explanation of how Late Fee was calculated.
 
 Example:
 
 ```text
 Outstanding amount: ₹10,000
-Monthly interest rate: 2%
+Monthly Late Fee rate: 2%
 Eligible days: 15
 
-Interest:
+Late Fee:
 ₹10,000 × 2% × 15 / 30
 
-Interest amount: ₹100
+Late Fee amount: ₹100
 ```
 
 The example is illustrative.
 
 The backend remains authoritative for actual calculations, including grace period, capitalization policy and applicable balance rules.
 
-Never display unexplained interest charges.
+Never display unexplained Late Fee charges.
 
-## 13. Interest Policy Settings
+## 13. Late Fee Policy Settings
 
-Shop Owner can configure the approved shop-level interest settings.
+Shop Owner can configure the approved shop-level Late Fee settings.
 
-Where supported, customer-specific rates may override the shop default.
+Where supported, customer-specific Late Fee rates may override the shop default.
 
 Settings may include:
 
-- Monthly interest rate.
+- Monthly Late Fee rate.
 - Grace period.
-- Interest capitalization policy.
+- Late Fee capitalization policy.
 - Annual Auto Settlement dates.
 
 Requirements:
@@ -425,7 +425,7 @@ The settlement screen should provide a clear summary before posting.
 Show:
 
 - Current outstanding balance.
-- Applicable interest through settlement date.
+- Applicable Late Fee through settlement date.
 - Total payable amount.
 - Amount received.
 - Remaining balance.
@@ -454,7 +454,7 @@ Requirements:
 - Require confirmation before saving corrections.
 - Capture a correction reason where required.
 - Show original and updated values in audit history.
-- Explain when a correction affects outstanding balance or interest.
+- Explain when a correction affects outstanding balance or Late Fee.
 - Display the updated authoritative balance after successful processing.
 
 Manager and Staff must not receive edit or delete controls for posted financial transactions.
@@ -629,7 +629,7 @@ Full shop interface, including:
 - Shop settings.
 - Subscription.
 - Staff management.
-- Interest policies.
+- Late Fee policies.
 - Financial corrections.
 - Reports and exports.
 
@@ -672,7 +672,7 @@ Observe whether they can independently:
 4. Record a payment.
 5. Find a customer.
 6. Understand outstanding balance.
-7. Understand an interest calculation.
+7. Understand a Late Fee calculation.
 8. View customer ledger.
 9. Print a ledger.
 10. Complete a settlement where authorized.
@@ -692,7 +692,7 @@ The interface is acceptable when:
 - Financial values are clear.
 - Consolidated customer balances are understandable.
 - Payments do not require sale-level allocation.
-- Interest calculations are explainable.
+- Late Fee calculations are explainable.
 - Owner-only correction controls are enforced.
 - Role-based navigation is consistent.
 - Ledger history is readable.

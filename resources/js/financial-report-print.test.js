@@ -49,10 +49,10 @@ test('stops and reports a failed page instead of printing incomplete data', asyn
 
 test('renders all report types with their own columns and escapes untrusted values', () => {
     const cases = [
-        ['outstanding', [{ name_hi: '<ग्राहक>', principal: '10.00', interest: '2.00', total: '12.00' }], 'Principal'],
+        ['outstanding', [{ name_hi: '<ग्राहक>', principal: '10.00', interest: '2.00', total: '12.00' }], 'Late Fee'],
         ['sales', [{ sale_number: 'S-1', customer_name: '<script>alert(1)</script>', amount: '10.00' }], 'बिक्री नंबर'],
         ['payments', [{ payment_number: 'P-1', payment_type: 'NORMAL', amount: '10.00' }], 'जमा नंबर'],
-        ['interest', [{ sale_number: 'S-1', posted_interest: '2.00', eligible_principal_basis: '10.00' }], 'Posted interest'],
+        ['interest', [{ sale_number: 'S-1', posted_interest: '2.00', eligible_principal_basis: '10.00' }], 'Posted Late Fee'],
     ];
 
     for (const [report, rows, expectedColumn] of cases) {

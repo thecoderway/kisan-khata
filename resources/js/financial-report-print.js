@@ -1,7 +1,7 @@
 const reportDefinitions = {
     outstanding: {
         title: 'ग्राहक बकाया रिपोर्ट',
-        columns: ['ग्राहक', 'स्थिति', 'Principal', 'Interest', 'कुल'],
+        columns: ['ग्राहक', 'स्थिति', 'मूलधन', 'Late Fee', 'कुल'],
         values: (row, money) => [row.name_hi || row.name_original || row.name_en, row.deleted_at ? 'हटाया गया' : row.status, money(row.principal), money(row.interest), money(row.total)],
     },
     sales: {
@@ -15,8 +15,8 @@ const reportDefinitions = {
         values: (row, money) => [row.payment_number, row.payment_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_type, row.payment_method, money(row.amount), row.reversed_payment_number || row.replacement_for_payment_number],
     },
     interest: {
-        title: 'ब्याज रिपोर्ट',
-        columns: ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted interest', 'Ledger ID'],
+        title: 'Late Fee रिपोर्ट',
+        columns: ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted Late Fee', 'Ledger ID'],
         values: (row, money) => [
             row.customer_name_hi || row.customer_name || row.customer_name_en,
             row.sale_number, row.trigger_type, row.run_status, row.cutoff_date_exclusive,
@@ -74,7 +74,7 @@ export const buildFinancialReportPrintHtml = ({ report, rows, summary, filters, 
         const display = typeof value === 'string' && /^-?\d+\.\d{2}$/.test(value)
             ? formatMoney(value)
             : escapeHtml(value);
-        return '<div class="summary-item"><span>' + escapeHtml(key.replaceAll('_', ' ')) +
+        return '<div class="summary-item"><span>' + escapeHtml(key.replaceAll('_', ' ').replace(/interest/gi, 'Late Fee')) +
             '</span><strong>' + display + '</strong></div>';
     }).join('');
 
@@ -119,6 +119,7 @@ const readReportFilters = () => {
     }
 
     filters.customer_id = value('report-customer');
+    filters.village_code = value('report-village');
     if (report !== 'outstanding') filters.q = value('report-search');
     if (report === 'sales') filters.payment_status = value('report-status');
     if (report === 'payments') {
@@ -133,7 +134,10 @@ const filterLabels = (filters) => {
     const customer = document.getElementById('report-customer');
     const labels = { ...filters };
     if (filters.customer_id && customer?.selectedOptions?.[0]) labels.customer = customer.selectedOptions[0].textContent.trim();
+    const village = document.getElementById('report-village');
+    if (filters.village_code && village?.selectedOptions?.[0]) labels.village = village.selectedOptions[0].textContent.trim();
     delete labels.customer_id;
+    delete labels.village_code;
     return labels;
 };
 
