@@ -10,27 +10,28 @@ export function attachVillageDropdown(input, menu) {
     menu.style.overflowX = 'hidden';
     menu.style.width = 'auto';
     menu.style.maxWidth = 'calc(100vw - 16px)';
-    menu.style.margin = '4px 0 0';
+    menu.style.margin = '0';
     document.body.append(menu);
 
     const position = () => {
         if (menu.hidden || !input.isConnected) return;
+
         const rect = input.getBoundingClientRect();
-        const gap = 4;
         const viewportPadding = 8;
+        const gap = 4;
         const width = Math.min(rect.width, window.innerWidth - viewportPadding * 2);
         const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
-        const below = window.innerHeight - rect.bottom - gap - viewportPadding;
-        const above = rect.top - gap - viewportPadding;
-        const openAbove = below < 160 && above > below;
-        const availableHeight = Math.max(100, openAbove ? above : below);
+        const below = Math.max(0, window.innerHeight - rect.bottom - gap - viewportPadding);
+        const above = Math.max(0, rect.top - gap - viewportPadding);
+        const naturalHeight = Math.min(288, Math.max(40, menu.scrollHeight));
+        const openAbove = below < naturalHeight && above > below;
+        const availableHeight = Math.max(40, openAbove ? above : below);
+        const height = Math.min(naturalHeight, availableHeight);
 
         menu.style.left = left + 'px';
         menu.style.width = width + 'px';
-        menu.style.maxHeight = Math.min(288, availableHeight) + 'px';
-        menu.style.top = openAbove
-            ? Math.max(viewportPadding, rect.top - Math.min(288, availableHeight) - gap) + 'px'
-            : rect.bottom + gap + 'px';
+        menu.style.maxHeight = height + 'px';
+        menu.style.top = (openAbove ? rect.top - height - gap : rect.bottom + gap) + 'px';
     };
 
     const setOpen = (open) => {
@@ -38,9 +39,8 @@ export function attachVillageDropdown(input, menu) {
         if (open) position();
     };
 
-    const onViewportChange = () => position();
-    window.addEventListener('resize', onViewportChange);
-    window.addEventListener('scroll', onViewportChange, true);
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
 
     return setOpen;
 }
