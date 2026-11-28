@@ -57,7 +57,7 @@ const enhanceDateInput = (input) => {
         footer.append(clear,todayBtn);pop.append(head,grid,footer);
     };
     const open=()=>{if(input.disabled||input.readOnly)return;view=parseDate(input.value)||new Date();view=new Date(view.getFullYear(),view.getMonth(),1);render();opened=true;pop.hidden=false;sync();};
-    display.addEventListener('click',open);trigger.addEventListener('click',open);});
+    display.addEventListener('click',open);trigger.addEventListener('click',open);
     display.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
     document.addEventListener('click',e=>{if(opened&&!wrapper.contains(e.target))close();});
     document.addEventListener('keydown',e=>{if(opened&&e.key==='Escape'){close();display.focus();}});
