@@ -456,3 +456,21 @@ window.addEventListener('kk-toast:show', (event) => {
     });
 });
 
+
+
+window.addEventListener('kk-drawer:success', () => {
+    const detail = document.querySelector('[data-customer-detail]');
+    if (!detail) return;
+
+    if (document.body.dataset.customerLifecycleAction === 'soft-delete') {
+        window.location.assign(detail.dataset.customerIndexUrl);
+        return;
+    }
+
+    window.location.reload();
+});
+
+document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-customer-lifecycle-action]');
+    if (trigger) document.body.dataset.customerLifecycleAction = trigger.dataset.customerLifecycleAction;
+});
