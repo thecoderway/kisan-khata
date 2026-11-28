@@ -83,6 +83,12 @@
             </div>
         </div>
     </div>
+    <div class="d-flex justify-content-end p-3 border-bottom">
+        <button class="btn btn-outline-secondary" id="report-print" type="button"
+            data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" disabled>
+            <i class="ti ti-printer me-1" aria-hidden="true"></i> प्रिंट / PDF
+        </button>
+    </div>
     <div id="report-summary" class="p-3 border-bottom" aria-live="polite"></div>
     <div id="report-feedback" class="px-3 pt-3" role="status" aria-live="polite"></div>
     <div class="table-responsive" id="report-table-wrap">
@@ -235,6 +241,7 @@
         state.perPage = Number(payload.meta?.per_page || state.perPage);
         state.lastPage = Number(payload.meta?.last_page || 1);
         renderPagination(Number(payload.meta?.total || 0));
+        $('report-print').disabled = false;
     }
 
     function renderPagination(total) {
@@ -309,6 +316,7 @@
             $('report-summary').innerHTML = '';
             $('report-page-links').innerHTML = '';
             $('report-page-info').textContent = 'Showing 0–0 of 0 records';
+            $('report-print').disabled = true;
         } finally {
             $('report-load').disabled = false;
         }
