@@ -6,7 +6,7 @@
 @section('content')
     <div class="page-heading" data-customer-detail data-customer-index-url="{{ route('customers.index') }}">
         <div>
-            <span class="eyebrow">CUSTOMER PROFILE</span>
+            <span class="eyebrow">ग्राहक विवरण</span>
             <h1>{{ $customer->name_hi ?: $customer->name_original }}</h1>
             <p>{{ $customer->mobile ?: 'मोबाइल नंबर दर्ज नहीं है' }}</p>
             @if ($customer->status === 'inactive')
@@ -52,7 +52,7 @@
                         data-customer-drawer
                         data-customer-lifecycle-action="soft-delete"
                         data-url="{{ route('customers.index', ['drawer_action' => 'soft-delete', 'drawer_customer_id' => $customer->id]) }}"
-                        data-title="ग्राहक Soft Delete करें">
+                        data-title="ग्राहक हटाएँ करें">
                         <i class="ti ti-trash me-1"></i> Soft Delete
                     </button>
                 @endcan
@@ -70,7 +70,7 @@
     <section class="content-card form-card">
         <div class="row g-4">
             <div class="col-md-6"><span class="text-secondary small">मूल नाम</span><div class="fw-semibold">{{ $customer->name_original }}</div></div>
-            <div class="col-md-6"><span class="text-secondary small">English name</span><div class="fw-semibold">{{ $customer->name_en ?: '—' }}</div></div>
+            <div class="col-md-6"><span class="text-secondary small">अंग्रेज़ी नाम</span><div class="fw-semibold">{{ $customer->name_en ?: '—' }}</div></div>
             <div class="col-md-6"><span class="text-secondary small">हिंदी नाम</span><div class="fw-semibold">{{ $customer->name_hi ?: '—' }}</div></div>
             <div class="col-md-6"><span class="text-secondary small">मोबाइल</span><div class="fw-semibold">{{ $customer->mobile ?: '—' }}</div></div>
             <div class="col-md-6"><span class="text-secondary small">गाँव</span><div class="fw-semibold">{{ $location?->villageNameLocal ?: $location?->villageNameEnglish ?: '—' }}</div></div>
