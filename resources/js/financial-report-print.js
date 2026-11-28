@@ -2,24 +2,24 @@ const reportDefinitions = {
     outstanding: {
         title: 'ग्राहक बकाया रिपोर्ट',
         columns: ['ग्राहक', 'स्थिति', 'मूलधन', 'लेट फीस', 'कुल'],
-        values: (row, money) => [row.name_hi || row.name_original || row.name_en, row.deleted_at ? 'हटाया गया' : row.status, money(row.principal), money(row.interest), money(row.total)],
+        values: (row, money) => [row.name_hi || row.name_original || row.name_en, row.deleted_at ? 'हटाया गया' : ({ active: 'सक्रिय', inactive: 'निष्क्रिय' }[row.status] || row.status), money(row.principal), money(row.interest), money(row.total)],
     },
     sales: {
         title: 'बिक्री रजिस्टर',
         columns: ['बिक्री नंबर', 'तारीख', 'ग्राहक', 'स्थिति', 'राशि'],
-        values: (row, money) => [row.sale_number, row.sale_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_status, money(row.amount)],
+        values: (row, money) => [row.sale_number, row.sale_date, row.customer_name_hi || row.customer_name || row.customer_name_en, ({ UNPAID: 'उधार', PARTIALLY_PAID: 'आंशिक जमा', PAID: 'जमा पूर्ण' }[row.payment_status] || row.payment_status), money(row.amount)],
     },
     payments: {
         title: 'जमा रजिस्टर',
         columns: ['जमा नंबर', 'तारीख', 'ग्राहक', 'प्रकार', 'माध्यम', 'राशि', 'लिंक'],
-        values: (row, money) => [row.payment_number, row.payment_date, row.customer_name_hi || row.customer_name || row.customer_name_en, row.payment_type, row.payment_method, money(row.amount), row.reversed_payment_number || row.replacement_for_payment_number],
+        values: (row, money) => [row.payment_number, row.payment_date, row.customer_name_hi || row.customer_name || row.customer_name_en, ({ NORMAL: 'सामान्य जमा', REVERSAL: 'जमा वापसी', SALE_DAY_AUTO: 'बिक्री के दिन स्वतः जमा' }[row.payment_type] || row.payment_type), ({ CASH: 'नकद', UPI: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[row.payment_method] || row.payment_method), money(row.amount), row.reversed_payment_number || row.replacement_for_payment_number],
     },
     interest: {
         title: 'लेट फीस रिपोर्ट',
         columns: ['ग्राहक', 'बिक्री', 'कारण', 'गणना', 'अंतिम तिथि (शामिल नहीं)', 'अवधि', 'दिन', 'दर %', 'मूलधन आधार', 'दर्ज राशि लेट फीस', 'खाता-बही क्रमांक'],
         values: (row, money) => [
             row.customer_name_hi || row.customer_name || row.customer_name_en,
-            row.sale_number, row.trigger_type, row.run_status, row.cutoff_date_exclusive,
+            row.sale_number, (row.trigger_type === 'CUSTOMER_PAYMENT' ? 'जमा मिलने पर' : 'वार्षिक हिसाब'), ({ COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल' }[row.run_status] || row.run_status), row.cutoff_date_exclusive,
             (row.interval_start_date || '—') + ' – ' + (row.interval_end_date_exclusive || '—'),
             row.actual_days, row.monthly_rate_percent, money(row.eligible_principal_basis),
             money(row.posted_interest), row.ledger_entry_id,
@@ -97,7 +97,7 @@ export const buildFinancialReportPrintHtml = ({ report, rows, summary, filters, 
         'table{width:100%;border-collapse:collapse;font-size:9px}thead{display:table-header-group}th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:left;vertical-align:top}th{background:#f1f5f9;font-weight:700}tr{break-inside:avoid}.empty{text-align:center;padding:18px}.footer{display:flex;justify-content:space-between;margin-top:12px;color:#64748b;font-size:9px}' +
         '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
         '</style></head><body>' +
-        '<header class="header"><div><div class="muted">' + escapeHtml(shopName) + ' · KISAN KHATA</div><h1>' + escapeHtml(definition.title) + '</h1><div class="muted">यह रिपोर्ट सिस्टम में उपलब्ध posted financial records पर आधारित है।</div></div>' +
+        '<header class="header"><div><div class="muted">' + escapeHtml(shopName) + ' · KISAN KHATA</div><h1>' + escapeHtml(definition.title) + '</h1><div class="muted">यह रिपोर्ट सिस्टम में उपलब्ध दर्ज वित्तीय रिकॉर्ड पर आधारित है।</div></div>' +
         '<div class="muted">तैयार किया गया: ' + escapeHtml(generatedAt.toLocaleString('en-IN')) + '</div></header>' +
         (filterItems ? '<section class="filters">' + filterItems + '</section>' : '') +
         (summaryItems ? '<section class="summary">' + summaryItems + '</section>' : '') +

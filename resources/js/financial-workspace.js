@@ -43,6 +43,8 @@ const customerLifecycleLabel = (customer) => {
     if (customer.status === 'inactive') return ' <span class="badge bg-warning-lt">निष्क्रिय</span>';
     return '';
 };
+const policyStatusLabel = (value) => ({ COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल', ACTIVE: 'सक्रिय', INACTIVE: 'निष्क्रिय' }[value] || value || '—');
+const waterfallLabel = (value) => ({ PRINCIPAL_FIRST: 'पहले मूलधन', INTEREST_FIRST: 'पहले लेट फीस' }[value] || value || '—');
 const entryKindLabel = (value) => ({ SALE: 'उधार बिक्री', PAYMENT: 'जमा', PAYMENT_REVERSAL: 'जमा वापसी', REVERSAL: 'जमा वापसी', INTEREST: 'लेट फीस', INTEREST_CALCULATION: 'लेट फीस', INTEREST_ADJUSTMENT: 'लेट फीस में सुधार', INTEREST_SETTLEMENT: 'लेट फीस का वार्षिक हिसाब', OPENING_BALANCE: 'प्रारंभिक शेष' }[value] || (String(value || '').startsWith('INTEREST') ? 'लेट फीस' : String(value || '—').replaceAll('_', ' ')));
 const paymentTypeLabel = (value) => ({
     NORMAL: 'सामान्य जमा',
@@ -368,7 +370,7 @@ const loadInterest = async (signal) => {
         versions.map((version) => [
             esc(version.version_number), date(version.effective_from), esc(version.monthly_rate_percent) + '%',
             esc(version.grace_days) + ' दिन', version.capitalization_enabled ? 'चालू' : 'बंद',
-            esc(version.payment_waterfall),
+            esc(waterfallLabel(version.payment_waterfall)),
             esc(version.annual_settlement_month_1 + '/' + version.annual_settlement_day_1 + ' · ' + version.annual_settlement_month_2 + '/' + version.annual_settlement_day_2),
         ]));
     await loadInterestHistory(signal);
@@ -391,8 +393,8 @@ const loadInterestHistory = async (signal) => {
         const rows = payload.data || [];
         const meta = payload.meta || {};
         const table = rows.map((run) => '<tr>' +
-            '<td>' + esc(run.id) + '</td><td>' + esc(run.trigger_type === 'CUSTOMER_PAYMENT' ? 'भुगतान पर' : 'वार्षिक हिसाब') + '</td>' +
-            '<td>' + date(run.cutoff_date_exclusive) + '</td><td>' + esc(run.status) + '</td>' +
+            '<td>' + esc(run.id) + '</td><td>' + esc(run.trigger_type === 'CUSTOMER_PAYMENT' ? 'जमा मिलने पर' : 'वार्षिक हिसाब') + '</td>' +
+            '<td>' + date(run.cutoff_date_exclusive) + '</td><td>' + esc(policyStatusLabel(run.status)) + '</td>' +
             '<td class="text-end">' + money(run.posted_interest_total) + '</td><td>' + esc(run.items_count) + '</td>' +
             '<td><button type="button" class="btn btn-sm btn-outline-primary" data-interest-run="' + esc(run.id) + '">पूरा विवरण</button></td></tr>').join('');
         target.innerHTML = (rows.length
@@ -419,9 +421,9 @@ const loadInterestRunDetail = async (runId) => {
             '<td class="text-end">' + esc(item.monthly_rate_percent) + '%</td><td class="text-end">' + money(item.eligible_principal_basis) + '</td>' +
             '<td class="text-end">' + money(item.unrounded_interest) + '</td><td class="text-end"><strong>' + money(item.posted_interest) + '</strong></td>' +
             '<td>' + (item.capitalization_enabled ? 'चालू' : 'बंद') + '</td></tr>').join('');
-        target.innerHTML = '<section class="content-card p-3"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h3 class="h4 mb-1">गणना क्रमांक #' + esc(run.id) + '</h3><p class="text-secondary small mb-0">' + esc(run.trigger_type) + ' · अंतिम तिथि (शामिल नहीं): ' + date(run.cutoff_date_exclusive) + ' · ' + esc(run.status) + '</p></div></div>' +
+        target.innerHTML = '<section class="content-card p-3"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h3 class="h4 mb-1">गणना क्रमांक #' + esc(run.id) + '</h3><p class="text-secondary small mb-0">' + esc(run.trigger_type === 'CUSTOMER_PAYMENT' ? 'जमा मिलने पर' : 'वार्षिक हिसाब') + ' · अंतिम तिथि (शामिल नहीं): ' + date(run.cutoff_date_exclusive) + ' · ' + esc(run.status) + '</p></div></div>' +
             '<div class="kk-data-table-wrap"><table class="table table-sm financial-table"><thead><tr><th>बिक्री</th><th>गणना अवधि</th><th class="text-end">वास्तविक दिन</th><th class="text-end">छूट अवधि (दिन)</th><th class="text-end">मासिक दर</th><th class="text-end">योग्य मूलधन</th><th class="text-end">बिना पूर्णांक राशि</th><th class="text-end">दर्ज राशि</th><th>मूलधन में जोड़ना</th></tr></thead><tbody>' + (rows || '<tr><td colspan="9">इस run में कोई calculation item नहीं है।</td></tr>') + '</tbody></table></div>' +
-            (run.items || []).map((item) => '<div class="border rounded p-2 mt-2"><strong>Sale #' + esc(item.sale?.number || item.sale?.id || '—') + '</strong><div class="small text-secondary">दुकान नीति संस्करण ' + esc(item.shop_policy?.version ?? '—') + ' · ग्राहक विशेष दर संस्करण ' + esc(item.customer_policy?.version ?? '—') + ' · जमा समायोजन क्रम: ' + esc(item.shop_policy?.payment_waterfall || '—') + '</div><div class="small">खाता-बही: ' + (item.ledger_entry ? '#' + esc(item.ledger_entry.id) + ' · ' + esc(item.ledger_entry.component) + ' · ' + money(item.ledger_entry.debit) + ' / ' + money(item.ledger_entry.credit) : 'खाता-बही प्रविष्टि उपलब्ध नहीं') + '</div></div>').join('') +
+            (run.items || []).map((item) => '<div class="border rounded p-2 mt-2"><strong>बिक्री क्रमांक ' + esc(item.sale?.number || item.sale?.id || '—') + '</strong><div class="small text-secondary">दुकान नीति संस्करण ' + esc(item.shop_policy?.version ?? '—') + ' · ग्राहक विशेष दर संस्करण ' + esc(item.customer_policy?.version ?? '—') + ' · जमा समायोजन क्रम: ' + esc(waterfallLabel(item.shop_policy?.payment_waterfall)) + '</div><div class="small">खाता-बही: ' + (item.ledger_entry ? '#' + esc(item.ledger_entry.id) + ' · ' + esc(item.ledger_entry.component) + ' · ' + money(item.ledger_entry.debit) + ' / ' + money(item.ledger_entry.credit) : 'खाता-बही प्रविष्टि उपलब्ध नहीं') + '</div></div>').join('') +
             '</section>';
     } catch (error) {
         target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'गणना का विवरण लोड नहीं हो सका।') + '</div>';
@@ -569,7 +571,7 @@ const renderPaymentDetails = (payment) => {
         const sale = item.sale || {};
         return '<tr><td>' + detailValue(sale.sale_number) + '</td><td>' + date(sale.sale_date) + '</td><td>' + detailValue(sale.payment_status ? saleStatusLabel(sale.payment_status) : '—') + '</td><td>' + detailValue(item.component_type) + '</td><td>' + money(item.amount) + '</td><td>' + detailValue(item.reverses_allocation_item_id || '—') + '</td></tr>';
     }).join('');
-    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(entry.component) + '</td><td>' + detailValue(entry.entry_kind) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
+    const ledgerRows = ledgerEntries.map((entry) => '<tr><td>' + detailValue(entry.id) + '</td><td>' + date(entry.effective_date) + '</td><td>' + detailValue(entry.component === 'INTEREST' ? 'लेट फीस' : (entry.component === 'PRINCIPAL' ? 'मूलधन' : entry.component)) + '</td><td>' + detailValue(entryKindLabel(entry.entry_kind)) + '</td><td>' + money(entry.debit_amount) + '</td><td>' + money(entry.credit_amount) + '</td></tr>').join('');
     const revisionRows = revisions.map((revision) => {
         const reversal = revision.reversal_payment || {};
         const replacement = revision.replacement_payment || {};
