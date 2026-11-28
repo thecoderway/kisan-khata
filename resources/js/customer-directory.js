@@ -1,4 +1,4 @@
-import { attachVillageDropdown } from './village-dropdown';
+import { attachVillageDropdown } from './village-dropdown.js';
 
 export function registerCustomerDirectory() {
     const form = document.querySelector('[data-customer-filters]');
