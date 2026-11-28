@@ -97,7 +97,7 @@ export const buildFinancialReportPrintHtml = ({ report, rows, summary, filters, 
         'table{width:100%;border-collapse:collapse;font-size:9px}thead{display:table-header-group}th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:left;vertical-align:top}th{background:#f1f5f9;font-weight:700}tr{break-inside:avoid}.empty{text-align:center;padding:18px}.footer{display:flex;justify-content:space-between;margin-top:12px;color:#64748b;font-size:9px}' +
         '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
         '</style></head><body>' +
-        '<header class="header"><div><div class="muted">' + escapeHtml(shopName) + ' · KISAN KHATA</div><h1>' + escapeHtml(definition.title) + '</h1><div class="muted">यह रिपोर्ट सिस्टम में उपलब्ध posted financial records पर आधारित है।</div></div>' +
+        '<header class="header"><div><div class="muted">' + escapeHtml(shopName) + ' · KISAN KHATA</div><h1>' + escapeHtml(definition.title) + '</h1><div class="muted">यह रिपोर्ट सिस्टम में उपलब्ध दर्ज वित्तीय रिकॉर्ड पर आधारित है।</div></div>' +
         '<div class="muted">तैयार किया गया: ' + escapeHtml(generatedAt.toLocaleString('en-IN')) + '</div></header>' +
         (filterItems ? '<section class="filters">' + filterItems + '</section>' : '') +
         (summaryItems ? '<section class="summary">' + summaryItems + '</section>' : '') +

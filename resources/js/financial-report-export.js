@@ -20,8 +20,8 @@ const definitions = {
         title: 'लेट फीस रिपोर्ट',
         columns: ['ग्राहक', 'बिक्री', 'कारण', 'गणना', 'अंतिम तिथि (शामिल नहीं)', 'अवधि प्रारंभ', 'अवधि समाप्ति (शामिल नहीं)', 'दिन', 'छूट अवधि (दिन)', 'दर %', 'मूलधन आधार', 'बिना पूर्णांक की राशि लेट फीस', 'दर्ज राशि लेट फीस', 'मूलधन में जोड़ा गया', 'दुकान नीति संस्करण', 'ग्राहक नीति संस्करण', 'खाता-बही क्रमांक'],
         values: (row) => [
-            row.customer_name_hi || row.customer_name || row.customer_name_en, row.sale_number, row.trigger_type,
-            row.run_status, row.cutoff_date_exclusive, row.interval_start_date, row.interval_end_date_exclusive,
+            row.customer_name_hi || row.customer_name || row.customer_name_en, row.sale_number, (row.trigger_type === 'CUSTOMER_PAYMENT' ? 'जमा मिलने पर' : 'वार्षिक हिसाब'),
+            ({ COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल' }[row.run_status] || row.run_status), row.cutoff_date_exclusive, row.interval_start_date, row.interval_end_date_exclusive,
             row.actual_days, row.grace_days_applied, row.monthly_rate_percent, row.eligible_principal_basis,
             row.unrounded_interest, row.posted_interest, row.capitalization_enabled, row.shop_policy_version_id,
             row.customer_policy_version_id, row.ledger_entry_id,

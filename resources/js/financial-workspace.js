@@ -436,7 +436,7 @@ const loadReconciliation = async (signal) => {
     const result = payload.data;
     renderTable(['स्थिति', 'फ़ील्ड / तारीख', 'अपेक्षित', 'वास्तविक'], (result.discrepancies || []).map((item) => [
         '<span class="badge bg-secondary-lt">' + esc(item.type) + '</span>',
-        esc(item.field || item.as_of_date || item.sale_id || item.payment_id || '—'),
+        esc(String(item.field || item.as_of_date || item.sale_id || item.payment_id || '—').replace(/interest/gi, 'लेट फीस').replaceAll('_', ' ')),
         esc(JSON.stringify(item.expected ?? '—')), esc(JSON.stringify(item.actual ?? '—')),
     ]));
     showMessage(result.consistent ? 'खाता-बही और खाते के शेष में कोई अंतर नहीं मिला।' : result.discrepancies.length + ' discrepancy मिली।', result.consistent ? 'success' : 'error');
@@ -444,7 +444,7 @@ const loadReconciliation = async (signal) => {
 const loadAudit = async (signal) => {
     const payload = await request('/financial-audit?' + buildQuery(), { signal });
     renderTable(['समय', 'उपयोगकर्ता', 'कार्रवाई', 'रिकॉर्ड', 'कारण'], (payload.data || []).map((audit) => [
-        date(audit.created_at), esc(audit.user?.name || 'System'), esc(audit.action),
+        date(audit.created_at), esc(audit.user?.name || 'प्रणाली'), esc(String(audit.action || '').replace(/interest/gi, 'लेट फीस').replaceAll('_', ' ')),
         esc(audit.entity_type + ' #' + audit.entity_id), esc(audit.reason || '—'),
     ]));
     renderPagination(payload.meta);
