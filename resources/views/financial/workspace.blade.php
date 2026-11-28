@@ -90,8 +90,6 @@
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
             <div class="financial-filter-grid">
-                <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from" name="from"></div>
-                <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to" name="to"></div>
                 <div>
                     <label class="form-label" for="financial-village-search">गाँव</label>
                     <input class="form-control" type="search" id="financial-village-search" list="financial-village-options" data-village-filter-search data-village-select="financial-village" placeholder="गाँव खोजें या चुनें…" autocomplete="off">
@@ -107,6 +105,8 @@
                         @endforeach
                     </select>
                 </div>
+                <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from" name="from"></div>
+                <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to" name="to"></div>
                 <div class="financial-search-field"><label class="form-label" for="financial-search">खोजें</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span><input class="form-control" type="search" id="financial-search" name="q" maxlength="100" placeholder="नंबर, ग्राहक या मोबाइल…" autocomplete="off"></div></div>
                 @if ($section === 'sales')
                     <div><label class="form-label" for="financial-status">भुगतान स्थिति</label><select class="form-select" id="financial-status" name="payment_status"><option value="">सभी स्थितियाँ</option><option value="UNPAID">उधार</option><option value="PARTIALLY_PAID">आंशिक जमा</option><option value="PAID">जमा पूर्ण</option></select></div>
