@@ -54,7 +54,7 @@
                 <input class="form-control" type="search" id="report-village-search" list="report-village-options" data-village-filter-search data-village-select="report-village" placeholder="गाँव खोजें या चुनें…" autocomplete="off">
                 <datalist id="report-village-options">
                     @foreach ($villages as $village)
-                        <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
+                        <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
                     @endforeach
                 </datalist>
                 <select class="visually-hidden" id="report-village" aria-hidden="true" tabindex="-1">
