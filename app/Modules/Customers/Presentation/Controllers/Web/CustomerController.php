@@ -83,10 +83,10 @@ class CustomerController extends Controller
         }
 
         $customers = $directory->paginate($request);
-        $villageOptions = DB::table('customers as c')->join('villages as v', 'v.villageCode', '=', 'c.village_code')
-            ->where('c.shop_id', $currentShop->require()->getKey())
-            ->whereNotNull('c.village_code')->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish', 'v.subdistrictNameLocal', 'v.subdistrictNameEnglish', 'v.districtNameLocal', 'v.districtNameEnglish')
-            ->distinct()->orderBy('v.districtNameLocal')->orderBy('v.subdistrictNameLocal')->orderBy('v.villageNameLocal')->get();
+        $villageCode = (string) $request->query('village_code', '');
+        $selectedVillage = $villageCode !== ''
+            ? DB::table('villages')->where('villageCode', $villageCode)->first()
+            : null;
         $search = trim((string) $request->query('q', ''));
         $status = in_array($request->query('status'), ['active', 'inactive', 'deleted'], true)
             ? $request->query('status')
@@ -94,13 +94,68 @@ class CustomerController extends Controller
 
         return view('customers.index', [
             'customers' => $customers,
-            'villageOptions' => $villageOptions,
-            'villageCode' => (string) $request->query('village_code', ''),
+            'selectedVillage' => $selectedVillage,
+            'villageCode' => $villageCode,
             'search' => $search,
             'status' => $status,
             'drawerAction' => $drawerContent ? $drawerAction : null,
             'drawerCustomer' => $drawerCustomer,
             'drawerContent' => $drawerContent,
+        ]);
+    }
+
+    public function villageOptions(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
+        ]);
+
+        $term = trim((string) ($validated['q'] ?? ''));
+        $selected = isset($validated['code'])
+            ? DB::table('villages')->where('villageCode', $validated['code'])->first()
+            : null;
+
+        $villages = collect();
+
+        if (mb_strlen($term) >= 2) {
+            $pattern = $term.'%';
+            $villages = DB::table('villages')
+                ->where(function ($query) use ($pattern): void {
+                    $query->where('villageNameLocal', 'like', $pattern)
+                        ->orWhere('villageNameEnglish', 'like', $pattern)
+                        ->orWhere('subdistrictNameLocal', 'like', $pattern)
+                        ->orWhere('subdistrictNameEnglish', 'like', $pattern)
+                        ->orWhere('districtNameLocal', 'like', $pattern)
+                        ->orWhere('districtNameEnglish', 'like', $pattern);
+                })
+                ->select(
+                    'villageCode',
+                    'villageNameLocal',
+                    'villageNameEnglish',
+                    'subdistrictNameLocal',
+                    'subdistrictNameEnglish',
+                    'districtNameLocal',
+                    'districtNameEnglish',
+                )
+                ->orderBy('villageNameLocal')
+                ->orderBy('villageNameEnglish')
+                ->limit(50)
+                ->get();
+        }
+
+        $formatVillage = static fn (object $village): array => [
+            'code' => (string) $village->villageCode,
+            'label' => collect([
+                $village->villageNameLocal ?: $village->villageNameEnglish,
+                $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish,
+                $village->districtNameLocal ?: $village->districtNameEnglish,
+            ])->filter()->implode(', '),
+        ];
+
+        return response()->json([
+            'data' => $villages->map($formatVillage)->values(),
+            'selected' => $selected ? $formatVillage($selected) : null,
         ]);
     }
 

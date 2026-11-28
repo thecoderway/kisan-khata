@@ -777,6 +777,33 @@ class CustomerManagementTest extends TestCase
         ]);
     }
 
+    public function test_customer_directory_village_filter_searches_all_master_villages_without_customer_assignments(): void
+    {
+        $this->seedVillage();
+        DB::table('villages')->insert([
+            'villageCode' => '1002', 'villageNameEnglish' => 'Lotiya Khurd', 'villageNameLocal' => 'लोटिया खुर्द',
+            'subdistrictCode' => '201', 'subdistrictNameEnglish' => 'Sarangpur', 'subdistrictNameLocal' => 'सारंगपुर',
+            'districtCode' => '301', 'districtNameEnglish' => 'Rajgarh', 'districtNameLocal' => 'राजगढ़',
+            'stateCode' => '23', 'stateNameEnglish' => 'Madhya Pradesh', 'stateNameLocal' => 'मध्य प्रदेश',
+            'data_gov_update_date' => '21-04-2026',
+        ]);
+
+        $owner = $this->makeUser();
+
+        $this->actingAs($owner)->getJson(route('customers.villages', ['q' => 'Lot']))
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['code' => '1001', 'label' => 'लोटिया, सारंगपुर, राजगढ़'])
+            ->assertJsonFragment(['code' => '1002', 'label' => 'लोटिया खुर्द, सारंगपुर, राजगढ़']);
+
+        $this->assertDatabaseCount('customers', 0);
+
+        $this->getJson(route('customers.villages', ['code' => '1002']))
+            ->assertOk()
+            ->assertJsonPath('selected.code', '1002')
+            ->assertJsonPath('selected.label', 'लोटिया खुर्द, सारंगपुर, राजगढ़');
+    }
+
     public function test_customer_directory_filters_by_village_code(): void
     {
         $this->seedVillage();

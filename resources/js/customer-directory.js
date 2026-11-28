@@ -7,21 +7,133 @@ export function registerCustomerDirectory() {
     const searchInput = form.querySelector('[name="q"]');
     const statusInput = form.querySelector('[name="status"]');
     const villageInput = form.querySelector('[name="village_code"]');
+    const villageSearchInput = form.querySelector('[data-village-search]');
+    const villageOptions = form.querySelector('[data-village-options]');
+    const villageOptionsUrl = form.dataset.villageOptionsUrl || '';
     const statusRegion = document.querySelector('[data-customer-filter-status]');
     const resetLink = form.querySelector('[data-customer-filter-reset]');
     let debounceTimer = null;
+    let villageSearchTimer = null;
     let activeController = null;
+    let villageSearchController = null;
     let composing = false;
+    let activeVillageIndex = -1;
+    const selectedVillageLabels = new Map();
+
+    if (villageInput?.value && villageSearchInput?.value) {
+        selectedVillageLabels.set(villageInput.value, villageSearchInput.value);
+    }
 
     const updateResetVisibility = () => {
         if (!resetLink) return;
         resetLink.hidden = !((searchInput?.value || '').trim() || (statusInput?.value && statusInput.value !== 'active') || (villageInput?.value || ''));
     };
 
-    const syncFiltersFromUrl = (url) => {
+    const setVillageOptionsOpen = (open) => {
+        if (!villageOptions || !villageSearchInput) return;
+        villageOptions.hidden = !open;
+        villageSearchInput.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const renderVillageOptions = (items, emptyMessage = 'कोई गाँव नहीं मिला।') => {
+        if (!villageOptions) return;
+        villageOptions.replaceChildren();
+        activeVillageIndex = -1;
+
+        if (!items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'list-group-item text-muted small';
+            empty.textContent = emptyMessage;
+            villageOptions.append(empty);
+            setVillageOptionsOpen(true);
+            return;
+        }
+
+        items.forEach((item) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'list-group-item list-group-item-action';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+            option.dataset.villageOption = '';
+            option.dataset.villageCode = item.code;
+            option.dataset.villageLabel = item.label;
+            option.textContent = item.label;
+            villageOptions.append(option);
+        });
+
+        setVillageOptionsOpen(true);
+    };
+
+    const loadVillageOptions = async (term) => {
+        if (!villageOptionsUrl || !villageSearchInput) return;
+        if (term.trim().length < 2) {
+            renderVillageOptions([], 'कम से कम 2 अक्षर लिखें।');
+            return;
+        }
+
+        villageSearchController?.abort();
+        const controller = new AbortController();
+        villageSearchController = controller;
+        const url = new URL(villageOptionsUrl, window.location.origin);
+        url.searchParams.set('q', term.trim());
+
+        try {
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                signal: controller.signal,
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !Array.isArray(payload.data)) {
+                throw new Error(payload.message || 'गाँवों की सूची लोड नहीं हो सकी।');
+            }
+            if (villageSearchController !== controller) return;
+            payload.data.forEach((item) => selectedVillageLabels.set(item.code, item.label));
+            renderVillageOptions(payload.data);
+        } catch (error) {
+            if (error.name !== 'AbortError' && villageSearchController === controller) {
+                renderVillageOptions([], error.message || 'गाँवों की सूची लोड नहीं हो सकी।');
+            }
+        }
+    };
+
+    const loadVillageLabel = async (code) => {
+        if (!code) return '';
+        if (selectedVillageLabels.has(code)) return selectedVillageLabels.get(code);
+        if (!villageOptionsUrl) return '';
+
+        const url = new URL(villageOptionsUrl, window.location.origin);
+        url.searchParams.set('code', code);
+        try {
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+            const payload = await response.json().catch(() => ({}));
+            const label = response.ok ? (payload.selected?.label || '') : '';
+            if (label) selectedVillageLabels.set(code, label);
+            return label;
+        } catch {
+            return '';
+        }
+    };
+
+    const chooseVillage = (code, label) => {
+        if (villageInput) villageInput.value = code;
+        if (villageSearchInput) villageSearchInput.value = label;
+        selectedVillageLabels.set(code, label);
+        setVillageOptionsOpen(false);
+        updateResetVisibility();
+        applyFilters('replace');
+    };
+
+    const syncFiltersFromUrl = async (url) => {
         if (searchInput) searchInput.value = url.searchParams.get('q') || '';
         if (statusInput) statusInput.value = url.searchParams.get('status') || 'active';
-        if (villageInput) villageInput.value = url.searchParams.get('village_code') || '';
+        const villageCode = url.searchParams.get('village_code') || '';
+        if (villageInput) villageInput.value = villageCode;
+        if (villageSearchInput) villageSearchInput.value = await loadVillageLabel(villageCode);
         const pageSizeInput = results.querySelector('[data-customer-page-size]');
         if (pageSizeInput) pageSizeInput.value = url.searchParams.get('pageSize') || '20';
         updateResetVisibility();
@@ -124,23 +236,84 @@ export function registerCustomerDirectory() {
         debounceTimer = window.setTimeout(() => applyFilters('replace'), 375);
     });
 
-    [statusInput, villageInput].forEach((input) => input?.addEventListener('change', () => {
+    villageSearchInput?.addEventListener('focus', () => {
+        if (!villageSearchInput.value.trim()) {
+            renderVillageOptions([], 'गाँव खोजने के लिए कम से कम 2 अक्षर लिखें।');
+        }
+    });
+
+    villageSearchInput?.addEventListener('input', () => {
+        const hadSelectedVillage = Boolean(villageInput?.value);
+        if (villageInput) villageInput.value = '';
+        updateResetVisibility();
+        window.clearTimeout(villageSearchTimer);
+
+        const term = villageSearchInput.value.trim();
+        if (!term) {
+            setVillageOptionsOpen(false);
+            if (hadSelectedVillage) applyFilters('replace');
+            return;
+        }
+
+        villageSearchTimer = window.setTimeout(() => loadVillageOptions(term), 250);
+    });
+
+    villageSearchInput?.addEventListener('keydown', (event) => {
+        if (!villageOptions || villageOptions.hidden) return;
+        const options = [...villageOptions.querySelectorAll('[data-village-option]')];
+
+        if (event.key === 'Escape') {
+            setVillageOptionsOpen(false);
+            return;
+        }
+
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            const direction = event.key === 'ArrowDown' ? 1 : -1;
+            activeVillageIndex = Math.max(0, Math.min(options.length - 1, activeVillageIndex + direction));
+            options.forEach((option, index) => {
+                option.setAttribute('aria-selected', index === activeVillageIndex ? 'true' : 'false');
+            });
+            options[activeVillageIndex]?.scrollIntoView({ block: 'nearest' });
+        }
+
+        if (event.key === 'Enter' && activeVillageIndex >= 0) {
+            event.preventDefault();
+            const option = options[activeVillageIndex];
+            if (option) chooseVillage(option.dataset.villageCode, option.dataset.villageLabel);
+        }
+    });
+
+    villageOptions?.addEventListener('click', (event) => {
+        const option = event.target.closest('[data-village-option]');
+        if (!option) return;
+        chooseVillage(option.dataset.villageCode, option.dataset.villageLabel);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('[data-village-filter]')) return;
+        setVillageOptionsOpen(false);
+    });
+
+    statusInput?.addEventListener('change', () => {
         updateResetVisibility();
         applyFilters('replace');
-    }));
+    });
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         applyFilters('replace');
     });
 
-    document.addEventListener('click', (event) => {
+    document.addEventListener('click', async (event) => {
         const resetLink = event.target.closest('[data-customer-filter-reset]');
         if (resetLink && form.contains(resetLink)) {
             event.preventDefault();
             if (searchInput) searchInput.value = '';
             if (statusInput) statusInput.value = 'active';
             if (villageInput) villageInput.value = '';
+            if (villageSearchInput) villageSearchInput.value = '';
+            setVillageOptionsOpen(false);
             updateResetVisibility();
             applyFilters('push');
             return;
@@ -151,7 +324,7 @@ export function registerCustomerDirectory() {
 
         event.preventDefault();
         const targetUrl = new URL(pageLink.href, window.location.origin);
-        syncFiltersFromUrl(targetUrl);
+        await syncFiltersFromUrl(targetUrl);
         loadResults(targetUrl, 'push');
     });
 
@@ -165,9 +338,9 @@ export function registerCustomerDirectory() {
         loadResults(targetUrl, 'push');
     });
 
-    window.addEventListener('popstate', () => {
+    window.addEventListener('popstate', async () => {
         const currentUrl = new URL(window.location.href);
-        syncFiltersFromUrl(currentUrl);
+        await syncFiltersFromUrl(currentUrl);
         loadResults(currentUrl, 'none');
     });
 
