@@ -245,7 +245,8 @@
         state.perPage = Number(payload.meta?.per_page || state.perPage);
         state.lastPage = Number(payload.meta?.last_page || 1);
         renderPagination(Number(payload.meta?.total || 0));
-        $('report-print').disabled = false;\n        $('report-export').disabled = false;
+        $('report-print').disabled = false;
+        $('report-export').disabled = false;
     }
 
     function renderPagination(total) {
@@ -320,7 +321,8 @@
             $('report-summary').innerHTML = '';
             $('report-page-links').innerHTML = '';
             $('report-page-info').textContent = 'Showing 0–0 of 0 records';
-            $('report-print').disabled = true;\n            $('report-export').disabled = true;
+            $('report-print').disabled = true;
+            $('report-export').disabled = true;
         } finally {
             $('report-load').disabled = false;
         }
