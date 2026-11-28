@@ -7,6 +7,7 @@ export const filterVillageOptions = (options, query) => {
         if (!normalized) return true;
 
         return normalizeLabel(option.textContent).includes(normalized)
+            || normalizeLabel(option.dataset?.search || '').includes(normalized)
             || normalizeLabel(option.value).includes(normalized);
     });
 };
@@ -89,6 +90,7 @@ export const initialiseVillageFilter = (input, select) => {
                 button.type = 'button';
                 button.className = 'list-group-item list-group-item-action';
                 button.id = menu.id + '-' + index;
+                button.dataset.optionIndex = String(Array.from(select.options).indexOf(option));
                 button.setAttribute('role', 'option');
                 button.setAttribute('aria-selected', 'false');
                 button.textContent = option.textContent.trim();
