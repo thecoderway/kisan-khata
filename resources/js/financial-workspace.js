@@ -77,7 +77,7 @@ const readUrlState = () => {
     currentPage = Math.max(1, Number(url.searchParams.get('page') || 1));
     pageSize = [10, 20, 50, 100].includes(Number(url.searchParams.get('per_page'))) ? Number(url.searchParams.get('per_page')) : 20;
     if (filtersForm) {
-        for (const name of ['q', 'from', 'to', 'payment_status', 'payment_method', 'sort']) {
+        for (const name of ['q', 'from', 'to', 'village_code', 'payment_status', 'payment_method', 'sort']) {
             const input = filtersForm.elements.namedItem(name);
             if (input) input.value = url.searchParams.get(name) || (name === 'sort' ? 'date_desc' : '');
         }
