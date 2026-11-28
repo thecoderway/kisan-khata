@@ -323,4 +323,61 @@ class FinancialReportControllerTest extends TestCase
             'created_at' => now(),
         ]);
     }
+
+    public function test_village_filter_scopes_sales_payments_and_financial_reports(): void
+    {
+        [$shop, $owner, $customer] = $this->context();
+        $this->createPolicy($shop, $owner);
+        DB::table('villages')->insert([
+            ['villageCode' => '1001', 'villageNameEnglish' => 'Lotiya', 'villageNameLocal' => 'लोटिया',
+                'subdistrictCode' => '201', 'subdistrictNameEnglish' => 'Sarangpur', 'subdistrictNameLocal' => 'सारंगपुर',
+                'districtCode' => '301', 'districtNameEnglish' => 'Rajgarh', 'districtNameLocal' => 'राजगढ़',
+                'stateCode' => '23', 'stateNameEnglish' => 'Madhya Pradesh', 'stateNameLocal' => 'मध्य प्रदेश',
+                'data_gov_update_date' => '21-04-2026'],
+            ['villageCode' => '1002', 'villageNameEnglish' => 'Biaora', 'villageNameLocal' => 'ब्यावरा',
+                'subdistrictCode' => '202', 'subdistrictNameEnglish' => 'Biaora', 'subdistrictNameLocal' => 'ब्यावरा',
+                'districtCode' => '301', 'districtNameEnglish' => 'Rajgarh', 'districtNameLocal' => 'राजगढ़',
+                'stateCode' => '23', 'stateNameEnglish' => 'Madhya Pradesh', 'stateNameLocal' => 'मध्य प्रदेश',
+                'data_gov_update_date' => '21-04-2026'],
+        ]);
+        DB::table('customers')->where('id', $customer->getKey())->update(['village_code' => '1001']);
+        $otherId = DB::table('customers')->insertGetId([
+            'shop_id' => $shop->getKey(), 'name_original' => 'Biaora Customer',
+            'name_original_language' => 'en', 'name_en' => 'Biaora Customer',
+            'village_code' => '1002', 'status' => Customer::STATUS_ACTIVE,
+            'created_by' => $owner->getKey(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $other = Customer::query()->findOrFail($otherId);
+
+        app(SalePostingService::class)->post(
+            $owner, $customer, Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-01'), '100.00', 'Lotiya sale', 'village-filter-sale-one',
+        );
+        app(SalePostingService::class)->post(
+            $owner, $other, Sale::PAYMENT_CHOICE_UNPAID,
+            CarbonImmutable::parse('2026-11-01'), '200.00', 'Biaora sale', 'village-filter-sale-two',
+        );
+        app(PaymentPostingService::class)->post(
+            $owner, $customer, '20.00', CarbonImmutable::parse('2026-11-02'),
+            'CASH', null, 'Lotiya payment', 'village-filter-payment-one',
+        );
+        app(PaymentPostingService::class)->post(
+            $owner, $other, '30.00', CarbonImmutable::parse('2026-11-02'),
+            'CASH', null, 'Biaora payment', 'village-filter-payment-two',
+        );
+
+        Sanctum::actingAs($owner, ['app']);
+
+        $this->getJson('/api/v1/sales?village_code=1001')->assertOk()
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.customer_id', $customer->getKey());
+        $this->getJson('/api/v1/payments?village_code=1001')->assertOk()
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.customer_id', $customer->getKey());
+        $this->getJson('/api/v1/reports/sales?village_code=1001')->assertOk()
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('summary.gross_sales', '100.00');
+        $this->getJson('/api/v1/reports/payments?village_code=1001')->assertOk()
+            ->assertJsonPath('meta.total', 1);
+        $this->getJson('/api/v1/reports/outstanding?as_of=2026-11-02&village_code=1001')->assertOk()
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.customer_id', $customer->getKey());
+    }
+
 }
