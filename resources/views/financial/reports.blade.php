@@ -6,7 +6,7 @@
 @section('content')
 <div class="page-heading">
     <div>
-        <span class="eyebrow">KISAN KHATA · FINANCIAL REPORTS</span>
+        <span class="eyebrow">किसान खाता · वित्तीय रिपोर्ट</span>
         <h1>वित्तीय रिपोर्ट सेंटर</h1>
         <p>दुकान की बिक्री, जमा, ग्राहक बकाया और लेट फीस का केवल देखने योग्य सारांश।</p>
     </div>
