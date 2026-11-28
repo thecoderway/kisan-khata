@@ -407,7 +407,7 @@ Settings may include:
 
 - Monthly Late Fee rate.
 - Grace period.
-- Interest capitalization policy.
+- Late Fee capitalization policy.
 - Annual Auto Settlement dates.
 
 Requirements:
@@ -425,7 +425,7 @@ The settlement screen should provide a clear summary before posting.
 Show:
 
 - Current outstanding balance.
-- Applicable interest through settlement date.
+- Applicable Late Fee through settlement date.
 - Total payable amount.
 - Amount received.
 - Remaining balance.
