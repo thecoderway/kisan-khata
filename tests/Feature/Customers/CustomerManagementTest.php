@@ -854,7 +854,7 @@ class CustomerManagementTest extends TestCase
         $customer = DB::table('customers')->where('shop_id', $shop->id)->firstOrFail();
 
         $staff = $this->makeUser(User::ROLE_STAFF, $shop);
-        $this->actingAs($staff)->get(route('customers.show', $customer))->assertOk()
+        $this->actingAs($staff)->get(route('customers.show', $customer->id))->assertOk()
             ->assertSee('customer-detail-action-drawer', false)
             ->assertSee('data-customer-drawer', false)
             ->assertSee('संपादित करें');
