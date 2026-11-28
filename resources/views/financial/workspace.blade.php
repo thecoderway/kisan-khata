@@ -91,19 +91,12 @@
         <form id="financial-filters" class="financial-toolbar" role="search">
             <div class="financial-filter-grid">
                 <div>
-                    <label class="form-label" for="financial-village-search">गाँव</label>
-                    <input class="form-control" type="search" id="financial-village-search" list="financial-village-options" data-village-filter-search data-village-select="financial-village" placeholder="गाँव खोजें या चुनें…" autocomplete="off">
-                    <datalist id="financial-village-options">
-                        @foreach ($villages as $village)
-                            <option value="{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}"></option>
-                        @endforeach
-                    </datalist>
-                    <select class="visually-hidden" id="financial-village" name="village_code" aria-hidden="true" tabindex="-1">
-                        <option value="">सभी गाँव</option>
-                        @foreach ($villages as $village)
-                            <option value="{{ $village->villageCode }}" data-search="{{ collect([$village->villageNameEnglish, $village->subdistrictNameEnglish, $village->districtNameEnglish])->filter()->implode(', ') }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
-                        @endforeach
-                    </select>
+                    @include('financial.partials.village-filter', [
+                        'inputId' => 'financial-village-search',
+                        'selectId' => 'financial-village',
+                        'selectName' => 'village_code',
+                        'villages' => $villages,
+                    ])
                 </div>
                 <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from" name="from"></div>
                 <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to" name="to"></div>
