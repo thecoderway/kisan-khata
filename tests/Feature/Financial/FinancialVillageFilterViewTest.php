@@ -65,9 +65,15 @@ class FinancialVillageFilterViewTest extends TestCase
                 ->assertOk()
                 ->assertSee('data-village-filter-search', false)
                 ->assertSee('data-village-select="financial-village"', false)
+                ->assertSee('data-search="Lotia, Sarangpur, Rajgarh"', false)
                 ->assertSee('लोटिया, सारंगपुर, राजगढ़')
                 ->assertSee('ब्यावरा, ब्यावरा, राजगढ़')
-                ->assertSee('नरसिंहगढ़, नरसिंहगढ़, राजगढ़');
+                ->assertSee('नरसिंहगढ़, नरसिंहगढ़, राजगढ़')
+                ->assertSeeInOrder([
+                    'for="financial-village-search"',
+                    'for="financial-from">तारीख से',
+                    'for="financial-to">तारीख तक',
+                ], false);
         }
 
         $this->get(route('financial.workspace', ['section' => 'reports']))
