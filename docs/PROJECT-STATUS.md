@@ -1,9 +1,9 @@
 # Kisan Khata — Project Status
 
-**Last Updated:** 2026-11-27  
-**Status Snapshot Base:** `main` at `29a2c0f5eec868a2a581a493e681098fe7de1df7` (2026-11-27), including merged PR #75 Phase 10 deferral / Phase 11 plan.  
-**Documentation update:** Phase 9 remains accepted; Phase 10 is explicitly deferred to a future release; Product Owner authorized Phase 11 and approved all three Batch 11A report decisions on 2026-11-27. Batch 11A source verification found a replacement-cash evidence gap and an Owner-only Interest API authorization gap; both remain 11A/11B gates.
-**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 9 PR #73 is merged, its exact-head CI passed, and the Product Owner confirmed the Interest History UI, calculation breakdown, filters and pagination tests. The live browser read-only before/after database comparison was not independently performed; automated read-only regression coverage passed. Phase 10 Crop-Season Settlement is explicitly deferred to a future release at the Product Owner's direction. Phase 11 Reports, Printing and Exports is authorized and Batch 11A (report definitions/read-only data contracts) is in progress; 11B–11E have not started. No production deployment or release is claimed.
+**Last Updated:** 2026-11-28  
+**Status Snapshot Base:** `main` includes Phase 11 closeout; latest implementation merge is PR #80 (`05d8ac8b0a11ba5591de77f4792ba85cbbbfb715`), with documentation closeout pending merge.  
+**Documentation update:** Phase 11 Reports, Printing and Exports (Batches 11A–11E) is complete and Product Owner accepted on 2026-11-28. All five batch PRs are merged; exact-head CI and user-confirmed browser/reconciliation/security acceptance are recorded below. Phase 10 Crop-Season Settlement remains explicitly deferred.
+**Project Status:** Phases 5–9 are accepted for their delivered scopes. Phase 10 Crop-Season Settlement remains deferred and is not part of Phase 11. Phase 11 Reports, Printing and Exports (11A–11E) is COMPLETE / ACCEPTED as of 2026-11-28. Report APIs/UI, browser print/PDF, CSV export, formula-injection hardening, tenant/role security and financial reconciliation are merged and user-accepted. No production deployment or release is claimed.
 **Release:** Not released; no production deployment is claimed.
 
 ## 1. Source of truth and mandatory project rules
@@ -74,7 +74,7 @@ The initial Docker/modular-monolith foundation and initial shop identity/authent
 | Phase 8 | Customer Ledger | **COMPLETE — Product Owner accepted 2026-11-27.** Batches 8A–8C merged through PRs #69–#71; exact-head CI passed; Product Owner confirmed all Batch 8D browser, print/PDF, ledger, balance, filter, pagination and regression checks passed. |
 | Phase 9 | Interest Engine | **COMPLETE / ACCEPTED — 2026-11-27.** PR #73 merged as `6a9146c496b82143a7813683ed32a178eb60efb3`; exact-head CI passed. Product Owner confirmed UI, calculation breakdown, filters and pagination. Browser before/after DB comparison was not independently performed; automated read-only regression tests passed. |
 | Phase 10 | Crop-Season Settlement | **DEFERRED TO FUTURE RELEASE — NOT STARTED.** Product Owner explicitly deferred this phase on 2026-11-27. Do not schedule or resume without explicit reactivation. |
-| Phase 11 | Reports, Printing and Exports | **AUTHORIZED — Batch 11A IN PROGRESS.** First-pass report definitions and read-only source contracts are documented; 11A Product Owner decisions and acceptance remain open. Batches 11B–11E have not started. |
+| Phase 11 | Reports, Printing and Exports | **COMPLETE / ACCEPTED — 2026-11-28.** Batches 11A–11E merged (PRs #76–#80; 11A implementation PR #76, 11B #77, 11C #78, 11D #79, 11E #80; planning/deferral PR #75). Exact-head CI passed for each implementation PR. Product Owner confirmed report UI, pagination, customer selection, ledger/outstanding comparison, all four print/PDF exports, all four CSV exports, formula-injection protection, negative amount preservation, tenant/role controls, financial reconciliation and read-only behavior. Local `main` sync confirmed at PR #80 merge; SQL backup preserved. No production release implied. |
 | Phase 12 | Subscription System | Not started |
 | Phase 13 | API Finalization and Android Readiness | Versioned tenant-scoped financial API foundations exist from Phase 5 Batch 7; API contract finalization and Android readiness remain incomplete |
 | Phase 14 | Production Readiness | Not started |
@@ -241,7 +241,7 @@ Phase 4 implementation and merged-scope verification are recorded as complete. T
 5. **Phase 8 — Customer Ledger:** complete running account, sales/payments/interest/settlements/corrections, filters and printable Hindi/English ledger.
 6. **Phase 9 — Interest Engine:** policy management/versioning, actual-days/30 basis, grace period, capitalization and calculation history. Finalize unresolved date, rounding and capitalization parameters with Product Owner before implementation.
 7. **Phase 10 — Crop-Season Settlement:** full/partial settlement, carry-forward, history, audit and duplicate prevention. **Deferred to a future release by Product Owner instruction; do not start.**
-8. **Phase 11 — Reports, Printing and Exports:** authorized; Batch 11A report definitions/read-only data contracts in progress; 11B–11E not started. Reports, PDF and CSV/Excel-compatible exports must reconcile to authoritative records.
+8. **Phase 11 — Reports, Printing and Exports:** COMPLETE / ACCEPTED (2026-11-28), Batches 11A–11E merged and user acceptance passed. See Section 35 for delivery and acceptance evidence. Reports remain read-only; Phase 10 settlement reporting remains excluded.
 9. **Phase 12 — Subscription System:** shop-level plans, trial, monthly/annual billing, renewal/expiry, three-day grace period, read-only enforcement and Owner data export. Do not invent pricing/entitlements.
 10. **Phase 13 — API Finalization and Android Readiness:** complete approved versioned REST API, auth/customer/sales/payment/ledger/interest/settlement/file endpoints, documentation and integration tests. Current auth routes are under `/api`; approved architecture specifies `/api/v1`, so versioning remains outstanding.
 11. **Phase 14 — Production Readiness:** hosting, HTTPS, secure configuration, encrypted off-site backup, restore tests, monitoring, logging, security/performance review and deployment/recovery procedures.
@@ -769,4 +769,53 @@ The Product Owner approved all three Batch 11A decisions on 2026-11-27:
 **Remaining 11A gates:** finalize the auditable actual-collection evidence mechanism for replacement Payments; verify report-specific reconciliation equations against MySQL fixtures (including all/zero/negative Outstanding, NORMAL receipt/reversal pairs, replacement inclusion/exclusion, SALE_DAY_AUTO separation and interest ledger links); approve sample layouts and response schemas. Batch 11A remains IN PROGRESS; Batch 11B has not started. Detailed evidence is in `docs/phase-11-batch-11a-report-definitions.md`.
 
 No production operation, deployment or release is authorized.
+
+
+
+---
+
+## 35. Phase 11 Report Centre — final completion and Product Owner acceptance (2026-11-28)
+
+**Status: COMPLETE / ACCEPTED.** The Product Owner confirmed all remaining Phase 11E browser reconciliation and security checks passed. All Phase 11 implementation batches are merged into `main`; local `main` synchronization after PR #80 was confirmed by the Product Owner.
+
+### Delivery record
+
+| Batch | Scope | PR / merge evidence | Acceptance |
+|---|---|---|---|
+| 11A | Report definitions, read-only data contracts and Owner-only Interest History authorization | PR #76 merged; merge commit `c8a2d67de0860bea7c00fb46d7bda7b9e7534327` | CI passed; approved report contracts and Owner-only Interest access |
+| 11B | Financial report APIs and Report Centre UI | PR #77 merged; merge commit `cdcb371c8277c9000af150289a5ded4b130cd6fa` | CI passed; all four report screens, filters, customer selector and pagination accepted |
+| 11C | Browser print / Save as PDF | PR #78 merged; merge commit `a2c208652cf178e9e8c171e427b53d97362dd5db` | CI passed; all four report print/PDF outputs accepted |
+| 11D | CSV / Excel-compatible export | PR #79 merged; merge commit `45297d6aeec6d25c6c4e58054cb5492adba0f56c` | CI passed; all four CSV exports accepted |
+| 11E | CSV formula-injection hardening, security and reconciliation acceptance | PR #80 merged; merge commit `05d8ac8b0a11ba5591de77f4792ba85cbbbfb715` | Exact-head CI passed; formula bypass cases and negative monetary values accepted; all final reconciliation/security checks passed |
+
+### Delivered report capabilities
+
+- Customer Outstanding (ledger-derived as-of balances, including zero and negative balances).
+- Sales Register / Sales Summary.
+- Payment Register / Collection Summary with NORMAL receipts, reversals, replacements and SALE_DAY_AUTO treatment kept distinct.
+- Owner-only Interest Calculation / Posted Interest report.
+- Tenant-scoped read-only APIs, filters, deterministic pagination and full-filter summaries.
+- Browser-native print / Save as PDF for all four report families, fetching all pages under the active filters.
+- CSV / Excel-compatible export for all four report families, including all filtered pages, metadata and summaries.
+- CSV formula-injection neutralization for formula markers following leading whitespace/control characters while preserving legitimate negative decimal values.
+
+### Security, reconciliation and acceptance
+
+Product Owner confirmed the following local browser checks passed:
+- Outstanding Report matched Customer Ledger for the same customer and as-of date.
+- Sales report counts and gross totals reconciled with the Sales Register.
+- Payment NORMAL receipts, reversals, net collection and SALE_DAY_AUTO were separately reconciled; unverified replacements were not treated as confirmed cash collection.
+- Owner-only Interest report access was enforced; Staff access was denied.
+- Tenant and role authorization, date boundaries, pagination and export parity checks passed.
+- Report viewing, filtering, printing and exporting did not mutate financial records or customer projections, as confirmed by the Product Owner's read-only acceptance checks.
+- All four report print/PDF and CSV exports were browser-tested and accepted.
+- CSV formula-injection regression cases passed; legitimate negative decimal amounts were preserved.
+
+### Scope and safety boundaries
+
+- No new financial transaction type, ledger posting, interest posting, projection repair or database schema change was introduced by Phase 11.
+- Replacement Payments are excluded from confirmed cash collection unless actual receipt is supported by auditable evidence.
+- Phase 10 Crop-Season Settlement remains deferred to a future release and was not implemented or included in Phase 11.
+- Phase 12 subscription/billing reports remain out of scope.
+- This is functional and browser acceptance only; no production migration, deployment or release is claimed.
 
