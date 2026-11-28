@@ -2,6 +2,7 @@ export function attachVillageDropdown(input, menu) {
     if (!input || !menu || menu.dataset.portalReady === 'true') return () => {};
 
     menu.dataset.portalReady = 'true';
+    menu.classList.remove('position-absolute', 'start-0', 'top-100', 'mt-1', 'w-100');
     menu.hidden = true;
     menu.style.position = 'fixed';
     menu.style.zIndex = '1200';
