@@ -8,7 +8,7 @@
     <div>
         <span class="eyebrow">KISAN KHATA · FINANCIAL REPORTS</span>
         <h1>वित्तीय रिपोर्ट सेंटर</h1>
-        <p>दुकान की बिक्री, जमा, ग्राहक बकाया और Late Fee का read-only सारांश।</p>
+        <p>दुकान की बिक्री, जमा, ग्राहक बकाया और लेट फीस का केवल देखने योग्य सारांश।</p>
     </div>
 </div>
 
@@ -22,7 +22,7 @@
                     <option value="sales">बिक्री रजिस्टर</option>
                     <option value="payments">जमा रजिस्टर</option>
                     @if (auth()->user()->role === \App\Models\User::ROLE_OWNER)
-                        <option value="interest">Late Fee रिपोर्ट (Owner)</option>
+                        <option value="interest">लेट फीस रिपोर्ट (केवल दुकान मालिक)</option>
                     @endif
                 </select>
             </div>
@@ -60,7 +60,7 @@
             </div>
 
             <div class="col-md-3" id="report-search-wrap">
-                <label class="form-label" for="report-search">रिकॉर्ड नंबर / Reference</label>
+                <label class="form-label" for="report-search">रिकॉर्ड नंबर / संदर्भ</label>
                 <input class="form-control" id="report-search" maxlength="100" placeholder="बिक्री या जमा नंबर">
             </div>
             <div class="col-md-3 d-none" id="report-status-wrap">
@@ -76,10 +76,10 @@
                 <label class="form-label" for="report-method">भुगतान माध्यम</label>
                 <select class="form-select" id="report-method">
                     <option value="">सभी माध्यम</option>
-                    <option value="CASH">Cash</option>
-                    <option value="UPI">UPI</option>
-                    <option value="BANK">Bank</option>
-                    <option value="CHEQUE">Cheque</option>
+                    <option value="CASH">नकद</option>
+                    <option value="UPI">यूपीआई</option>
+                    <option value="BANK">बैंक</option>
+                    <option value="CHEQUE">चेक</option>
                 </select>
             </div>
             <div class="col-md-3 d-none" id="report-payment-type-wrap">
@@ -88,7 +88,7 @@
                     <option value="">सभी प्रकार</option>
                     <option value="NORMAL">सामान्य जमा</option>
                     <option value="REVERSAL">रिवर्सल</option>
-                    <option value="SALE_DAY_AUTO">Sale-day auto</option>
+                    <option value="SALE_DAY_AUTO">बिक्री के दिन स्वतः जमा</option>
                 </select>
             </div>
         </div>
@@ -112,11 +112,11 @@
         </table>
     </div>
     <div id="report-pagination" class="financial-pagination customer-pagination-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <span class="customer-pagination-summary text-secondary small" id="report-page-info" aria-live="polite">Showing 0–0 of 0 records</span>
+        <span class="customer-pagination-summary text-secondary small" id="report-page-info" aria-live="polite">कुल 0 में से 0–0 रिकॉर्ड</span>
         <div class="customer-pagination-controls d-flex flex-wrap align-items-center gap-3">
             <label class="customer-page-size d-flex align-items-center gap-2 text-secondary small">
-                <span>Rows per page</span>
-                <select class="form-select form-select-sm" id="report-page-size" aria-label="Rows per page">
+                <span>प्रति पृष्ठ पंक्तियाँ</span>
+                <select class="form-select form-select-sm" id="report-page-size" aria-label="प्रति पृष्ठ पंक्तियाँ">
                     <option value="10">10</option>
                     <option value="20" selected>20</option>
                     <option value="50">50</option>
@@ -143,6 +143,10 @@
     const safe = (value) => String(value ?? '—');
     const cell = (value) => '<td>' + safe(value).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch])) + '</td>';
     const show = (id, yes) => $(id).classList.toggle('d-none', !yes);
+    const saleStatusLabel = (value) => ({ UNPAID: 'उधार', PARTIALLY_PAID: 'आंशिक जमा', PAID: 'जमा पूर्ण' }[value] || value || '—');
+    const paymentMethodLabel = (value) => ({ CASH: 'नकद', UPI: 'यूपीआई', BANK: 'बैंक', CHEQUE: 'चेक' }[value] || value || '—');
+    const paymentTypeLabel = (value) => ({ NORMAL: 'सामान्य जमा', REVERSAL: 'जमा वापसी', SALE_DAY_AUTO: 'बिक्री के दिन स्वतः जमा' }[value] || value || '—');
+    const reportStatusLabel = (value) => ({ active: 'सक्रिय', inactive: 'निष्क्रिय', ACTIVE: 'सक्रिय', INACTIVE: 'निष्क्रिय', COMPLETED: 'पूर्ण', PENDING: 'लंबित', FAILED: 'विफल' }[value] || value || '—');
 
     function configure() {
         const report = $('report-type').value;
@@ -201,9 +205,9 @@
         customers.forEach((customer) => {
             const name = customer.name_hi || customer.name_original || customer.name_en || 'ग्राहक';
             const details = [
-                customer.customer_code ? 'Code: ' + customer.customer_code : null,
+                customer.customer_code ? 'ग्राहक कोड: ' + customer.customer_code : null,
                 customer.mobile ? 'मोबाइल: ' + customer.mobile : null,
-                'ID: ' + customer.id,
+                'क्रमांक: ' + customer.id,
             ].filter(Boolean);
             const option = new Option(name + ' — ' + details.join(' · '), String(customer.id));
             select.add(option);
@@ -215,7 +219,7 @@
         const entries = Object.entries(summary || {});
         $('report-summary').innerHTML = entries.map(([key, value]) =>
             '<div class="d-inline-block me-4 mb-2"><div class="text-secondary small">' +
-            key.replaceAll('_', ' ').replace(/interest/gi, 'Late Fee') + '</div><strong>' +
+            key.replaceAll('_', ' ').replace(/interest/gi, 'लेट फीस') + '</div><strong>' +
             (typeof value === 'string' && /^-?\d+\.\d{2}$/.test(value) ? money(value) : safe(value)) +
             '</strong></div>'
         ).join('') || '<span class="text-secondary">कोई सारांश उपलब्ध नहीं।</span>';
@@ -226,30 +230,30 @@
         let columns = [];
         let rows = payload.data || [];
         if (report === 'outstanding') {
-            columns = ['ग्राहक', 'स्थिति', 'मूलधन', 'Late Fee', 'कुल'];
+            columns = ['ग्राहक', 'स्थिति', 'मूलधन', 'लेट फीस', 'कुल'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' +
-                cell(r.name_hi || r.name_original || r.name_en) + cell(r.deleted_at ? 'हटाया गया' : r.status) +
-                cell(money(r.principal)) + cell(money(r.interest)) + cell(money(r.total)) + '</tr>').join('') || '<tr><td colspan="5" class="p-4 text-secondary">इस तारीख तक कोई financial history नहीं मिली।</td></tr>';
+                cell(r.name_hi || r.name_original || r.name_en) + cell(r.deleted_at ? 'हटाया गया' : reportStatusLabel(r.status)) +
+                cell(money(r.principal)) + cell(money(r.interest)) + cell(money(r.total)) + '</tr>').join('') || '<tr><td colspan="5" class="p-4 text-secondary">इस तारीख तक कोई वित्तीय इतिहास नहीं मिला।</td></tr>';
         } else if (report === 'sales') {
             columns = ['बिक्री नंबर', 'तारीख', 'ग्राहक', 'स्थिति', 'राशि'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' + cell(r.sale_number) + cell(r.sale_date) +
-                cell(r.customer_name_hi || r.customer_name || r.customer_name_en) + cell(r.payment_status) + cell(money(r.amount)) + '</tr>').join('') || '<tr><td colspan="5" class="p-4 text-secondary">कोई बिक्री रिकॉर्ड नहीं मिला।</td></tr>';
+                cell(r.customer_name_hi || r.customer_name || r.customer_name_en) + cell(saleStatusLabel(r.payment_status)) + cell(money(r.amount)) + '</tr>').join('') || '<tr><td colspan="5" class="p-4 text-secondary">कोई बिक्री रिकॉर्ड नहीं मिला।</td></tr>';
         } else if (report === 'payments') {
             columns = ['जमा नंबर', 'तारीख', 'ग्राहक', 'प्रकार', 'माध्यम', 'राशि', 'लिंक'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' + cell(r.payment_number) + cell(r.payment_date) +
-                cell(r.customer_name_hi || r.customer_name || r.customer_name_en) + cell(r.payment_type) +
-                cell(r.payment_method) + cell(money(r.amount)) + cell(r.reversed_payment_number || r.replacement_for_payment_number) + '</tr>').join('') || '<tr><td colspan="7" class="p-4 text-secondary">कोई जमा रिकॉर्ड नहीं मिला।</td></tr>';
+                cell(r.customer_name_hi || r.customer_name || r.customer_name_en) + cell(paymentTypeLabel(r.payment_type)) +
+                cell(paymentMethodLabel(r.payment_method)) + cell(money(r.amount)) + cell(r.reversed_payment_number || r.replacement_for_payment_number) + '</tr>').join('') || '<tr><td colspan="7" class="p-4 text-secondary">कोई जमा रिकॉर्ड नहीं मिला।</td></tr>';
         } else {
-            columns = ['ग्राहक', 'बिक्री', 'Trigger', 'Run', 'Cutoff (exclusive)', 'Interval', 'Days', 'Rate %', 'Principal basis', 'Posted Late Fee', 'Ledger ID'];
+            columns = ['ग्राहक', 'बिक्री', 'कारण', 'गणना', 'अंतिम तिथि (शामिल नहीं)', 'अवधि', 'दिन', 'दर %', 'मूलधन आधार', 'दर्ज लेट फीस', 'खाता-बही क्रमांक'];
             $('report-head').innerHTML = '<tr>' + columns.map((x) => '<th>' + x + '</th>').join('') + '</tr>';
             $('report-body').innerHTML = rows.map((r) => '<tr>' + cell(r.customer_name_hi || r.customer_name || r.customer_name_en) +
-                cell(r.sale_number) + cell(r.trigger_type) + cell(r.run_status) + cell(r.cutoff_date_exclusive) +
+                cell(r.sale_number) + cell(r.trigger_type === 'CUSTOMER_PAYMENT' ? 'ग्राहक से जमा मिलने पर' : 'वार्षिक हिसाब') + cell(reportStatusLabel(r.run_status)) + cell(r.cutoff_date_exclusive) +
                 cell(r.interval_start_date + ' – ' + r.interval_end_date_exclusive) + cell(r.actual_days) +
                 cell(r.monthly_rate_percent) + cell(money(r.eligible_principal_basis)) + cell(money(r.posted_interest)) + cell(r.ledger_entry_id) + '</tr>').join('') ||
-                '<tr><td colspan="11" class="p-4 text-secondary">कोई completed Late Fee calculation नहीं मिली।</td></tr>';
+                '<tr><td colspan="11" class="p-4 text-secondary">लेट फीस की कोई पूर्ण गणना नहीं मिली।</td></tr>';
         }
         summaryCards(payload.summary);
         state.page = Number(payload.meta?.current_page || state.page);
@@ -331,7 +335,7 @@
             $('report-body').innerHTML = '';
             $('report-summary').innerHTML = '';
             $('report-page-links').innerHTML = '';
-            $('report-page-info').textContent = 'Showing 0–0 of 0 records';
+            $('report-page-info').textContent = 'कुल 0 में से 0–0 रिकॉर्ड';
             $('report-print').disabled = true;
             $('report-export').disabled = true;
         } finally {
