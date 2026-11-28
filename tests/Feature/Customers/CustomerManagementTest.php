@@ -432,7 +432,7 @@ class CustomerManagementTest extends TestCase
         DB::table('customers')->where('id', $customer->id)->update(['deleted_at' => now()]);
 
         $this->get(route('customers.index', ['status' => 'deleted']))
-            ->assertOk()->assertSee('रामलाल')->assertSee('Restore');
+            ->assertOk()->assertSee('रामलाल')->assertSee('पुनः बहाल करें');
     }
 
     public function test_staff_can_view_inactive_directory_but_does_not_receive_lifecycle_controls(): void

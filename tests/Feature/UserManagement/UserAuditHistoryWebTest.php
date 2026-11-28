@@ -100,7 +100,7 @@ class UserAuditHistoryWebTest extends TestCase
             ->assertJsonPath('meta.last_page', 2)
             ->assertJsonPath('meta.total', 12)
             ->assertJsonPath('meta.per_page', 10)
-            ->assertJsonPath('html', fn (string $html): bool => str_contains($html, 'Showing <strong>11–12</strong>'));
+            ->assertJsonPath('html', fn (string $html): bool => str_contains($html, 'कुल 12 में से <strong>11–12</strong>'));
     }
 
     private function userFor(Shop $shop, string $role, string $name): User
