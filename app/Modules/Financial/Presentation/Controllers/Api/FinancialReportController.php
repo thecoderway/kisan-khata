@@ -27,6 +27,7 @@ class FinancialReportController extends Controller
             'as_of' => ['required', 'date_format:Y-m-d'],
             'customer_id' => ['nullable', 'integer', 'min:1'],
             'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'positive_only' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -82,6 +83,7 @@ class FinancialReportController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'customer_id' => ['nullable', 'integer', 'min:1'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'payment_status' => ['nullable', Rule::in([
                 Sale::PAYMENT_STATUS_UNPAID, Sale::PAYMENT_STATUS_PARTIALLY_PAID, Sale::PAYMENT_STATUS_PAID,
             ])],
@@ -130,6 +132,7 @@ class FinancialReportController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'customer_id' => ['nullable', 'integer', 'min:1'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'payment_method' => ['nullable', 'string', 'max:32'],
             'payment_type' => ['nullable', Rule::in([Payment::TYPE_NORMAL, Payment::TYPE_SALE_DAY_AUTO, Payment::TYPE_REVERSAL])],
             'q' => ['nullable', 'string', 'max:100'],
@@ -174,10 +177,13 @@ class FinancialReportController extends Controller
                 });
             });
 
-        $totals = DB::table('payments as p')->where('p.shop_id', $shopId)->whereNotNull('p.posted_at')
+        $totals = DB::table('payments as p')->join('customers as c', function ($join): void {
+            $join->on('c.id', '=', 'p.customer_id')->on('c.shop_id', '=', 'p.shop_id');
+        })->where('p.shop_id', $shopId)->whereNotNull('p.posted_at')
             ->when(isset($filters['from']), fn (Builder $builder) => $builder->whereDate('p.payment_date', '>=', $filters['from']))
             ->when(isset($filters['to']), fn (Builder $builder) => $builder->whereDate('p.payment_date', '<=', $filters['to']))
             ->when(isset($filters['customer_id']), fn (Builder $builder) => $builder->where('p.customer_id', $filters['customer_id']))
+            ->when(isset($filters['village_code']), fn (Builder $builder) => $builder->where('c.village_code', $filters['village_code']))
             ->when(isset($filters['payment_method']), fn (Builder $builder) => $builder->where('p.payment_method', $filters['payment_method']))
             ->when(isset($filters['payment_type']), fn (Builder $builder) => $builder->where('p.payment_type', $filters['payment_type']))
             ->when(isset($filters['q']), function (Builder $builder) use ($filters): void {
@@ -232,6 +238,7 @@ class FinancialReportController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'customer_id' => ['nullable', 'integer', 'min:1'],
+            'village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode'],
             'q' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', 'integer', Rule::in([10, 20, 50, 100])],
             'page' => ['nullable', 'integer', 'min:1'],
