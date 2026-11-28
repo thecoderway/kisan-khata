@@ -85,7 +85,7 @@
     </div>
     <div class="d-flex justify-content-end gap-2 p-3 border-bottom">
         <button class="btn btn-outline-success" id="report-export" type="button"
-            data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" disabled>
+            data-api="{{ url('/api/v1/reports') }}" data-shop-name="{{ auth()->user()->shop?->name }}" data-user-role="{{ auth()->user()->role }}" disabled>
             <i class="ti ti-file-spreadsheet me-1" aria-hidden="true"></i> CSV / Excel
         </button>
         <button class="btn btn-outline-secondary" id="report-print" type="button"
