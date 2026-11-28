@@ -227,8 +227,8 @@ const loadLedger = async (signal) => {
             ? (entry.payment_type === 'REVERSAL' ? 'भुगतान रिवर्सल' : 'भुगतान') + ' · ' + esc(entry.payment_number)
             : esc(entry.entry_kind);
         const componentLabel = entry.component === 'MIXED'
-            ? 'मूलधन + ब्याज'
-            : (entry.component === 'PRINCIPAL' ? 'मूलधन' : (entry.component === 'INTEREST' ? 'ब्याज' : esc(entry.component)));
+            ? 'मूलधन + Late Fee'
+            : (entry.component === 'PRINCIPAL' ? 'मूलधन' : (entry.component === 'INTEREST' ? 'Late Fee' : esc(entry.component)));
         return [
             date(entry.effective_date), transactionLabel, componentLabel,
             money(entry.debit), money(entry.credit), money(entry.total_balance),
@@ -238,7 +238,7 @@ const loadLedger = async (signal) => {
     const opening = payload.meta?.opening_balance;
     if (opening) {
         root.insertAdjacentHTML('afterbegin', '<div class="alert alert-info mx-3 mt-3 mb-0" role="status">Opening balance — Principal: <strong>' +
-            money(opening.principal) + '</strong> · Interest: <strong>' + money(opening.interest) + '</strong> · Total: <strong>' + money(opening.total) + '</strong></div>');
+            money(opening.principal) + '</strong> · Late Fee: <strong>' + money(opening.interest) + '</strong> · Total: <strong>' + money(opening.total) + '</strong></div>');
     }
     renderPagination(payload.meta);
 };
@@ -290,9 +290,9 @@ const printCustomerLedger = async () => {
             return entry.entry_kind || '—';
         };
         const componentLabel = (entry) => entry.component === 'MIXED'
-            ? 'मूलधन + ब्याज'
+            ? 'मूलधन + Late Fee'
             : entry.component === 'PRINCIPAL' ? 'मूलधन'
-                : entry.component === 'INTEREST' ? 'ब्याज' : (entry.component || '—');
+                : entry.component === 'INTEREST' ? 'Late Fee' : (entry.component || '—');
         const tableRows = rows.map((entry) => '<tr>' +
             '<td>' + esc(date(entry.effective_date)) + '</td>' +
             '<td>' + esc(transactionLabel(entry)) + '</td>' +
@@ -324,11 +324,11 @@ const printCustomerLedger = async () => {
             '<header class="header"><div><div class="muted">' + esc(config.shopName || 'Kisan Khata') + '</div><h1>ग्राहक खाता-बही</h1><div>' + esc(customerName) + '</div></div>' +
             '<div class="muted">प्रिंट दिनांक: ' + esc(new Date().toLocaleString('en-IN')) + '</div></header>' +
             '<section class="meta"><div>ग्राहक<strong>' + esc(customerName) + '</strong></div><div>अवधि<strong>' + esc(rangeLabel) + '</strong></div><div>कुल लेन-देन<strong>' + rows.length + '</strong></div></section>' +
-            '<section class="balances"><div class="balance">प्रारंभिक मूलधन<strong>' + esc(money(opening.principal)) + '</strong></div><div class="balance">प्रारंभिक ब्याज<strong>' + esc(money(opening.interest)) + '</strong></div><div class="balance">प्रारंभिक कुल<strong>' + esc(money(opening.total)) + '</strong></div></section>' +
-            '<table><thead><tr><th>तारीख</th><th>लेन-देन</th><th>खाता</th><th class="number">Debit</th><th class="number">Credit</th><th class="number">मूलधन बाकी</th><th class="number">ब्याज बाकी</th><th class="number">कुल बाकी</th></tr></thead>' +
+            '<section class="balances"><div class="balance">प्रारंभिक मूलधन<strong>' + esc(money(opening.principal)) + '</strong></div><div class="balance">प्रारंभिक Late Fee<strong>' + esc(money(opening.interest)) + '</strong></div><div class="balance">प्रारंभिक कुल<strong>' + esc(money(opening.total)) + '</strong></div></section>' +
+            '<table><thead><tr><th>तारीख</th><th>लेन-देन</th><th>खाता</th><th class="number">Debit</th><th class="number">Credit</th><th class="number">मूलधन बाकी</th><th class="number">Late Fee बाकी</th><th class="number">कुल बाकी</th></tr></thead>' +
             '<tbody>' + (tableRows || '<tr><td colspan="8" style="text-align:center;padding:18px">इस अवधि में कोई लेन-देन नहीं है।</td></tr>') + '</tbody>' +
             '<tfoot><tr><td colspan="3">कुल</td><td class="number">' + esc(moneyFromCents(totalDebit)) + '</td><td class="number">' + esc(moneyFromCents(totalCredit)) + '</td><td colspan="3">समापन शेष: ' + esc(money(closing.total)) + '</td></tr></tfoot></table>' +
-            '<section class="balances" style="margin-top:14px"><div class="balance">समापन मूलधन<strong>' + esc(money(closing.principal)) + '</strong></div><div class="balance">समापन ब्याज<strong>' + esc(money(closing.interest)) + '</strong></div><div class="balance">समापन कुल<strong>' + esc(money(closing.total)) + '</strong></div></section>' +
+            '<section class="balances" style="margin-top:14px"><div class="balance">समापन मूलधन<strong>' + esc(money(closing.principal)) + '</strong></div><div class="balance">समापन Late Fee<strong>' + esc(money(closing.interest)) + '</strong></div><div class="balance">समापन कुल<strong>' + esc(money(closing.total)) + '</strong></div></section>' +
             '<div class="footer"><span>यह विवरण Kisan Khata के ग्राहक ledger से तैयार किया गया है।</span><span>पृष्ठ डेटा: ' + rows.length + ' रिकॉर्ड · ' + pages + ' पेज लोड</span></div>' +
             '</body></html>';
 
@@ -356,10 +356,10 @@ const loadInterest = async (signal) => {
     const overrideButton = document.getElementById('open-customer-policy-drawer');
     if (overrideButton) {
         overrideButton.disabled = versions.length === 0;
-        overrideButton.title = versions.length === 0 ? 'पहले Shop Interest Policy configure करें।' : '';
+        overrideButton.title = versions.length === 0 ? 'पहले Shop Late Fee Policy configure करें।' : '';
     }
     if (versions.length === 0) {
-        root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>Shop Interest Policy अभी configure नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई Shop Interest Policy” से पहली policy बनाएँ। कोई ब्याज दर अपने-आप लागू नहीं की जाएगी।</p></div>';
+        root.innerHTML = '<div class="empty-state"><i class="ti ti-percentage" aria-hidden="true"></i><h3>Shop Late Fee Policy अभी configure नहीं है</h3><p>इस पुरानी दुकान के लिए पहले “नई Shop Late Fee Policy” से पहली policy बनाएँ। कोई Late Fee दर अपने-आप लागू नहीं की जाएगी।</p></div>';
         await loadInterestHistory(signal);
         return;
     }
@@ -395,12 +395,12 @@ const loadInterestHistory = async (signal) => {
             '<td class="text-end">' + money(run.posted_interest_total) + '</td><td>' + esc(run.items_count) + '</td>' +
             '<td><button type="button" class="btn btn-sm btn-outline-primary" data-interest-run="' + esc(run.id) + '">पूरा विवरण</button></td></tr>').join('');
         target.innerHTML = (rows.length
-            ? '<div class="kk-data-table-wrap"><table class="table table-vcenter financial-table"><thead><tr><th>Run</th><th>कारण</th><th>Cutoff (exclusive)</th><th>स्थिति</th><th class="text-end">Posted ब्याज</th><th>Items</th><th>विवरण</th></tr></thead><tbody>' + table + '</tbody></table></div>'
+            ? '<div class="kk-data-table-wrap"><table class="table table-vcenter financial-table"><thead><tr><th>Run</th><th>कारण</th><th>Cutoff (exclusive)</th><th>स्थिति</th><th class="text-end">Posted Late Fee</th><th>Items</th><th>विवरण</th></tr></thead><tbody>' + table + '</tbody></table></div>'
             : '<div class="empty-state"><h3>Calculation history उपलब्ध नहीं है</h3><p>इस ग्राहक के लिए चुनी गई अवधि में कोई calculation run नहीं मिला।</p></div>') +
             '<div class="d-flex align-items-center justify-content-between gap-2 mt-3"><span class="text-secondary small">कुल ' + esc(meta.total || 0) + ' runs · Page ' + esc(meta.current_page || 1) + ' / ' + esc(meta.last_page || 1) + '</span><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.max(1, Number(meta.current_page || 1) - 1) + '"' + (Number(meta.current_page || 1) <= 1 ? ' disabled' : '') + '>पिछला</button><button type="button" class="btn btn-sm btn-outline-secondary" data-interest-page="' + Math.min(Number(meta.last_page || 1), Number(meta.current_page || 1) + 1) + '"' + (Number(meta.current_page || 1) >= Number(meta.last_page || 1) ? ' disabled' : '') + '>अगला</button></div></div>' +
             '<div id="interest-run-detail" class="mt-3"></div>';
     } catch (error) {
-        if (error.name !== 'AbortError') target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'Interest history लोड नहीं हो सकी।') + '</div>';
+        if (error.name !== 'AbortError') target.innerHTML = '<div class="alert alert-danger" role="alert">' + esc(error.message || 'Late Fee history लोड नहीं हो सकी।') + '</div>';
     }
 };
 const loadInterestRunDetail = async (runId) => {
@@ -539,7 +539,7 @@ const renderSaleDetails = (sale) => {
         detailRow('बिक्री तारीख', date(sale.sale_date)) +
         detailRow('राशि', money(sale.amount)) +
         detailRow('भुगतान स्थिति', saleStatusLabel(sale.payment_status)) +
-        detailRow('Interest settlement', sale.interest_settlement_status) +
+        detailRow('Late Fee settlement', sale.interest_settlement_status) +
         detailRow('विवरण', sale.description) +
         detailRow('Posted at', sale.posted_at ? new Date(sale.posted_at).toLocaleString('en-IN') : '—') + '</section>' +
         '<section class="mb-4"><h3 class="h4 mb-2">स्वतः बिक्री-दिवस भुगतान</h3>' +
@@ -796,7 +796,7 @@ document.getElementById('open-shop-policy-drawer')?.addEventListener('click', ()
         const capitalization = form.elements.namedItem('capitalization_enabled');
         if (capitalization) capitalization.value = defaults.capitalization_enabled ? '1' : '0';
     }
-    openInterestDrawer('shop-interest-policy-drawer', 'नई Shop Interest Policy');
+    openInterestDrawer('shop-interest-policy-drawer', 'नई Shop Late Fee Policy');
 });
 document.getElementById('open-customer-policy-drawer')?.addEventListener('click', () => {
     const button = document.getElementById('open-customer-policy-drawer');
@@ -808,7 +808,7 @@ document.getElementById('open-customer-policy-drawer')?.addEventListener('click'
     }
     const history = document.getElementById('customer-policy-history');
     if (history) history.innerHTML = '';
-    openInterestDrawer('customer-interest-override-drawer', 'Customer Interest Override');
+    openInterestDrawer('customer-interest-override-drawer', 'Customer Late Fee Override');
 });
 document.getElementById('interest-customer')?.addEventListener('change', async (event) => {
     const id = event.target.value;
