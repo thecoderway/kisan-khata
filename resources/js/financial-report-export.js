@@ -32,7 +32,8 @@ const definitions = {
 const csvCell = (value) => {
     let text = String(value ?? '');
     const numeric = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text);
-    if (!numeric && /^[=+@\-\t\r]/.test(text)) text = "'" + text;
+    const formulaLike = /^[\s\u0000-\u001F]*[=+@-]/.test(text);
+    if (!numeric && formulaLike) text = "'" + text;
     return '"' + text.replace(/"/g, '""') + '"';
 };
 
