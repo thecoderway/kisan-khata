@@ -8,6 +8,7 @@ use App\Models\InterestPolicy;
 use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
