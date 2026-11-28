@@ -179,6 +179,14 @@ class FinancialReportControllerTest extends TestCase
     public function test_interest_report_counts_only_a_matching_interest_ledger_debit(): void
     {
         [$shop, $owner, $customer] = $this->context();
+        DB::table('villages')->insert([
+            'villageCode' => '1001', 'villageNameEnglish' => 'Lotiya', 'villageNameLocal' => 'लोटिया',
+            'subdistrictCode' => '201', 'subdistrictNameEnglish' => 'Sarangpur', 'subdistrictNameLocal' => 'सारंगपुर',
+            'districtCode' => '301', 'districtNameEnglish' => 'Rajgarh', 'districtNameLocal' => 'राजगढ़',
+            'stateCode' => '23', 'stateNameEnglish' => 'Madhya Pradesh', 'stateNameLocal' => 'मध्य प्रदेश',
+            'data_gov_update_date' => '21-04-2026',
+        ]);
+        DB::table('customers')->where('id', $customer->getKey())->update(['village_code' => '1001']);
         $sale = app(SalePostingService::class)->post(
             $owner, $customer, Sale::PAYMENT_CHOICE_UNPAID,
             CarbonImmutable::parse('2026-10-01'), '1000.00', 'Interest report sale', 'report-interest-sale',
@@ -219,7 +227,7 @@ class FinancialReportControllerTest extends TestCase
 
         Sanctum::actingAs($owner, ['app']);
 
-        $this->getJson('/api/v1/reports/interest?customer_id='.$customer->getKey())
+        $this->getJson('/api/v1/reports/interest?customer_id='.$customer->getKey().'&village_code=1001')
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('summary.item_count', 1)
