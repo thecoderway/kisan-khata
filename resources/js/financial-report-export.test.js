@@ -57,7 +57,7 @@ test('exports all interest audit fields and rejects unknown report types', () =>
 });
 
 test('neutralizes spreadsheet formulas after leading whitespace and control characters while preserving negative decimals', () => {
-    const values = [' =1+1', '\\t=1+1', '\\n@SUM(A1:A2)', '\\r-1+2'];
+    const values = [' =1+1', '\t=1+1', '\n@SUM(A1:A2)', '\r-1+2'];
     const csv = buildFinancialReportCsv({
         report: 'sales',
         rows: values.map((sale_number) => ({ sale_number, amount: '-123.45' })),
@@ -66,7 +66,7 @@ test('neutralizes spreadsheet formulas after leading whitespace and control char
     });
 
     for (const value of values) {
-        assert.ok(csv.includes('"\\'' + value + '"'));
+        assert.ok(csv.includes('"' + "'" + value + '"'));
     }
     assert.ok(csv.includes('"-123.45"'));
 });
