@@ -8,7 +8,7 @@
     <div class="page-heading">
         <div>
             <span class="eyebrow">टीम और पहुँच</span>
-            <h1>{{ $isOwner ? 'दुकान के उपयोगकर्ता' : 'आपकी दुकान के कर्मचारी' }}</h1>
+            <h1>{{ $isOwner ? 'दुकान के स्टाफ' : 'आपकी दुकान के कर्मचारी' }}</h1>
             <p>{{ $isOwner ? 'प्रबंधक और Staff खाते तथा उनकी पहुँच की स्थिति प्रबंधित करें।' : 'आप Staff सदस्यों का नाम और खाते की स्थिति देख सकते हैं।' }}</p>
         </div>
         @if ($isOwner)
@@ -27,7 +27,7 @@
     @endif
 
     @if ($capacity)
-        <section class="capacity-grid" aria-label="सक्रिय उपयोगकर्ता सीमा">
+        <section class="capacity-grid" aria-label="सक्रिय स्टाफ सीमा">
             @foreach ($capacity['roles'] as $roleName => $usage)
                 <article class="capacity-card">
                     <span>{{ ucfirst($roleName) }}</span>
@@ -37,7 +37,7 @@
                 </article>
             @endforeach
             <article class="capacity-card capacity-total">
-                <span>कुल सक्रिय उपयोगकर्ता</span>
+                <span>कुल सक्रिय स्टाफ</span>
                 <strong>{{ $capacity['active_total'] }} <small>/ {{ $capacity['total_limit'] }}</small></strong>
                 <div class="capacity-track"><span style="width: {{ min(100, ($capacity['active_total'] / $capacity['total_limit']) * 100) }}%"></span></div>
                 <small>दुकान की क्षमता</small>

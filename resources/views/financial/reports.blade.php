@@ -31,16 +31,17 @@
                 <input class="form-control" type="date" id="report-as-of">
             </div>
             <div class="col-md-2 d-none" id="report-from-wrap">
-                <label class="form-label" for="report-from">से तारीख</label>
+                <label class="form-label" for="report-from">तारीख से</label>
                 <input class="form-control" type="date" id="report-from">
             </div>
             <div class="col-md-2 d-none" id="report-to-wrap">
-                <label class="form-label" for="report-to">तक तारीख</label>
+                <label class="form-label" for="report-to">तारीख तक</label>
                 <input class="form-control" type="date" id="report-to">
             </div>
             <div class="col-md-3">
-                <label class="form-label" for="report-customer">ग्राहक चुनें</label>
-                <select class="form-select" id="report-customer" disabled>
+                <label class="form-label" for="report-customer-search">ग्राहक चुनें</label>
+                <input class="form-control" type="search" id="report-customer-search" data-customer-filter-search data-customer-select="report-customer" placeholder="ग्राहक खोजें या चुनें…" autocomplete="off" disabled>
+                <select class="visually-hidden" id="report-customer" data-customer-filter-select aria-hidden="true" tabindex="-1" disabled>
                     <option value="">सभी ग्राहक</option>
                 </select>
             </div>
@@ -50,13 +51,11 @@
         </div>
         <div class="row g-3 mt-1" id="report-extra-filters">
             <div class="col-md-3">
-                <label class="form-label" for="report-village">गाँव</label>
-                <select class="form-select" id="report-village">
-                    <option value="">सभी गाँव</option>
-                    @foreach ($villages as $village)
-                        <option value="{{ $village->villageCode }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>
-                    @endforeach
-                </select>
+                @include('financial.partials.village-filter', [
+                    'inputId' => 'report-village-search',
+                    'selectId' => 'report-village',
+                    'villages' => $villages,
+                ])
             </div>
 
             <div class="col-md-3" id="report-search-wrap">
@@ -210,9 +209,12 @@
                 'क्रमांक: ' + customer.id,
             ].filter(Boolean);
             const option = new Option(name + ' — ' + details.join(' · '), String(customer.id));
+            option.dataset.search = [customer.mobile, customer.customer_code, customer.id].filter(Boolean).join(' ');
             select.add(option);
         });
         select.disabled = false;
+        const search = $('report-customer-search');
+        if (search) search.disabled = false;
     }
 
     function summaryCards(summary) {
@@ -370,6 +372,7 @@
     loadCustomers().then(configure).catch((error) => {
         $('report-feedback').textContent = error.message;
         $('report-customer').innerHTML = '<option value="">ग्राहक सूची उपलब्ध नहीं</option>';
+        $('report-customer-search').disabled = true;
     });
 })();
 </script>

@@ -44,7 +44,7 @@
     @if ($section === 'interest')
         <div class="financial-toolbar">
             <div class="financial-filter-grid">
-                <div><label class="form-label" for="interest-history-customer">लेट फीस गणना का इतिहास देखने के लिए ग्राहक</label><select class="form-select" id="interest-history-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div><label class="form-label" for="interest-history-customer-search">लेट फीस गणना का इतिहास देखने के लिए ग्राहक</label><input class="form-control" type="search" id="interest-history-customer-search" data-customer-filter-search data-customer-select="interest-history-customer" placeholder="ग्राहक खोजें या चुनें…" autocomplete="off"><select class="visually-hidden" id="interest-history-customer" data-customer-filter-select aria-hidden="true" tabindex="-1"><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="financial-from">से cutoff तारीख</label><input class="form-control" type="date" id="financial-from"></div>
                 <div><label class="form-label" for="financial-to">तक cutoff तारीख</label><input class="form-control" type="date" id="financial-to"></div>
                 <div class="financial-filter-action"><button class="btn btn-outline-secondary" id="interest-history-refresh" type="button"><i class="ti ti-refresh me-1"></i> इतिहास ताज़ा करें</button></div>
@@ -55,10 +55,23 @@
     @if (in_array($section, ['sales', 'payments'], true))
         <form id="financial-filters" class="financial-toolbar" role="search">
             <div class="financial-filter-grid">
-                <div class="financial-search-field"><label class="form-label" for="financial-search">खोजें</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span><input class="form-control" type="search" id="financial-search" name="q" maxlength="100" placeholder="नंबर, ग्राहक या मोबाइल…" autocomplete="off"></div></div>
-                <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from" name="from"></div>
-                <div><label class="form-label" for="financial-village">गाँव</label><select class="form-select" id="financial-village" name="village_code"><option value="">सभी गाँव</option>@foreach ($villages as $village)<option value="{{ $village->villageCode }}">{{ collect([$village->villageNameLocal ?: $village->villageNameEnglish, $village->subdistrictNameLocal ?: $village->subdistrictNameEnglish, $village->districtNameLocal ?: $village->districtNameEnglish])->filter()->implode(', ') }}</option>@endforeach</select></div>
-                <div><label class="form-label" for="financial-to">तक तारीख</label><input class="form-control" type="date" id="financial-to" name="to"></div>
+                <div class="financial-search-field">
+                    <label class="form-label" for="financial-search">खोजें</label>
+                    <div class="input-icon">
+                        <span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span>
+                        <input class="form-control" type="search" id="financial-search" name="q" maxlength="100" placeholder="नंबर, ग्राहक या मोबाइल…" autocomplete="off">
+                    </div>
+                </div>
+                <div>
+                    @include('financial.partials.village-filter', [
+                        'inputId' => 'financial-village-search',
+                        'selectId' => 'financial-village',
+                        'selectName' => 'village_code',
+                        'villages' => $villages,
+                    ])
+                </div>
+                <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from" name="from"></div>
+                <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to" name="to"></div>
                 @if ($section === 'sales')
                     <div><label class="form-label" for="financial-status">भुगतान स्थिति</label><select class="form-select" id="financial-status" name="payment_status"><option value="">सभी स्थितियाँ</option><option value="UNPAID">उधार</option><option value="PARTIALLY_PAID">आंशिक जमा</option><option value="PAID">जमा पूर्ण</option></select></div>
                 @else
@@ -72,11 +85,11 @@
         <div class="financial-toolbar">
             <div class="financial-filter-grid">
                 @if (in_array($section, ['ledger', 'reconciliation'], true))
-                    <div><label class="form-label" for="financial-customer">ग्राहक</label><select class="form-select" id="financial-customer"><option value="">ग्राहक चुनें</option></select></div>
+                    <div><label class="form-label" for="financial-customer-search">ग्राहक</label><input class="form-control" type="search" id="financial-customer-search" data-customer-filter-search data-customer-select="financial-customer" placeholder="ग्राहक खोजें या चुनें…" autocomplete="off"><select class="visually-hidden" id="financial-customer" data-customer-filter-select aria-hidden="true" tabindex="-1"><option value="">ग्राहक चुनें</option></select></div>
                 @endif
                 @if (in_array($section, ['ledger', 'audit'], true))
-                    <div><label class="form-label" for="financial-from">से तारीख</label><input class="form-control" type="date" id="financial-from"></div>
-                    <div><label class="form-label" for="financial-to">तक तारीख</label><input class="form-control" type="date" id="financial-to"></div>
+                    <div><label class="form-label" for="financial-from">तारीख से</label><input class="form-control" type="date" id="financial-from"></div>
+                    <div><label class="form-label" for="financial-to">तारीख तक</label><input class="form-control" type="date" id="financial-to"></div>
                 @endif
                 @if ($section === 'audit')
                     <div><label class="form-label" for="financial-action">कार्रवाई</label><input class="form-control" id="financial-action" placeholder="कार्रवाई का नाम"></div>
@@ -126,7 +139,7 @@
         <x-ui.action-drawer id="customer-interest-override-drawer" title="ग्राहक की लेट फीस की विशेष दर">
             <form id="customer-policy-form" class="financial-form-grid" method="POST" data-drawer-ajax>
                 @csrf
-                <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer"><option value="">ग्राहक चुनें</option></select></div>
+                <div class="financial-form-wide"><label class="form-label" for="interest-customer">ग्राहक</label><select class="form-select" name="customer_id" required id="interest-customer" data-customer-searchable><option value="">ग्राहक चुनें</option></select></div>
                 <div><label class="form-label" for="customer-policy-effective-from">लागू होने की तारीख</label><input class="form-control" id="customer-policy-effective-from" type="date" name="effective_from" min="{{ now()->addDay()->toDateString() }}" required></div>
                 <div><label class="form-label" for="customer-policy-rate">मासिक लेट फीस दर (%)</label><input class="form-control" id="customer-policy-rate" type="number" name="monthly_rate_percent" min="0" max="100" step="0.00000001" placeholder="दुकान की लेट फीस नीति से स्वतः लागू"></div>
                 <div class="financial-form-wide"><label class="form-label" for="customer-policy-capitalization">मूलधन में जोड़ने का विशेष नियम</label><select class="form-select" id="customer-policy-capitalization" name="capitalization_enabled"><option value="">दुकान की नीति से स्वतः लागू</option><option value="0">बंद</option><option value="1">चालू</option></select></div>
