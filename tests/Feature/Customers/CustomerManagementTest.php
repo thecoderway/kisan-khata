@@ -828,15 +828,15 @@ class CustomerManagementTest extends TestCase
         $owner = $this->makeUser();
         $this->actingAs($owner)->post(route('customers.store'), $this->customerPayload())->assertRedirect();
         $customer = DB::table('customers')->where('shop_id', $owner->shop_id)->firstOrFail();
-        $editUrl = route('customers.edit', [$customer, 'drawer' => 1]);
+        $editUrl = route('customers.edit', [$customer->id, 'drawer' => 1]);
 
-        $this->get(route('customers.show', $customer))->assertOk()
+        $this->get(route('customers.show', $customer->id))->assertOk()
             ->assertSee('customer-detail-action-drawer', false)
             ->assertSee('data-url="'.$editUrl.'"', false)
             ->assertSee('data-title="ग्राहक संपादित करें"', false)
             ->assertSee('> संपादित करें', false)
             ->assertDontSee('जानकारी बदलें')
-            ->assertDontSee('href="'.route('customers.edit', $customer).'"', false);
+            ->assertDontSee('href="'.route('customers.edit', $customer->id).'"', false);
 
         $this->withHeader('X-Requested-With', 'XMLHttpRequest')->get($editUrl)
             ->assertOk()
