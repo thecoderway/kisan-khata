@@ -47,7 +47,7 @@ export const buildFinancialReportCsv = ({ report, rows, summary, filters, shopNa
         ['तैयार किया गया', generatedAt.toISOString()],
         ['कुल रिकॉर्ड', rows.length],
         ...Object.entries(filters || {}).map(([key, value]) => ['फ़िल्टर: ' + key, value]),
-        ...Object.entries(summary || {}).map(([key, value]) => ['सारांश: ' + key, value]),
+        ...Object.entries(summary || {}).map(([key, value]) => ['सारांश: ' + key.replace(/interest/gi, 'Late Fee'), value]),
         [],
         definition.columns,
         ...rows.map(definition.values),
