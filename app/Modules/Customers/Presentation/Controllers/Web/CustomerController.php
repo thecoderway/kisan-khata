@@ -21,6 +21,7 @@ class CustomerController extends Controller
     public function index(Request $request, CustomerDirectoryQuery $directory, CurrentShop $currentShop): View|Response|JsonResponse
     {
         Gate::authorize('viewAny', Customer::class);
+        $request->validate(['village_code' => ['nullable', 'string', 'max:20', 'exists:villages,villageCode']]);
         if ($request->query('status') === 'deleted') {
             Gate::authorize('viewDeleted', Customer::class);
         }
@@ -82,6 +83,10 @@ class CustomerController extends Controller
         }
 
         $customers = $directory->paginate($request);
+        $villageOptions = DB::table('customers as c')->join('villages as v', 'v.villageCode', '=', 'c.village_code')
+            ->where('c.shop_id', $currentShop->require()->getKey())
+            ->whereNotNull('c.village_code')->select('v.villageCode', 'v.villageNameLocal', 'v.villageNameEnglish')
+            ->distinct()->orderBy('v.villageNameEnglish')->get();
         $search = trim((string) $request->query('q', ''));
         $status = in_array($request->query('status'), ['active', 'inactive', 'deleted'], true)
             ? $request->query('status')
@@ -89,6 +94,8 @@ class CustomerController extends Controller
 
         return view('customers.index', [
             'customers' => $customers,
+            'villageOptions' => $villageOptions,
+            'villageCode' => (string) $request->query('village_code', ''),
             'search' => $search,
             'status' => $status,
             'drawerAction' => $drawerContent ? $drawerAction : null,
