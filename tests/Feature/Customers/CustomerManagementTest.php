@@ -815,5 +815,4 @@ class CustomerManagementTest extends TestCase
             ->assertDontSee('id="deactivate-reason"', false)
             ->assertDontSee('id="delete-reason"', false);
     }
-
 }
