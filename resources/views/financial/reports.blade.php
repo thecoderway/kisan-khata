@@ -76,7 +76,7 @@
                 <select class="form-select" id="report-method">
                     <option value="">सभी माध्यम</option>
                     <option value="CASH">नकद</option>
-                    <option value="यूपीआई">यूपीआई</option>
+                    <option value="UPI">यूपीआई</option>
                     <option value="BANK">बैंक</option>
                     <option value="CHEQUE">चेक</option>
                 </select>
