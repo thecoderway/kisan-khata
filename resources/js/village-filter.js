@@ -1,4 +1,4 @@
-import { attachVillageDropdown } from './village-dropdown';
+import { attachVillageDropdown } from './village-dropdown.js';
 
 const normalizeLabel = (value) => String(value ?? '').normalize('NFC').trim().toLocaleLowerCase();
 
